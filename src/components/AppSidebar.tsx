@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, FolderOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import DokaLogo from "./DokaLogo";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
+  { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
   { to: "/questionario", icon: HelpCircle, label: "Questionário" },
