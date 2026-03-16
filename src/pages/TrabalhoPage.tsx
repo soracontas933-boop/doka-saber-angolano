@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
-import { exportToWord, exportToPDF } from "@/lib/export-utils";
+import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 
 const disciplinas = [
   "Português", "Matemática", "História", "Geografia", "Biologia",
@@ -48,6 +48,8 @@ const TrabalhoPage = () => {
   const [tipoTrabalho, setTipoTrabalho] = useLocalStorage("doka_trabalho_tipo", "Trabalho de Pesquisa");
   const [disciplina, setDisciplina] = useLocalStorage("doka_trabalho_disciplina", "");
   const [paginas, setPaginas] = useLocalStorage("doka_trabalho_paginas", 5);
+  const [numero, setNumero] = useLocalStorage("doka_trabalho_numero", "");
+  const [curso, setCurso] = useLocalStorage("doka_trabalho_curso", "");
   const [elementosVisuais, setElementosVisuais] = useLocalStorage("doka_trabalho_elementosVisuais", 2);
   const [tipoCapa, setTipoCapa] = useLocalStorage<"padrao" | "upload" | "personalizada">("doka_trabalho_tipoCapa", "padrao");
   const [capaUpload, setCapaUpload] = useState<File | null>(null);
@@ -218,13 +220,25 @@ const TrabalhoPage = () => {
           </div>
 
           {modalidade === "individual" ? (
-            <div className="space-y-2">
-              <Label>Nome do Aluno</Label>
-              <Input
-                placeholder="Nome completo"
-                value={nomeAluno}
-                onChange={(e) => setNomeAluno(e.target.value)}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Nome do Aluno</Label>
+                <Input
+                  placeholder="Nome completo"
+                  value={nomeAluno}
+                  onChange={(e) => setNomeAluno(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nº</Label>
+                  <Input placeholder="Ex: 01" value={numero} onChange={(e) => setNumero(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Curso</Label>
+                  <Input placeholder="Ex: Mecânico Frio e Climatização" value={curso} onChange={(e) => setCurso(e.target.value)} />
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -434,7 +448,13 @@ const TrabalhoPage = () => {
                 <Button variant="outline" size="sm" onClick={async () => {
                   try {
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_doka";
-                    await exportToWord(resultado, nomeArquivo);
+                    const coverData: CoverPageData = {
+                      nomeEscola, tipoTrabalho, tema, nomeDocente, localidade, anoLectivo, classe, disciplina,
+                      sala, turma, numero, curso, modalidade,
+                      nomeAluno: modalidade === "individual" ? nomeAluno : undefined,
+                      nomesIntegrantes: modalidade === "grupo" ? nomesIntegrantes.filter(Boolean) : undefined,
+                    };
+                    await exportToWord(resultado, nomeArquivo, coverData);
                     toast.success("Ficheiro Word exportado!");
                   } catch { toast.error("Erro ao exportar Word"); }
                 }}>
@@ -443,7 +463,13 @@ const TrabalhoPage = () => {
                 <Button size="sm" onClick={async () => {
                   try {
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_doka";
-                    await exportToPDF(resultado, nomeArquivo);
+                    const coverData: CoverPageData = {
+                      nomeEscola, tipoTrabalho, tema, nomeDocente, localidade, anoLectivo, classe, disciplina,
+                      sala, turma, numero, curso, modalidade,
+                      nomeAluno: modalidade === "individual" ? nomeAluno : undefined,
+                      nomesIntegrantes: modalidade === "grupo" ? nomesIntegrantes.filter(Boolean) : undefined,
+                    };
+                    await exportToPDF(resultado, nomeArquivo, coverData);
                     toast.success("PDF exportado!");
                   } catch { toast.error("Erro ao exportar PDF"); }
                 }}>
