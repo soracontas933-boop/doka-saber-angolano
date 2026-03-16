@@ -1,5 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, PageBreak, ImageRun } from "docx";
 import { saveAs } from "file-saver";
+import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
 
 export interface CoverPageData {
   nomeEscola?: string;
@@ -290,31 +291,36 @@ function parseMarkdownToParagraphs(text: string): Paragraph[] {
 }
 
 export async function exportToWord(content: string, filename: string, coverData?: CoverPageData) {
-  const coatOfArmsBuffer = await fetchImageAsBuffer(ANGOLA_COAT_OF_ARMS_URL);
-  const coverParagraphs = coverData ? createCoverPageParagraphs(coverData, coatOfArmsBuffer) : [];
-  const contentParagraphs = parseMarkdownToParagraphs(content);
+  showExportOverlay("A gerar ficheiro Word...");
+  try {
+    const coatOfArmsBuffer = await fetchImageAsBuffer(ANGOLA_COAT_OF_ARMS_URL);
+    const coverParagraphs = coverData ? createCoverPageParagraphs(coverData, coatOfArmsBuffer) : [];
+    const contentParagraphs = parseMarkdownToParagraphs(content);
 
-  const doc = new Document({
-    sections: [
-      {
-        properties: {
-          page: {
-            margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 },
-            borders: coverData ? {
-              pageBorderTop: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-              pageBorderBottom: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-              pageBorderLeft: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-              pageBorderRight: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-            } : undefined,
+    const doc = new Document({
+      sections: [
+        {
+          properties: {
+            page: {
+              margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 },
+              borders: coverData ? {
+                pageBorderTop: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                pageBorderBottom: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                pageBorderLeft: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                pageBorderRight: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+              } : undefined,
+            },
           },
+          children: [...coverParagraphs, ...contentParagraphs],
         },
-        children: [...coverParagraphs, ...contentParagraphs],
-      },
-    ],
-  });
+      ],
+    });
 
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${filename}.docx`);
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `${filename}.docx`);
+  } finally {
+    hideExportOverlay();
+  }
 }
 
 function generateCoverPageHTML(data: CoverPageData): string {
@@ -366,42 +372,45 @@ function generateCoverPageHTML(data: CoverPageData): string {
 }
 
 export async function exportToPDF(content: string, filename: string, coverData?: CoverPageData) {
-  const container = document.createElement("div");
-  container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 700px;";
+  showExportOverlay("A gerar ficheiro PDF...");
+  try {
+    const container = document.createElement("div");
+    container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 700px;";
 
-  // Cover page
-  if (coverData) {
-    container.innerHTML = generateCoverPageHTML(coverData);
+    if (coverData) {
+      container.innerHTML = generateCoverPageHTML(coverData);
+    }
+
+    const contentDiv = document.createElement("div");
+    contentDiv.style.cssText = "padding: 40px;";
+    const html = content
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/^### (.+)$/gm, '<h3 style="font-size: 14pt; margin-top: 18px; margin-bottom: 8px;">$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2 style="font-size: 16pt; margin-top: 24px; margin-bottom: 10px;">$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1 style="font-size: 18pt; margin-top: 30px; margin-bottom: 12px; text-align: center;">$1</h1>')
+      .replace(/^\* (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+      .replace(/^- (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+      .replace(/\n\n/g, "<br/><br/>")
+      .replace(/\n/g, "<br/>");
+
+    contentDiv.innerHTML = html;
+    container.appendChild(contentDiv);
+    document.body.appendChild(container);
+
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    await html2pdf()
+      .set({
+        margin: [15, 15, 15, 15],
+        filename: `${filename}.pdf`,
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      } as any)
+      .from(container)
+      .save();
+
+    document.body.removeChild(container);
+  } finally {
+    hideExportOverlay();
   }
-
-  // Content
-  const contentDiv = document.createElement("div");
-  contentDiv.style.cssText = "padding: 40px;";
-  const html = content
-    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-    .replace(/^### (.+)$/gm, '<h3 style="font-size: 14pt; margin-top: 18px; margin-bottom: 8px;">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 style="font-size: 16pt; margin-top: 24px; margin-bottom: 10px;">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="font-size: 18pt; margin-top: 30px; margin-bottom: 12px; text-align: center;">$1</h1>')
-    .replace(/^\* (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
-    .replace(/^- (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
-    .replace(/\n\n/g, "<br/><br/>")
-    .replace(/\n/g, "<br/>");
-
-  contentDiv.innerHTML = html;
-  container.appendChild(contentDiv);
-  document.body.appendChild(container);
-
-  const html2pdf = (await import("html2pdf.js")).default;
-
-  await html2pdf()
-    .set({
-      margin: [15, 15, 15, 15],
-      filename: `${filename}.pdf`,
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    } as any)
-    .from(container)
-    .save();
-
-  document.body.removeChild(container);
 }
