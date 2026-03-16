@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { saveProject } from "@/lib/save-project";
 
 const disciplinas = [
   "Português", "Matemática", "História", "Geografia", "Biologia",
@@ -89,6 +90,14 @@ const PlanoAulaPage = () => {
       setImagemPlano(imgUrl);
 
       toast.success("Plano de aula gerado com sucesso!");
+
+      saveProject("plano-aula", `Plano de Aula - ${disciplina || "Geral"} - ${classe || ""}`, {
+        resultado: revisado,
+        tipoPlano,
+        disciplina,
+        classe,
+        imagemPlano: imgUrl,
+      });
     } catch (err) {
       console.error("Erro ao gerar plano:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar plano de aula.");

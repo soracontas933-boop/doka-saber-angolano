@@ -12,6 +12,7 @@ import { generateWithGroq, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
 import SubtemasEditor, { type Subtema } from "@/components/trabalho/SubtemasEditor";
+import { saveProject } from "@/lib/save-project";
 
 const disciplinas = [
   "Português", "Matemática", "História", "Geografia", "Biologia",
@@ -236,6 +237,16 @@ const TrabalhoPage = () => {
 
     setFase("resultado");
     toast.success("Trabalho compilado com sucesso!");
+
+    saveProject("trabalho", tema || "Trabalho sem título", {
+      resultado: fullContent,
+      tema,
+      disciplina,
+      classe,
+      nomeEscola,
+      nomeDocente,
+      tipoTrabalho,
+    });
   };
 
   const handleBack = () => {

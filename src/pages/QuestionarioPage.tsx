@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { saveProject } from "@/lib/save-project";
 
 const tiposPerguntas = [
   { value: "multipla_escolha", label: "Selecção múltipla" },
@@ -98,6 +99,15 @@ const QuestionarioPage = () => {
       setResultado(revisado);
 
       toast.success("Questionário gerado com sucesso!");
+
+      saveProject("questionario", `Questionário - ${disciplina || "Geral"}`, {
+        resultado: revisado,
+        tipo,
+        disciplina,
+        numPerguntas,
+        dificuldade,
+        comGabarito,
+      });
     } catch (err) {
       console.error("Erro ao gerar questionário:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar questionário.");

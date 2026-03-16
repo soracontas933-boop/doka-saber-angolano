@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { saveProject } from "@/lib/save-project";
 
 const tiposResumo = [
   "Resumo por Tópicos",
@@ -94,6 +95,13 @@ const ResumoPage = () => {
       setImagemResumo(imgUrl);
 
       toast.success("Resumo gerado com sucesso!");
+
+      saveProject("resumo", `${tipoResumo} - ${disciplina || "Geral"}`, {
+        resultado: revisado,
+        tipoResumo,
+        disciplina,
+        imagemResumo: imgUrl,
+      });
     } catch (err) {
       console.error("Erro ao gerar resumo:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar resumo. Verifique as chaves API.");
