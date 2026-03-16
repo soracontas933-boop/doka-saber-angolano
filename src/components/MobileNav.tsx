@@ -4,6 +4,7 @@ import {
   BookOpen,
   HelpCircle,
   ClipboardList,
+  Search,
   LayoutDashboard,
   FolderOpen,
   LogOut,
