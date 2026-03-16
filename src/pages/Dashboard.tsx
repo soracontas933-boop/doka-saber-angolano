@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FileText, BookOpen, HelpCircle, ClipboardList } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const cards = [
@@ -30,6 +30,13 @@ const cards = [
     icon: ClipboardList,
     to: "/plano-aula",
     gradient: "from-secondary to-primary",
+  },
+  {
+    title: "Corrigir Trabalho",
+    description: "Envia o teu trabalho e o DOKA corrige tudo automaticamente.",
+    icon: Search,
+    to: "/correcao",
+    gradient: "from-primary to-secondary",
   },
 ];
 

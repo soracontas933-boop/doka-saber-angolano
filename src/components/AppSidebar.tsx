@@ -4,6 +4,7 @@ import {
   BookOpen,
   HelpCircle,
   ClipboardList,
+  Search,
   LayoutDashboard,
   Settings,
   FolderOpen,
@@ -24,6 +25,7 @@ const navItems = [
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
   { to: "/questionario", icon: HelpCircle, label: "Questionário" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
+  { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
   { to: "/planos", icon: CreditCard, label: "Planos" },
 ];
 

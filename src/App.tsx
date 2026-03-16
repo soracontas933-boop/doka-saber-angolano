@@ -16,6 +16,7 @@ import AdminPanelPage from "@/pages/AdminPanelPage";
 import SettingsPage from "@/pages/SettingsPage";
 import PlanosPage from "@/pages/PlanosPage";
 import ApiKeysSetup from "@/pages/ApiKeysSetup";
+import CorrecaoPage from "@/pages/CorrecaoPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/resumo" element={<ResumoPage />} />
             <Route path="/questionario" element={<QuestionarioPage />} />
             <Route path="/plano-aula" element={<PlanoAulaPage />} />
+            <Route path="/correcao" element={<CorrecaoPage />} />
             <Route path="/admin" element={<AdminPanelPage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
             <Route path="/planos" element={<PlanosPage />} />
