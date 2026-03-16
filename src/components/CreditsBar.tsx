@@ -1,6 +1,42 @@
-import { Zap, Crown } from "lucide-react";
+import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface UsageItemProps {
+  icon: React.ReactNode;
+  label: string;
+  used: number;
+  limit: number; // -1 = ilimitado, 0 = indisponível
+}
+
+const UsageItem = ({ icon, label, used, limit }: UsageItemProps) => {
+  if (limit === 0) return null;
+
+  const isUnlimited = limit === -1;
+  const remaining = isUnlimited ? Infinity : Math.max(0, limit - used);
+  const percentage = isUnlimited ? 0 : limit > 0 ? (used / limit) * 100 : 0;
+  const isLow = !isUnlimited && remaining <= 1;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-default">
+          <span className={isLow ? "text-destructive" : "text-muted-foreground"}>{icon}</span>
+          <span className={`text-xs font-semibold ${isLow ? "text-destructive" : "text-foreground"}`}>
+            {isUnlimited ? "∞" : `${used}/${limit}`}
+          </span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs">
+        <p className="font-medium">{label}</p>
+        <p className="text-muted-foreground">
+          {isUnlimited ? "Uso ilimitado" : `${remaining} restante${remaining !== 1 ? "s" : ""}`}
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 const CreditsBar = () => {
   const { plan, loading } = useUserPlan();
@@ -13,49 +49,72 @@ const CreditsBar = () => {
 
   const totalCredits = plan.creditos_totais === -1 ? Infinity : plan.creditos_totais;
   const usedCredits = plan.creditos_usados;
-  const remaining = totalCredits === Infinity ? "∞" : Math.max(0, totalCredits - usedCredits);
-  const percentage = totalCredits === Infinity || totalCredits === 0 ? 0 : (usedCredits / totalCredits) * 100;
+  const remainingCredits = totalCredits === Infinity ? "∞" : Math.max(0, totalCredits - usedCredits);
+  const creditPercentage = totalCredits === Infinity || totalCredits === 0 ? 0 : (usedCredits / (totalCredits as number)) * 100;
 
   return (
-    <div className="sticky top-0 z-40 w-full border-b border-border bg-card/80 backdrop-blur-md">
-      <div className="flex items-center justify-between px-4 md:px-6 py-2 max-w-screen-2xl mx-auto">
+    <div className="sticky top-0 z-40 w-full border-b border-border bg-card/90 backdrop-blur-md">
+      <div className="flex items-center justify-between px-3 md:px-6 py-1.5 max-w-screen-2xl mx-auto gap-2">
+        {/* Plano */}
         <button
           onClick={() => navigate("/planos")}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors shrink-0"
         >
-          <Crown className="h-4 w-4 text-primary" />
-          <span className="text-xs font-semibold text-foreground">
-            Plano <span className="text-primary">{cfg.nome}</span>
-          </span>
+          <Crown className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-bold text-primary">{cfg.nome}</span>
         </button>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+        {/* Contadores de uso */}
+        <div className="flex items-center gap-1 md:gap-2 overflow-x-auto scrollbar-none">
+          <UsageItem
+            icon={<FileText className="h-3.5 w-3.5" />}
+            label="Trabalhos Escolares"
+            used={plan.limite_trabalhos > 0 ? cfg.limite_trabalhos - plan.limite_trabalhos : 0}
+            limit={cfg.limite_trabalhos}
+          />
+          <UsageItem
+            icon={<BookOpen className="h-3.5 w-3.5" />}
+            label="Resumos"
+            used={plan.limite_resumos > 0 ? cfg.limite_resumos - plan.limite_resumos : 0}
+            limit={cfg.limite_resumos}
+          />
+          <UsageItem
+            icon={<HelpCircle className="h-3.5 w-3.5" />}
+            label="Questionários"
+            used={plan.limite_questionarios > 0 ? cfg.limite_questionarios - plan.limite_questionarios : 0}
+            limit={cfg.limite_questionarios}
+          />
+          <UsageItem
+            icon={<ClipboardList className="h-3.5 w-3.5" />}
+            label="Planos de Aula"
+            used={plan.limite_planos_aula > 0 ? cfg.limite_planos_aula - plan.limite_planos_aula : 0}
+            limit={cfg.limite_planos_aula}
+          />
+          <UsageItem
+            icon={<GraduationCap className="h-3.5 w-3.5" />}
+            label="TFC/Monografias"
+            used={plan.limite_tfc > 0 ? cfg.limite_tfc - plan.limite_tfc : 0}
+            limit={cfg.limite_tfc}
+          />
+        </div>
+
+        {/* Créditos totais */}
+        {(totalCredits !== Infinity && totalCredits > 0) || totalCredits === Infinity ? (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Zap className="h-3.5 w-3.5 text-primary" />
             {totalCredits !== Infinity && totalCredits > 0 && (
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-500"
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                  />
-                </div>
+              <div className="hidden sm:block w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${Math.min(creditPercentage, 100)}%` }}
+                />
               </div>
             )}
-            <span className="text-xs text-muted-foreground font-medium">
-              {typeof remaining === "number" ? (
-                <>
-                  <span className={remaining <= 3 ? "text-destructive font-bold" : "text-foreground font-semibold"}>
-                    {remaining}
-                  </span>
-                  /{totalCredits} créditos
-                </>
-              ) : (
-                <span className="text-foreground font-semibold">Ilimitado</span>
-              )}
+            <span className="text-xs font-semibold text-foreground">
+              {typeof remainingCredits === "number" ? `${remainingCredits}` : "∞"}
             </span>
           </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );
