@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FileText, BookOpen, HelpCircle, ClipboardList } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const cards = [
