@@ -19,7 +19,7 @@ export async function saveProject(
       tipo,
       titulo,
       conteudo,
-    })
+    } as any)
     .select()
     .single();
 

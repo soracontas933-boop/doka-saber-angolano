@@ -54,8 +54,8 @@ const MeusProjetosPage = () => {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("projects")
+    const { data, error } = await (supabase
+      .from("projects") as any)
       .select("*")
       .order("criado_em", { ascending: false });
 
