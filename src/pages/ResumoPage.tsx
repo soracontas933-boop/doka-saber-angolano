@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Upload, Download, Camera, X, Image } from "lucide-react";
+import { BookOpen, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 
 const tiposResumo = [
   "Resumo por Tópicos",
@@ -32,9 +33,10 @@ const ResumoPage = () => {
   const [disciplina, setDisciplina] = useState("");
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
   const [loading, setLoading] = useState(false);
+  const [etapa, setEtapa] = useState("");
   const [resultado, setResultado] = useState<string | null>(null);
+  const [imagemResumo, setImagemResumo] = useState<string | null>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
-  const uploadRef = useRef<HTMLInputElement>(null);
 
   const addFiles = (newFiles: File[]) => {
     const total = [...files, ...newFiles].slice(0, 100);
@@ -63,11 +65,41 @@ const ResumoPage = () => {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setResultado("O resumo será gerado aqui após a integração com a IA estar configurada.");
-      setLoading(false);
+    setResultado(null);
+    setImagemResumo(null);
+
+    try {
+      // Pipeline: Gemini → Groq → OpenRouter → Pollinations
+      setEtapa("A extrair texto das fotos (Gemini Vision)...");
+      const extractedTexts = await extractTextFromImages(files);
+      const combinedText = extractedTexts.filter(Boolean).join("\n\n---\n\n");
+
+      if (!combinedText.trim()) {
+        toast.error("Não foi possível extrair texto das fotos. Tente novamente com fotos mais nítidas.");
+        setLoading(false);
+        return;
+      }
+
+      setEtapa("A gerar resumo inteligente...");
+      const prompt = prompts.resumo(combinedText, disciplina || "Geral", tipoResumo);
+      const resumo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
+
+      setEtapa("A revisar conteúdo...");
+      const revisado = await reviewWithOpenRouter(resumo);
+      setResultado(revisado);
+
+      setEtapa("A gerar ilustração...");
+      const imgUrl = generateImageUrl(imagePrompts.resumo(disciplina || "educação angolana"));
+      setImagemResumo(imgUrl);
+
       toast.success("Resumo gerado com sucesso!");
-    }, 2000);
+    } catch (err) {
+      console.error("Erro ao gerar resumo:", err);
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar resumo. Verifique as chaves API.");
+    } finally {
+      setLoading(false);
+      setEtapa("");
+    }
   };
 
   return (
@@ -90,7 +122,7 @@ const ResumoPage = () => {
         transition={{ delay: 0.1 }}
         className="space-y-6"
       >
-        {/* Tipo de Resumo e Disciplina */}
+        {/* Configurações */}
         <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
           <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
             Configurações
@@ -139,14 +171,7 @@ const ResumoPage = () => {
               <Image className="h-8 w-8 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Clique ou arraste as fotos</span>
               <span className="text-xs text-muted-foreground mt-1">JPG, PNG — máx. 100 fotos</span>
-              <input
-                ref={uploadRef}
-                type="file"
-                className="hidden"
-                accept="image/*"
-                multiple
-                onChange={handleFileChange}
-              />
+              <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} />
             </label>
           ) : (
             <button
@@ -157,18 +182,10 @@ const ResumoPage = () => {
               <Camera className="h-8 w-8 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Toque para abrir a câmera</span>
               <span className="text-xs text-muted-foreground mt-1">Tire fotos directamente do caderno</span>
-              <input
-                ref={cameraRef}
-                type="file"
-                className="hidden"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFileChange}
-              />
+              <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
             </button>
           )}
 
-          {/* Preview grid */}
           {previews.length > 0 && (
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
               {previews.map((src, i) => (
@@ -192,7 +209,12 @@ const ResumoPage = () => {
         </div>
 
         <Button className="w-full h-12 text-base" onClick={handleGenerate} disabled={loading || files.length === 0}>
-          {loading ? "A gerar resumo..." : "Gerar Resumo"}
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {etapa || "A processar..."}
+            </span>
+          ) : "Gerar Resumo"}
         </Button>
       </motion.div>
 
@@ -200,13 +222,24 @@ const ResumoPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-card"
+          className="mt-6 space-y-4"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold">Resumo</h2>
-            <Button size="sm"><Download className="h-4 w-4 mr-1" /> Exportar PDF</Button>
+          {imagemResumo && (
+            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
+              <img src={imagemResumo} alt="Ilustração do resumo" className="w-full h-40 object-cover" />
+            </div>
+          )}
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-semibold">Resumo</h2>
+              <Button size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
+                <Download className="h-4 w-4 mr-1" /> Copiar
+              </Button>
+            </div>
+            <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
+              {resultado}
+            </div>
           </div>
-          <p className="text-sm text-card-foreground">{resultado}</p>
         </motion.div>
       )}
     </div>

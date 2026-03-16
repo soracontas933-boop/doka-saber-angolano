@@ -1,0 +1,4 @@
+project_id = "ocvzyaudtjtntkcttgsw"
+
+[functions.ai-proxy]
+verify_jwt = false

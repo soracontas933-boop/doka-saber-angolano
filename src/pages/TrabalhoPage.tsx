@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, Download, Copy, Upload, Plus, Minus, Image } from "lucide-react";
+import { FileText, Download, Copy, Upload, Plus, Minus, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 
 const disciplinas = [
   "Português", "Matemática", "História", "Geografia", "Biologia",
@@ -85,16 +86,54 @@ const TrabalhoPage = () => {
     setNomesIntegrantes(updated.slice(0, clamped));
   };
 
+  const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
+  const [etapa, setEtapa] = useState("");
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tema.trim()) { toast.error("Insira o tema do trabalho"); return; }
     setLoading(true);
-    // TODO: integrate AI
-    setTimeout(() => {
-      setResultado("O trabalho será gerado aqui após a integração com a IA estar configurada.");
-      setLoading(false);
+    setResultado(null);
+    setCapaImageUrl(null);
+
+    try {
+      // Etapa 1: Groq gera o trabalho
+      setEtapa("A gerar trabalho com IA...");
+      const prompt = prompts.trabalho({
+        titulo: tema,
+        disciplina: disciplina || "Geral",
+        classe: classe || "10ª Classe",
+        paginas,
+        tipo: tipoTrabalho,
+        nomeEscola,
+        nomeAluno: modalidade === "individual" ? nomeAluno : nomesIntegrantes.filter(Boolean).join(", "),
+        nomeDocente,
+        anoLectivo,
+        localidade,
+      });
+
+      const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
+
+      // Etapa 2: OpenRouter revisa
+      setEtapa("A revisar conteúdo...");
+      const revisado = await reviewWithOpenRouter(conteudo);
+      setResultado(revisado);
+
+      // Etapa 3: Pollinations gera imagem da capa
+      if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
+        setEtapa("A gerar imagem da capa...");
+        const imgUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
+        setCapaImageUrl(imgUrl);
+      }
+
       toast.success("Trabalho gerado com sucesso!");
-    }, 2000);
+    } catch (err) {
+      console.error("Erro ao gerar trabalho:", err);
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar o trabalho. Verifique as chaves API.");
+    } finally {
+      setLoading(false);
+      setEtapa("");
+    }
   };
 
   return (
@@ -363,7 +402,12 @@ const TrabalhoPage = () => {
 
         {/* Submit */}
         <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-          {loading ? "A gerar trabalho..." : "Gerar Trabalho"}
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {etapa || "A gerar..."}
+            </span>
+          ) : "Gerar Trabalho"}
         </Button>
       </motion.form>
 
@@ -371,21 +415,28 @@ const TrabalhoPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-card"
+          className="mt-6 space-y-4"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold">Resultado</h2>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
-                <Copy className="h-4 w-4 mr-1" /> Copiar
-              </Button>
-              <Button size="sm">
-                <Download className="h-4 w-4 mr-1" /> Exportar PDF
-              </Button>
+          {capaImageUrl && (
+            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
+              <img src={capaImageUrl} alt="Capa do trabalho" className="w-full h-48 object-cover" />
             </div>
-          </div>
-          <div className="prose prose-sm max-w-none text-card-foreground">
-            <p>{resultado}</p>
+          )}
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-semibold">Resultado</h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
+                  <Copy className="h-4 w-4 mr-1" /> Copiar
+                </Button>
+                <Button size="sm">
+                  <Download className="h-4 w-4 mr-1" /> Exportar PDF
+                </Button>
+              </div>
+            </div>
+            <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
+              {resultado}
+            </div>
           </div>
         </motion.div>
       )}

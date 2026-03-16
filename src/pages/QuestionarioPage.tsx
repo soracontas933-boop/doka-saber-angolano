@@ -1,18 +1,19 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { HelpCircle, Upload, Download, Camera, X, Image } from "lucide-react";
+import { HelpCircle, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 
 const tiposPerguntas = [
-  { value: "multipla", label: "Selecção múltipla" },
-  { value: "vf", label: "Verdadeiro / Falso" },
-  { value: "curta", label: "Resposta curta" },
-  { value: "completar", label: "Completar espaços" },
+  { value: "multipla_escolha", label: "Selecção múltipla" },
+  { value: "verdadeiro_falso", label: "Verdadeiro / Falso" },
+  { value: "resposta_curta", label: "Resposta curta" },
+  { value: "completar_espacos", label: "Completar espaços" },
   { value: "correspondencia", label: "Correspondência" },
   { value: "dissertativa", label: "Dissertativa" },
   { value: "ordenacao", label: "Ordenação" },
@@ -30,14 +31,14 @@ const QuestionarioPage = () => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
   const [numPerguntas, setNumPerguntas] = useState("10");
-  const [tipo, setTipo] = useState("multipla");
+  const [tipo, setTipo] = useState("multipla_escolha");
   const [disciplina, setDisciplina] = useState("");
   const [dificuldade, setDificuldade] = useState("medio");
   const [comGabarito, setComGabarito] = useState("sim");
   const [loading, setLoading] = useState(false);
+  const [etapa, setEtapa] = useState("");
   const [resultado, setResultado] = useState<string | null>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
-  const uploadRef = useRef<HTMLInputElement>(null);
 
   const addFiles = (newFiles: File[]) => {
     const total = [...files, ...newFiles].slice(0, 50);
@@ -67,11 +68,42 @@ const QuestionarioPage = () => {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setResultado("O questionário será gerado aqui após a integração com a IA estar configurada.");
-      setLoading(false);
+    setResultado(null);
+
+    try {
+      setEtapa("A extrair texto das fotos (Gemini Vision)...");
+      const extractedTexts = await extractTextFromImages(files);
+      const combinedText = extractedTexts.filter(Boolean).join("\n\n---\n\n");
+
+      if (!combinedText.trim()) {
+        toast.error("Não foi possível extrair texto das fotos.");
+        setLoading(false);
+        return;
+      }
+
+      setEtapa("A gerar questionário...");
+      const tipoLabel = tiposPerguntas.find((t) => t.value === tipo)?.label || tipo;
+      const prompt = prompts.questionario(
+        combinedText,
+        parseInt(numPerguntas),
+        disciplina || "Geral",
+        dificuldade,
+        tipoLabel
+      );
+      const questionario = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
+
+      setEtapa("A melhorar perguntas...");
+      const revisado = await reviewWithOpenRouter(questionario);
+      setResultado(revisado);
+
       toast.success("Questionário gerado com sucesso!");
-    }, 2000);
+    } catch (err) {
+      console.error("Erro ao gerar questionário:", err);
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar questionário.");
+    } finally {
+      setLoading(false);
+      setEtapa("");
+    }
   };
 
   return (
@@ -116,14 +148,7 @@ const QuestionarioPage = () => {
             <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
               <Image className="h-7 w-7 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Carregar fotos da galeria</span>
-              <input
-                ref={uploadRef}
-                type="file"
-                className="hidden"
-                accept="image/*"
-                multiple
-                onChange={handleFileChange}
-              />
+              <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} />
             </label>
           ) : (
             <button
@@ -133,14 +158,7 @@ const QuestionarioPage = () => {
             >
               <Camera className="h-7 w-7 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Abrir câmera</span>
-              <input
-                ref={cameraRef}
-                type="file"
-                className="hidden"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFileChange}
-              />
+              <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
             </button>
           )}
 
@@ -221,7 +239,12 @@ const QuestionarioPage = () => {
         </div>
 
         <Button type="submit" className="w-full h-12 text-base" disabled={loading || files.length === 0}>
-          {loading ? "A gerar questionário..." : "Gerar Questionário"}
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {etapa || "A processar..."}
+            </span>
+          ) : "Gerar Questionário"}
         </Button>
       </motion.form>
 
@@ -229,9 +252,13 @@ const QuestionarioPage = () => {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display font-semibold">Questionário</h2>
-            <Button size="sm"><Download className="h-4 w-4 mr-1" /> Exportar PDF</Button>
+            <Button size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
+              <Download className="h-4 w-4 mr-1" /> Copiar
+            </Button>
           </div>
-          <p className="text-sm text-card-foreground">{resultado}</p>
+          <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
+            {resultado}
+          </div>
         </motion.div>
       )}
     </div>
