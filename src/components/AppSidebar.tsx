@@ -10,6 +10,7 @@ import {
   BarChart3,
   LogOut,
   ShieldCheck,
+  type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
