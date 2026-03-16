@@ -38,6 +38,36 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          atualizado_em: string
+          conteudo: Json
+          criado_em: string
+          id: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          conteudo?: Json
+          criado_em?: string
+          id?: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          conteudo?: Json
+          criado_em?: string
+          id?: string
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usage_logs: {
         Row: {
           criado_em: string
