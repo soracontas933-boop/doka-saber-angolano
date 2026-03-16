@@ -1,43 +1,81 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// ─── AI Proxy Call ───────────────────────────────────────────────
-async function callAIProxy(servico: string, payload: Record<string, unknown>) {
+// ─── AI Proxy Call (Lovable AI) ──────────────────────────────────
+async function callAI(
+  systemPrompt: string,
+  userPrompt: string,
+  options: { maxTokens?: number; temperature?: number; model?: string } = {}
+): Promise<string> {
   const { data, error } = await supabase.functions.invoke("ai-proxy", {
-    body: { servico, payload },
+    body: {
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: options.maxTokens ?? 8000,
+      temperature: options.temperature ?? 0.7,
+      model: options.model,
+    },
   });
 
-  if (error) throw new Error(`Erro ao chamar ${servico}: ${error.message}`);
+  if (error) throw new Error(`Erro ao chamar IA: ${error.message}`);
   if (data?.error) throw new Error(data.error);
-  return data;
+
+  return data?.choices?.[0]?.message?.content || "";
+}
+
+// ─── Geração de Conteúdo Principal ───────────────────────────────
+export async function generateWithGroq(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens = 8000,
+  temperature = 0.7
+): Promise<string> {
+  return callAI(systemPrompt, userPrompt, { maxTokens, temperature });
+}
+
+// ─── Revisão de Conteúdo ─────────────────────────────────────────
+export async function reviewWithOpenRouter(
+  content: string,
+  maxTokens = 4000
+): Promise<string> {
+  try {
+    return await callAI(
+      "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
+      `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
+      { maxTokens, temperature: 0.5 }
+    );
+  } catch {
+    console.warn("Revisão falhou: retornando conteúdo original");
+    return content;
+  }
 }
 
 // ─── Gemini Vision (OCR de fotos) ────────────────────────────────
 export async function extractTextFromImage(base64: string, mimeType = "image/jpeg"): Promise<string> {
-  const payload = {
-    contents: [
-      {
-        parts: [
-          {
-            inline_data: {
-              mime_type: mimeType,
-              data: base64,
-            },
-          },
-          {
-            text: `Você é um assistente educacional angolano especializado no sistema de ensino de Angola (INIDE). Analise esta imagem de caderno escolar (pode ser manuscrito ou digitalizado). Extraia TODO o conteúdo visível com máxima fidelidade. Retorne em JSON estruturado: { "tema": "string", "subtemas": ["string"], "conceitos_chave": ["string"], "conteudo_completo": "string", "disciplina_detectada": "string", "nivel_detectado": "string" }`,
-          },
-        ],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 4096,
-    },
-  };
+  const prompt = `Analise esta imagem de caderno escolar (pode ser manuscrito ou digitalizado). Extraia TODO o conteúdo visível com máxima fidelidade. Retorne em JSON estruturado: { "tema": "string", "subtemas": ["string"], "conceitos_chave": ["string"], "conteudo_completo": "string", "disciplina_detectada": "string", "nivel_detectado": "string" }`;
 
-  const result = await callAIProxy("gemini", payload);
-  const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  return text;
+  const { data, error } = await supabase.functions.invoke("ai-proxy", {
+    body: {
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
+            { type: "text", text: prompt },
+          ],
+        },
+      ],
+      model: "google/gemini-2.5-flash",
+      max_tokens: 4096,
+      temperature: 0.2,
+    },
+  });
+
+  if (error) throw new Error(`Erro OCR: ${error.message}`);
+  if (data?.error) throw new Error(data.error);
+
+  return data?.choices?.[0]?.message?.content || "";
 }
 
 // Batch extract from multiple images
@@ -57,57 +95,6 @@ export async function extractTextFromImages(files: File[]): Promise<string[]> {
   }
 
   return results;
-}
-
-// ─── Groq (Geração de Conteúdo Principal) ────────────────────────
-export async function generateWithGroq(
-  systemPrompt: string,
-  userPrompt: string,
-  maxTokens = 8000,
-  temperature = 0.7
-): Promise<string> {
-  const payload = {
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    max_tokens: maxTokens,
-    temperature,
-  };
-
-  const result = await callAIProxy("groq", payload);
-  return result?.choices?.[0]?.message?.content || "";
-}
-
-// ─── OpenRouter (Fallback / Revisão) ─────────────────────────────
-export async function reviewWithOpenRouter(
-  content: string,
-  maxTokens = 4000
-): Promise<string> {
-  const payload = {
-    messages: [
-      {
-        role: "system",
-        content:
-          "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
-      },
-      {
-        role: "user",
-        content: `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
-      },
-    ],
-    max_tokens: maxTokens,
-    temperature: 0.5,
-  };
-
-  try {
-    const result = await callAIProxy("openrouter", payload);
-    return result?.choices?.[0]?.message?.content || content;
-  } catch {
-    // Fallback: return original content if OpenRouter fails
-    console.warn("OpenRouter fallback: retornando conteúdo original");
-    return content;
-  }
 }
 
 // ─── Pollinations (Imagens Gratuitas) ────────────────────────────
@@ -166,7 +153,6 @@ function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Remove data:xxx;base64, prefix
       const base64 = result.split(",")[1];
       resolve(base64);
     };
