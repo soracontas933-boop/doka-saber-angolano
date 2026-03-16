@@ -1,7 +1,6 @@
 import React from "react";
 import type { CoverPageData } from "@/lib/export-utils";
-
-const ANGOLA_COAT_OF_ARMS_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Coat_of_arms_of_Angola.svg/200px-Coat_of_arms_of_Angola.svg.png";
+import brasaoAngola from "@/assets/brasao-angola.svg";
 
 interface CapaPageProps {
   data: CoverPageData;
