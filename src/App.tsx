@@ -11,6 +11,7 @@ import TrabalhoPage from "@/pages/TrabalhoPage";
 import ResumoPage from "@/pages/ResumoPage";
 import QuestionarioPage from "@/pages/QuestionarioPage";
 import PlanoAulaPage from "@/pages/PlanoAulaPage";
+import ApiKeysSetup from "@/pages/ApiKeysSetup";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,18 +22,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/trabalho" element={<TrabalhoPage />} />
-            <Route path="/resumo" element={<ResumoPage />} />
-            <Route path="/questionario" element={<QuestionarioPage />} />
-            <Route path="/plano-aula" element={<PlanoAulaPage />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/trabalho" element={<TrabalhoPage />} />
+              <Route path="/resumo" element={<ResumoPage />} />
+              <Route path="/questionario" element={<QuestionarioPage />} />
+              <Route path="/plano-aula" element={<PlanoAulaPage />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
