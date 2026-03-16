@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      api_keys: {
+        Row: {
+          ativo: boolean
+          chave: string
+          criado_em: string
+          id: string
+          servico: string
+        }
+        Insert: {
+          ativo?: boolean
+          chave: string
+          criado_em?: string
+          id?: string
+          servico: string
+        }
+        Update: {
+          ativo?: boolean
+          chave?: string
+          criado_em?: string
+          id?: string
+          servico?: string
+        }
+        Relationships: []
+      }
+      usage_logs: {
+        Row: {
+          criado_em: string
+          id: string
+          modulo: string
+          servico_ia: string | null
+          tokens_usados: number | null
+          user_id: string | null
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          modulo: string
+          servico_ia?: string | null
+          tokens_usados?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          modulo?: string
+          servico_ia?: string | null
+          tokens_usados?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
