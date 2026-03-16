@@ -151,6 +151,84 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Planos */}
+      <section id="planos" className="px-6 md:px-12 py-20 bg-background">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-3">
+              Planos & Preços
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Escolha o plano ideal para o seu nível de estudo.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
+          >
+            {(["gratuito", "basico", "intermedio", "profissional", "premium"] as PlanKey[]).map((key, i) => {
+              const cfg = PLAN_CONFIGS[key];
+              const isPopular = key === "intermedio";
+              const fmt = (v: number) => (v === -1 ? "∞" : v === 0 ? "—" : String(v));
+
+              return (
+                <motion.div
+                  key={key}
+                  variants={item}
+                  className={`relative flex flex-col rounded-2xl border p-5 transition-shadow duration-200 ${
+                    isPopular
+                      ? "border-primary bg-primary/5 shadow-lg scale-[1.02]"
+                      : "border-border bg-card hover:shadow-card-hover"
+                  }`}
+                >
+                  {isPopular && (
+                    <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px]">
+                      Popular
+                    </Badge>
+                  )}
+                  {key === "premium" && <Crown className="h-4 w-4 text-primary mb-1" />}
+
+                  <h3 className="font-display font-bold text-foreground">{cfg.nome}</h3>
+                  <p className="text-2xl font-extrabold text-foreground mt-1">
+                    {cfg.label_preco}
+                    {cfg.preco > 0 && <span className="text-xs font-normal text-muted-foreground">/mês</span>}
+                  </p>
+
+                  <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground flex-1">
+                    <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> {fmt(cfg.limite_trabalhos)} trabalhos</li>
+                    <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> {fmt(cfg.limite_resumos)} resumos</li>
+                    <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> {fmt(cfg.limite_questionarios)} questionários</li>
+                    <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> {fmt(cfg.limite_planos_aula)} planos aula</li>
+                    <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> {fmt(cfg.limite_tfc)} TFCs</li>
+                    {cfg.suporte_prioritario && (
+                      <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-primary" /> Suporte prioritário</li>
+                    )}
+                  </ul>
+
+                  <Button
+                    size="sm"
+                    variant={isPopular ? "default" : "outline"}
+                    className="mt-4 w-full"
+                    onClick={() => navigate("/auth")}
+                  >
+                    {cfg.preco === 0 ? "Começar grátis" : "Escolher plano"}
+                  </Button>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="px-6 md:px-12 py-20">
         <motion.div
