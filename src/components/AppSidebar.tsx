@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, LogOut } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 import DokaLogo from "./DokaLogo";
 
@@ -15,12 +15,12 @@ const AppSidebar = () => {
   const location = useLocation();
 
   return (
-    <aside className="hidden md:flex flex-col w-64 min-h-screen bg-sidebar text-sidebar-foreground">
-      <div className="p-6">
+    <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-sidebar text-sidebar-foreground">
+      <div className="p-6 flex-shrink-0">
         <DokaLogo size={36} />
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (
@@ -43,7 +43,7 @@ const AppSidebar = () => {
         })}
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border">
+      <div className="p-3 border-t border-sidebar-border flex-shrink-0">
         <NavLink
           to="/configuracoes"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity"
