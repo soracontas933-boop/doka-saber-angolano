@@ -1,65 +1,58 @@
-import { useEffect, useState } from "react";
 import { Zap, Crown } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-const DAILY_LIMIT = 20;
+import { useNavigate } from "react-router-dom";
+import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 
 const CreditsBar = () => {
-  const [usageToday, setUsageToday] = useState(0);
-  const [plan] = useState("Gratuito");
+  const { plan, loading } = useUserPlan();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUsage = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  if (loading || !plan) return null;
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+  const planKey = (plan.plano || "gratuito") as PlanKey;
+  const cfg = PLAN_CONFIGS[planKey] || PLAN_CONFIGS.gratuito;
 
-      const { count } = await supabase
-        .from("usage_logs")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .gte("criado_em", today.toISOString());
-
-      setUsageToday(count || 0);
-    };
-
-    fetchUsage();
-
-    const interval = setInterval(fetchUsage, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const remaining = Math.max(0, DAILY_LIMIT - usageToday);
-  const percentage = (usageToday / DAILY_LIMIT) * 100;
+  const totalCredits = plan.creditos_totais === -1 ? Infinity : plan.creditos_totais;
+  const usedCredits = plan.creditos_usados;
+  const remaining = totalCredits === Infinity ? "∞" : Math.max(0, totalCredits - usedCredits);
+  const percentage = totalCredits === Infinity || totalCredits === 0 ? 0 : (usedCredits / totalCredits) * 100;
 
   return (
     <div className="sticky top-0 z-40 w-full border-b border-border bg-card/80 backdrop-blur-md">
       <div className="flex items-center justify-between px-4 md:px-6 py-2 max-w-screen-2xl mx-auto">
-        <div className="flex items-center gap-2">
+        <button
+          onClick={() => navigate("/planos")}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
           <Crown className="h-4 w-4 text-primary" />
           <span className="text-xs font-semibold text-foreground">
-            Plano <span className="text-primary">{plan}</span>
+            Plano <span className="text-primary">{cfg.nome}</span>
           </span>
-        </div>
+        </button>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Zap className="h-3.5 w-3.5 text-muted-foreground" />
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
-                  style={{ width: `${Math.min(percentage, 100)}%` }}
-                />
+            {totalCredits !== Infinity && totalCredits > 0 && (
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-500"
+                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <span className="text-xs text-muted-foreground font-medium">
-              <span className={remaining <= 3 ? "text-destructive font-bold" : "text-foreground font-semibold"}>
-                {remaining}
-              </span>
-              /{DAILY_LIMIT} hoje
+              {typeof remaining === "number" ? (
+                <>
+                  <span className={remaining <= 3 ? "text-destructive font-bold" : "text-foreground font-semibold"}>
+                    {remaining}
+                  </span>
+                  /{totalCredits} créditos
+                </>
+              ) : (
+                <span className="text-foreground font-semibold">Ilimitado</span>
+              )}
             </span>
           </div>
         </div>
