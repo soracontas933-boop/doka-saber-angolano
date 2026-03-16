@@ -29,6 +29,7 @@ const App = () => (
             <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/meus-projetos" element={<MeusProjetosPage />} />
               <Route path="/trabalho" element={<TrabalhoPage />} />
               <Route path="/resumo" element={<ResumoPage />} />
               <Route path="/questionario" element={<QuestionarioPage />} />

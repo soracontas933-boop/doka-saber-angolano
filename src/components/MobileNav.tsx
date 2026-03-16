@@ -1,8 +1,9 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, FolderOpen } from "lucide-react";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
+  { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho" },
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
   { to: "/questionario", icon: HelpCircle, label: "Quiz" },
