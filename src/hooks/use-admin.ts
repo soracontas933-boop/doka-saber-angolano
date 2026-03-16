@@ -46,11 +46,21 @@ export const useAdmin = () => {
   useEffect(() => {
     const mounted = { current: true };
 
-    // Use onAuthStateChange as the single source of truth
+    const syncAdmin = async (user: User | null) => {
+      await checkAdmin(user, mounted);
+    };
+
+    void (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      await syncAdmin(session?.user ?? null);
+    })();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      checkAdmin(session?.user ?? null, mounted);
+      void syncAdmin(session?.user ?? null);
     });
 
     return () => {
