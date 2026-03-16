@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
+import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
 
 const disciplinas = [
   "Português", "Matemática", "História", "Geografia", "Biologia",
