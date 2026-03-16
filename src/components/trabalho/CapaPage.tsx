@@ -19,7 +19,7 @@ const CapaPage: React.FC<CapaPageProps> = ({ data, capaImageUrl }) => {
           {capaImageUrl ? (
             <img src={capaImageUrl} alt="Capa" className="capa-img-gerada" />
           ) : (
-            <img src={ANGOLA_COAT_OF_ARMS_URL} alt="Brasão de Angola" className="capa-brasao" />
+            <img src={brasaoAngola} alt="Brasão de Angola" className="capa-brasao" />
           )}
           <p className="capa-republica">República de Angola</p>
           <p className="capa-ministerio">Ministério da Educação</p>
