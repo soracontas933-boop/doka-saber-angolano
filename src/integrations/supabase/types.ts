@@ -125,6 +125,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_plans: {
+        Row: {
+          atualizado_em: string
+          creditos_totais: number
+          creditos_usados: number
+          criado_em: string
+          id: string
+          limite_planos_aula: number
+          limite_questionarios: number
+          limite_resumos: number
+          limite_tfc: number
+          limite_trabalhos: number
+          pago_em: string | null
+          plano: string
+          suporte_prioritario: boolean
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          creditos_totais?: number
+          creditos_usados?: number
+          criado_em?: string
+          id?: string
+          limite_planos_aula?: number
+          limite_questionarios?: number
+          limite_resumos?: number
+          limite_tfc?: number
+          limite_trabalhos?: number
+          pago_em?: string | null
+          plano?: string
+          suporte_prioritario?: boolean
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          creditos_totais?: number
+          creditos_usados?: number
+          criado_em?: string
+          id?: string
+          limite_planos_aula?: number
+          limite_questionarios?: number
+          limite_resumos?: number
+          limite_tfc?: number
+          limite_trabalhos?: number
+          pago_em?: string | null
+          plano?: string
+          suporte_prioritario?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
