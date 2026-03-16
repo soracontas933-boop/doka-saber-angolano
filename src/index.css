@@ -98,3 +98,325 @@
     font-family: var(--font-body);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SISTEMA DE PAGINAÇÃO A4 — VISUALIZAÇÃO DE TRABALHOS
+   ═══════════════════════════════════════════════════════════ */
+
+.trabalho-completo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+/* Wrapper da página */
+.pagina-a4-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Folha A4 simulada */
+.pagina-a4 {
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  color: #000;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+  font-family: 'Times New Roman', 'Georgia', serif;
+  font-size: 12pt;
+  line-height: 1.6;
+}
+
+.pagina-a4:hover {
+  box-shadow: 0 8px 32px rgba(30, 64, 175, 0.18), 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pagina-a4-content {
+  padding: 25mm 20mm 30mm 25mm;
+  min-height: 250mm;
+}
+
+/* Número de página */
+.pagina-a4-numero {
+  position: absolute;
+  bottom: 12mm;
+  right: 20mm;
+  font-size: 10pt;
+  color: #555;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CAPA
+   ═══════════════════════════════════════════════════════════ */
+
+.capa-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.capa-border {
+  flex: 1;
+  border: 3px double hsl(224, 76%, 40%);
+  padding: 20px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 240mm;
+}
+
+.capa-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.capa-brasao {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 8px;
+  display: block;
+}
+
+.capa-img-gerada {
+  width: 100%;
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.capa-republica,
+.capa-ministerio,
+.capa-escola {
+  font-size: 12pt;
+  margin: 3px 0;
+  color: #000;
+}
+
+.capa-titulo-box {
+  border: 2px solid #000;
+  padding: 24px 32px;
+  margin: 24px 0 16px;
+  text-align: center;
+  width: 85%;
+}
+
+.capa-tipo {
+  font-size: 26pt;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin: 0;
+  font-family: 'Times New Roman', serif;
+  color: #000;
+}
+
+.capa-tema-section {
+  text-align: center;
+  margin: 12px 0 24px;
+}
+
+.capa-label {
+  font-size: 12pt;
+  margin: 4px 0;
+}
+
+.capa-tema {
+  font-size: 13pt;
+  font-weight: 500;
+  margin: 4px 0;
+}
+
+.capa-info {
+  width: 100%;
+  text-align: left;
+  margin-top: auto;
+  font-size: 11pt;
+  line-height: 1.9;
+}
+
+.capa-info p {
+  margin: 2px 0;
+}
+
+.capa-info-label {
+  font-weight: bold;
+}
+
+.capa-info-integrante {
+  margin-left: 16px !important;
+}
+
+.capa-orientador {
+  width: 100%;
+  text-align: right;
+  margin-top: 16px;
+  font-size: 11pt;
+}
+
+.capa-orientador-label {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.capa-footer {
+  text-align: center;
+  margin-top: auto;
+  padding-top: 20px;
+  font-size: 10pt;
+  color: #333;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SECÇÕES (Índice, Introdução, Capítulos, Conclusão, Bib.)
+   ═══════════════════════════════════════════════════════════ */
+
+.secao-wrapper {
+  height: 100%;
+}
+
+.secao-titulo {
+  font-family: 'Times New Roman', serif;
+  font-size: 16pt;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  color: #000;
+}
+
+.secao-divisor {
+  width: 60%;
+  height: 2px;
+  background: #000;
+  margin: 0 auto 20px;
+}
+
+.secao-conteudo {
+  font-family: 'Times New Roman', serif;
+  font-size: 12pt;
+  line-height: 1.8;
+  text-align: justify;
+  color: #000;
+}
+
+.secao-conteudo h1,
+.secao-conteudo h2 {
+  font-family: 'Times New Roman', serif;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 18px 0 8px;
+  color: #000;
+}
+
+.secao-conteudo h3 {
+  font-family: 'Times New Roman', serif;
+  font-size: 13pt;
+  font-weight: bold;
+  margin: 14px 0 6px;
+  color: #000;
+}
+
+.secao-conteudo h4 {
+  font-family: 'Times New Roman', serif;
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 10px 0 4px;
+  color: #000;
+}
+
+.secao-titulo-principal {
+  font-size: 16pt !important;
+  text-align: center;
+  margin-bottom: 12px !important;
+}
+
+.secao-subtitulo {
+  font-size: 13pt;
+  margin: 14px 0 6px;
+}
+
+.secao-paragrafo {
+  margin: 8px 0;
+  text-indent: 1.5em;
+}
+
+.secao-lista {
+  margin: 8px 0;
+  padding-left: 2em;
+  list-style-type: disc;
+}
+
+.secao-lista li {
+  margin: 4px 0;
+}
+
+.secao-lista-num {
+  margin: 4px 0;
+  margin-left: 2em;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVO — Escala A4 em ecrãs pequenos
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 860px) {
+  .pagina-a4 {
+    width: 100%;
+    min-height: auto;
+    border-radius: 8px;
+  }
+
+  .pagina-a4-content {
+    padding: 20px 16px 40px;
+    min-height: auto;
+  }
+
+  .capa-tipo {
+    font-size: 18pt;
+  }
+
+  .capa-titulo-box {
+    padding: 16px 20px;
+  }
+
+  .capa-border {
+    padding: 16px 20px;
+    min-height: auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   IMPRESSÃO / EXPORTAÇÃO PDF
+   ═══════════════════════════════════════════════════════════ */
+
+@media print {
+  .pagina-a4 {
+    box-shadow: none;
+    margin: 0;
+    page-break-after: always;
+    break-after: page;
+    border-radius: 0;
+  }
+
+  .pagina-a4-wrapper {
+    margin-bottom: 0;
+  }
+
+  .secao-titulo {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .secao-conteudo {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
