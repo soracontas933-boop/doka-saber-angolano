@@ -14,6 +14,7 @@ import QuestionarioPage from "@/pages/QuestionarioPage";
 import PlanoAulaPage from "@/pages/PlanoAulaPage";
 import AdminPanelPage from "@/pages/AdminPanelPage";
 import SettingsPage from "@/pages/SettingsPage";
+import PlanosPage from "@/pages/PlanosPage";
 import ApiKeysSetup from "@/pages/ApiKeysSetup";
 import NotFound from "@/pages/NotFound";
 
