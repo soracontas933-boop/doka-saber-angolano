@@ -7,6 +7,7 @@ import AppLayout from "@/components/AppLayout";
 import HomePage from "@/pages/HomePage";
 import AuthPage from "@/pages/AuthPage";
 import Dashboard from "@/pages/Dashboard";
+import MeusProjetosPage from "@/pages/MeusProjetosPage";
 import TrabalhoPage from "@/pages/TrabalhoPage";
 import ResumoPage from "@/pages/ResumoPage";
 import QuestionarioPage from "@/pages/QuestionarioPage";
