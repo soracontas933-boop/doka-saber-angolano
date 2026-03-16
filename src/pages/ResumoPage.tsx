@@ -183,7 +183,7 @@ const ResumoPage = () => {
               <Camera className="h-8 w-8 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Toque para abrir a câmera</span>
               <span className="text-xs text-muted-foreground mt-1">Tire fotos directamente do caderno</span>
-              <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
+              <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture onChange={handleFileChange} />
             </button>
           )}
 

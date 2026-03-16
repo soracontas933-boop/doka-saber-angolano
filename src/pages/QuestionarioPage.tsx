@@ -159,7 +159,7 @@ const QuestionarioPage = () => {
             >
               <Camera className="h-7 w-7 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Abrir câmera</span>
-              <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
+              <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture onChange={handleFileChange} />
             </button>
           )}
 
