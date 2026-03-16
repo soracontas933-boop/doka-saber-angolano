@@ -141,6 +141,8 @@
 .pagina-a4-content {
   padding: 25mm 20mm 30mm 25mm;
   min-height: 250mm;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 /* Número de página */
