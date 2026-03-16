@@ -1,7 +1,6 @@
 import React from "react";
 import type { CoverPageData } from "@/lib/export-utils";
-
-const ANGOLA_COAT_OF_ARMS_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Coat_of_arms_of_Angola.svg/200px-Coat_of_arms_of_Angola.svg.png";
+import brasaoAngola from "@/assets/brasao-angola.svg";
 
 interface CapaPageProps {
   data: CoverPageData;
@@ -20,7 +19,7 @@ const CapaPage: React.FC<CapaPageProps> = ({ data, capaImageUrl }) => {
           {capaImageUrl ? (
             <img src={capaImageUrl} alt="Capa" className="capa-img-gerada" />
           ) : (
-            <img src={ANGOLA_COAT_OF_ARMS_URL} alt="Brasão de Angola" className="capa-brasao" />
+            <img src={brasaoAngola} alt="Brasão de Angola" className="capa-brasao" />
           )}
           <p className="capa-republica">República de Angola</p>
           <p className="capa-ministerio">Ministério da Educação</p>
