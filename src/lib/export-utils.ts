@@ -372,42 +372,45 @@ function generateCoverPageHTML(data: CoverPageData): string {
 }
 
 export async function exportToPDF(content: string, filename: string, coverData?: CoverPageData) {
-  const container = document.createElement("div");
-  container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 700px;";
+  showExportOverlay("A gerar ficheiro PDF...");
+  try {
+    const container = document.createElement("div");
+    container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 700px;";
 
-  // Cover page
-  if (coverData) {
-    container.innerHTML = generateCoverPageHTML(coverData);
+    if (coverData) {
+      container.innerHTML = generateCoverPageHTML(coverData);
+    }
+
+    const contentDiv = document.createElement("div");
+    contentDiv.style.cssText = "padding: 40px;";
+    const html = content
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/^### (.+)$/gm, '<h3 style="font-size: 14pt; margin-top: 18px; margin-bottom: 8px;">$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2 style="font-size: 16pt; margin-top: 24px; margin-bottom: 10px;">$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1 style="font-size: 18pt; margin-top: 30px; margin-bottom: 12px; text-align: center;">$1</h1>')
+      .replace(/^\* (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+      .replace(/^- (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+      .replace(/\n\n/g, "<br/><br/>")
+      .replace(/\n/g, "<br/>");
+
+    contentDiv.innerHTML = html;
+    container.appendChild(contentDiv);
+    document.body.appendChild(container);
+
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    await html2pdf()
+      .set({
+        margin: [15, 15, 15, 15],
+        filename: `${filename}.pdf`,
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      } as any)
+      .from(container)
+      .save();
+
+    document.body.removeChild(container);
+  } finally {
+    hideExportOverlay();
   }
-
-  // Content
-  const contentDiv = document.createElement("div");
-  contentDiv.style.cssText = "padding: 40px;";
-  const html = content
-    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-    .replace(/^### (.+)$/gm, '<h3 style="font-size: 14pt; margin-top: 18px; margin-bottom: 8px;">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 style="font-size: 16pt; margin-top: 24px; margin-bottom: 10px;">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="font-size: 18pt; margin-top: 30px; margin-bottom: 12px; text-align: center;">$1</h1>')
-    .replace(/^\* (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
-    .replace(/^- (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
-    .replace(/\n\n/g, "<br/><br/>")
-    .replace(/\n/g, "<br/>");
-
-  contentDiv.innerHTML = html;
-  container.appendChild(contentDiv);
-  document.body.appendChild(container);
-
-  const html2pdf = (await import("html2pdf.js")).default;
-
-  await html2pdf()
-    .set({
-      margin: [15, 15, 15, 15],
-      filename: `${filename}.pdf`,
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    } as any)
-    .from(container)
-    .save();
-
-  document.body.removeChild(container);
 }
