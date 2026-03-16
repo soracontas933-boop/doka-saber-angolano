@@ -9,6 +9,7 @@ import {
   FolderOpen,
   LogOut,
   ShieldCheck,
+  CreditCard,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -23,6 +24,7 @@ const navItems = [
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
   { to: "/questionario", icon: HelpCircle, label: "Questionário" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
+  { to: "/planos", icon: CreditCard, label: "Planos" },
 ];
 
 const adminNavItems = [

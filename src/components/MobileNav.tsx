@@ -8,6 +8,7 @@ import {
   FolderOpen,
   LogOut,
   ShieldCheck,
+  CreditCard,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
@@ -19,6 +20,7 @@ const baseNavItems = [
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
   { to: "/questionario", icon: HelpCircle, label: "Quiz" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano" },
+  { to: "/planos", icon: CreditCard, label: "Planos" },
 ];
 
 const MobileNav = () => {
