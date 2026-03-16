@@ -79,7 +79,7 @@ serve(async (req) => {
           "X-Title": "DOKA Educational App",
         };
         body = JSON.stringify({
-          model: "mistralai/mistral-7b-instruct:free",
+          model: "mistralai/mistral-small-3.1-24b-instruct:free",
           messages: payload.messages,
           max_tokens: payload.max_tokens ?? 4000,
           temperature: payload.temperature ?? 0.5,
