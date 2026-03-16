@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Settings,
   FolderOpen,
-  BarChart3,
   LogOut,
   ShieldCheck,
   type LucideIcon,
@@ -27,8 +26,7 @@ const navItems = [
 ];
 
 const adminNavItems = [
-  { to: "/admin/usuarios", icon: ShieldCheck, label: "Painel Master" },
-  { to: "/admin/stats", icon: BarChart3, label: "Estatísticas Admin" },
+  { to: "/admin", icon: ShieldCheck, label: "Painel Master" },
 ];
 
 const AppSidebar = () => {

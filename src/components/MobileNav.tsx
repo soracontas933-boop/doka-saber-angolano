@@ -32,7 +32,7 @@ const MobileNav = () => {
   };
 
   const navItems = !isLoading && isAdmin
-    ? [...baseNavItems, { to: "/admin/usuarios", icon: ShieldCheck, label: "Master" }]
+    ? [...baseNavItems, { to: "/admin", icon: ShieldCheck, label: "Master" }]
     : baseNavItems;
 
   return (
