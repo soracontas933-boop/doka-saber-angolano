@@ -92,16 +92,54 @@ const TrabalhoPage = () => {
     setNomesIntegrantes(updated.slice(0, clamped));
   };
 
+  const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
+  const [etapa, setEtapa] = useState("");
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tema.trim()) { toast.error("Insira o tema do trabalho"); return; }
     setLoading(true);
-    // TODO: integrate AI
-    setTimeout(() => {
-      setResultado("O trabalho será gerado aqui após a integração com a IA estar configurada.");
-      setLoading(false);
+    setResultado(null);
+    setCapaImageUrl(null);
+
+    try {
+      // Etapa 1: Groq gera o trabalho
+      setEtapa("A gerar trabalho com IA...");
+      const prompt = prompts.trabalho({
+        titulo: tema,
+        disciplina: disciplina || "Geral",
+        classe: classe || "10ª Classe",
+        paginas,
+        tipo: tipoTrabalho,
+        nomeEscola,
+        nomeAluno: modalidade === "individual" ? nomeAluno : nomesIntegrantes.filter(Boolean).join(", "),
+        nomeDocente,
+        anoLectivo,
+        localidade,
+      });
+
+      const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
+
+      // Etapa 2: OpenRouter revisa
+      setEtapa("A revisar conteúdo...");
+      const revisado = await reviewWithOpenRouter(conteudo);
+      setResultado(revisado);
+
+      // Etapa 3: Pollinations gera imagem da capa
+      if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
+        setEtapa("A gerar imagem da capa...");
+        const imgUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
+        setCapaImageUrl(imgUrl);
+      }
+
       toast.success("Trabalho gerado com sucesso!");
-    }, 2000);
+    } catch (err) {
+      console.error("Erro ao gerar trabalho:", err);
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar o trabalho. Verifique as chaves API.");
+    } finally {
+      setLoading(false);
+      setEtapa("");
+    }
   };
 
   return (
