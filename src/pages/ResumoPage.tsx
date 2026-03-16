@@ -30,13 +30,13 @@ const disciplinas = [
 const ResumoPage = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [tipoResumo, setTipoResumo] = useState("Resumo por Tópicos");
-  const [disciplina, setDisciplina] = useState("");
+  const [tipoResumo, setTipoResumo] = useLocalStorage("doka_resumo_tipo", "Resumo por Tópicos");
+  const [disciplina, setDisciplina] = useLocalStorage("doka_resumo_disciplina", "");
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState("");
-  const [resultado, setResultado] = useState<string | null>(null);
-  const [imagemResumo, setImagemResumo] = useState<string | null>(null);
+  const [resultado, setResultado] = useLocalStorage<string | null>("doka_resumo_resultado", null);
+  const [imagemResumo, setImagemResumo] = useLocalStorage<string | null>("doka_resumo_imagem", null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
   const addFiles = (newFiles: File[]) => {
