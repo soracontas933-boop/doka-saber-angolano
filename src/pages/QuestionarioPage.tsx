@@ -99,6 +99,15 @@ const QuestionarioPage = () => {
       setResultado(revisado);
 
       toast.success("Questionário gerado com sucesso!");
+
+      saveProject("questionario", `Questionário - ${disciplina || "Geral"}`, {
+        resultado: revisado,
+        tipo,
+        disciplina,
+        numPerguntas,
+        dificuldade,
+        comGabarito,
+      });
     } catch (err) {
       console.error("Erro ao gerar questionário:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar questionário.");

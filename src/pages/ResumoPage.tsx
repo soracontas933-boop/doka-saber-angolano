@@ -95,6 +95,13 @@ const ResumoPage = () => {
       setImagemResumo(imgUrl);
 
       toast.success("Resumo gerado com sucesso!");
+
+      saveProject("resumo", `${tipoResumo} - ${disciplina || "Geral"}`, {
+        resultado: revisado,
+        tipoResumo,
+        disciplina,
+        imagemResumo: imgUrl,
+      });
     } catch (err) {
       console.error("Erro ao gerar resumo:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar resumo. Verifique as chaves API.");

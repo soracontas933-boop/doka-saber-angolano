@@ -90,6 +90,14 @@ const PlanoAulaPage = () => {
       setImagemPlano(imgUrl);
 
       toast.success("Plano de aula gerado com sucesso!");
+
+      saveProject("plano-aula", `Plano de Aula - ${disciplina || "Geral"} - ${classe || ""}`, {
+        resultado: revisado,
+        tipoPlano,
+        disciplina,
+        classe,
+        imagemPlano: imgUrl,
+      });
     } catch (err) {
       console.error("Erro ao gerar plano:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar plano de aula.");

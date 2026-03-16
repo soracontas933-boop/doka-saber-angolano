@@ -237,6 +237,16 @@ const TrabalhoPage = () => {
 
     setFase("resultado");
     toast.success("Trabalho compilado com sucesso!");
+
+    saveProject("trabalho", tema || "Trabalho sem título", {
+      resultado: fullContent,
+      tema,
+      disciplina,
+      classe,
+      nomeEscola,
+      nomeDocente,
+      tipoTrabalho,
+    });
   };
 
   const handleBack = () => {
