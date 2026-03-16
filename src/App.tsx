@@ -12,12 +12,6 @@ import ResumoPage from "@/pages/ResumoPage";
 import QuestionarioPage from "@/pages/QuestionarioPage";
 import PlanoAulaPage from "@/pages/PlanoAulaPage";
 import NotFound from "@/pages/NotFound";
-import Dashboard from "@/pages/Dashboard";
-import TrabalhoPage from "@/pages/TrabalhoPage";
-import ResumoPage from "@/pages/ResumoPage";
-import QuestionarioPage from "@/pages/QuestionarioPage";
-import PlanoAulaPage from "@/pages/PlanoAulaPage";
-import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
