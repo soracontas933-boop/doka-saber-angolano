@@ -220,13 +220,25 @@ const TrabalhoPage = () => {
           </div>
 
           {modalidade === "individual" ? (
-            <div className="space-y-2">
-              <Label>Nome do Aluno</Label>
-              <Input
-                placeholder="Nome completo"
-                value={nomeAluno}
-                onChange={(e) => setNomeAluno(e.target.value)}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Nome do Aluno</Label>
+                <Input
+                  placeholder="Nome completo"
+                  value={nomeAluno}
+                  onChange={(e) => setNomeAluno(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nº</Label>
+                  <Input placeholder="Ex: 01" value={numero} onChange={(e) => setNumero(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Curso</Label>
+                  <Input placeholder="Ex: Mecânico Frio e Climatização" value={curso} onChange={(e) => setCurso(e.target.value)} />
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
