@@ -448,7 +448,13 @@ const TrabalhoPage = () => {
                 <Button variant="outline" size="sm" onClick={async () => {
                   try {
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_doka";
-                    await exportToWord(resultado, nomeArquivo);
+                    const coverData: CoverPageData = {
+                      nomeEscola, tipoTrabalho, tema, nomeDocente, localidade, anoLectivo, classe, disciplina,
+                      sala, turma, numero, curso, modalidade,
+                      nomeAluno: modalidade === "individual" ? nomeAluno : undefined,
+                      nomesIntegrantes: modalidade === "grupo" ? nomesIntegrantes.filter(Boolean) : undefined,
+                    };
+                    await exportToWord(resultado, nomeArquivo, coverData);
                     toast.success("Ficheiro Word exportado!");
                   } catch { toast.error("Erro ao exportar Word"); }
                 }}>
@@ -457,7 +463,13 @@ const TrabalhoPage = () => {
                 <Button size="sm" onClick={async () => {
                   try {
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_doka";
-                    await exportToPDF(resultado, nomeArquivo);
+                    const coverData: CoverPageData = {
+                      nomeEscola, tipoTrabalho, tema, nomeDocente, localidade, anoLectivo, classe, disciplina,
+                      sala, turma, numero, curso, modalidade,
+                      nomeAluno: modalidade === "individual" ? nomeAluno : undefined,
+                      nomesIntegrantes: modalidade === "grupo" ? nomesIntegrantes.filter(Boolean) : undefined,
+                    };
+                    await exportToPDF(resultado, nomeArquivo, coverData);
                     toast.success("PDF exportado!");
                   } catch { toast.error("Erro ao exportar PDF"); }
                 }}>
