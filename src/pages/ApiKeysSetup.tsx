@@ -10,7 +10,7 @@ export default function ApiKeysSetup() {
   const { toast } = useToast();
   const [keys, setKeys] = useState({
     gemini: "AIzaSyDAHZQELdW9pXIU_gorQI-aOH1jTCY2yIo",
-    groq: "",
+    groq: "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",
     openrouter: "",
   });
   const [loading, setLoading] = useState(false);
