@@ -30,6 +30,7 @@ const item = {
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { canInstall, install } = usePwaInstall();
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
