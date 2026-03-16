@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
-import { exportToWord, exportToPDF } from "@/lib/export-utils";
+import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 
 const disciplinas = [
   "Português", "Matemática", "História", "Geografia", "Biologia",
