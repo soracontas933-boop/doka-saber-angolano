@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DokaLogo from "@/components/DokaLogo";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 const features = [
   { icon: FileText, title: "Trabalhos Escolares", desc: "Gere trabalhos completos com estrutura angolana" },
