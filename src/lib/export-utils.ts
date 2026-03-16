@@ -291,31 +291,36 @@ function parseMarkdownToParagraphs(text: string): Paragraph[] {
 }
 
 export async function exportToWord(content: string, filename: string, coverData?: CoverPageData) {
-  const coatOfArmsBuffer = await fetchImageAsBuffer(ANGOLA_COAT_OF_ARMS_URL);
-  const coverParagraphs = coverData ? createCoverPageParagraphs(coverData, coatOfArmsBuffer) : [];
-  const contentParagraphs = parseMarkdownToParagraphs(content);
+  showExportOverlay("A gerar ficheiro Word...");
+  try {
+    const coatOfArmsBuffer = await fetchImageAsBuffer(ANGOLA_COAT_OF_ARMS_URL);
+    const coverParagraphs = coverData ? createCoverPageParagraphs(coverData, coatOfArmsBuffer) : [];
+    const contentParagraphs = parseMarkdownToParagraphs(content);
 
-  const doc = new Document({
-    sections: [
-      {
-        properties: {
-          page: {
-            margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 },
-            borders: coverData ? {
-              pageBorderTop: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-              pageBorderBottom: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-              pageBorderLeft: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-              pageBorderRight: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-            } : undefined,
+    const doc = new Document({
+      sections: [
+        {
+          properties: {
+            page: {
+              margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 },
+              borders: coverData ? {
+                pageBorderTop: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                pageBorderBottom: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                pageBorderLeft: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                pageBorderRight: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+              } : undefined,
+            },
           },
+          children: [...coverParagraphs, ...contentParagraphs],
         },
-        children: [...coverParagraphs, ...contentParagraphs],
-      },
-    ],
-  });
+      ],
+    });
 
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${filename}.docx`);
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `${filename}.docx`);
+  } finally {
+    hideExportOverlay();
+  }
 }
 
 function generateCoverPageHTML(data: CoverPageData): string {
