@@ -1,14 +1,17 @@
 import { useState, useRef } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { ClipboardList, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
+import { ClipboardList, Upload, Camera, X, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, DOKA_SYSTEM_PROMPT, prompts } from "@/lib/ai-service";
 import { saveProject } from "@/lib/save-project";
+import PlanoHorizontalForm, { type PlanoHorizontalData } from "@/components/plano-aula/PlanoHorizontalForm";
+import PlanoHorizontalResult from "@/components/plano-aula/PlanoHorizontalResult";
+import { Input } from "@/components/ui/input";
 
 const disciplinas = [
   "Português", "Matemática", "História", "Geografia", "Biologia",
@@ -19,18 +22,53 @@ const disciplinas = [
 
 const classes = [...Array.from({ length: 13 }, (_, i) => `${i + 1}ª Classe`), "Ensino Superior"];
 
+const defaultHorizontalData: PlanoHorizontalData = {
+  nome: "",
+  escola: "",
+  classe: "",
+  disciplina: "",
+  unidade: "",
+  sumario: "",
+  perfilEntrada: "",
+  perfilSaida: "",
+  data: "",
+  periodo: "",
+  tempo: "45 min",
+  duracao: "45 min",
+  anoLectivo: "2025-2026",
+  objectivoGeral: "",
+  objectivosEspecificos: "",
+};
+
+interface FaseAula {
+  tempo: string;
+  fase: string;
+  conteudo: string;
+  metodos: string;
+  actividades: string;
+  estrategia: string;
+  meios: string;
+  avaliacao: string;
+  obs: string;
+}
+
 const PlanoAulaPage = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
-  const [tipoPlano, setTipoPlano] = useLocalStorage("doka_plano_tipo", "vertical");
-  const [disciplina, setDisciplina] = useLocalStorage("doka_plano_disciplina", "");
-  const [classe, setClasse] = useLocalStorage("doka_plano_classe", "");
+  const [tipoPlano, setTipoPlano] = useLocalStorage("doka_plano_tipo", "horizontal");
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState("");
-  const [resultado, setResultado] = useLocalStorage<string | null>("doka_plano_resultado", null);
-  const [imagemPlano, setImagemPlano] = useLocalStorage<string | null>("doka_plano_imagem", null);
   const cameraRef = useRef<HTMLInputElement>(null);
+
+  // Vertical state
+  const [disciplinaV, setDisciplinaV] = useLocalStorage("doka_plano_disciplina", "");
+  const [classeV, setClasseV] = useLocalStorage("doka_plano_classe", "");
+  const [resultadoV, setResultadoV] = useLocalStorage<string | null>("doka_plano_resultado", null);
+
+  // Horizontal state
+  const [hData, setHData] = useLocalStorage<PlanoHorizontalData>("doka_plano_h_dados", defaultHorizontalData);
+  const [hFases, setHFases] = useLocalStorage<FaseAula[] | null>("doka_plano_h_fases", null);
 
   const addFiles = (newFiles: File[]) => {
     const total = [...files, ...newFiles].slice(0, 50);
@@ -53,62 +91,109 @@ const PlanoAulaPage = () => {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleGenerate = async (e: React.FormEvent) => {
+  const handleGenerateHorizontal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (files.length === 0) {
-      toast.error("Seleccione pelo menos uma foto do conteúdo");
+    if (!hData.sumario && files.length === 0) {
+      toast.error("Preencha o sumário ou adicione fotos do conteúdo");
       return;
     }
     setLoading(true);
-    setResultado(null);
-    setImagemPlano(null);
+    setHFases(null);
 
     try {
-      setEtapa("A extrair texto das fotos (Gemini Vision)...");
-      const extractedTexts = await extractTextFromImages(files);
-      const combinedText = extractedTexts.filter(Boolean).join("\n\n---\n\n");
-
-      if (!combinedText.trim()) {
-        toast.error("Não foi possível extrair texto das fotos.");
-        setLoading(false);
-        return;
+      let extraContent = "";
+      if (files.length > 0) {
+        setEtapa("A extrair texto das fotos...");
+        const texts = await extractTextFromImages(files);
+        extraContent = texts.filter(Boolean).join("\n\n");
       }
 
-      setEtapa("A gerar plano de aula...");
-      const prompt = tipoPlano === "vertical"
-        ? prompts.planoVertical(disciplina || "Geral", classe || "10ª Classe", combinedText)
-        : prompts.planoHorizontal(disciplina || "Geral", classe || "10ª Classe");
+      setEtapa("A gerar plano horizontal...");
+      const prompt = prompts.planoHorizontal({
+        disciplina: hData.disciplina || "Geral",
+        classe: hData.classe || "8ª Classe",
+        unidade: hData.unidade,
+        sumario: hData.sumario + (extraContent ? `\n\nConteúdo extraído das fotos:\n${extraContent}` : ""),
+        perfilEntrada: hData.perfilEntrada,
+        perfilSaida: hData.perfilSaida,
+        objectivoGeral: hData.objectivoGeral,
+        objectivosEspecificos: hData.objectivosEspecificos,
+        tempo: hData.tempo,
+      });
 
-      const plano = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
+      const raw = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
 
-      setEtapa("A complementar estratégias...");
-      const revisado = await reviewWithOpenRouter(plano);
-      setResultado(revisado);
+      // Parse JSON from response
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Resposta da IA não contém JSON válido");
 
-      setEtapa("A gerar ilustração...");
-      const imgUrl = generateImageUrl(imagePrompts.planoAula());
-      setImagemPlano(imgUrl);
+      const parsed = JSON.parse(jsonMatch[0]);
+      const fases: FaseAula[] = parsed.fases;
+      setHFases(fases);
 
-      toast.success("Plano de aula gerado com sucesso!");
+      toast.success("Plano de aula horizontal gerado com sucesso!");
 
-      saveProject("plano-aula", `Plano de Aula - ${disciplina || "Geral"} - ${classe || ""}`, {
-        resultado: revisado,
-        tipoPlano,
-        disciplina,
-        classe,
-        imagemPlano: imgUrl,
+      saveProject("plano-aula", `Plano Horizontal - ${hData.disciplina || "Geral"} - ${hData.classe}`, {
+        tipo: "horizontal",
+        dados: hData,
+        fases,
       });
     } catch (err) {
-      console.error("Erro ao gerar plano:", err);
-      toast.error(err instanceof Error ? err.message : "Erro ao gerar plano de aula.");
+      console.error("Erro:", err);
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar plano");
     } finally {
       setLoading(false);
       setEtapa("");
     }
   };
 
+  const handleGenerateVertical = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (files.length === 0) {
+      toast.error("Seleccione pelo menos uma foto do conteúdo");
+      return;
+    }
+    setLoading(true);
+    setResultadoV(null);
+
+    try {
+      setEtapa("A extrair texto das fotos...");
+      const texts = await extractTextFromImages(files);
+      const combined = texts.filter(Boolean).join("\n\n---\n\n");
+      if (!combined.trim()) {
+        toast.error("Não foi possível extrair texto das fotos.");
+        setLoading(false);
+        return;
+      }
+
+      setEtapa("A gerar plano de aula...");
+      const prompt = prompts.planoVertical(disciplinaV || "Geral", classeV || "10ª Classe", combined);
+      const plano = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
+
+      setEtapa("A complementar estratégias...");
+      const revisado = await reviewWithOpenRouter(plano);
+      setResultadoV(revisado);
+      toast.success("Plano de aula gerado com sucesso!");
+
+      saveProject("plano-aula", `Plano Vertical - ${disciplinaV || "Geral"} - ${classeV}`, {
+        tipo: "vertical",
+        resultado: revisado,
+        disciplina: disciplinaV,
+        classe: classeV,
+      });
+    } catch (err) {
+      console.error("Erro:", err);
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar plano");
+    } finally {
+      setLoading(false);
+      setEtapa("");
+    }
+  };
+
+  const isHorizontal = tipoPlano === "horizontal";
+
   return (
-    <div className="p-6 md:p-10 max-w-3xl mx-auto">
+    <div className="p-6 md:p-10 max-w-4xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
@@ -125,13 +210,56 @@ const PlanoAulaPage = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        onSubmit={handleGenerate}
+        onSubmit={isHorizontal ? handleGenerateHorizontal : handleGenerateVertical}
         className="space-y-6"
       >
+        {/* Tipo de Plano */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+            Tipo de Plano
+          </h2>
+          <Tabs value={tipoPlano} onValueChange={setTipoPlano}>
+            <TabsList className="w-full">
+              <TabsTrigger value="horizontal" className="flex-1">Horizontal (INIDE)</TabsTrigger>
+              <TabsTrigger value="vertical" className="flex-1">Vertical (aula)</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {isHorizontal ? (
+          <PlanoHorizontalForm data={hData} onChange={setHData} />
+        ) : (
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+            <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+              Configurações
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Disciplina</Label>
+                <Select value={disciplinaV} onValueChange={setDisciplinaV}>
+                  <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                  <SelectContent>
+                    {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Classe</Label>
+                <Select value={classeV} onValueChange={setClasseV}>
+                  <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                  <SelectContent>
+                    {classes.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Fotos */}
         <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
           <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-            Fotos do Conteúdo (manual, livro ou caderno)
+            Fotos do Conteúdo {isHorizontal ? "(opcional)" : "(obrigatório)"}
           </h2>
 
           <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera")}>
@@ -181,45 +309,11 @@ const PlanoAulaPage = () => {
           )}
         </div>
 
-        {/* Configurações */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
-          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-            Configurações
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Tipo de Plano</Label>
-              <Select value={tipoPlano} onValueChange={setTipoPlano}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="horizontal">Horizontal (anual)</SelectItem>
-                  <SelectItem value="vertical">Vertical (aula)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Disciplina</Label>
-              <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
-                <SelectContent>
-                  {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Classe</Label>
-              <Select value={classe} onValueChange={setClasse}>
-                <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
-                <SelectContent>
-                  {classes.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        <Button type="submit" className="w-full h-12 text-base" disabled={loading || files.length === 0}>
+        <Button
+          type="submit"
+          className="w-full h-12 text-base"
+          disabled={loading || (!isHorizontal && files.length === 0)}
+        >
           {loading ? (
             <span className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -229,22 +323,20 @@ const PlanoAulaPage = () => {
         </Button>
       </motion.form>
 
-      {resultado && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4">
-          {imagemPlano && (
-            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
-              <img src={imagemPlano} alt="Ilustração do plano" className="w-full h-40 object-cover" />
-            </div>
-          )}
+      {/* Horizontal Result */}
+      {isHorizontal && hFases && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
+          <PlanoHorizontalResult dados={hData} fases={hFases} />
+        </motion.div>
+      )}
+
+      {/* Vertical Result */}
+      {!isHorizontal && resultadoV && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-semibold">Plano de Aula</h2>
-              <Button size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
-                <Download className="h-4 w-4 mr-1" /> Copiar
-              </Button>
-            </div>
+            <h2 className="font-display font-semibold mb-4">Plano de Aula</h2>
             <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
-              {resultado}
+              {resultadoV}
             </div>
           </div>
         </motion.div>
