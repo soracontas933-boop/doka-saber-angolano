@@ -430,8 +430,23 @@ const TrabalhoPage = () => {
                 <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
                   <Copy className="h-4 w-4 mr-1" /> Copiar
                 </Button>
-                <Button size="sm">
-                  <Download className="h-4 w-4 mr-1" /> Exportar PDF
+                <Button variant="outline" size="sm" onClick={async () => {
+                  try {
+                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_doka";
+                    await exportToWord(resultado, nomeArquivo);
+                    toast.success("Ficheiro Word exportado!");
+                  } catch { toast.error("Erro ao exportar Word"); }
+                }}>
+                  <FileDown className="h-4 w-4 mr-1" /> Word
+                </Button>
+                <Button size="sm" onClick={async () => {
+                  try {
+                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_doka";
+                    await exportToPDF(resultado, nomeArquivo);
+                    toast.success("PDF exportado!");
+                  } catch { toast.error("Erro ao exportar PDF"); }
+                }}>
+                  <Download className="h-4 w-4 mr-1" /> PDF
                 </Button>
               </div>
             </div>
