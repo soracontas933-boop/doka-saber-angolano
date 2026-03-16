@@ -1,5 +1,6 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, FolderOpen } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, FolderOpen, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
@@ -12,6 +13,12 @@ const navItems = [
 
 const MobileNav = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
@@ -31,6 +38,13 @@ const MobileNav = () => {
             </NavLink>
           );
         })}
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-xs font-medium text-destructive transition-colors"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Sair</span>
+        </button>
       </div>
     </nav>
   );

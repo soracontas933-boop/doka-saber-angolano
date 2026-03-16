@@ -1,5 +1,5 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, FolderOpen, BarChart3 } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, FolderOpen, BarChart3, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,13 @@ const navItems = [
 
 const AppSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   useEffect(() => {
     const check = async () => {
@@ -74,7 +80,7 @@ const AppSidebar = () => {
         )}
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border flex-shrink-0">
+      <div className="p-3 border-t border-sidebar-border flex-shrink-0 space-y-1">
         <NavLink
           to="/configuracoes"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity"
@@ -82,6 +88,13 @@ const AppSidebar = () => {
           <Settings className="h-5 w-5" />
           <span>Configurações</span>
         </NavLink>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity text-destructive"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Sair da Conta</span>
+        </button>
       </div>
     </aside>
   );
