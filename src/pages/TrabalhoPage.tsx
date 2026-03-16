@@ -65,6 +65,7 @@ const TrabalhoPage = () => {
   const [subtemas, setSubtemas] = useState<Subtema[]>([]);
   const [resultadoCompilado, setResultadoCompilado] = useState<string | null>(null);
   const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
