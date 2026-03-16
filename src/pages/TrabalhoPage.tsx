@@ -48,6 +48,8 @@ const TrabalhoPage = () => {
   const [tipoTrabalho, setTipoTrabalho] = useLocalStorage("doka_trabalho_tipo", "Trabalho de Pesquisa");
   const [disciplina, setDisciplina] = useLocalStorage("doka_trabalho_disciplina", "");
   const [paginas, setPaginas] = useLocalStorage("doka_trabalho_paginas", 5);
+  const [numero, setNumero] = useLocalStorage("doka_trabalho_numero", "");
+  const [curso, setCurso] = useLocalStorage("doka_trabalho_curso", "");
   const [elementosVisuais, setElementosVisuais] = useLocalStorage("doka_trabalho_elementosVisuais", 2);
   const [tipoCapa, setTipoCapa] = useLocalStorage<"padrao" | "upload" | "personalizada">("doka_trabalho_tipoCapa", "padrao");
   const [capaUpload, setCapaUpload] = useState<File | null>(null);
