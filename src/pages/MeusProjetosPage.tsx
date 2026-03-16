@@ -72,7 +72,7 @@ const MeusProjetosPage = () => {
   }, []);
 
   const deleteProject = async (id: string) => {
-    const { error } = await supabase.from("projects").delete().eq("id", id);
+    const { error } = await (supabase.from("projects") as any).delete().eq("id", id);
     if (error) {
       toast.error("Erro ao eliminar projecto");
     } else {
