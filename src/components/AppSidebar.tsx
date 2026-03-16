@@ -80,7 +80,7 @@ const AppSidebar = () => {
         )}
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border flex-shrink-0">
+      <div className="p-3 border-t border-sidebar-border flex-shrink-0 space-y-1">
         <NavLink
           to="/configuracoes"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity"
@@ -88,6 +88,13 @@ const AppSidebar = () => {
           <Settings className="h-5 w-5" />
           <span>Configurações</span>
         </NavLink>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity text-destructive"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Sair da Conta</span>
+        </button>
       </div>
     </aside>
   );
