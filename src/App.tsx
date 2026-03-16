@@ -12,6 +12,7 @@ import TrabalhoPage from "@/pages/TrabalhoPage";
 import ResumoPage from "@/pages/ResumoPage";
 import QuestionarioPage from "@/pages/QuestionarioPage";
 import PlanoAulaPage from "@/pages/PlanoAulaPage";
+import AdminStatsPage from "@/pages/AdminStatsPage";
 import ApiKeysSetup from "@/pages/ApiKeysSetup";
 import NotFound from "@/pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/resumo" element={<ResumoPage />} />
               <Route path="/questionario" element={<QuestionarioPage />} />
               <Route path="/plano-aula" element={<PlanoAulaPage />} />
+              <Route path="/admin/stats" element={<AdminStatsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

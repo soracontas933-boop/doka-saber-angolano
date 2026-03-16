@@ -1,7 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, FolderOpen } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, FolderOpen, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import DokaLogo from "./DokaLogo";
+
+const ADMIN_EMAIL = "kenymatos943@gmail.com";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
@@ -14,6 +18,15 @@ const navItems = [
 
 const AppSidebar = () => {
   const location = useLocation();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAdmin(user?.email === ADMIN_EMAIL);
+    };
+    check();
+  }, []);
 
   return (
     <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-sidebar text-sidebar-foreground">
@@ -42,6 +55,23 @@ const AppSidebar = () => {
             </NavLink>
           );
         })}
+
+        {isAdmin && (
+          <NavLink
+            to="/admin/stats"
+            className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
+          >
+            {location.pathname === "/admin/stats" && (
+              <motion.div
+                layoutId="sidebar-active"
+                className="absolute inset-0 rounded-lg bg-sidebar-accent"
+                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              />
+            )}
+            <BarChart3 className="relative z-10 h-5 w-5" />
+            <span className="relative z-10">Admin Stats</span>
+          </NavLink>
+        )}
       </nav>
 
       <div className="p-3 border-t border-sidebar-border flex-shrink-0">
