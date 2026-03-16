@@ -434,15 +434,11 @@ const TrabalhoPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mt-6 space-y-4"
         >
-          {capaImageUrl && (
-            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
-              <img src={capaImageUrl} alt="Capa do trabalho" className="w-full h-48 object-cover" />
-            </div>
-          )}
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
-            <div className="flex items-center justify-between mb-4">
+          {/* Action buttons */}
+          <div className="bg-card border border-border rounded-2xl p-4 shadow-card">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="font-display font-semibold">Resultado</h2>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
                   <Copy className="h-4 w-4 mr-1" /> Copiar
                 </Button>
@@ -478,10 +474,19 @@ const TrabalhoPage = () => {
                 </Button>
               </div>
             </div>
-            <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
-              {resultado}
-            </div>
           </div>
+
+          {/* Paginated A4 display */}
+          <TrabalhoCompleto
+            conteudo={resultado}
+            coverData={{
+              nomeEscola, tipoTrabalho, tema, nomeDocente, localidade, anoLectivo, classe, disciplina,
+              sala, turma, numero, curso, modalidade,
+              nomeAluno: modalidade === "individual" ? nomeAluno : undefined,
+              nomesIntegrantes: modalidade === "grupo" ? nomesIntegrantes.filter(Boolean) : undefined,
+            }}
+            capaImageUrl={capaImageUrl}
+          />
         </motion.div>
       )}
     </div>
