@@ -6,9 +6,6 @@ import DokaLogo from "@/components/DokaLogo";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import DokaLogo from "@/components/DokaLogo";
-import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 const features = [
   { icon: FileText, title: "Trabalhos Escolares", desc: "Gere trabalhos completos com estrutura angolana" },
