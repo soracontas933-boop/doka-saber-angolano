@@ -1,5 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, PageBreak, ImageRun } from "docx";
 import { saveAs } from "file-saver";
+import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
 
 export interface CoverPageData {
   nomeEscola?: string;
