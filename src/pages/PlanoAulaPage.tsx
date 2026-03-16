@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { ClipboardList, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,13 +22,13 @@ const PlanoAulaPage = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
-  const [tipoPlano, setTipoPlano] = useState("vertical");
-  const [disciplina, setDisciplina] = useState("");
-  const [classe, setClasse] = useState("");
+  const [tipoPlano, setTipoPlano] = useLocalStorage("doka_plano_tipo", "vertical");
+  const [disciplina, setDisciplina] = useLocalStorage("doka_plano_disciplina", "");
+  const [classe, setClasse] = useLocalStorage("doka_plano_classe", "");
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState("");
-  const [resultado, setResultado] = useState<string | null>(null);
-  const [imagemPlano, setImagemPlano] = useState<string | null>(null);
+  const [resultado, setResultado] = useLocalStorage<string | null>("doka_plano_resultado", null);
+  const [imagemPlano, setImagemPlano] = useLocalStorage<string | null>("doka_plano_imagem", null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
   const addFiles = (newFiles: File[]) => {

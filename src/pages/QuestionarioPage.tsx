@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { HelpCircle, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,14 +31,14 @@ const QuestionarioPage = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
-  const [numPerguntas, setNumPerguntas] = useState("10");
-  const [tipo, setTipo] = useState("multipla_escolha");
-  const [disciplina, setDisciplina] = useState("");
-  const [dificuldade, setDificuldade] = useState("medio");
-  const [comGabarito, setComGabarito] = useState("sim");
+  const [numPerguntas, setNumPerguntas] = useLocalStorage("doka_quest_numPerguntas", "10");
+  const [tipo, setTipo] = useLocalStorage("doka_quest_tipo", "multipla_escolha");
+  const [disciplina, setDisciplina] = useLocalStorage("doka_quest_disciplina", "");
+  const [dificuldade, setDificuldade] = useLocalStorage("doka_quest_dificuldade", "medio");
+  const [comGabarito, setComGabarito] = useLocalStorage("doka_quest_gabarito", "sim");
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState("");
-  const [resultado, setResultado] = useState<string | null>(null);
+  const [resultado, setResultado] = useLocalStorage<string | null>("doka_quest_resultado", null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
   const addFiles = (newFiles: File[]) => {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { FileText, Download, Copy, Upload, Plus, Minus, Image, Loader2, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,27 +32,27 @@ const tiposTrabalho = [
 ];
 
 const TrabalhoPage = () => {
-  const [tema, setTema] = useState("");
-  const [nomeEscola, setNomeEscola] = useState("");
+  const [tema, setTema] = useLocalStorage("doka_trabalho_tema", "");
+  const [nomeEscola, setNomeEscola] = useLocalStorage("doka_trabalho_escola", "");
   const [logoEscola, setLogoEscola] = useState<File | null>(null);
-  const [modalidade, setModalidade] = useState<"individual" | "grupo">("individual");
-  const [numIntegrantes, setNumIntegrantes] = useState(4);
-  const [nomesIntegrantes, setNomesIntegrantes] = useState<string[]>(["", "", "", ""]);
-  const [nomeAluno, setNomeAluno] = useState("");
-  const [nomeDocente, setNomeDocente] = useState("");
-  const [classe, setClasse] = useState("");
-  const [turma, setTurma] = useState("");
-  const [sala, setSala] = useState("");
-  const [localidade, setLocalidade] = useState("Luanda - Angola");
-  const [anoLectivo, setAnoLectivo] = useState("2025/2026");
-  const [tipoTrabalho, setTipoTrabalho] = useState("Trabalho de Pesquisa");
-  const [disciplina, setDisciplina] = useState("");
-  const [paginas, setPaginas] = useState(5);
-  const [elementosVisuais, setElementosVisuais] = useState(2);
-  const [tipoCapa, setTipoCapa] = useState<"padrao" | "upload" | "personalizada">("padrao");
+  const [modalidade, setModalidade] = useLocalStorage<"individual" | "grupo">("doka_trabalho_modalidade", "individual");
+  const [numIntegrantes, setNumIntegrantes] = useLocalStorage("doka_trabalho_numIntegrantes", 4);
+  const [nomesIntegrantes, setNomesIntegrantes] = useLocalStorage<string[]>("doka_trabalho_integrantes", ["", "", "", ""]);
+  const [nomeAluno, setNomeAluno] = useLocalStorage("doka_trabalho_aluno", "");
+  const [nomeDocente, setNomeDocente] = useLocalStorage("doka_trabalho_docente", "");
+  const [classe, setClasse] = useLocalStorage("doka_trabalho_classe", "");
+  const [turma, setTurma] = useLocalStorage("doka_trabalho_turma", "");
+  const [sala, setSala] = useLocalStorage("doka_trabalho_sala", "");
+  const [localidade, setLocalidade] = useLocalStorage("doka_trabalho_localidade", "Luanda - Angola");
+  const [anoLectivo, setAnoLectivo] = useLocalStorage("doka_trabalho_anoLectivo", "2025/2026");
+  const [tipoTrabalho, setTipoTrabalho] = useLocalStorage("doka_trabalho_tipo", "Trabalho de Pesquisa");
+  const [disciplina, setDisciplina] = useLocalStorage("doka_trabalho_disciplina", "");
+  const [paginas, setPaginas] = useLocalStorage("doka_trabalho_paginas", 5);
+  const [elementosVisuais, setElementosVisuais] = useLocalStorage("doka_trabalho_elementosVisuais", 2);
+  const [tipoCapa, setTipoCapa] = useLocalStorage<"padrao" | "upload" | "personalizada">("doka_trabalho_tipoCapa", "padrao");
   const [capaUpload, setCapaUpload] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<string | null>(null);
+  const [resultado, setResultado] = useLocalStorage<string | null>("doka_trabalho_resultado", null);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
