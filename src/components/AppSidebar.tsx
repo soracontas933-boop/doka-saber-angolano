@@ -41,7 +41,7 @@ const AppSidebar = () => {
     navigate("/");
   };
 
-  const renderNavItem = (item: { to: string; icon: React.ComponentType<{ className?: string }>; label: string }) => {
+  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string }) => {
     const isActive = location.pathname === item.to;
 
     return (
