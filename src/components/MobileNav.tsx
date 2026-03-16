@@ -21,6 +21,7 @@ const baseNavItems = [
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
   { to: "/questionario", icon: HelpCircle, label: "Quiz" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano" },
+  { to: "/correcao", icon: Search, label: "Corrigir" },
   { to: "/planos", icon: CreditCard, label: "Planos" },
 ];
 

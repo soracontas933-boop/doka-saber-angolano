@@ -31,6 +31,13 @@ const cards = [
     to: "/plano-aula",
     gradient: "from-secondary to-primary",
   },
+  {
+    title: "Corrigir Trabalho",
+    description: "Envia o teu trabalho e o DOKA corrige tudo automaticamente.",
+    icon: Search,
+    to: "/correcao",
+    gradient: "from-primary to-secondary",
+  },
 ];
 
 const container = {

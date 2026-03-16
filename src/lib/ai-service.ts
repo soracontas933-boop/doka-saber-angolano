@@ -200,6 +200,52 @@ Retorna APENAS JSON válido no seguinte formato (sem markdown, sem backticks):
 }
 O conteúdo deve ser detalhado, rico e contextualizado à realidade angolana. Cada campo deve ter conteúdo substancial.`,
 
+  correcaoExtrair: (conteudo: string) =>
+    `És um assistente educacional especializado no sistema de ensino de Angola (INIDE/MED). Analisa este trabalho escolar e extrai TODO o conteúdo em JSON estruturado: { "capa": { "titulo": "", "nome_aluno": "", "escola": "", "disciplina": "", "classe": "", "turma": "", "numero": "", "orientador": "", "ano_letivo": "", "local": "" }, "indice": null, "introducao": "", "capitulos": [{ "numero": 1, "titulo": "", "subcapitulos": [{ "numero": "1.1", "titulo": "", "conteudo": "" }] }], "conclusao": "", "bibliografia": [""], "problemas_estruturais": [""], "paginas_total": 0 }\n\nConteúdo do trabalho:\n${conteudo}`,
+
+  correcaoAnalisar: (conteudo: string) =>
+    `Analisa este trabalho escolar extraído e identifica TODOS os problemas.
+Conteúdo do trabalho: ${conteudo}
+
+Verifica obrigatoriamente e retorna em JSON:
+{
+  "problemas": [
+    {
+      "id": 1,
+      "categoria": "grave|moderado|conteudo|formatacao",
+      "titulo": "",
+      "descricao": "",
+      "localizacao": "",
+      "sugestao_correcao": "",
+      "prioridade": 1
+    }
+  ],
+  "pontuacao_actual": 0,
+  "pontuacao_estimada_apos_correcao": 0,
+  "resumo_geral": "",
+  "nivel_trabalho": "fraco|suficiente|bom|muito_bom|excelente"
+}
+
+Verifica: CAPA (campos completos), ÍNDICE (existência e numeração), ESTRUTURA (paginação, numeração de capítulos/subcapítulos), INTRODUÇÃO (contextualização, objectivos geral e específicos, justificativa, metodologia, estrutura do trabalho, 1-2 páginas), DESENVOLVIMENTO (mín 2 capítulos, profundidade, sem repetição, exemplos), CONCLUSÃO (retoma objectivos, síntese crítica, perspectivas futuras), BIBLIOGRAFIA (mín 5 referências APA, fontes angolanas), FORMATAÇÃO (fonte, espaçamento, margens, linguagem académica).`,
+
+  correcaoGerar: (original: string, problemas: string, dadosCapa: string) =>
+    `Com base neste trabalho original e nos problemas identificados, gera uma versão COMPLETAMENTE CORRIGIDA E MELHORADA.
+
+Trabalho original: ${original}
+Problemas identificados: ${problemas}
+Dados do aluno: ${dadosCapa}
+
+Corrige e melhora TUDO seguindo normas INIDE/MED Angola.
+Retorna em JSON:
+{
+  "capa": { "titulo": "", "nome_aluno": "", "escola": "", "numero": "", "sala": "", "turma": "", "curso": "", "disciplina": "", "classe": "", "orientador": "", "ano_letivo": "", "local": "", "data": "" },
+  "indice": [{ "secao": "", "pagina": 1 }],
+  "introducao": { "contextualizacao": "", "objetivo_geral": "", "objetivos_especificos": [""], "justificativa": "", "metodologia": "", "estrutura_trabalho": "" },
+  "capitulos": [{ "numero": 1, "titulo": "", "subcapitulos": [{ "numero": "1.1", "titulo": "", "conteudo": "" }] }],
+  "conclusao": { "sintese": "", "reflexao_critica": "", "perspectivas_futuras": "" },
+  "bibliografia": [{ "referencia": "" }]
+}`,
+
   estruturaTrabalho: (dados: {
     titulo: string;
     disciplina: string;
