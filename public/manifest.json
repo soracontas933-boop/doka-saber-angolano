@@ -4,7 +4,14 @@
   "description": "Plataforma Educacional Angolana",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F8FAFC",
-  "theme_color": "#1E40AF",
-  "icons": []
+  "background_color": "#000000",
+  "theme_color": "#00D9FF",
+  "icons": [
+    {
+      "src": "/doka-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
