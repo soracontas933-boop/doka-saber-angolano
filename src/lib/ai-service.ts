@@ -145,6 +145,35 @@ export const prompts = {
 
   planoHorizontal: (disciplina: string, classe: string) =>
     `Gera um Plano Anual Horizontal para: Disciplina: ${disciplina}, Classe: ${classe}, Ano Lectivo: 2025-2026. Estrutura detalhada com: trimestres, unidades temáticas, temas, carga horária, competências, recursos e avaliação. Seguir a distribuição curricular oficial do INIDE Angola. Formato bem estruturado com tabelas.`,
+
+  estruturaTrabalho: (dados: {
+    titulo: string;
+    disciplina: string;
+    classe: string;
+    paginas: number;
+    tipo: string;
+  }) =>
+    `Para o tema "${dados.titulo}", disciplina ${dados.disciplina}, ${dados.classe}, tipo ${dados.tipo}, com aproximadamente ${dados.paginas} páginas, sugere uma estrutura de subtemas/capítulos para o desenvolvimento do trabalho. Retorna APENAS um JSON válido no formato: { "subtemas": [ { "titulo": "string", "tipo": "introducao|capitulo|conclusao|bibliografia", "descricao": "breve descrição do conteúdo esperado" } ] }. A estrutura deve incluir: Introdução, ${Math.max(2, Math.floor(dados.paginas / 2))} capítulos de desenvolvimento relevantes ao tema no contexto angolano, Conclusão e Bibliografia. Não incluas Capa nem Índice.`,
+
+  subtema: (dados: {
+    temaGeral: string;
+    tituloSubtema: string;
+    tipoSubtema: string;
+    disciplina: string;
+    classe: string;
+    posicao: number;
+    totalSubtemas: number;
+    contexto?: string;
+  }) => {
+    const instrucoes: Record<string, string> = {
+      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, objectivos do trabalho (geral e específicos), justificativa/importância do tema, e metodologia utilizada. Deve ter pelo menos 2-3 parágrafos bem desenvolvidos.`,
+      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 3-4 parágrafos densos.`,
+      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais abordados nos capítulos, apresenta as principais constatações, e sugere recomendações ou perspectivas futuras. Deve ter 2-3 parágrafos.`,
+      bibliografia: `Gera a Bibliografia/Referências do trabalho sobre "${dados.temaGeral}" para ${dados.disciplina}, ${dados.classe}. Inclui pelo menos 5-8 referências em formato APA, com livros, artigos e fontes online relevantes ao tema no contexto angolano e africano.`,
+    };
+    const tipo = dados.tipoSubtema as keyof typeof instrucoes;
+    return `${instrucoes[tipo] || instrucoes.capitulo} Disciplina: ${dados.disciplina}, Nível: ${dados.classe}. ${dados.contexto ? `Contexto dos capítulos anteriores: ${dados.contexto}` : ""} Retorna APENAS o conteúdo em markdown (sem título de nível 1 ou 2, começa directo no texto).`;
+  },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────
