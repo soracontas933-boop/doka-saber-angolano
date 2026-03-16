@@ -18,7 +18,13 @@ const navItems = [
 
 const AppSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   useEffect(() => {
     const check = async () => {
