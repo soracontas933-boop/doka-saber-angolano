@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +7,129 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+// API endpoints
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+
+async function getApiKeys() {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+  const { data } = await supabase
+    .from("api_keys")
+    .select("servico, chave")
+    .eq("ativo", true);
+  
+  const keys: Record<string, string> = {};
+  for (const row of data || []) {
+    keys[row.servico] = row.chave;
+  }
+  return keys;
+}
+
+async function callGroq(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "llama-3.1-8b-instant",
+      messages,
+      max_tokens: maxTokens,
+      temperature,
+    }),
+  });
+  if (!res.ok) throw new Error(`Groq error ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function callOpenRouter(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
+  const res = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://doka-angola-smart-learn.lovable.app",
+      "X-Title": "DOKA Angola",
+    },
+    body: JSON.stringify({
+      model: "mistralai/mistral-small-3.1-24b-instruct:free",
+      messages,
+      max_tokens: maxTokens,
+      temperature,
+    }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`OpenRouter error ${res.status}: ${errText}`);
+  }
+  return res.json();
+}
+
+async function callGemini(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
+  // Convert OpenAI-style messages to Gemini format
+  const contents = messages
+    .filter((m: any) => m.role !== "system")
+    .map((m: any) => {
+      if (typeof m.content === "string") {
+        return { role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] };
+      }
+      // Handle multimodal (image + text)
+      const parts: any[] = [];
+      for (const part of m.content) {
+        if (part.type === "text") {
+          parts.push({ text: part.text });
+        } else if (part.type === "image_url") {
+          const url = part.image_url.url;
+          if (url.startsWith("data:")) {
+            const [meta, b64] = url.split(",");
+            const mime = meta.match(/data:(.*?);/)?.[1] || "image/jpeg";
+            parts.push({ inline_data: { mime_type: mime, data: b64 } });
+          }
+        }
+      }
+      return { role: "user", parts };
+    });
+
+  const systemInstruction = messages.find((m: any) => m.role === "system");
+
+  const body: any = {
+    contents,
+    generationConfig: { maxOutputTokens: maxTokens, temperature },
+  };
+  if (systemInstruction) {
+    body.systemInstruction = { parts: [{ text: systemInstruction.content }] };
+  }
+
+  const res = await fetch(
+    `${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+  if (!res.ok) throw new Error(`Gemini error ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  
+  // Return in OpenAI-compatible format
+  return { choices: [{ message: { content: text } }] };
+}
+
+async function callWithRetry(fn: () => Promise<any>, retries = 2, delay = 2000): Promise<any> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (e: any) {
+      if (i === retries || !e.message?.includes("429")) throw e;
+      console.log(`Rate limited, retrying in ${delay}ms...`);
+      await new Promise((r) => setTimeout(r, delay));
+      delay *= 2;
+    }
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,69 +137,66 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, model, max_tokens, temperature } = await req.json();
+    const { messages, max_tokens = 8000, temperature = 0.7, service } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
-        JSON.stringify({ error: "Parâmetro 'messages' é obrigatório e deve ser um array" }),
+        JSON.stringify({ error: "Parâmetro 'messages' é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "LOVABLE_API_KEY não está configurada" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const keys = await getApiKeys();
+    const hasImages = messages.some((m: any) =>
+      Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
+    );
+
+    // Determine service priority
+    let preferredService = service;
+    if (hasImages) preferredService = "gemini"; // Vision requires Gemini
+
+    const servicePriority = preferredService
+      ? [preferredService, ...["groq", "gemini", "openrouter"].filter((s) => s !== preferredService)]
+      : ["groq", "gemini", "openrouter"];
+
+    let lastError: Error | null = null;
+
+    for (const svc of servicePriority) {
+      const key = keys[svc];
+      if (!key) continue;
+
+      try {
+        console.log(`Trying ${svc}...`);
+        let result;
+        switch (svc) {
+          case "groq":
+            if (hasImages) continue; // Groq doesn't support images
+            result = await callWithRetry(() => callGroq(messages, key, max_tokens, temperature));
+            break;
+          case "openrouter":
+            if (hasImages) continue;
+            result = await callWithRetry(() => callOpenRouter(messages, key, max_tokens, temperature));
+            break;
+          case "gemini":
+            result = await callWithRetry(() => callGemini(messages, key, max_tokens, temperature));
+            break;
+          default:
+            continue;
+        }
+        console.log(`Success with ${svc}`);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (e: any) {
+        console.error(`${svc} failed:`, e.message);
+        lastError = e;
+      }
     }
 
-    const selectedModel = model || "google/gemini-2.5-flash";
-
-    console.log(`Calling Lovable AI with model: ${selectedModel}...`);
-
-    const response = await fetch(LOVABLE_AI_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: selectedModel,
-        messages,
-        max_tokens: max_tokens ?? 8000,
-        temperature: temperature ?? 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Lovable AI error [${response.status}]:`, errorText);
-
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ error: "Erro na API de IA", details: errorText }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const result = await response.json();
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: lastError?.message || "Nenhuma API disponível. Configure suas chaves em /setup-api-keys." }),
+      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (e) {
     console.error("ai-proxy error:", e);
     return new Response(
