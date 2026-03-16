@@ -1,11 +1,20 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, FolderOpen, BarChart3, LogOut } from "lucide-react";
+import {
+  FileText,
+  BookOpen,
+  HelpCircle,
+  ClipboardList,
+  LayoutDashboard,
+  Settings,
+  FolderOpen,
+  BarChart3,
+  LogOut,
+  ShieldCheck,
+} from "lucide-react";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/hooks/use-admin";
 import DokaLogo from "./DokaLogo";
-
-const ADMIN_EMAIL = "kenymatos943@gmail.com";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
@@ -16,29 +25,42 @@ const navItems = [
   { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
 ];
 
+const adminNavItems = [
+  { to: "/admin/usuarios", icon: ShieldCheck, label: "Painel Master" },
+  { to: "/admin/stats", icon: BarChart3, label: "Estatísticas Admin" },
+];
+
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin, isLoading } = useAdmin();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
 
-  useEffect(() => {
-    const check = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAdmin(user?.email === ADMIN_EMAIL);
-    };
-    check();
+  const renderNavItem = (item: { to: string; icon: React.ComponentType<{ className?: string }>; label: string }) => {
+    const isActive = location.pathname === item.to;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAdmin(session?.user?.email === ADMIN_EMAIL);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
+      >
+        {isActive && (
+          <motion.div
+            layoutId="sidebar-active"
+            className="absolute inset-0 rounded-lg bg-sidebar-accent"
+            transition={{ type: "spring", stiffness: 350, damping: 30 }}
+          />
+        )}
+        <item.icon className="relative z-10 h-5 w-5" />
+        <span className="relative z-10">{item.label}</span>
+      </NavLink>
+    );
+  };
 
   return (
     <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-sidebar text-sidebar-foreground">
@@ -47,42 +69,13 @@ const AppSidebar = () => {
       </div>
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.to;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="sidebar-active"
-                  className="absolute inset-0 rounded-lg bg-sidebar-accent"
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                />
-              )}
-              <item.icon className="relative z-10 h-5 w-5" />
-              <span className="relative z-10">{item.label}</span>
-            </NavLink>
-          );
-        })}
+        {navItems.map(renderNavItem)}
 
-        {isAdmin && (
-          <NavLink
-            to="/admin/stats"
-            className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
-          >
-            {location.pathname === "/admin/stats" && (
-              <motion.div
-                layoutId="sidebar-active"
-                className="absolute inset-0 rounded-lg bg-sidebar-accent"
-                transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              />
-            )}
-            <BarChart3 className="relative z-10 h-5 w-5" />
-            <span className="relative z-10">Admin Stats</span>
-          </NavLink>
+        {!isLoading && isAdmin && (
+          <>
+            <div className="my-3 border-t border-sidebar-border" />
+            {adminNavItems.map(renderNavItem)}
+          </>
         )}
       </nav>
 

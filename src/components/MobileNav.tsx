@@ -1,8 +1,18 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, FolderOpen, LogOut } from "lucide-react";
+import {
+  FileText,
+  BookOpen,
+  HelpCircle,
+  ClipboardList,
+  LayoutDashboard,
+  FolderOpen,
+  LogOut,
+  ShieldCheck,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/hooks/use-admin";
 
-const navItems = [
+const baseNavItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho" },
@@ -14,15 +24,20 @@ const navItems = [
 const MobileNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAdmin, isLoading } = useAdmin();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
 
+  const navItems = !isLoading && isAdmin
+    ? [...baseNavItems, { to: "/admin/usuarios", icon: ShieldCheck, label: "Master" }]
+    : baseNavItems;
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
-      <div className="flex items-center justify-around py-2 px-1">
+      <div className="flex items-center justify-around py-2 px-1 overflow-x-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (

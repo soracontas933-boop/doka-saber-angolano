@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +13,7 @@ import ResumoPage from "@/pages/ResumoPage";
 import QuestionarioPage from "@/pages/QuestionarioPage";
 import PlanoAulaPage from "@/pages/PlanoAulaPage";
 import AdminStatsPage from "@/pages/AdminStatsPage";
+import AdminUsersPage from "@/pages/AdminUsersPage";
 import ApiKeysSetup from "@/pages/ApiKeysSetup";
 import NotFound from "@/pages/NotFound";
 
@@ -24,22 +25,23 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/meus-projetos" element={<MeusProjetosPage />} />
-              <Route path="/trabalho" element={<TrabalhoPage />} />
-              <Route path="/resumo" element={<ResumoPage />} />
-              <Route path="/questionario" element={<QuestionarioPage />} />
-              <Route path="/plano-aula" element={<PlanoAulaPage />} />
-              <Route path="/admin/stats" element={<AdminStatsPage />} />
-              <Route path="/configuracoes" element={<ApiKeysSetup />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/meus-projetos" element={<MeusProjetosPage />} />
+            <Route path="/trabalho" element={<TrabalhoPage />} />
+            <Route path="/resumo" element={<ResumoPage />} />
+            <Route path="/questionario" element={<QuestionarioPage />} />
+            <Route path="/plano-aula" element={<PlanoAulaPage />} />
+            <Route path="/admin/usuarios" element={<AdminUsersPage />} />
+            <Route path="/admin/stats" element={<AdminStatsPage />} />
+            <Route path="/configuracoes" element={<ApiKeysSetup />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
