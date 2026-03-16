@@ -11,7 +11,7 @@ export default function ApiKeysSetup() {
   const [keys, setKeys] = useState({
     gemini: "AIzaSyDAHZQELdW9pXIU_gorQI-aOH1jTCY2yIo",
     groq: "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",
-    openrouter: "",
+    openrouter: "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",
   });
   const [loading, setLoading] = useState(false);
 
