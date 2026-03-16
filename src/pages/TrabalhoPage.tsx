@@ -560,6 +560,16 @@ const TrabalhoPage = () => {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="font-display font-semibold">Resultado</h2>
               <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={editMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setEditMode(!editMode);
+                    toast.info(editMode ? "Modo visualização" : "Modo edição — clique no texto para editar");
+                  }}
+                >
+                  {editMode ? <><Eye className="h-4 w-4 mr-1" /> Visualizar</> : <><Pencil className="h-4 w-4 mr-1" /> Editar</>}
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultadoCompilado); toast.success("Copiado!"); }}>
                   <Copy className="h-4 w-4 mr-1" /> Copiar
                 </Button>
@@ -583,6 +593,11 @@ const TrabalhoPage = () => {
                 </Button>
               </div>
             </div>
+            {editMode && (
+              <p className="text-xs text-muted-foreground mt-2">
+                💡 Clique em qualquer texto para editar. Seleccione texto para ver a barra de formatação.
+              </p>
+            )}
           </div>
 
           {/* Paginated A4 display */}
@@ -590,6 +605,8 @@ const TrabalhoPage = () => {
             conteudo={resultadoCompilado}
             coverData={getCoverData()}
             capaImageUrl={capaImageUrl}
+            editable={editMode}
+            onContentChange={(updatedHtml) => setResultadoCompilado(updatedHtml)}
           />
         </motion.div>
       )}
