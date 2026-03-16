@@ -2,10 +2,15 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-const ADMIN_EMAIL = "kenymatos943@gmail.com";
+const ADMIN_EMAILS = [
+  "kenymatos943@gmail.com",
+  "manuelmatosjose67@gmail.com",
+];
 
 const isMasterEmail = (email?: string | null) =>
-  (email ?? "").trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  ADMIN_EMAILS.some(
+    (admin) => (email ?? "").trim().toLowerCase() === admin.toLowerCase()
+  );
 
 export const useAdmin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
