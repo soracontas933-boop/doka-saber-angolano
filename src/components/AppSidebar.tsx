@@ -1,5 +1,5 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, FolderOpen, BarChart3 } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { FileText, BookOpen, HelpCircle, ClipboardList, LayoutDashboard, Settings, FolderOpen, BarChart3, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
