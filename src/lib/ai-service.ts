@@ -1,10 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// ─── AI Proxy Call (Lovable AI) ──────────────────────────────────
+// ─── AI Proxy Call ───────────────────────────────────────────────
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
-  options: { maxTokens?: number; temperature?: number; model?: string } = {}
+  options: { maxTokens?: number; temperature?: number; service?: string } = {}
 ): Promise<string> {
   const { data, error } = await supabase.functions.invoke("ai-proxy", {
     body: {
@@ -14,7 +14,7 @@ async function callAI(
       ],
       max_tokens: options.maxTokens ?? 8000,
       temperature: options.temperature ?? 0.7,
-      model: options.model,
+      service: options.service,
     },
   });
 
@@ -31,7 +31,7 @@ export async function generateWithGroq(
   maxTokens = 8000,
   temperature = 0.7
 ): Promise<string> {
-  return callAI(systemPrompt, userPrompt, { maxTokens, temperature });
+  return callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
 }
 
 // ─── Revisão de Conteúdo ─────────────────────────────────────────
@@ -43,7 +43,7 @@ export async function reviewWithOpenRouter(
     return await callAI(
       "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
       `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
-      { maxTokens, temperature: 0.5 }
+      { maxTokens, temperature: 0.5, service: "openrouter" }
     );
   } catch {
     console.warn("Revisão falhou: retornando conteúdo original");
@@ -66,7 +66,7 @@ export async function extractTextFromImage(base64: string, mimeType = "image/jpe
           ],
         },
       ],
-      model: "google/gemini-2.5-flash",
+      service: "gemini",
       max_tokens: 4096,
       temperature: 0.2,
     },
