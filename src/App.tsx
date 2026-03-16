@@ -13,6 +13,7 @@ import ResumoPage from "@/pages/ResumoPage";
 import QuestionarioPage from "@/pages/QuestionarioPage";
 import PlanoAulaPage from "@/pages/PlanoAulaPage";
 import AdminPanelPage from "@/pages/AdminPanelPage";
+import SettingsPage from "@/pages/SettingsPage";
 import ApiKeysSetup from "@/pages/ApiKeysSetup";
 import NotFound from "@/pages/NotFound";
 
@@ -36,7 +37,7 @@ const App = () => (
             <Route path="/questionario" element={<QuestionarioPage />} />
             <Route path="/plano-aula" element={<PlanoAulaPage />} />
             <Route path="/admin" element={<AdminPanelPage />} />
-            <Route path="/configuracoes" element={<ApiKeysSetup />} />
+            <Route path="/configuracoes" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
