@@ -1,21 +1,60 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Upload, Download } from "lucide-react";
+import { BookOpen, Upload, Download, Camera, X, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+
+const tiposResumo = [
+  "Resumo por Tópicos",
+  "Resumo Esquemático",
+  "Mapa Mental",
+  "Flashcards",
+  "Resumo Narrativo",
+  "Resumo com Mnemônicos",
+  "Quadro Comparativo",
+  "Linha do Tempo",
+];
+
+const disciplinas = [
+  "Português", "Matemática", "História", "Geografia", "Biologia",
+  "Física", "Química", "Inglês", "Educação Moral e Cívica",
+  "Filosofia", "Sociologia", "Educação Visual", "Informática",
+  "Economia", "Direito", "Contabilidade", "Gestão",
+];
 
 const ResumoPage = () => {
   const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [tipoResumo, setTipoResumo] = useState("Resumo por Tópicos");
+  const [disciplina, setDisciplina] = useState("");
+  const [fonte, setFonte] = useState<"upload" | "camera">("upload");
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<string | null>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const addFiles = (newFiles: File[]) => {
+    const total = [...files, ...newFiles].slice(0, 100);
+    setFiles(total);
+    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
+    setPreviews((prev) => [...prev, ...newPreviews].slice(0, 100));
+    toast.success(`${newFiles.length} foto(s) adicionada(s) — total: ${total.length}`);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const selected = Array.from(e.target.files).slice(0, 100);
-      setFiles(selected);
-      toast.success(`${selected.length} foto(s) seleccionada(s)`);
+      addFiles(Array.from(e.target.files));
+      e.target.value = "";
     }
+  };
+
+  const removeFile = (index: number) => {
+    URL.revokeObjectURL(previews[index]);
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleGenerate = async () => {
@@ -49,25 +88,112 @@ const ResumoPage = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-card border border-border rounded-2xl p-6 shadow-card"
+        className="space-y-6"
       >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Fotos do Caderno (até 100)</Label>
-            <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/30">
-              <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-              <span className="text-sm text-muted-foreground font-medium">
-                {files.length > 0 ? `${files.length} foto(s) seleccionada(s)` : "Clique ou arraste as fotos"}
-              </span>
-              <span className="text-xs text-muted-foreground mt-1">JPG, PNG — máx. 100 fotos</span>
-              <input type="file" className="hidden" accept="image/*" multiple onChange={handleFiles} />
-            </label>
+        {/* Tipo de Resumo e Disciplina */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+            Configurações
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Tipo de Resumo</Label>
+              <Select value={tipoResumo} onValueChange={setTipoResumo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {tiposResumo.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Disciplina</Label>
+              <Select value={disciplina} onValueChange={setDisciplina}>
+                <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                <SelectContent>
+                  {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-
-          <Button className="w-full" onClick={handleGenerate} disabled={loading || files.length === 0}>
-            {loading ? "A gerar resumo..." : "Gerar Resumo"}
-          </Button>
         </div>
+
+        {/* Fotos */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+            Fotos do Caderno (até 100)
+          </h2>
+
+          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera")}>
+            <TabsList className="w-full">
+              <TabsTrigger value="upload" className="flex-1 gap-2">
+                <Upload className="h-4 w-4" /> Galeria
+              </TabsTrigger>
+              <TabsTrigger value="camera" className="flex-1 gap-2">
+                <Camera className="h-4 w-4" /> Câmera
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {fonte === "upload" ? (
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
+              <Image className="h-8 w-8 text-muted-foreground mb-2" />
+              <span className="text-sm text-muted-foreground font-medium">Clique ou arraste as fotos</span>
+              <span className="text-xs text-muted-foreground mt-1">JPG, PNG — máx. 100 fotos</span>
+              <input
+                ref={uploadRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+              />
+            </label>
+          ) : (
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20"
+            >
+              <Camera className="h-8 w-8 text-muted-foreground mb-2" />
+              <span className="text-sm text-muted-foreground font-medium">Toque para abrir a câmera</span>
+              <span className="text-xs text-muted-foreground mt-1">Tire fotos directamente do caderno</span>
+              <input
+                ref={cameraRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+              />
+            </button>
+          )}
+
+          {/* Preview grid */}
+          {previews.length > 0 && (
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+              {previews.map((src, i) => (
+                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-border">
+                  <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeFile(i)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-foreground/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3 text-background" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {files.length > 0 && (
+            <p className="text-xs text-muted-foreground">{files.length} de 100 fotos</p>
+          )}
+        </div>
+
+        <Button className="w-full h-12 text-base" onClick={handleGenerate} disabled={loading || files.length === 0}>
+          {loading ? "A gerar resumo..." : "Gerar Resumo"}
+        </Button>
       </motion.div>
 
       {resultado && (
