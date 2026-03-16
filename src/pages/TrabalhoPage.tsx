@@ -402,7 +402,12 @@ const TrabalhoPage = () => {
 
         {/* Submit */}
         <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-          {loading ? "A gerar trabalho..." : "Gerar Trabalho"}
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {etapa || "A gerar..."}
+            </span>
+          ) : "Gerar Trabalho"}
         </Button>
       </motion.form>
 
@@ -410,21 +415,28 @@ const TrabalhoPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-card"
+          className="mt-6 space-y-4"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold">Resultado</h2>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
-                <Copy className="h-4 w-4 mr-1" /> Copiar
-              </Button>
-              <Button size="sm">
-                <Download className="h-4 w-4 mr-1" /> Exportar PDF
-              </Button>
+          {capaImageUrl && (
+            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-card">
+              <img src={capaImageUrl} alt="Capa do trabalho" className="w-full h-48 object-cover" />
             </div>
-          </div>
-          <div className="prose prose-sm max-w-none text-card-foreground">
-            <p>{resultado}</p>
+          )}
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-semibold">Resultado</h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
+                  <Copy className="h-4 w-4 mr-1" /> Copiar
+                </Button>
+                <Button size="sm">
+                  <Download className="h-4 w-4 mr-1" /> Exportar PDF
+                </Button>
+              </div>
+            </div>
+            <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
+              {resultado}
+            </div>
           </div>
         </motion.div>
       )}
