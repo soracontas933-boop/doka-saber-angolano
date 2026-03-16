@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DokaLogo from "@/components/DokaLogo";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 const features = [
   { icon: FileText, title: "Trabalhos Escolares", desc: "Gere trabalhos completos com estrutura angolana" },
@@ -29,6 +30,7 @@ const item = {
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { canInstall, install } = usePwaInstall();
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -36,6 +38,12 @@ const HomePage = () => {
       <header className="flex items-center justify-between px-6 md:px-12 py-5">
         <DokaLogo size={36} />
         <div className="flex items-center gap-3">
+          {canInstall && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={install}>
+              <Download className="h-4 w-4" />
+              Baixar App
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
             Entrar
           </Button>
