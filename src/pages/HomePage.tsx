@@ -38,6 +38,12 @@ const HomePage = () => {
       <header className="flex items-center justify-between px-6 md:px-12 py-5">
         <DokaLogo size={36} />
         <div className="flex items-center gap-3">
+          {canInstall && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={install}>
+              <Download className="h-4 w-4" />
+              Baixar App
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
             Entrar
           </Button>
