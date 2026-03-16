@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { saveProject } from "@/lib/save-project";
 
 const tiposPerguntas = [
   { value: "multipla_escolha", label: "Selecção múltipla" },
