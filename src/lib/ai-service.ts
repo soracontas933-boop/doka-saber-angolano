@@ -143,8 +143,62 @@ export const prompts = {
   planoVertical: (disciplina: string, classe: string, tema: string) =>
     `Gera um Plano de Aula Vertical completo seguindo o modelo INIDE/MED Angola para: Disciplina: ${disciplina}, Classe: ${classe}, Tema: ${tema}. Estrutura obrigatória: Dados de identificação, Tema e subtema, Objectivos específicos (3 a 5), Competências a desenvolver, Pré-requisitos, Conteúdos (conceptuais, procedimentais, atitudinais), Estratégias e metodologias, Recursos didácticos, Desenvolvimento da aula em fases (motivação + desenvolvimento + consolidação + avaliação) com tempo por fase, Avaliação formativa, Referências bibliográficas.`,
 
-  planoHorizontal: (disciplina: string, classe: string) =>
-    `Gera um Plano Anual Horizontal para: Disciplina: ${disciplina}, Classe: ${classe}, Ano Lectivo: 2025-2026. Estrutura detalhada com: trimestres, unidades temáticas, temas, carga horária, competências, recursos e avaliação. Seguir a distribuição curricular oficial do INIDE Angola. Formato bem estruturado com tabelas.`,
+  planoHorizontal: (dados: {
+    disciplina: string;
+    classe: string;
+    unidade: string;
+    sumario: string;
+    perfilEntrada: string;
+    perfilSaida: string;
+    objectivoGeral: string;
+    objectivosEspecificos: string;
+    tempo: string;
+  }) =>
+    `Gera o conteúdo das 3 fases didácticas de um Plano de Aula Horizontal no modelo INIDE/MED Angola.
+Disciplina: ${dados.disciplina}, Classe: ${dados.classe}, Unidade: ${dados.unidade}, Sumário: ${dados.sumario}.
+Perfil de entrada: ${dados.perfilEntrada}. Perfil de saída: ${dados.perfilSaida}.
+Objectivo geral: ${dados.objectivoGeral}. Objectivos específicos: ${dados.objectivosEspecificos}.
+Tempo total: ${dados.tempo || "45 min"}.
+
+Retorna APENAS JSON válido no seguinte formato (sem markdown, sem backticks):
+{
+  "fases": [
+    {
+      "tempo": "5min",
+      "fase": "Introdução",
+      "conteudo": "...",
+      "metodos": "- Diálogo",
+      "actividades": "...",
+      "estrategia": "...",
+      "meios": "- Quadro\\n- Giz",
+      "avaliacao": "Diagnostica",
+      "obs": ""
+    },
+    {
+      "tempo": "30min",
+      "fase": "Desenvolvimento",
+      "conteudo": "...",
+      "metodos": "- Expositivo\\n- Explicativo\\n- Elaboração conjunta",
+      "actividades": "...",
+      "estrategia": "...",
+      "meios": "...",
+      "avaliacao": "Formativa",
+      "obs": ""
+    },
+    {
+      "tempo": "10min",
+      "fase": "Conclusão",
+      "conteudo": "...",
+      "metodos": "Trabalho independente",
+      "actividades": "...",
+      "estrategia": "...",
+      "meios": "...",
+      "avaliacao": "Formativa",
+      "obs": ""
+    }
+  ]
+}
+O conteúdo deve ser detalhado, rico e contextualizado à realidade angolana. Cada campo deve ter conteúdo substancial.`,
 
   estruturaTrabalho: (dados: {
     titulo: string;
