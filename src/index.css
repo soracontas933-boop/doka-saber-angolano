@@ -127,7 +127,7 @@
   color: #000;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
   border-radius: 2px;
-  overflow: hidden;
+  overflow: visible;
   transition: box-shadow 0.3s ease;
   font-family: 'Times New Roman', 'Georgia', serif;
   font-size: 12pt;
@@ -141,6 +141,8 @@
 .pagina-a4-content {
   padding: 25mm 20mm 30mm 25mm;
   min-height: 250mm;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 /* Número de página */

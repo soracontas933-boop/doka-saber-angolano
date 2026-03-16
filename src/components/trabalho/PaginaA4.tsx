@@ -13,7 +13,7 @@ const PaginaA4: React.FC<PaginaA4Props> = ({ numero, tipo = "conteudo", children
         <div className="pagina-a4-content">
           {children}
         </div>
-        {tipo === "conteudo" && numero && (
+        {tipo !== "capa" && numero && (
           <div className="pagina-a4-numero">{numero}</div>
         )}
       </div>
