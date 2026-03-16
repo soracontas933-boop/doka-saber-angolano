@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Settings,
   FolderOpen,
-  BarChart3,
   LogOut,
   ShieldCheck,
   type LucideIcon,
