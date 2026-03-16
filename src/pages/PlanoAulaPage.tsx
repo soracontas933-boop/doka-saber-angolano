@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { ClipboardList, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
