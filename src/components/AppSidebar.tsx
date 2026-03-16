@@ -32,6 +32,12 @@ const AppSidebar = () => {
       setIsAdmin(user?.email === ADMIN_EMAIL);
     };
     check();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAdmin(session?.user?.email === ADMIN_EMAIL);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
