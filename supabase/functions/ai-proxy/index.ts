@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,112 +6,73 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { servico, payload } = await req.json();
+    const { messages, model, max_tokens, temperature } = await req.json();
 
-    if (!servico || !payload) {
+    if (!messages || !Array.isArray(messages)) {
       return new Response(
-        JSON.stringify({ error: "Parâmetros 'servico' e 'payload' são obrigatórios" }),
+        JSON.stringify({ error: "Parâmetro 'messages' é obrigatório e deve ser um array" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get API key from database using service role
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    const { data: keyData, error: keyError } = await supabase
-      .from("api_keys")
-      .select("chave")
-      .eq("servico", servico)
-      .eq("ativo", true)
-      .single();
-
-    if (keyError || !keyData) {
-      console.error("API key not found for service:", servico, keyError);
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: `Chave API não encontrada para o serviço: ${servico}. Configure no painel admin.` }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "LOVABLE_API_KEY não está configurada" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const apiKey = keyData.chave;
+    const selectedModel = model || "google/gemini-2.5-flash";
 
-    let url: string;
-    let headers: Record<string, string>;
-    let body: string;
+    console.log(`Calling Lovable AI with model: ${selectedModel}...`);
 
-    switch (servico) {
-      case "gemini":
-        url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-        headers = { "Content-Type": "application/json" };
-        body = JSON.stringify(payload);
-        break;
-
-      case "groq":
-        url = "https://api.groq.com/openai/v1/chat/completions";
-        headers = {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        };
-        body = JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          temperature: payload.temperature ?? 0.7,
-          max_tokens: payload.max_tokens ?? 8000,
-          messages: payload.messages,
-        });
-        break;
-
-      case "openrouter":
-        url = "https://openrouter.ai/api/v1/chat/completions";
-        headers = {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://doka.app",
-          "X-Title": "DOKA Educational App",
-        };
-        body = JSON.stringify({
-          model: "mistralai/mistral-small-3.1-24b-instruct:free",
-          messages: payload.messages,
-          max_tokens: payload.max_tokens ?? 4000,
-          temperature: payload.temperature ?? 0.5,
-        });
-        break;
-
-      default:
-        return new Response(
-          JSON.stringify({ error: `Serviço desconhecido: ${servico}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-    }
-
-    console.log(`Calling ${servico} API...`);
-    const response = await fetch(url, {
+    const response = await fetch(LOVABLE_AI_URL, {
       method: "POST",
-      headers,
-      body,
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages,
+        max_tokens: max_tokens ?? 8000,
+        temperature: temperature ?? 0.7,
+      }),
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-      console.error(`${servico} API error [${response.status}]:`, JSON.stringify(result));
+      const errorText = await response.text();
+      console.error(`Lovable AI error [${response.status}]:`, errorText);
+
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       return new Response(
-        JSON.stringify({
-          error: `Erro na API ${servico}`,
-          status: response.status,
-          details: result,
-        }),
+        JSON.stringify({ error: "Erro na API de IA", details: errorText }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const result = await response.json();
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
