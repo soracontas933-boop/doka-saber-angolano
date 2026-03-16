@@ -16,6 +16,7 @@ import AdminPanelPage from "@/pages/AdminPanelPage";
 import SettingsPage from "@/pages/SettingsPage";
 import PlanosPage from "@/pages/PlanosPage";
 import ApiKeysSetup from "@/pages/ApiKeysSetup";
+import CorrecaoPage from "@/pages/CorrecaoPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
