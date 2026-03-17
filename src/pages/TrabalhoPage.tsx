@@ -115,6 +115,10 @@ const TrabalhoPage = () => {
   const handleGenerateStructure = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tema.trim()) { toast.error("Insira o tema do trabalho"); return; }
+    
+    const canProceed = await checkLimit("trabalho");
+    if (!canProceed) return;
+    
     setLoading(true);
     setEtapa("A gerar estrutura...");
 
