@@ -18,8 +18,10 @@ import {
   Mail,
   User,
   Globe,
+  Receipt,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import AdminPaymentsTab from "@/components/AdminPaymentsTab";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -645,6 +647,10 @@ const AdminPanelPage = () => {
             <Globe className="h-4 w-4" />
             Tráfego
           </TabsTrigger>
+          <TabsTrigger value="payments" className="gap-2">
+            <Receipt className="h-4 w-4" />
+            Pagamentos
+          </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -856,6 +862,11 @@ const AdminPanelPage = () => {
         {/* Traffic Tab */}
         <TabsContent value="traffic">
           <TrafficPanel pageViews={pageViews} trafficPeriod={trafficPeriod} setTrafficPeriod={setTrafficPeriod} />
+        </TabsContent>
+
+        {/* Payments Tab */}
+        <TabsContent value="payments">
+          <AdminPaymentsTab />
         </TabsContent>
       </Tabs>
 
