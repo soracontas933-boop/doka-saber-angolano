@@ -68,6 +68,10 @@ const ResumoPage = () => {
       toast.error("Seleccione pelo menos uma foto do caderno");
       return;
     }
+    
+    const canProceed = await checkLimit("resumo");
+    if (!canProceed) return;
+    
     setLoading(true);
     setResultado(null);
     setImagemResumo(null);
