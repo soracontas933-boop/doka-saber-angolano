@@ -14,6 +14,8 @@ import {
   PanelLeftOpen,
   ShieldCheck,
   Crown,
+  LifeBuoy,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
