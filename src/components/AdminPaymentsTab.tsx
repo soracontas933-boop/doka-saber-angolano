@@ -209,6 +209,38 @@ const AdminPaymentsTab = () => {
     }
   };
 
+  const fetchSettings = async () => {
+    setSettingsLoading(true);
+    const { data } = await (supabase.from("payment_settings") as any).select("chave, valor");
+    if (data) {
+      const map: Record<string, string> = {};
+      data.forEach((d: any) => { map[d.chave] = d.valor; });
+      setIban(map["iban"] || "");
+      setIbanBanco(map["iban_banco"] || "");
+      setIbanTitular(map["iban_titular"] || "");
+      setMulticaixaNumero(map["multicaixa_numero"] || "");
+    }
+    setSettingsLoading(false);
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    const updates = [
+      { chave: "iban", valor: iban },
+      { chave: "iban_banco", valor: ibanBanco },
+      { chave: "iban_titular", valor: ibanTitular },
+      { chave: "multicaixa_numero", valor: multicaixaNumero },
+    ];
+    for (const u of updates) {
+      await (supabase.from("payment_settings") as any)
+        .update({ valor: u.valor, atualizado_em: new Date().toISOString() })
+        .eq("chave", u.chave);
+    }
+    setSavingSettings(false);
+    setEditingSettings(false);
+    toast({ title: "Dados de pagamento actualizados!" });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
