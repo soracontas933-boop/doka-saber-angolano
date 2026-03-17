@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
-  options: { maxTokens?: number; temperature?: number; service?: string } = {}
+  options: { maxTokens?: number; temperature?: number } = {}
 ): Promise<string> {
   const { data, error } = await supabase.functions.invoke("ai-proxy", {
     body: {
@@ -14,7 +14,6 @@ async function callAI(
       ],
       max_tokens: options.maxTokens ?? 8000,
       temperature: options.temperature ?? 0.7,
-      service: options.service,
     },
   });
 
