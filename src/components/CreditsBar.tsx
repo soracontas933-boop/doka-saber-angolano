@@ -125,6 +125,9 @@ const CreditsBar = () => {
             </span>
           </div>
         ) : null}
+
+        {/* Notification Bell */}
+        <NotificationBell />
       </div>
     </div>
   );
