@@ -27,6 +27,7 @@ const disciplinas = [
   "Física", "Química", "Inglês", "Educação Moral e Cívica",
   "Filosofia", "Sociologia", "Educação Visual", "Informática",
   "Economia", "Direito", "Contabilidade", "Gestão",
+  "__manual__",
 ];
 
 const QuestionarioPage = () => {
@@ -37,6 +38,7 @@ const QuestionarioPage = () => {
   const [numPerguntas, setNumPerguntas] = useLocalStorage("doka_quest_numPerguntas", "10");
   const [tipo, setTipo] = useLocalStorage("doka_quest_tipo", "multipla_escolha");
   const [disciplina, setDisciplina] = useLocalStorage("doka_quest_disciplina", "");
+  const [disciplinaManual, setDisciplinaManual] = useLocalStorage("doka_quest_disciplina_manual", "");
   const [dificuldade, setDificuldade] = useLocalStorage("doka_quest_dificuldade", "medio");
   const [comGabarito, setComGabarito] = useLocalStorage("doka_quest_gabarito", "sim");
   const [loading, setLoading] = useState(false);
@@ -90,11 +92,12 @@ const QuestionarioPage = () => {
       }
 
       setEtapa("A gerar questionário...");
+      const nomeDisciplina = disciplina === "__manual__" ? disciplinaManual : disciplina;
       const tipoLabel = tiposPerguntas.find((t) => t.value === tipo)?.label || tipo;
       const prompt = prompts.questionario(
         combinedText,
         parseInt(numPerguntas),
-        disciplina || "Geral",
+        nomeDisciplina || "Geral",
         dificuldade,
         tipoLabel
       );
@@ -107,10 +110,11 @@ const QuestionarioPage = () => {
       toast.success("Questionário gerado com sucesso!");
       logUsage("questionario");
 
-      saveProject("questionario", `Questionário - ${disciplina || "Geral"}`, {
+      const nomeDisciplinaSave = disciplina === "__manual__" ? disciplinaManual : disciplina;
+      saveProject("questionario", `Questionário - ${nomeDisciplinaSave || "Geral"}`, {
         resultado: revisado,
         tipo,
-        disciplina,
+        disciplina: nomeDisciplinaSave,
         numPerguntas,
         dificuldade,
         comGabarito,
@@ -206,12 +210,21 @@ const QuestionarioPage = () => {
 
           <div className="space-y-2">
             <Label>Disciplina</Label>
-            <Select value={disciplina} onValueChange={setDisciplina}>
+            <Select value={disciplina} onValueChange={(v) => { setDisciplina(v); if (v !== "__manual__") setDisciplinaManual(""); }}>
               <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
               <SelectContent>
-                {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                {disciplinas.filter(d => d !== "__manual__").map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                <SelectItem value="__manual__">✏️ Outra (digitar)</SelectItem>
               </SelectContent>
             </Select>
+            {disciplina === "__manual__" && (
+              <Input
+                placeholder="Digite o nome da disciplina"
+                value={disciplinaManual}
+                onChange={(e) => setDisciplinaManual(e.target.value)}
+                className="mt-2"
+              />
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
