@@ -11,12 +11,15 @@ import {
   LogOut,
   ShieldCheck,
   CreditCard,
+  PanelLeftClose,
+  PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 import DokaLogo from "./DokaLogo";
+import { useState } from "react";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
