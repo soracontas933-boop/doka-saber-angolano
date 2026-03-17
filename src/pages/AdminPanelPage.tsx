@@ -863,6 +863,11 @@ const AdminPanelPage = () => {
         <TabsContent value="traffic">
           <TrafficPanel pageViews={pageViews} trafficPeriod={trafficPeriod} setTrafficPeriod={setTrafficPeriod} />
         </TabsContent>
+
+        {/* Payments Tab */}
+        <TabsContent value="payments">
+          <AdminPaymentsTab />
+        </TabsContent>
       </Tabs>
 
       {/* User Management Dialog */}
