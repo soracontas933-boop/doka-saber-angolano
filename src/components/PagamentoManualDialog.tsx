@@ -37,8 +37,26 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey }: PagamentoManualD
   const [submitting, setSubmitting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [paymentInfo, setPaymentInfo] = useState({ iban: "", iban_banco: "", iban_titular: "", multicaixa_numero: "" });
 
   const cfg = PLAN_CONFIGS[planKey];
+
+  useEffect(() => {
+    if (open) {
+      (supabase.from("payment_settings") as any).select("chave, valor").then(({ data }: any) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((d: any) => { map[d.chave] = d.valor; });
+          setPaymentInfo({
+            iban: map["iban"] || "",
+            iban_banco: map["iban_banco"] || "",
+            iban_titular: map["iban_titular"] || "",
+            multicaixa_numero: map["multicaixa_numero"] || "",
+          });
+        }
+      });
+    }
+  }, [open]);
 
   const handleFileSelect = (selectedFile: File) => {
     if (!ACCEPTED_TYPES.includes(selectedFile.type)) {
