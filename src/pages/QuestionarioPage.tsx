@@ -27,6 +27,7 @@ const disciplinas = [
   "Física", "Química", "Inglês", "Educação Moral e Cívica",
   "Filosofia", "Sociologia", "Educação Visual", "Informática",
   "Economia", "Direito", "Contabilidade", "Gestão",
+  "__manual__",
 ];
 
 const QuestionarioPage = () => {
