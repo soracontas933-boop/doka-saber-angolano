@@ -18,6 +18,8 @@ import SettingsPage from "@/pages/SettingsPage";
 import PlanosPage from "@/pages/PlanosPage";
 import ApiKeysSetup from "@/pages/ApiKeysSetup";
 import CorrecaoPage from "@/pages/CorrecaoPage";
+import SuportePage from "@/pages/SuportePage";
+import AdminMensagensPage from "@/pages/AdminMensagensPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
