@@ -371,14 +371,43 @@ function generateCoverPageHTML(data: CoverPageData): string {
   `;
 }
 
+async function imageToDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function exportToPDF(content: string, filename: string, coverData?: CoverPageData) {
   showExportOverlay("A gerar ficheiro PDF...");
   try {
+    // Pre-convert coat of arms to data URL to avoid CORS issues
+    let coatDataUrl: string | null = null;
+    if (coverData) {
+      coatDataUrl = await imageToDataUrl(ANGOLA_COAT_OF_ARMS_URL);
+    }
+
     const container = document.createElement("div");
-    container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 700px;";
+    container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 700px; position: absolute; left: -9999px; top: 0;";
 
     if (coverData) {
-      container.innerHTML = generateCoverPageHTML(coverData);
+      // Replace the image URL with data URL in cover HTML
+      let coverHTML = generateCoverPageHTML(coverData);
+      if (coatDataUrl) {
+        coverHTML = coverHTML.replace(ANGOLA_COAT_OF_ARMS_URL, coatDataUrl);
+      } else {
+        // Remove the img tag entirely if we couldn't load
+        coverHTML = coverHTML.replace(/<img[^>]*>/g, "");
+      }
+      container.innerHTML = coverHTML;
     }
 
     const contentDiv = document.createElement("div");
@@ -397,19 +426,35 @@ export async function exportToPDF(content: string, filename: string, coverData?:
     container.appendChild(contentDiv);
     document.body.appendChild(container);
 
+    // Wait for any images to load
+    const images = container.querySelectorAll("img");
+    await Promise.all(
+      Array.from(images).map(
+        (img) => new Promise<void>((resolve) => {
+          if (img.complete) return resolve();
+          img.onload = () => resolve();
+          img.onerror = () => { img.remove(); resolve(); };
+        })
+      )
+    );
+
     const html2pdf = (await import("html2pdf.js")).default;
 
     await html2pdf()
       .set({
         margin: [15, 15, 15, 15],
         filename: `${filename}.pdf`,
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
       } as any)
       .from(container)
       .save();
 
     document.body.removeChild(container);
+  } catch (err) {
+    console.error("PDF export error:", err);
+    throw err;
   } finally {
     hideExportOverlay();
   }
