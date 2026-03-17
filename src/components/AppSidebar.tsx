@@ -13,11 +13,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  Crown,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
+import { Badge } from "@/components/ui/badge";
 
 import DokaLogo from "./DokaLogo";
 import { useState } from "react";
@@ -76,7 +78,17 @@ const AppSidebar = () => {
       }`}
     >
       <div className={`flex items-center flex-shrink-0 ${collapsed ? "p-3 justify-center" : "p-6 justify-between"}`}>
-        {!collapsed && <DokaLogo size={36} />}
+        {!collapsed && (
+          <div className="flex items-center gap-2">
+            <DokaLogo size={36} />
+            {isAdmin && (
+              <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 gap-1 text-[10px] px-1.5 py-0.5">
+                <Crown className="h-3 w-3" />
+                Master
+              </Badge>
+            )}
+          </div>
+        )}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors text-sidebar-foreground opacity-70 hover:opacity-100"
