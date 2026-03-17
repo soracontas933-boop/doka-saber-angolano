@@ -71,6 +71,10 @@ const QuestionarioPage = () => {
       toast.error("Seleccione pelo menos uma foto do conteúdo");
       return;
     }
+    
+    const canProceed = await checkLimit("questionario");
+    if (!canProceed) return;
+    
     setLoading(true);
     setResultado(null);
 
