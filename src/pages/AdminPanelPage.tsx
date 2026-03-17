@@ -419,15 +419,22 @@ const AdminPanelPage = () => {
         }
       });
 
+      // Filter out master accounts
+      const masterIds = new Set(
+        Array.from(userMap.entries())
+          .filter(([, u]) => MASTER_EMAILS.includes(u.email.toLowerCase()))
+          .map(([id]) => id)
+      );
+
       setUsers(
-        Array.from(userMap.values()).sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
+        Array.from(userMap.values())
+          .filter((u) => !MASTER_EMAILS.includes(u.email.toLowerCase()))
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       );
       setTokensByService(svcTokens);
       setProjectsByType(typeCount);
-      setRecentLogs(recentLogsRes.data ?? []);
-      setPageViews(pageViewsRes.data ?? []);
+      setRecentLogs((recentLogsRes.data ?? []).filter((l: any) => !masterIds.has(l.user_id)));
+      setPageViews((pageViewsRes.data ?? []).filter((v: any) => !masterIds.has(v.user_id)));
     } finally {
       setLoading(false);
     }
