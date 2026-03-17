@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { ClipboardList, Upload, Camera, X, Image, Loader2 } from "lucide-react";
@@ -53,6 +54,7 @@ interface FaseAula {
 }
 
 const PlanoAulaPage = () => {
+  const { checkLimit, logUsage } = useUsageTracker();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
@@ -132,6 +134,7 @@ const PlanoAulaPage = () => {
       setHFases(fases);
 
       toast.success("Plano de aula horizontal gerado com sucesso!");
+      logUsage("plano_aula");
 
       saveProject("plano-aula", `Plano Horizontal - ${hData.disciplina || "Geral"} - ${hData.classe}`, {
         tipo: "horizontal",
@@ -153,6 +156,10 @@ const PlanoAulaPage = () => {
       toast.error("Seleccione pelo menos uma foto do conteúdo");
       return;
     }
+    
+    const canProceed = await checkLimit("plano_aula");
+    if (!canProceed) return;
+    
     setLoading(true);
     setResultadoV(null);
 
@@ -174,6 +181,7 @@ const PlanoAulaPage = () => {
       const revisado = await reviewWithOpenRouter(plano);
       setResultadoV(revisado);
       toast.success("Plano de aula gerado com sucesso!");
+      logUsage("plano_aula");
 
       saveProject("plano-aula", `Plano Vertical - ${disciplinaV || "Geral"} - ${classeV}`, {
         tipo: "vertical",

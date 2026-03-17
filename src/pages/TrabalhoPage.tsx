@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { FileText, Download, Copy, Upload, Plus, Minus, Image, Loader2, FileDown, ArrowLeft, Pencil, Eye, Save } from "lucide-react";
@@ -37,6 +38,7 @@ const tiposTrabalho = [
 type Fase = "formulario" | "estrutura" | "resultado";
 
 const TrabalhoPage = () => {
+  const { checkLimit, logUsage } = useUsageTracker();
   const [tema, setTema] = useLocalStorage("doka_trabalho_tema", "");
   const [nomeEscola, setNomeEscola] = useLocalStorage("doka_trabalho_escola", "");
   const [logoEscola, setLogoEscola] = useState<File | null>(null);
@@ -113,6 +115,10 @@ const TrabalhoPage = () => {
   const handleGenerateStructure = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tema.trim()) { toast.error("Insira o tema do trabalho"); return; }
+    
+    const canProceed = await checkLimit("trabalho");
+    if (!canProceed) return;
+    
     setLoading(true);
     setEtapa("A gerar estrutura...");
 
@@ -237,6 +243,9 @@ const TrabalhoPage = () => {
 
     setFase("resultado");
     toast.success("Trabalho compilado com sucesso!");
+    
+    // Log usage after successful compilation
+    logUsage("trabalho");
 
     saveProject("trabalho", tema || "Trabalho sem título", {
       resultado: fullContent,

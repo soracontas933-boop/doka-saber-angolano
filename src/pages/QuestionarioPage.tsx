@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { HelpCircle, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
@@ -29,6 +30,7 @@ const disciplinas = [
 ];
 
 const QuestionarioPage = () => {
+  const { checkLimit, logUsage } = useUsageTracker();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
@@ -69,6 +71,10 @@ const QuestionarioPage = () => {
       toast.error("Seleccione pelo menos uma foto do conteúdo");
       return;
     }
+    
+    const canProceed = await checkLimit("questionario");
+    if (!canProceed) return;
+    
     setLoading(true);
     setResultado(null);
 
@@ -99,6 +105,7 @@ const QuestionarioPage = () => {
       setResultado(revisado);
 
       toast.success("Questionário gerado com sucesso!");
+      logUsage("questionario");
 
       saveProject("questionario", `Questionário - ${disciplina || "Geral"}`, {
         resultado: revisado,

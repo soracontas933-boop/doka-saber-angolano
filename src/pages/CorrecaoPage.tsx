@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, AlertTriangle, CheckCircle2, Download, Eye, Loader2, ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -133,6 +134,7 @@ function correctedToMarkdown(c: any): string {
 
 // ─── Component ───────────────────────────────────────────────────
 const CorrecaoPage = () => {
+  const { checkLimit, logUsage } = useUsageTracker();
   const [step, setStep] = useState<Step>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [pastedText, setPastedText] = useState("");
@@ -147,6 +149,9 @@ const CorrecaoPage = () => {
 
   // ─── Upload & Analyse ─────────────────────────────────────────
   const handleAnalyse = useCallback(async () => {
+    const canProceed = await checkLimit("correcao");
+    if (!canProceed) return;
+    
     try {
       setStep("analyzing");
       setProgress(10);
@@ -181,7 +186,7 @@ const CorrecaoPage = () => {
       toast.error(err.message || "Erro na análise.");
       setStep("upload");
     }
-  }, [file, pastedText, inputMode]);
+  }, [file, pastedText, inputMode, checkLimit]);
 
   // ─── Correct ──────────────────────────────────────────────────
   const handleCorrect = useCallback(async () => {
@@ -214,12 +219,13 @@ const CorrecaoPage = () => {
 
       setProgress(100);
       setStep("result");
+      logUsage("correcao");
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Erro na correcção.");
       setStep("report");
     }
-  }, [analise, extractedContent]);
+  }, [analise, extractedContent, logUsage]);
 
   // ─── Export ───────────────────────────────────────────────────
   const handleExportPDF = () => {
