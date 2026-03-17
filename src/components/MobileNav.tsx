@@ -38,8 +38,8 @@ const MobileNav = () => {
   };
 
   const navItems = !isLoading && isAdmin
-    ? [...baseNavItems, { to: "/admin", icon: ShieldCheck, label: "Master" }]
-    : baseNavItems;
+    ? [...baseNavItems.filter(i => i.to !== "/suporte"), { to: "/mensagens", icon: MessageSquare, label: "Msgs" }, { to: "/admin", icon: ShieldCheck, label: "Master" }]
+    : [...baseNavItems, { to: "/suporte", icon: LifeBuoy, label: "Suporte" }];
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">

@@ -52,8 +52,9 @@ const AppSidebar = () => {
     navigate("/");
   };
 
-  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string; masterLabel?: string; adminOnly?: boolean }) => {
+  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string; masterLabel?: string; adminOnly?: boolean; userOnly?: boolean }) => {
     if (item.adminOnly && !isAdmin) return null;
+    if (item.userOnly && isAdmin) return null;
     const isActive = location.pathname === item.to;
     const displayLabel = isAdmin && item.masterLabel ? item.masterLabel : item.label;
 
