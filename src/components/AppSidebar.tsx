@@ -9,7 +9,7 @@ import {
   Settings,
   FolderOpen,
   LogOut,
-  ShieldCheck,
+  
   CreditCard,
   PanelLeftClose,
   PanelLeftOpen,
