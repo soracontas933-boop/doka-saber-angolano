@@ -38,6 +38,7 @@ const tiposTrabalho = [
 type Fase = "formulario" | "estrutura" | "resultado";
 
 const TrabalhoPage = () => {
+  const { checkLimit, logUsage } = useUsageTracker();
   const [tema, setTema] = useLocalStorage("doka_trabalho_tema", "");
   const [nomeEscola, setNomeEscola] = useLocalStorage("doka_trabalho_escola", "");
   const [logoEscola, setLogoEscola] = useState<File | null>(null);
