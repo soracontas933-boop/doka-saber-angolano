@@ -95,7 +95,7 @@ export function useUsageTracker() {
     }
 
     // Update creditos_usados via secure RPC function
-    await supabase.rpc("increment_creditos_usados" as any, { p_user_id: user.id });
+    await supabase.rpc("increment_creditos_usados", { p_user_id: user.id });
 
     // Refresh plan data
     refetch();
