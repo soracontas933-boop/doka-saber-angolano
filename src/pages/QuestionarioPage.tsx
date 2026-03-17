@@ -30,6 +30,7 @@ const disciplinas = [
 ];
 
 const QuestionarioPage = () => {
+  const { checkLimit, logUsage } = useUsageTracker();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [fonte, setFonte] = useState<"upload" | "camera">("upload");
