@@ -53,7 +53,7 @@ export async function reviewWithOpenRouter(
 
 // ─── Gemini Vision (OCR de fotos) ────────────────────────────────
 export async function extractTextFromImage(base64: string, mimeType = "image/jpeg"): Promise<string> {
-  const prompt = `Analise esta imagem de caderno escolar (pode ser manuscrito ou digitalizado). Extraia TODO o conteúdo visível com máxima fidelidade. Retorne em JSON estruturado: { "tema": "string", "subtemas": ["string"], "conceitos_chave": ["string"], "conteudo_completo": "string", "disciplina_detectada": "string", "nivel_detectado": "string" }`;
+  const prompt = `Você é um OCR especializado. Extraia TODO o texto visível nesta imagem com máxima fidelidade. A imagem pode conter texto manuscrito (escrito à mão), impresso, digitado ou misto. Transcreva exactamente o que está escrito, incluindo títulos, parágrafos, listas, fórmulas, tabelas e anotações. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem formatação JSON, sem comentários adicionais. Se não conseguir ler alguma parte, indique [ilegível].`;
 
   const { data, error } = await supabase.functions.invoke("ai-proxy", {
     body: {

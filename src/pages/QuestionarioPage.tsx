@@ -38,6 +38,7 @@ const QuestionarioPage = () => {
   const [numPerguntas, setNumPerguntas] = useLocalStorage("doka_quest_numPerguntas", "10");
   const [tipo, setTipo] = useLocalStorage("doka_quest_tipo", "multipla_escolha");
   const [disciplina, setDisciplina] = useLocalStorage("doka_quest_disciplina", "");
+  const [disciplinaManual, setDisciplinaManual] = useLocalStorage("doka_quest_disciplina_manual", "");
   const [dificuldade, setDificuldade] = useLocalStorage("doka_quest_dificuldade", "medio");
   const [comGabarito, setComGabarito] = useLocalStorage("doka_quest_gabarito", "sim");
   const [loading, setLoading] = useState(false);
