@@ -186,7 +186,7 @@ const CorrecaoPage = () => {
       toast.error(err.message || "Erro na análise.");
       setStep("upload");
     }
-  }, [file, pastedText, inputMode]);
+  }, [file, pastedText, inputMode, checkLimit]);
 
   // ─── Correct ──────────────────────────────────────────────────
   const handleCorrect = useCallback(async () => {
