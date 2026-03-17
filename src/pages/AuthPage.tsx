@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import DokaLogo from "@/components/DokaLogo";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,18 +17,68 @@ const AuthPage = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { user, isLoading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // TODO: Integrate with Supabase Auth
-    setTimeout(() => {
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast.error("Email ou palavra-passe incorrectos.");
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
+        toast.success("Bem-vindo de volta!");
+        navigate("/dashboard", { replace: true });
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: { nome: name.trim() },
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast.error("Este email já está registado. Tente fazer login.");
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
+        toast.success("Conta criada com sucesso!");
+        navigate("/dashboard", { replace: true });
+      }
+    } catch {
+      toast.error("Erro inesperado. Tente novamente.");
+    } finally {
       setLoading(false);
-      toast.success(isLogin ? "Bem-vindo de volta!" : "Conta criada com sucesso!");
-      navigate("/dashboard");
-    }, 1000);
+    }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -89,6 +142,9 @@ const AuthPage = () => {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               {loading ? "A processar..." : isLogin ? "Entrar" : "Criar conta"}
             </Button>
           </form>
