@@ -48,14 +48,15 @@ const AppSidebar = () => {
     navigate("/");
   };
 
-  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string }) => {
+  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string; masterLabel?: string }) => {
     const isActive = location.pathname === item.to;
+    const displayLabel = isAdmin && item.masterLabel ? item.masterLabel : item.label;
 
     return (
       <NavLink
         key={item.to}
         to={item.to}
-        title={item.label}
+        title={displayLabel}
         className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
       >
         {isActive && (
@@ -66,7 +67,7 @@ const AppSidebar = () => {
           />
         )}
         <item.icon className="relative z-10 h-5 w-5 flex-shrink-0" />
-        {!collapsed && <span className="relative z-10">{item.label}</span>}
+        {!collapsed && <span className="relative z-10">{displayLabel}</span>}
       </NavLink>
     );
   };
