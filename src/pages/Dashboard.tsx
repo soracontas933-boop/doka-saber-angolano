@@ -108,7 +108,7 @@ const CHART_TYPE_COLORS: Record<string, string> = {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { isAdmin, isLoading: isLoadingAdmin } = useAdmin();
+  const { isAdmin, isLoading: isLoadingAdmin, isAuthReady } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [tokensByService, setTokensByService] = useState<Record<string, number>>({});
@@ -124,10 +124,10 @@ const Dashboard = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isLoadingAdmin && !isAdmin) {
+    if (isAuthReady && !isLoadingAdmin && !isAdmin) {
       navigate("/trabalho");
     }
-  }, [isAdmin, isLoadingAdmin, navigate]);
+  }, [isAdmin, isLoadingAdmin, isAuthReady, navigate]);
 
   const fetchData = useCallback(async () => {
     if (!isAdmin) return;
