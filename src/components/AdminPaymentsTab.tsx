@@ -65,6 +65,15 @@ const AdminPaymentsTab = () => {
     payment: PaymentRequest | null;
   }>({ open: false, action: "aprovar", payment: null });
 
+  // Payment settings state
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [editingSettings, setEditingSettings] = useState(false);
+  const [iban, setIban] = useState("");
+  const [ibanBanco, setIbanBanco] = useState("");
+  const [ibanTitular, setIbanTitular] = useState("");
+  const [multicaixaNumero, setMulticaixaNumero] = useState("");
+
   const fetchPayments = useCallback(async () => {
     setLoading(true);
 
