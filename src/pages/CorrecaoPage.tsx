@@ -219,6 +219,7 @@ const CorrecaoPage = () => {
 
       setProgress(100);
       setStep("result");
+      logUsage("correcao");
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Erro na correcção.");
