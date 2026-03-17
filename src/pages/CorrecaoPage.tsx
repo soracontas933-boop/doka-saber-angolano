@@ -225,7 +225,7 @@ const CorrecaoPage = () => {
       toast.error(err.message || "Erro na correcção.");
       setStep("report");
     }
-  }, [analise, extractedContent]);
+  }, [analise, extractedContent, logUsage]);
 
   // ─── Export ───────────────────────────────────────────────────
   const handleExportPDF = () => {
