@@ -90,7 +90,7 @@ const PLAN_COLORS: Record<string, string> = {
 
 const AdminPanelPage = () => {
   const navigate = useNavigate();
-  const { isAdmin, isLoading: isLoadingAdmin } = useAdmin();
+  const { isAdmin, isLoading: isLoadingAdmin, isAuthReady } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [tokensByService, setTokensByService] = useState<Record<string, number>>({});
