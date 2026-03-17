@@ -80,8 +80,9 @@ export function useUsageTracker() {
   }, [plan, getUsageCount]);
 
   const logUsage = useCallback(async (modulo: ModuloType, servicoIa?: string, tokensUsados?: number) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    const user = session.user;
 
     const { error } = await supabase
       .from("usage_logs")
