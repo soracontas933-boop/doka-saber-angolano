@@ -17,6 +17,7 @@ import {
   Phone,
   Mail,
   User,
+  Globe,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
