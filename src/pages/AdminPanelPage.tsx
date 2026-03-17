@@ -463,6 +463,10 @@ const AdminPanelPage = () => {
             <Activity className="h-4 w-4" />
             Logs
           </TabsTrigger>
+          <TabsTrigger value="traffic" className="gap-2">
+            <Globe className="h-4 w-4" />
+            Tráfego
+          </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
