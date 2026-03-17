@@ -9,7 +9,7 @@ import {
   Settings,
   FolderOpen,
   LogOut,
-  ShieldCheck,
+  
   CreditCard,
   PanelLeftClose,
   PanelLeftOpen,
@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdmin } from "@/hooks/use-admin";
+
 import DokaLogo from "./DokaLogo";
 import { useState } from "react";
 
@@ -32,14 +32,11 @@ const navItems = [
   { to: "/planos", icon: CreditCard, label: "Planos" },
 ];
 
-const adminNavItems = [
-  { to: "/admin", icon: ShieldCheck, label: "Painel Master" },
-];
 
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, isLoading } = useAdmin();
+  
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
@@ -90,12 +87,6 @@ const AppSidebar = () => {
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {navItems.map(renderNavItem)}
 
-        {!isLoading && isAdmin && (
-          <>
-            <div className="my-3 border-t border-sidebar-border" />
-            {adminNavItems.map(renderNavItem)}
-          </>
-        )}
       </nav>
 
       <div className="p-3 border-t border-sidebar-border flex-shrink-0 space-y-1">
