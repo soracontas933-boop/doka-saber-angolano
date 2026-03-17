@@ -88,7 +88,7 @@ const AppSidebar = () => {
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {navItems.map(renderNavItem)}
-
+        {isAdmin && renderNavItem({ to: "/admin", icon: ShieldCheck, label: "Painel Admin" })}
       </nav>
 
       <div className="p-3 border-t border-sidebar-border flex-shrink-0 space-y-1">
