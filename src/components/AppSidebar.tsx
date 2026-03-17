@@ -40,6 +40,7 @@ const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin, isLoading } = useAdmin();
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -53,6 +54,7 @@ const AppSidebar = () => {
       <NavLink
         key={item.to}
         to={item.to}
+        title={item.label}
         className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
       >
         {isActive && (
@@ -62,16 +64,27 @@ const AppSidebar = () => {
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
           />
         )}
-        <item.icon className="relative z-10 h-5 w-5" />
-        <span className="relative z-10">{item.label}</span>
+        <item.icon className="relative z-10 h-5 w-5 flex-shrink-0" />
+        {!collapsed && <span className="relative z-10">{item.label}</span>}
       </NavLink>
     );
   };
 
   return (
-    <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-sidebar text-sidebar-foreground">
-      <div className="p-6 flex-shrink-0">
-        <DokaLogo size={36} />
+    <aside
+      className={`hidden md:flex flex-col h-screen sticky top-0 bg-sidebar text-sidebar-foreground transition-all duration-300 ${
+        collapsed ? "w-16" : "w-64"
+      }`}
+    >
+      <div className={`flex items-center flex-shrink-0 ${collapsed ? "p-3 justify-center" : "p-6 justify-between"}`}>
+        {!collapsed && <DokaLogo size={36} />}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors text-sidebar-foreground opacity-70 hover:opacity-100"
+          title={collapsed ? "Expandir menu" : "Recolher menu"}
+        >
+          {collapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+        </button>
       </div>
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
@@ -88,17 +101,19 @@ const AppSidebar = () => {
       <div className="p-3 border-t border-sidebar-border flex-shrink-0 space-y-1">
         <NavLink
           to="/configuracoes"
+          title="Configurações"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity"
         >
-          <Settings className="h-5 w-5" />
-          <span>Configurações</span>
+          <Settings className="h-5 w-5 flex-shrink-0" />
+          {!collapsed && <span>Configurações</span>}
         </NavLink>
         <button
           onClick={handleLogout}
+          title="Sair da Conta"
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity text-destructive"
         >
-          <LogOut className="h-5 w-5" />
-          <span>Sair da Conta</span>
+          <LogOut className="h-5 w-5 flex-shrink-0" />
+          {!collapsed && <span>Sair da Conta</span>}
         </button>
       </div>
     </aside>
