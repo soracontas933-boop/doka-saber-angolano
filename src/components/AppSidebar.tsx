@@ -37,6 +37,7 @@ const navItems = [
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
   
   const [collapsed, setCollapsed] = useState(false);
 
