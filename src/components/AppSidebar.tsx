@@ -14,6 +14,8 @@ import {
   PanelLeftOpen,
   ShieldCheck,
   Crown,
+  LifeBuoy,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -33,6 +35,8 @@ const navItems = [
   { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
   { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
   { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
+  { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
+  { to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true },
 ];
 
 
@@ -48,8 +52,9 @@ const AppSidebar = () => {
     navigate("/");
   };
 
-  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string; masterLabel?: string; adminOnly?: boolean }) => {
+  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string; masterLabel?: string; adminOnly?: boolean; userOnly?: boolean }) => {
     if (item.adminOnly && !isAdmin) return null;
+    if (item.userOnly && isAdmin) return null;
     const isActive = location.pathname === item.to;
     const displayLabel = isAdmin && item.masterLabel ? item.masterLabel : item.label;
 

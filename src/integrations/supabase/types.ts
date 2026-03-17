@@ -197,6 +197,39 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          assunto: string
+          atualizado_em: string
+          criado_em: string
+          estado: string
+          id: string
+          mensagem: string
+          resposta: string | null
+          user_id: string
+        }
+        Insert: {
+          assunto: string
+          atualizado_em?: string
+          criado_em?: string
+          estado?: string
+          id?: string
+          mensagem: string
+          resposta?: string | null
+          user_id: string
+        }
+        Update: {
+          assunto?: string
+          atualizado_em?: string
+          criado_em?: string
+          estado?: string
+          id?: string
+          mensagem?: string
+          resposta?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       usage_logs: {
         Row: {
           criado_em: string

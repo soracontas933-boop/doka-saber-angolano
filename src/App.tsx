@@ -18,6 +18,8 @@ import SettingsPage from "@/pages/SettingsPage";
 import PlanosPage from "@/pages/PlanosPage";
 import ApiKeysSetup from "@/pages/ApiKeysSetup";
 import CorrecaoPage from "@/pages/CorrecaoPage";
+import SuportePage from "@/pages/SuportePage";
+import AdminMensagensPage from "@/pages/AdminMensagensPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,8 @@ const App = () => (
               <Route path="/admin" element={<AdminPanelPage />} />
               <Route path="/configuracoes" element={<SettingsPage />} />
               <Route path="/planos" element={<PlanosPage />} />
+              <Route path="/suporte" element={<SuportePage />} />
+              <Route path="/mensagens" element={<AdminMensagensPage />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFound />} />
