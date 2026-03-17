@@ -25,7 +25,7 @@ import DokaLogo from "./DokaLogo";
 import { useState } from "react";
 
 const navItems = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true },
   { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
