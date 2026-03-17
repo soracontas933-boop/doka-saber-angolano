@@ -493,5 +493,9 @@
 
   .floating-toolbar {
     display: none !important;
-  }
+  } remover marca d´agua no index 
+
+#lovable-badge {
+display: none !important;
 }
+
