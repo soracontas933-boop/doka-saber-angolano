@@ -85,8 +85,9 @@ export function useUserPlan() {
   const [loading, setLoading] = useState(true);
 
   const fetchPlan = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) { setLoading(false); return; }
+    const user = session.user;
 
     const { data, error } = await (supabase.from("user_plans") as any)
       .select("*")

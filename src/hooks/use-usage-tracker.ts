@@ -18,8 +18,9 @@ export function useUsageTracker() {
   const { plan, refetch } = useUserPlan();
 
   const getUsageCount = useCallback(async (modulo: ModuloType): Promise<number> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return 0;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return 0;
+    const user = session.user;
 
     const { count, error } = await supabase
       .from("usage_logs")
@@ -35,8 +36,9 @@ export function useUsageTracker() {
   }, []);
 
   const getAllUsageCounts = useCallback(async (): Promise<Record<string, number>> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return {};
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return {};
+    const user = session.user;
 
     const { data, error } = await supabase
       .from("usage_logs")
@@ -78,8 +80,9 @@ export function useUsageTracker() {
   }, [plan, getUsageCount]);
 
   const logUsage = useCallback(async (modulo: ModuloType, servicoIa?: string, tokensUsados?: number) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    const user = session.user;
 
     const { error } = await supabase
       .from("usage_logs")
