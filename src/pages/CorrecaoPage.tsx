@@ -149,6 +149,9 @@ const CorrecaoPage = () => {
 
   // ─── Upload & Analyse ─────────────────────────────────────────
   const handleAnalyse = useCallback(async () => {
+    const canProceed = await checkLimit("correcao");
+    if (!canProceed) return;
+    
     try {
       setStep("analyzing");
       setProgress(10);
