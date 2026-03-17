@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
-import { LifeBuoy, Send, MessageSquare, Clock, CheckCircle2 } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Send, Loader2, ArrowLeft, Headphones } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SupportMessage {
   id: string;
@@ -15,20 +13,38 @@ interface SupportMessage {
   resposta: string | null;
   estado: string;
   criado_em: string;
+  atualizado_em: string;
+}
+
+interface ChatEntry {
+  id: string;
+  text: string;
+  from: "user" | "admin";
+  time: string;
+  subject?: string;
 }
 
 const SuportePage = () => {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [isFirstMessage, setIsFirstMessage] = useState(false);
   const [assunto, setAssunto] = useState("");
-  const [mensagem, setMensagem] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const fetchMessages = async () => {
     const { data } = await (supabase.from("support_messages") as any)
       .select("*")
-      .order("criado_em", { ascending: false });
-    if (data) setMessages(data);
+      .order("criado_em", { ascending: true });
+    if (data) {
+      setMessages(data);
+      setIsFirstMessage(data.length === 0);
+    }
     setLoading(false);
   };
 
@@ -36,46 +52,96 @@ const SuportePage = () => {
     fetchMessages();
 
     const channel = supabase
-      .channel("support-updates")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "support_messages" }, (payload: any) => {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === payload.new.id ? (payload.new as SupportMessage) : m))
-        );
+      .channel("support-chat-updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_messages" }, () => {
+        fetchMessages();
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Convert support messages to chat entries
+  const chatEntries: ChatEntry[] = [];
+  messages.forEach((m) => {
+    chatEntries.push({
+      id: m.id + "-user",
+      text: m.mensagem,
+      from: "user",
+      time: m.criado_em,
+      subject: m.assunto,
+    });
+    if (m.resposta) {
+      chatEntries.push({
+        id: m.id + "-admin",
+        text: m.resposta,
+        from: "admin",
+        time: m.atualizado_em,
+      });
+    }
+  });
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString("pt-AO", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatDateSeparator = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) return "Hoje";
+    if (date.toDateString() === yesterday.toDateString()) return "Ontem";
+    return date.toLocaleDateString("pt-AO", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const shouldShowDateSeparator = (index: number) => {
+    if (index === 0) return true;
+    const current = new Date(chatEntries[index].time).toDateString();
+    const prev = new Date(chatEntries[index - 1].time).toDateString();
+    return current !== prev;
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!assunto.trim() || !mensagem.trim()) return;
+    if (!newMessage.trim()) return;
+    if (isFirstMessage && !assunto.trim()) {
+      toast({ title: "Digite um assunto", variant: "destructive" });
+      return;
+    }
 
     setSending(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSending(false); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) { setSending(false); return; }
+
+    const subject = isFirstMessage ? assunto.trim() : `Mensagem #${messages.length + 1}`;
 
     const { error } = await (supabase.from("support_messages") as any).insert({
-      user_id: user.id,
-      assunto: assunto.trim(),
-      mensagem: mensagem.trim(),
+      user_id: session.user.id,
+      assunto: subject,
+      mensagem: newMessage.trim(),
     });
 
-    // Also create a notification for admin
     if (!error) {
-      // Get user profile name
       const { data: profile } = await (supabase.from("profiles") as any)
         .select("nome")
-        .eq("id", user.id)
+        .eq("id", session.user.id)
         .single();
 
-      const nome = profile?.nome || user.email || "Utilizador";
+      const nome = profile?.nome || session.user.email || "Utilizador";
 
-      // Insert notification for admin visibility (admin can see all notifications)
       await (supabase.from("notifications") as any).insert({
-        user_id: user.id, // stored as user's but admin can see all
+        user_id: session.user.id,
         titulo: "Nova mensagem de suporte",
-        mensagem: `${nome} enviou: "${assunto.trim()}"`,
+        mensagem: `${nome} enviou: "${subject}"`,
         tipo: "info",
       });
     }
@@ -84,97 +150,139 @@ const SuportePage = () => {
     if (error) {
       toast({ title: "Erro ao enviar", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Mensagem enviada com sucesso!" });
+      setNewMessage("");
       setAssunto("");
-      setMensagem("");
+      setIsFirstMessage(false);
       fetchMessages();
     }
   };
 
-  const estadoBadge = (estado: string) => {
-    if (estado === "respondido") return <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">Respondido</Badge>;
-    return <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300">Aberto</Badge>;
-  };
-
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-3">
-        <LifeBuoy className="h-7 w-7 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Suporte & Ajuda</h1>
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3rem)] max-w-3xl mx-auto">
+      {/* Chat Header */}
+      <div className="flex items-center gap-3 px-4 py-3 bg-primary/10 border-b border-border shrink-0">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20">
+          <Headphones className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-sm font-bold text-foreground">Suporte Doka</h1>
+          <p className="text-xs text-muted-foreground">Normalmente responde em minutos</p>
+        </div>
+        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
       </div>
 
-      {/* New message form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Send className="h-4 w-4" />
-            Enviar Mensagem
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              placeholder="Assunto da mensagem"
-              value={assunto}
-              onChange={(e) => setAssunto(e.target.value)}
-              required
-            />
-            <Textarea
-              placeholder="Descreva o seu problema ou dúvida..."
-              value={mensagem}
-              onChange={(e) => setMensagem(e.target.value)}
-              rows={4}
-              required
-            />
-            <Button type="submit" disabled={sending} className="gap-2">
-              <Send className="h-4 w-4" />
-              {sending ? "Enviando..." : "Enviar"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Previous messages */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">As Minhas Mensagens</h2>
+      {/* Chat Messages Area */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 bg-[hsl(var(--muted)/0.3)]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}>
         {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando...</p>
-        ) : messages.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Ainda não enviou nenhuma mensagem.</p>
-            </CardContent>
-          </Card>
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : chatEntries.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center px-6">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Headphones className="h-8 w-8 text-primary/60" />
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">Bem-vindo ao suporte!</p>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Envie sua primeira mensagem e a equipa Doka irá responder o mais rápido possível.
+            </p>
+          </div>
         ) : (
-          messages.map((m) => (
-            <Card key={m.id}>
-              <CardContent className="py-4 space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-foreground">{m.assunto}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {new Date(m.criado_em).toLocaleDateString("pt-AO", {
-                        day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  {estadoBadge(m.estado)}
-                </div>
-                <p className="text-sm text-muted-foreground">{m.mensagem}</p>
-                {m.resposta && (
-                  <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
-                    <p className="text-xs font-medium text-primary mb-1 flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" /> Resposta da equipa
-                    </p>
-                    <p className="text-sm text-foreground">{m.resposta}</p>
+          <AnimatePresence initial={false}>
+            {chatEntries.map((entry, index) => (
+              <div key={entry.id}>
+                {shouldShowDateSeparator(index) && (
+                  <div className="flex justify-center my-3">
+                    <span className="text-[10px] bg-card/80 backdrop-blur-sm text-muted-foreground px-3 py-1 rounded-full shadow-sm border border-border/50">
+                      {formatDateSeparator(entry.time)}
+                    </span>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          ))
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex mb-1.5 ${entry.from === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`relative max-w-[80%] sm:max-w-[70%] px-3 py-2 rounded-2xl shadow-sm ${
+                      entry.from === "user"
+                        ? "bg-primary text-primary-foreground rounded-br-md"
+                        : "bg-card text-card-foreground border border-border/50 rounded-bl-md"
+                    }`}
+                  >
+                    {entry.from === "admin" && (
+                      <p className="text-[10px] font-bold text-primary mb-0.5">Equipa Doka</p>
+                    )}
+                    {entry.subject && entry.from === "user" && (
+                      <p className={`text-[10px] font-bold mb-0.5 ${entry.from === "user" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                        {entry.subject}
+                      </p>
+                    )}
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{entry.text}</p>
+                    <p className={`text-[10px] mt-1 text-right ${
+                      entry.from === "user" ? "text-primary-foreground/60" : "text-muted-foreground"
+                    }`}>
+                      {formatTime(entry.time)}
+                      {entry.from === "user" && (
+                        <span className="ml-1">✓✓</span>
+                      )}
+                    </p>
+                  </div>
+                </motion.div>
+              </div>
+            ))}
+          </AnimatePresence>
         )}
+        <div ref={messagesEndRef} />
       </div>
+
+      {/* Subject input for first message */}
+      <AnimatePresence>
+        {(isFirstMessage || chatEntries.length === 0) && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden bg-card border-t border-border"
+          >
+            <div className="px-3 py-2">
+              <Input
+                placeholder="Assunto da conversa..."
+                value={assunto}
+                onChange={(e) => setAssunto(e.target.value)}
+                className="h-8 text-xs bg-muted/50 border-none"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Chat Input */}
+      <form
+        onSubmit={handleSend}
+        className="flex items-center gap-2 px-3 py-2.5 bg-card border-t border-border shrink-0"
+      >
+        <Input
+          placeholder="Digite uma mensagem..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          className="flex-1 rounded-full bg-muted/50 border-none text-sm h-10 px-4"
+          disabled={sending}
+        />
+        <Button
+          type="submit"
+          size="icon"
+          disabled={sending || !newMessage.trim()}
+          className="rounded-full h-10 w-10 shrink-0"
+        >
+          {sending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+        </Button>
+      </form>
     </div>
   );
 };
