@@ -94,15 +94,8 @@ export function useUsageTracker() {
       console.error("Error logging usage:", error);
     }
 
-    // Update creditos_usados in user_plans
-    if (plan) {
-      await (supabase.from("user_plans") as any)
-        .update({
-          creditos_usados: (plan.creditos_usados || 0) + 1,
-          atualizado_em: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-    }
+    // Update creditos_usados via secure RPC function
+    await supabase.rpc("increment_creditos_usados" as any, { p_user_id: user.id });
 
     // Refresh plan data
     refetch();
