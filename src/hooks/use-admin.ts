@@ -15,13 +15,15 @@ const isMasterEmail = (email?: string | null) =>
 export const useAdmin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   const checkAdmin = useCallback(async (user: User | null, mounted: { current: boolean }) => {
+    if (!mounted.current) return;
+    setIsAuthReady(true);
+    
     if (!user) {
-      if (mounted.current) {
-        setIsAdmin(false);
-        setIsLoading(false);
-      }
+      setIsAdmin(false);
+      setIsLoading(false);
       return;
     }
 
@@ -74,5 +76,5 @@ export const useAdmin = () => {
     };
   }, [checkAdmin]);
 
-  return { isAdmin, isLoading };
+  return { isAdmin, isLoading, isAuthReady };
 };
