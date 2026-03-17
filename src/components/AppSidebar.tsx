@@ -13,11 +13,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  Crown,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
+import { Badge } from "@/components/ui/badge";
 
 import DokaLogo from "./DokaLogo";
 import { useState } from "react";
