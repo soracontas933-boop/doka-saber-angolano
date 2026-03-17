@@ -156,7 +156,7 @@ async function callWithRetry(fn: () => Promise<any>, retries = 2, delay = 2000):
 }
 
 function getServiceOrder(keys: Record<string, string>, hasImages: boolean, preferredService?: string): string[] {
-  const textServices = ["groq", "openrouter", "gemini"];
+  const textServices = ["selfhosted", "groq", "openrouter", "gemini"];
   const imageServices = ["gemini"];
 
   if (preferredService) {
@@ -209,6 +209,10 @@ serve(async (req) => {
         console.log(`Trying ${svc}...`);
         let result;
         switch (svc) {
+          case "selfhosted":
+            if (hasImages) continue;
+            result = await callWithRetry(() => callSelfHosted(messages, key, max_tokens, temperature));
+            break;
           case "groq":
             if (hasImages) continue;
             result = await callWithRetry(() => callGroq(messages, key, max_tokens, temperature));
