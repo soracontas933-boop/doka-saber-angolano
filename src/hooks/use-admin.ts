@@ -76,5 +76,5 @@ export const useAdmin = () => {
     };
   }, [checkAdmin]);
 
-  return { isAdmin, isLoading };
+  return { isAdmin, isLoading, isAuthReady };
 };
