@@ -105,6 +105,7 @@ const QuestionarioPage = () => {
       setResultado(revisado);
 
       toast.success("Questionário gerado com sucesso!");
+      logUsage("questionario");
 
       saveProject("questionario", `Questionário - ${disciplina || "Geral"}`, {
         resultado: revisado,

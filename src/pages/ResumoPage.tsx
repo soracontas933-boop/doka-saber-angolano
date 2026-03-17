@@ -101,6 +101,7 @@ const ResumoPage = () => {
       setImagemResumo(imgUrl);
 
       toast.success("Resumo gerado com sucesso!");
+      logUsage("resumo");
 
       saveProject("resumo", `${tipoResumo} - ${disciplina || "Geral"}`, {
         resultado: revisado,

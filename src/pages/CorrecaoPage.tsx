@@ -134,6 +134,7 @@ function correctedToMarkdown(c: any): string {
 
 // ─── Component ───────────────────────────────────────────────────
 const CorrecaoPage = () => {
+  const { checkLimit, logUsage } = useUsageTracker();
   const [step, setStep] = useState<Step>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [pastedText, setPastedText] = useState("");

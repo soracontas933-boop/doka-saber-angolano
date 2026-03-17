@@ -181,6 +181,7 @@ const PlanoAulaPage = () => {
       const revisado = await reviewWithOpenRouter(plano);
       setResultadoV(revisado);
       toast.success("Plano de aula gerado com sucesso!");
+      logUsage("plano_aula");
 
       saveProject("plano-aula", `Plano Vertical - ${disciplinaV || "Geral"} - ${classeV}`, {
         tipo: "vertical",
