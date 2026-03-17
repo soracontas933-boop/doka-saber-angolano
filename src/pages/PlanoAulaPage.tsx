@@ -134,6 +134,7 @@ const PlanoAulaPage = () => {
       setHFases(fases);
 
       toast.success("Plano de aula horizontal gerado com sucesso!");
+      logUsage("plano_aula");
 
       saveProject("plano-aula", `Plano Horizontal - ${hData.disciplina || "Geral"} - ${hData.classe}`, {
         tipo: "horizontal",
