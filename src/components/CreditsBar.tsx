@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import NotificationBell from "@/components/NotificationBell";
 
 interface UsageItemProps {
   icon: React.ReactNode;
