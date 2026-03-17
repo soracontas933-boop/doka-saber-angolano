@@ -2,8 +2,10 @@ import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import MobileNav from "./MobileNav";
 import CreditsBar from "./CreditsBar";
+import { usePageTracking } from "@/hooks/use-page-tracking";
 
 const AppLayout = () => {
+  usePageTracking();
   return (
     <div className="flex min-h-screen bg-background">
       <AppSidebar />
