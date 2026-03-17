@@ -119,6 +119,7 @@ const AdminPaymentsTab = () => {
 
   useEffect(() => {
     fetchPayments();
+    fetchSettings();
   }, [fetchPayments]);
 
   const viewReceipt = async (filePath: string) => {
