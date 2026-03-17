@@ -7,10 +7,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// API endpoints
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+
+// Round-robin state
+let lastServiceIndex = 0;
 
 async function getApiKeys() {
   const supabase = createClient(
@@ -21,7 +23,7 @@ async function getApiKeys() {
     .from("api_keys")
     .select("servico, chave")
     .eq("ativo", true);
-  
+
   const keys: Record<string, string> = {};
   for (const row of data || []) {
     keys[row.servico] = row.chave;
@@ -34,7 +36,7 @@ async function callGroq(messages: any[], apiKey: string, maxTokens: number, temp
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "llama-3.1-8b-instant",
+      model: "llama-3.3-70b-versatile",
       messages,
       max_tokens: maxTokens,
       temperature,
@@ -54,7 +56,7 @@ async function callOpenRouter(messages: any[], apiKey: string, maxTokens: number
       "X-Title": "DOKA Angola",
     },
     body: JSON.stringify({
-      model: "mistralai/mistral-small-3.1-24b-instruct:free",
+      model: "deepseek/deepseek-chat-v3-0324:free",
       messages,
       max_tokens: maxTokens,
       temperature,
@@ -111,7 +113,7 @@ async function callGemini(messages: any[], apiKey: string, maxTokens: number, te
   if (!res.ok) throw new Error(`Gemini error ${res.status}: ${await res.text()}`);
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  
+
   return { choices: [{ message: { content: text } }] };
 }
 
@@ -126,6 +128,29 @@ async function callWithRetry(fn: () => Promise<any>, retries = 2, delay = 2000):
       delay *= 2;
     }
   }
+}
+
+function getServiceOrder(keys: Record<string, string>, hasImages: boolean, preferredService?: string): string[] {
+  const textServices = ["groq", "openrouter", "gemini"];
+  const imageServices = ["gemini"];
+
+  if (preferredService) {
+    const base = hasImages ? imageServices : textServices;
+    return [preferredService, ...base.filter((s) => s !== preferredService)];
+  }
+
+  if (hasImages) return imageServices;
+
+  // Round-robin: rotate starting service for load distribution
+  const available = textServices.filter((s) => keys[s]);
+  if (available.length === 0) return textServices;
+
+  lastServiceIndex = (lastServiceIndex + 1) % available.length;
+  const rotated = [
+    ...available.slice(lastServiceIndex),
+    ...available.slice(0, lastServiceIndex),
+  ];
+  return rotated;
 }
 
 serve(async (req) => {
@@ -148,13 +173,7 @@ serve(async (req) => {
       Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
     );
 
-    let preferredService = service;
-    if (hasImages) preferredService = "gemini";
-
-    const servicePriority = preferredService
-      ? [preferredService, ...["groq", "gemini", "openrouter"].filter((s) => s !== preferredService)]
-      : ["groq", "gemini", "openrouter"];
-
+    const servicePriority = getServiceOrder(keys, hasImages, service);
     let lastError: Error | null = null;
 
     for (const svc of servicePriority) {
