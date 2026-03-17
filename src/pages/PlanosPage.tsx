@@ -27,28 +27,10 @@ const formatLimit = (val: number | boolean) => {
 const popularPlan: PlanKey = "profissional";
 
 const PlanosPage = () => {
-  const { plan, loading, refetch } = useUserPlan();
-  const [requesting, setRequesting] = useState<PlanKey | null>(null);
+  const { plan, loading } = useUserPlan();
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
 
   const currentPlanKey = (plan?.plano || "gratuito") as PlanKey;
-
-  const handleSelectPlan = async (planKey: PlanKey) => {
-    if (planKey === "gratuito" || planKey === currentPlanKey) return;
-
-    setRequesting(planKey);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Precisas estar autenticado"); return; }
-
-      // For manual payment: just show instructions
-      toast.info(
-        `Para activar o plano ${PLAN_CONFIGS[planKey].nome}, envie ${PLAN_CONFIGS[planKey].label_preco} por transferência e contacte o suporte com o comprovativo.`,
-        { duration: 10000 }
-      );
-    } finally {
-      setRequesting(null);
-    }
-  };
 
   if (loading) {
     return (
