@@ -106,7 +106,173 @@ const GENERO_LABELS: Record<string, string> = {
   outro: "Outro",
 };
 
-const AdminPanelPage = () => {
+// Traffic Panel Component
+const TrafficPanel = ({
+  pageViews,
+  trafficPeriod,
+  setTrafficPeriod,
+}: {
+  pageViews: any[];
+  trafficPeriod: "today" | "7d" | "30d";
+  setTrafficPeriod: (v: "today" | "7d" | "30d") => void;
+}) => {
+  const now = new Date();
+  const periodStart = useMemo(() => {
+    const d = new Date();
+    if (trafficPeriod === "today") d.setHours(0, 0, 0, 0);
+    else if (trafficPeriod === "7d") d.setDate(d.getDate() - 7);
+    else d.setDate(d.getDate() - 30);
+    return d;
+  }, [trafficPeriod]);
+
+  const filtered = useMemo(
+    () => pageViews.filter((v) => new Date(v.created_at) >= periodStart),
+    [pageViews, periodStart]
+  );
+
+  const totalViews = filtered.length;
+  const uniqueUsers = new Set(filtered.map((v) => v.user_id)).size;
+
+  // Views by page
+  const byPage = useMemo(() => {
+    const map: Record<string, number> = {};
+    filtered.forEach((v) => {
+      map[v.page] = (map[v.page] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [filtered]);
+
+  // Views by day
+  const byDay = useMemo(() => {
+    const map: Record<string, number> = {};
+    filtered.forEach((v) => {
+      const day = new Date(v.created_at).toLocaleDateString("pt-AO", {
+        day: "2-digit",
+        month: "short",
+      });
+      map[day] = (map[day] || 0) + 1;
+    });
+    return Object.entries(map);
+  }, [filtered]);
+
+  // Views by hour (for today)
+  const byHour = useMemo(() => {
+    if (trafficPeriod !== "today") return [];
+    const map: Record<string, number> = {};
+    filtered.forEach((v) => {
+      const h = new Date(v.created_at).getHours();
+      const label = `${h}h`;
+      map[label] = (map[label] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+  }, [filtered, trafficPeriod]);
+
+  const maxPageViews = Math.max(...byPage.map(([, c]) => c), 1);
+  const chartData = trafficPeriod === "today" ? byHour : byDay;
+  const maxChart = Math.max(...chartData.map(([, c]) => c), 1);
+
+  return (
+    <div className="space-y-4">
+      {/* Period selector */}
+      <div className="flex items-center gap-2">
+        {(["today", "7d", "30d"] as const).map((p) => (
+          <Button
+            key={p}
+            variant={trafficPeriod === p ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTrafficPeriod(p)}
+          >
+            {p === "today" ? "Hoje" : p === "7d" ? "7 dias" : "30 dias"}
+          </Button>
+        ))}
+      </div>
+
+      {/* KPI row */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Visitas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">{totalViews}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Utilizadores Únicos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">{uniqueUsers}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Páginas Visitadas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">{byPage.length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Chart */}
+      {chartData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {trafficPeriod === "today" ? "Visitas por Hora" : "Visitas por Dia"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-1 h-40">
+              {chartData.map(([label, count], i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-[10px] text-muted-foreground font-medium">{count}</span>
+                  <div
+                    className="w-full rounded-t bg-primary transition-all duration-300 min-h-[4px]"
+                    style={{ height: `${(count / maxChart) * 100}%` }}
+                  />
+                  <span className="text-[10px] text-muted-foreground truncate max-w-full">{label}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Top pages */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Páginas Mais Visitadas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {byPage.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sem dados de tráfego ainda.</p>
+          ) : (
+            <div className="space-y-3">
+              {byPage.slice(0, 10).map(([page, count]) => (
+                <div key={page} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium text-foreground">{page}</span>
+                    <span className="text-muted-foreground">{count} visitas</span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{ width: `${(count / maxPageViews) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+
   const navigate = useNavigate();
   const { isAdmin, isLoading: isLoadingAdmin, isAuthReady } = useAdmin();
   const [loading, setLoading] = useState(true);
