@@ -149,7 +149,7 @@ const AdminPanelPage = () => {
         }
       }
 
-      const [profilesRes, plansRes, projectsRes, logsRes, recentLogsRes] =
+      const [profilesRes, plansRes, projectsRes, logsRes, recentLogsRes, pageViewsRes] =
         await Promise.all([
           (supabase.from("profiles") as any).select("id, nome, genero, idade, telefone, funcao, created_at"),
           supabase.from("user_plans").select("*"),
@@ -160,6 +160,10 @@ const AdminPanelPage = () => {
             .select("*")
             .order("criado_em", { ascending: false })
             .limit(30),
+          (supabase.from("page_views") as any)
+            .select("id, user_id, page, created_at")
+            .order("created_at", { ascending: false })
+            .limit(1000),
         ]);
 
       const profiles = profilesRes.data ?? [];
