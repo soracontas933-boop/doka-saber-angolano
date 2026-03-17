@@ -243,6 +243,9 @@ const TrabalhoPage = () => {
 
     setFase("resultado");
     toast.success("Trabalho compilado com sucesso!");
+    
+    // Log usage after successful compilation
+    logUsage("trabalho");
 
     saveProject("trabalho", tema || "Trabalho sem título", {
       resultado: fullContent,
