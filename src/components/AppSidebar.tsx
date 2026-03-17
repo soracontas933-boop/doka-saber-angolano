@@ -36,7 +36,7 @@ const navItems = [
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, isLoading } = useAdmin();
+  
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
