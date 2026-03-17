@@ -42,7 +42,7 @@ export async function reviewWithOpenRouter(
     return await callAI(
       "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
       `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
-      { maxTokens, temperature: 0.5, service: "openrouter" }
+      { maxTokens, temperature: 0.5 }
     );
   } catch {
     console.warn("Revisão falhou: retornando conteúdo original");
