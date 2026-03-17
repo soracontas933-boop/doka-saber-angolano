@@ -31,7 +31,7 @@ export async function generateWithGroq(
   maxTokens = 8000,
   temperature = 0.7
 ): Promise<string> {
-  return callAI(systemPrompt, userPrompt, { maxTokens, temperature });
+  return callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
 }
 
 // ─── Revisão de Conteúdo ─────────────────────────────────────────
