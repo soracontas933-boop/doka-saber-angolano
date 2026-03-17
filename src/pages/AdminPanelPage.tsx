@@ -114,8 +114,10 @@ const AdminPanelPage = () => {
   const [tokensByService, setTokensByService] = useState<Record<string, number>>({});
   const [projectsByType, setProjectsByType] = useState<Record<string, number>>({});
   const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
+  const [pageViews, setPageViews] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [trafficPeriod, setTrafficPeriod] = useState<"today" | "7d" | "30d">("7d");
 
   // Dialog state
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
