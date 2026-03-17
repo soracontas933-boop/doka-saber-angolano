@@ -256,6 +256,7 @@ const AdminPanelPage = () => {
       setTokensByService(svcTokens);
       setProjectsByType(typeCount);
       setRecentLogs(recentLogsRes.data ?? []);
+      setPageViews(pageViewsRes.data ?? []);
     } finally {
       setLoading(false);
     }
