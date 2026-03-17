@@ -131,6 +131,27 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_settings: {
+        Row: {
+          atualizado_em: string
+          chave: string
+          id: string
+          valor: string
+        }
+        Insert: {
+          atualizado_em?: string
+          chave: string
+          id?: string
+          valor: string
+        }
+        Update: {
+          atualizado_em?: string
+          chave?: string
+          id?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
