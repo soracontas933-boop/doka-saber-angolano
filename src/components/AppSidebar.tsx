@@ -35,6 +35,8 @@ const navItems = [
   { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
   { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
   { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
+  { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
+  { to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true },
 ];
 
 
