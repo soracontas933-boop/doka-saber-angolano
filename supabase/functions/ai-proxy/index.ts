@@ -11,6 +11,31 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
+// Self-hosted endpoint (OpenAI-compatible API format, e.g. vLLM, Ollama, text-generation-webui)
+async function callSelfHosted(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
+  const selfHostedUrl = apiKey; // For self-hosted, "chave" stores the full URL (e.g. http://your-vps:8000/v1/chat/completions)
+  
+  // Check if the key contains a URL and optional bearer token separated by "|"
+  // Format: "http://your-vps:8000/v1/chat/completions" or "http://your-vps:8000/v1/chat/completions|bearer_token"
+  const [url, token] = apiKey.split("|");
+  
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(url.trim(), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model: "default",
+      messages,
+      max_tokens: maxTokens,
+      temperature,
+    }),
+  });
+  if (!res.ok) throw new Error(`Self-hosted error ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
 // Round-robin state
 let lastServiceIndex = 0;
 
@@ -131,7 +156,7 @@ async function callWithRetry(fn: () => Promise<any>, retries = 2, delay = 2000):
 }
 
 function getServiceOrder(keys: Record<string, string>, hasImages: boolean, preferredService?: string): string[] {
-  const textServices = ["groq", "openrouter", "gemini"];
+  const textServices = ["selfhosted", "groq", "openrouter", "gemini"];
   const imageServices = ["gemini"];
 
   if (preferredService) {
@@ -184,6 +209,10 @@ serve(async (req) => {
         console.log(`Trying ${svc}...`);
         let result;
         switch (svc) {
+          case "selfhosted":
+            if (hasImages) continue;
+            result = await callWithRetry(() => callSelfHosted(messages, key, max_tokens, temperature));
+            break;
           case "groq":
             if (hasImages) continue;
             result = await callWithRetry(() => callGroq(messages, key, max_tokens, temperature));
