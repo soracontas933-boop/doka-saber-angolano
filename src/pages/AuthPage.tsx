@@ -4,6 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import DokaLogo from "@/components/DokaLogo";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +22,10 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [genero, setGenero] = useState("");
+  const [idade, setIdade] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [funcao, setFuncao] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
@@ -46,11 +57,21 @@ const AuthPage = () => {
         toast.success("Bem-vindo de volta!");
         navigate("/dashboard", { replace: true });
       } else {
+        if (!name.trim() || !genero || !funcao) {
+          toast.error("Preencha todos os campos obrigatórios.");
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
-            data: { nome: name.trim() },
+            data: {
+              nome: name.trim(),
+              genero,
+              idade: idade ? parseInt(idade) : null,
+              telefone: telefone.trim() || null,
+              funcao,
+            },
             emailRedirectTo: window.location.origin,
           },
         });
@@ -81,7 +102,7 @@ const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -102,22 +123,78 @@ const AuthPage = () => {
               : "Preencha os campos para se registar"}
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
-                <Input
-                  id="name"
-                  placeholder="O seu nome"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required={!isLogin}
-                />
-              </div>
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="name">Nome completo *</Label>
+                  <Input
+                    id="name"
+                    placeholder="O seu nome"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required={!isLogin}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Género *</Label>
+                    <Select value={genero} onValueChange={setGenero}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="masculino">Masculino</SelectItem>
+                        <SelectItem value="feminino">Feminino</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="idade">Idade</Label>
+                    <Input
+                      id="idade"
+                      type="number"
+                      placeholder="Ex: 18"
+                      min={10}
+                      max={99}
+                      value={idade}
+                      onChange={(e) => setIdade(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="telefone">Telefone</Label>
+                  <Input
+                    id="telefone"
+                    type="tel"
+                    placeholder="Ex: 923 456 789"
+                    value={telefone}
+                    onChange={(e) => setTelefone(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Função *</Label>
+                  <Select value={funcao} onValueChange={setFuncao}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a sua função" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="aluno">Aluno</SelectItem>
+                      <SelectItem value="professor">Professor</SelectItem>
+                      <SelectItem value="outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 type="email"
@@ -128,8 +205,8 @@ const AuthPage = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Palavra-passe</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Palavra-passe *</Label>
               <Input
                 id="password"
                 type="password"

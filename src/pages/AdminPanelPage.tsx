@@ -10,11 +10,13 @@ import {
   Activity,
   CreditCard,
   UserCheck,
-  UserX,
   RefreshCw,
   Search,
   TrendingUp,
   Eye,
+  Phone,
+  Mail,
+  User,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
@@ -52,6 +54,10 @@ interface ManagedUser {
   id: string;
   email: string;
   nome: string | null;
+  genero: string | null;
+  idade: number | null;
+  telefone: string | null;
+  funcao: string | null;
   created_at: string;
   plano: string;
   planId: string | null;
@@ -60,7 +66,6 @@ interface ManagedUser {
   totalProjects: number;
   totalTokens: number;
   lastActivity: string | null;
-  disabled: boolean;
 }
 
 interface RecentLog {
@@ -86,6 +91,18 @@ const PLAN_COLORS: Record<string, string> = {
   intermedio: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
   profissional: "bg-purple-500/15 text-purple-700 dark:text-purple-300",
   premium: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+};
+
+const FUNCAO_LABELS: Record<string, string> = {
+  aluno: "Aluno",
+  professor: "Professor",
+  outro: "Outro",
+};
+
+const GENERO_LABELS: Record<string, string> = {
+  masculino: "Masculino",
+  feminino: "Feminino",
+  outro: "Outro",
 };
 
 const AdminPanelPage = () => {
@@ -115,9 +132,23 @@ const AdminPanelPage = () => {
     if (!isAdmin) return;
     setLoading(true);
     try {
+      // Fetch emails via edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      let emailMap: Record<string, string> = {};
+      if (session) {
+        try {
+          const res = await supabase.functions.invoke("admin-users", {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          if (res.data?.emailMap) emailMap = res.data.emailMap;
+        } catch {
+          // fail silently
+        }
+      }
+
       const [profilesRes, plansRes, projectsRes, logsRes, recentLogsRes] =
         await Promise.all([
-          supabase.from("profiles").select("id, nome, created_at"),
+          (supabase.from("profiles") as any).select("id, nome, genero, idade, telefone, funcao, created_at"),
           supabase.from("user_plans").select("*"),
           supabase.from("projects").select("user_id, tipo, criado_em"),
           supabase.from("usage_logs").select("user_id, servico_ia, tokens_usados, criado_em"),
@@ -133,14 +164,17 @@ const AdminPanelPage = () => {
       const projects = projectsRes.data ?? [];
       const logs = logsRes.data ?? [];
 
-      // Build user map
       const userMap = new Map<string, ManagedUser>();
 
-      profiles.forEach((p) => {
+      profiles.forEach((p: any) => {
         userMap.set(p.id, {
           id: p.id,
-          email: "",
+          email: emailMap[p.id] || "",
           nome: p.nome,
+          genero: p.genero,
+          idade: p.idade,
+          telefone: p.telefone,
+          funcao: p.funcao,
           created_at: p.created_at,
           plano: "gratuito",
           planId: null,
@@ -149,7 +183,6 @@ const AdminPanelPage = () => {
           totalProjects: 0,
           totalTokens: 0,
           lastActivity: null,
-          disabled: false,
         });
       });
 
@@ -163,8 +196,12 @@ const AdminPanelPage = () => {
         } else {
           userMap.set(pl.user_id, {
             id: pl.user_id,
-            email: "",
+            email: emailMap[pl.user_id] || "",
             nome: null,
+            genero: null,
+            idade: null,
+            telefone: null,
+            funcao: null,
             created_at: pl.criado_em,
             plano: pl.plano,
             planId: pl.id,
@@ -173,7 +210,6 @@ const AdminPanelPage = () => {
             totalProjects: 0,
             totalTokens: 0,
             lastActivity: null,
-            disabled: false,
           });
         }
       });
@@ -288,6 +324,8 @@ const AdminPanelPage = () => {
       (u) =>
         u.id.toLowerCase().includes(q) ||
         (u.nome ?? "").toLowerCase().includes(q) ||
+        (u.email ?? "").toLowerCase().includes(q) ||
+        (u.funcao ?? "").toLowerCase().includes(q) ||
         u.plano.toLowerCase().includes(q)
     );
   }, [users, searchQuery]);
@@ -427,7 +465,7 @@ const AdminPanelPage = () => {
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Pesquisar..."
+                  placeholder="Pesquisar nome, email, função..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-9"
@@ -439,11 +477,13 @@ const AdminPanelPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
                       <TableHead>Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Género</TableHead>
+                      <TableHead>Idade</TableHead>
+                      <TableHead>Telefone</TableHead>
+                      <TableHead>Função</TableHead>
                       <TableHead>Plano</TableHead>
-                      <TableHead>Trabalhos</TableHead>
-                      <TableHead>Tokens</TableHead>
                       <TableHead>Registado</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
@@ -451,26 +491,40 @@ const AdminPanelPage = () => {
                   <TableBody>
                     {filteredUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                           Nenhum utilizador encontrado.
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredUsers.map((user) => (
                         <TableRow key={user.id}>
-                          <TableCell className="font-mono text-xs">
-                            {user.id.slice(0, 8)}…
-                          </TableCell>
                           <TableCell className="font-medium">
                             {user.nome || "Sem nome"}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {user.email || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {GENERO_LABELS[user.genero || ""] || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {user.idade || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {user.telefone || "—"}
+                          </TableCell>
+                          <TableCell>
+                            {user.funcao ? (
+                              <Badge variant="outline" className="text-xs">
+                                {FUNCAO_LABELS[user.funcao] || user.funcao}
+                              </Badge>
+                            ) : "—"}
                           </TableCell>
                           <TableCell>
                             <Badge className={PLAN_COLORS[user.plano] || "bg-muted"} variant="secondary">
                               {PLAN_LABELS[user.plano] || user.plano}
                             </Badge>
                           </TableCell>
-                          <TableCell>{user.totalProjects}</TableCell>
-                          <TableCell>{user.totalTokens.toLocaleString()}</TableCell>
                           <TableCell className="text-muted-foreground text-xs">
                             {new Date(user.created_at).toLocaleDateString("pt-AO", {
                               day: "2-digit",
@@ -612,7 +666,7 @@ const AdminPanelPage = () => {
 
       {/* User Management Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCheck className="h-5 w-5 text-primary" />
@@ -624,12 +678,28 @@ const AdminPanelPage = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-muted-foreground">ID</p>
-                  <p className="font-mono text-xs">{selectedUser.id.slice(0, 16)}…</p>
+                  <p className="text-muted-foreground flex items-center gap-1"><User className="h-3 w-3" /> Nome</p>
+                  <p className="font-medium">{selectedUser.nome || "Sem nome"}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Nome</p>
-                  <p className="font-medium">{selectedUser.nome || "Sem nome"}</p>
+                  <p className="text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> Email</p>
+                  <p className="font-medium text-xs break-all">{selectedUser.email || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Género</p>
+                  <p className="font-medium">{GENERO_LABELS[selectedUser.genero || ""] || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Idade</p>
+                  <p className="font-medium">{selectedUser.idade || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Telefone</p>
+                  <p className="font-medium">{selectedUser.telefone || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Função</p>
+                  <p className="font-medium">{FUNCAO_LABELS[selectedUser.funcao || ""] || "—"}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Trabalhos</p>
