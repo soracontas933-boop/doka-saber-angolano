@@ -1,13 +1,15 @@
+import { useEffect, useState } from "react";
 import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UsageItemProps {
   icon: React.ReactNode;
   label: string;
   used: number;
-  limit: number; // -1 = ilimitado, 0 = indisponível
+  limit: number;
 }
 
 const UsageItem = ({ icon, label, used, limit }: UsageItemProps) => {
@@ -15,7 +17,6 @@ const UsageItem = ({ icon, label, used, limit }: UsageItemProps) => {
 
   const isUnlimited = limit === -1;
   const remaining = isUnlimited ? Infinity : Math.max(0, limit - used);
-  const percentage = isUnlimited ? 0 : limit > 0 ? (used / limit) * 100 : 0;
   const isLow = !isUnlimited && remaining <= 1;
 
   return (
@@ -40,7 +41,15 @@ const UsageItem = ({ icon, label, used, limit }: UsageItemProps) => {
 
 const CreditsBar = () => {
   const { plan, loading } = useUserPlan();
+  const { getAllUsageCounts } = useUsageTracker();
   const navigate = useNavigate();
+  const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!loading && plan) {
+      getAllUsageCounts().then(setUsageCounts);
+    }
+  }, [loading, plan, getAllUsageCounts]);
 
   if (loading || !plan) return null;
 
@@ -69,31 +78,31 @@ const CreditsBar = () => {
           <UsageItem
             icon={<FileText className="h-3.5 w-3.5" />}
             label="Trabalhos Escolares"
-            used={plan.limite_trabalhos > 0 ? cfg.limite_trabalhos - plan.limite_trabalhos : 0}
+            used={(usageCounts["trabalho"] || 0) + (usageCounts["correcao"] || 0)}
             limit={cfg.limite_trabalhos}
           />
           <UsageItem
             icon={<BookOpen className="h-3.5 w-3.5" />}
             label="Resumos"
-            used={plan.limite_resumos > 0 ? cfg.limite_resumos - plan.limite_resumos : 0}
+            used={usageCounts["resumo"] || 0}
             limit={cfg.limite_resumos}
           />
           <UsageItem
             icon={<HelpCircle className="h-3.5 w-3.5" />}
             label="Questionários"
-            used={plan.limite_questionarios > 0 ? cfg.limite_questionarios - plan.limite_questionarios : 0}
+            used={usageCounts["questionario"] || 0}
             limit={cfg.limite_questionarios}
           />
           <UsageItem
             icon={<ClipboardList className="h-3.5 w-3.5" />}
             label="Planos de Aula"
-            used={plan.limite_planos_aula > 0 ? cfg.limite_planos_aula - plan.limite_planos_aula : 0}
+            used={usageCounts["plano_aula"] || 0}
             limit={cfg.limite_planos_aula}
           />
           <UsageItem
             icon={<GraduationCap className="h-3.5 w-3.5" />}
             label="TFC/Monografias"
-            used={plan.limite_tfc > 0 ? cfg.limite_tfc - plan.limite_tfc : 0}
+            used={usageCounts["tfc"] || 0}
             limit={cfg.limite_tfc}
           />
         </div>
