@@ -272,7 +272,7 @@ const TrafficPanel = ({
   );
 };
 
-
+const AdminPanelPage = () => {
   const navigate = useNavigate();
   const { isAdmin, isLoading: isLoadingAdmin, isAuthReady } = useAdmin();
   const [loading, setLoading] = useState(true);
