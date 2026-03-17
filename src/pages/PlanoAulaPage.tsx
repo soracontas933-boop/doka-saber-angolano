@@ -156,6 +156,10 @@ const PlanoAulaPage = () => {
       toast.error("Seleccione pelo menos uma foto do conteúdo");
       return;
     }
+    
+    const canProceed = await checkLimit("plano_aula");
+    if (!canProceed) return;
+    
     setLoading(true);
     setResultadoV(null);
 
