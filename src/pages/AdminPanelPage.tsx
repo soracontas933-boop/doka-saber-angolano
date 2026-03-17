@@ -106,10 +106,10 @@ const AdminPanelPage = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isLoadingAdmin && !isAdmin) {
+    if (isAuthReady && !isLoadingAdmin && !isAdmin) {
       navigate("/dashboard");
     }
-  }, [isAdmin, isLoadingAdmin, navigate]);
+  }, [isAdmin, isLoadingAdmin, isAuthReady, navigate]);
 
   const fetchData = useCallback(async () => {
     if (!isAdmin) return;

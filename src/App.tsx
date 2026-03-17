@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import HomePage from "@/pages/HomePage";
 import AuthPage from "@/pages/AuthPage";
 import Dashboard from "@/pages/Dashboard";
@@ -31,17 +32,19 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
-          <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/meus-projetos" element={<MeusProjetosPage />} />
-            <Route path="/trabalho" element={<TrabalhoPage />} />
-            <Route path="/resumo" element={<ResumoPage />} />
-            <Route path="/questionario" element={<QuestionarioPage />} />
-            <Route path="/plano-aula" element={<PlanoAulaPage />} />
-            <Route path="/correcao" element={<CorrecaoPage />} />
-            <Route path="/admin" element={<AdminPanelPage />} />
-            <Route path="/configuracoes" element={<SettingsPage />} />
-            <Route path="/planos" element={<PlanosPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/meus-projetos" element={<MeusProjetosPage />} />
+              <Route path="/trabalho" element={<TrabalhoPage />} />
+              <Route path="/resumo" element={<ResumoPage />} />
+              <Route path="/questionario" element={<QuestionarioPage />} />
+              <Route path="/plano-aula" element={<PlanoAulaPage />} />
+              <Route path="/correcao" element={<CorrecaoPage />} />
+              <Route path="/admin" element={<AdminPanelPage />} />
+              <Route path="/configuracoes" element={<SettingsPage />} />
+              <Route path="/planos" element={<PlanosPage />} />
+            </Route>
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
