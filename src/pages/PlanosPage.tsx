@@ -139,13 +139,9 @@ const PlanosPage = () => {
                       size="sm"
                       className="w-full text-xs"
                       variant={isPopular ? "default" : "outline"}
-                      onClick={() => handleSelectPlan(key)}
-                      disabled={requesting === key}
+                      onClick={() => setSelectedPlan(key)}
                     >
-                      {requesting === key ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                      ) : null}
-                      {isPopular ? "Selecionar" : "Selecionar"}
+                      Selecionar
                     </Button>
                     <p className="text-[10px] text-center text-muted-foreground">Pagamento Manual</p>
                   </>
@@ -155,6 +151,14 @@ const PlanosPage = () => {
           );
         })}
       </div>
+
+      {selectedPlan && (
+        <PagamentoManualDialog
+          open={!!selectedPlan}
+          onOpenChange={(open) => { if (!open) setSelectedPlan(null); }}
+          planKey={selectedPlan}
+        />
+      )}
     </div>
   );
 };
