@@ -32,7 +32,7 @@ const navItems = [
   { to: "/questionario", icon: HelpCircle, label: "Questionário" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
   { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
-  { to: "/planos", icon: CreditCard, label: "Planos" },
+  { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
 ];
 
 
