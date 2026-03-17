@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { HelpCircle, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";

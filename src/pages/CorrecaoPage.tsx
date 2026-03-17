@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, AlertTriangle, CheckCircle2, Download, Eye, Loader2, ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
