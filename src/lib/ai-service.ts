@@ -66,6 +66,7 @@ export async function extractTextFromImage(base64: string, mimeType = "image/jpe
           ],
         },
       ],
+      service: "gemini",
       max_tokens: 4096,
       temperature: 0.2,
     },
