@@ -3,9 +3,8 @@ import { motion } from "framer-motion";
 import { Crown, Check, X, Star, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
-import { supabase } from "@/integrations/supabase/client";
+import PagamentoManualDialog from "@/components/PagamentoManualDialog";
 
 const planOrder: PlanKey[] = ["gratuito", "basico", "intermedio", "profissional", "premium"];
 
@@ -28,28 +27,10 @@ const formatLimit = (val: number | boolean) => {
 const popularPlan: PlanKey = "profissional";
 
 const PlanosPage = () => {
-  const { plan, loading, refetch } = useUserPlan();
-  const [requesting, setRequesting] = useState<PlanKey | null>(null);
+  const { plan, loading } = useUserPlan();
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
 
   const currentPlanKey = (plan?.plano || "gratuito") as PlanKey;
-
-  const handleSelectPlan = async (planKey: PlanKey) => {
-    if (planKey === "gratuito" || planKey === currentPlanKey) return;
-
-    setRequesting(planKey);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Precisas estar autenticado"); return; }
-
-      // For manual payment: just show instructions
-      toast.info(
-        `Para activar o plano ${PLAN_CONFIGS[planKey].nome}, envie ${PLAN_CONFIGS[planKey].label_preco} por transferência e contacte o suporte com o comprovativo.`,
-        { duration: 10000 }
-      );
-    } finally {
-      setRequesting(null);
-    }
-  };
 
   if (loading) {
     return (
@@ -158,13 +139,9 @@ const PlanosPage = () => {
                       size="sm"
                       className="w-full text-xs"
                       variant={isPopular ? "default" : "outline"}
-                      onClick={() => handleSelectPlan(key)}
-                      disabled={requesting === key}
+                      onClick={() => setSelectedPlan(key)}
                     >
-                      {requesting === key ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                      ) : null}
-                      {isPopular ? "Selecionar" : "Selecionar"}
+                      Selecionar
                     </Button>
                     <p className="text-[10px] text-center text-muted-foreground">Pagamento Manual</p>
                   </>
@@ -174,6 +151,14 @@ const PlanosPage = () => {
           );
         })}
       </div>
+
+      {selectedPlan && (
+        <PagamentoManualDialog
+          open={!!selectedPlan}
+          onOpenChange={(open) => { if (!open) setSelectedPlan(null); }}
+          planKey={selectedPlan}
+        />
+      )}
     </div>
   );
 };

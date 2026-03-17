@@ -65,6 +65,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_requests: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          email_confirmacao: string
+          estado: string
+          ficheiro_url: string | null
+          id: string
+          plano: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          email_confirmacao: string
+          estado?: string
+          ficheiro_url?: string | null
+          id?: string
+          plano: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          email_confirmacao?: string
+          estado?: string
+          ficheiro_url?: string | null
+          id?: string
+          plano?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
