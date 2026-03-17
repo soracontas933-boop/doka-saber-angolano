@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -21,7 +23,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil } from "lucide-react";
 
 interface PaymentRequest {
   id: string;
@@ -62,6 +64,15 @@ const AdminPaymentsTab = () => {
     action: "aprovar" | "rejeitar";
     payment: PaymentRequest | null;
   }>({ open: false, action: "aprovar", payment: null });
+
+  // Payment settings state
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [editingSettings, setEditingSettings] = useState(false);
+  const [iban, setIban] = useState("");
+  const [ibanBanco, setIbanBanco] = useState("");
+  const [ibanTitular, setIbanTitular] = useState("");
+  const [multicaixaNumero, setMulticaixaNumero] = useState("");
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
@@ -108,6 +119,7 @@ const AdminPaymentsTab = () => {
 
   useEffect(() => {
     fetchPayments();
+    fetchSettings();
   }, [fetchPayments]);
 
   const viewReceipt = async (filePath: string) => {
@@ -197,6 +209,38 @@ const AdminPaymentsTab = () => {
     }
   };
 
+  const fetchSettings = async () => {
+    setSettingsLoading(true);
+    const { data } = await (supabase.from("payment_settings") as any).select("chave, valor");
+    if (data) {
+      const map: Record<string, string> = {};
+      data.forEach((d: any) => { map[d.chave] = d.valor; });
+      setIban(map["iban"] || "");
+      setIbanBanco(map["iban_banco"] || "");
+      setIbanTitular(map["iban_titular"] || "");
+      setMulticaixaNumero(map["multicaixa_numero"] || "");
+    }
+    setSettingsLoading(false);
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    const updates = [
+      { chave: "iban", valor: iban },
+      { chave: "iban_banco", valor: ibanBanco },
+      { chave: "iban_titular", valor: ibanTitular },
+      { chave: "multicaixa_numero", valor: multicaixaNumero },
+    ];
+    for (const u of updates) {
+      await (supabase.from("payment_settings") as any)
+        .update({ valor: u.valor, atualizado_em: new Date().toISOString() })
+        .eq("chave", u.chave);
+    }
+    setSavingSettings(false);
+    setEditingSettings(false);
+    toast({ title: "Dados de pagamento actualizados!" });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -209,6 +253,68 @@ const AdminPaymentsTab = () => {
 
   return (
     <div className="space-y-4">
+      {/* Payment Settings Card */}
+      <Card className="border-primary/20">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
+            Dados de Pagamento
+          </CardTitle>
+          {!editingSettings ? (
+            <Button variant="outline" size="sm" onClick={() => setEditingSettings(true)} className="gap-1">
+              <Pencil className="h-3.5 w-3.5" />
+              Editar
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => { setEditingSettings(false); fetchSettings(); }}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings} className="gap-1">
+                <Save className="h-3.5 w-3.5" />
+                {savingSettings ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
+          {settingsLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+          ) : editingSettings ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">IBAN</Label>
+                <Input value={iban} onChange={(e) => setIban(e.target.value)} placeholder="AO06 ..." />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Banco</Label>
+                <Input value={ibanBanco} onChange={(e) => setIbanBanco(e.target.value)} placeholder="Nome do Banco" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Titular</Label>
+                <Input value={ibanTitular} onChange={(e) => setIbanTitular(e.target.value)} placeholder="Nome do titular" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs flex items-center gap-1"><Smartphone className="h-3 w-3" /> Multicaixa Express</Label>
+                <Input value={multicaixaNumero} onChange={(e) => setMulticaixaNumero(e.target.value)} placeholder="923 ..." />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">IBAN - {ibanBanco}</p>
+                <p className="font-mono font-medium text-foreground">{iban}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Titular: {ibanTitular}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1"><Smartphone className="h-3 w-3" /> Multicaixa Express</p>
+                <p className="font-mono font-medium text-foreground">{multicaixaNumero}</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Summary */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="border-amber-500/20">

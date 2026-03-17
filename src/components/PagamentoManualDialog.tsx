@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,8 +37,26 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey }: PagamentoManualD
   const [submitting, setSubmitting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [paymentInfo, setPaymentInfo] = useState({ iban: "", iban_banco: "", iban_titular: "", multicaixa_numero: "" });
 
   const cfg = PLAN_CONFIGS[planKey];
+
+  useEffect(() => {
+    if (open) {
+      (supabase.from("payment_settings") as any).select("chave, valor").then(({ data }: any) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((d: any) => { map[d.chave] = d.valor; });
+          setPaymentInfo({
+            iban: map["iban"] || "",
+            iban_banco: map["iban_banco"] || "",
+            iban_titular: map["iban_titular"] || "",
+            multicaixa_numero: map["multicaixa_numero"] || "",
+          });
+        }
+      });
+    }
+  }, [open]);
 
   const handleFileSelect = (selectedFile: File) => {
     if (!ACCEPTED_TYPES.includes(selectedFile.type)) {
@@ -149,12 +167,12 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey }: PagamentoManualD
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Building2 className="h-4 w-4 text-primary" />
-            IBAN - Banco X Angola
+            IBAN - {paymentInfo.iban_banco || "Banco"}
           </div>
           <div className="rounded-md bg-muted px-3 py-2">
-            <p className="text-sm font-mono text-foreground select-all">AO06 0000 0000 0000 0000 0000 0</p>
+            <p className="text-sm font-mono text-foreground select-all">{paymentInfo.iban || "—"}</p>
           </div>
-          <p className="text-xs text-muted-foreground">Titular: Doka Educação Lda</p>
+          <p className="text-xs text-muted-foreground">Titular: {paymentInfo.iban_titular || "—"}</p>
         </div>
 
         <Separator />
@@ -166,7 +184,7 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey }: PagamentoManualD
             Multicaixa Express
           </div>
           <div className="rounded-md bg-muted px-3 py-2">
-            <p className="text-sm font-mono text-foreground select-all">923 000 000</p>
+            <p className="text-sm font-mono text-foreground select-all">{paymentInfo.multicaixa_numero || "—"}</p>
           </div>
         </div>
 
