@@ -32,9 +32,6 @@ const navItems = [
   { to: "/planos", icon: CreditCard, label: "Planos" },
 ];
 
-const adminNavItems = [
-  { to: "/admin", icon: ShieldCheck, label: "Painel Master" },
-];
 
 const AppSidebar = () => {
   const location = useLocation();
