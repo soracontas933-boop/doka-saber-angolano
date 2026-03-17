@@ -91,6 +91,7 @@ const QuestionarioPage = () => {
         return;
       }
 
+      setEtapa("A gerar questionário...");
       const nomeDisciplina = disciplina === "__manual__" ? disciplinaManual : disciplina;
       const tipoLabel = tiposPerguntas.find((t) => t.value === tipo)?.label || tipo;
       const prompt = prompts.questionario(
