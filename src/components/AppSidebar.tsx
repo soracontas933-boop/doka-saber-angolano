@@ -25,7 +25,7 @@ import DokaLogo from "./DokaLogo";
 import { useState } from "react";
 
 const navItems = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true },
   { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
@@ -48,7 +48,8 @@ const AppSidebar = () => {
     navigate("/");
   };
 
-  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string; masterLabel?: string }) => {
+  const renderNavItem = (item: { to: string; icon: LucideIcon; label: string; masterLabel?: string; adminOnly?: boolean }) => {
+    if (item.adminOnly && !isAdmin) return null;
     const isActive = location.pathname === item.to;
     const displayLabel = isAdmin && item.masterLabel ? item.masterLabel : item.label;
 
