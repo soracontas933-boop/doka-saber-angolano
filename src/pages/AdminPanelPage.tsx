@@ -78,6 +78,11 @@ interface RecentLog {
   criado_em: string;
 }
 
+const MASTER_EMAILS = [
+  "kenymatos943@gmail.com",
+  "manuelmatosjose67@gmail.com",
+];
+
 const PLAN_LABELS: Record<string, string> = {
   gratuito: "Gratuito",
   basico: "Básico",
