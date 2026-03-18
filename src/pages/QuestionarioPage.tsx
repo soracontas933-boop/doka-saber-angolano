@@ -2,8 +2,7 @@ import { useState, useRef } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { HelpCircle, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
-import QuestionarioPreview from "@/components/questionario/QuestionarioPreview";
+import { HelpCircle, Upload, Camera, X, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { saveProject } from "@/lib/save-project";
+import { parseQuestionarioContent } from "@/lib/questionario-parser";
+import QuestionarioPreview from "@/components/questionario/QuestionarioPreview";
 
 const tiposPerguntas = [
   { value: "multipla_escolha", label: "Selecção múltipla" },
@@ -74,10 +75,10 @@ const QuestionarioPage = () => {
       toast.error("Seleccione pelo menos uma foto do conteúdo");
       return;
     }
-    
+
     const canProceed = await checkLimit("questionario");
     if (!canProceed) return;
-    
+
     setLoading(true);
     setResultado(null);
 
@@ -106,14 +107,27 @@ const QuestionarioPage = () => {
 
       setEtapa("A melhorar perguntas...");
       const revisado = await reviewWithOpenRouter(questionario);
-      setResultado(revisado);
+
+      const parsedReviewed = parseQuestionarioContent(revisado);
+      const parsedOriginal = parseQuestionarioContent(questionario);
+      const finalQuestionario = parsedReviewed.questions.length > 0
+        ? revisado
+        : parsedOriginal.questions.length > 0
+          ? questionario
+          : revisado;
+
+      if (parsedReviewed.questions.length === 0 && parsedOriginal.questions.length > 0) {
+        toast.warning("Formato revisto inválido. A usar versão original para evitar questionário vazio.");
+      }
+
+      setResultado(finalQuestionario);
 
       toast.success("Questionário gerado com sucesso!");
       logUsage("questionario");
 
       const nomeDisciplinaSave = disciplina === "__manual__" ? disciplinaManual : disciplina;
       saveProject("questionario", `Questionário - ${nomeDisciplinaSave || "Geral"}`, {
-        resultado: revisado,
+        resultado: finalQuestionario,
         tipo,
         disciplina: nomeDisciplinaSave,
         numPerguntas,
