@@ -52,7 +52,7 @@ async function ocrWithGroq(image_base64: string, mime_type: string, apiKey: stri
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "llama-3.2-90b-vision-preview",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: [{
         role: "user",
         content: [
