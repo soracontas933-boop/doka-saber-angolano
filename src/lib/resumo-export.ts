@@ -181,7 +181,7 @@ export async function exportResumoWord(resultado: string, tipoResumo: string, di
 
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `resumo-${disciplina || "geral"}.docx`);
-    toastSuccess();
+    import("sonner").then(({ toast }) => toast.success("Exportado com sucesso!"));
   } catch (err) {
     console.error("Word export error:", err);
     import("sonner").then(({ toast }) => toast.error("Erro ao exportar Word"));
