@@ -201,6 +201,15 @@ export async function exportQuestionarioPDF(resultado: string, tipo: string, dis
           html += `</div>`;
         }
 
+        if (q.answer) {
+          html += `<div style="margin-top:6px;padding:4px 10px;background:#e8f5e9;border-left:3px solid #2e7d32;border-radius:4px;">`;
+          html += `<p style="font-size:10pt;color:#2e7d32;font-weight:bold;margin:0;">✓ Resposta: <span style="font-weight:normal;color:#1b5e20;">${q.answer}</span></p>`;
+          if (q.explanation) {
+            html += `<p style="font-size:9pt;color:#555;font-style:italic;margin:2px 0 0;">${q.explanation}</p>`;
+          }
+          html += `</div>`;
+        }
+
         html += `</div>`;
       }
     }
