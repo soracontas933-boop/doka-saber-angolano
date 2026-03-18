@@ -157,6 +157,9 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `questionario-${disciplina || "geral"}.docx`);
     toastSuccess();
+  } catch (err) {
+    console.error("Word export error:", err);
+    import("sonner").then(({ toast }) => toast.error("Erro ao exportar Word"));
   } finally {
     hideExportOverlay();
   }
