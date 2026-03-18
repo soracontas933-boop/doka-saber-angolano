@@ -55,12 +55,16 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
     );
 
     if (questions.length === 0) {
-      paragraphs.push(
-        new Paragraph({
-          spacing: { after: 80 },
-          children: [new TextRun({ text: resultado, size: 20, font: "Times New Roman" })],
-        })
-      );
+      // Fallback: render raw text line by line
+      const rawLines = resultado.replace(/```[\s\S]*?```/g, '').split('\n').filter(l => l.trim());
+      for (const line of rawLines) {
+        paragraphs.push(
+          new Paragraph({
+            spacing: { after: 80 },
+            children: [new TextRun({ text: line, size: 20, font: "Times New Roman" })],
+          })
+        );
+      }
     } else {
       for (const q of questions) {
         paragraphs.push(
