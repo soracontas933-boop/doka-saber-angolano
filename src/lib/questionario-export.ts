@@ -22,7 +22,7 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
       new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 200 },
-        children: [new TextRun({ text: (titleOverride || title).toUpperCase(), bold: true, size: 32, font: "Times New Roman" })],
+        children: [new TextRun({ text: title.toUpperCase(), bold: true, size: 32, font: "Times New Roman" })],
       })
     );
 
