@@ -165,15 +165,22 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
 export async function exportQuestionarioPDF(resultado: string, tipo: string, disciplina: string, titleOverride?: string) {
   showExportOverlay("A gerar ficheiro PDF...");
   try {
-    const { title, questions } = parseQuestionarioContent(resultado);
+    const parsed = parseQuestionarioContent(resultado);
+    const { questions } = parsed;
+    const title = titleOverride || parsed.title;
     const shortAnswer = isShortAnswerTipo(tipo);
+
+    console.log("[PDF Export] parsed questions:", questions.length, "title:", title);
 
     const container = document.createElement("div");
     container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; color: #000; background: #fff; max-width: 700px; padding: 40px 50px; position: absolute; left: -9999px; top: 0;";
 
     let html = `
       <div style="text-align:center;margin-bottom:20px;">
-        <h1 style="font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">${titleOverride || title}</h1>
+        <h1 style="font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">${title}</h1>
+        ${disciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${disciplina}</p>` : ""}
+        <hr style="border:none;border-bottom:2px solid #000;margin-top:12px;"/>
+      </div>
         ${disciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${disciplina}</p>` : ""}
         <hr style="border:none;border-bottom:2px solid #000;margin-top:12px;"/>
       </div>
