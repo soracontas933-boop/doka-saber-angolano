@@ -168,6 +168,17 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
 
 export async function exportQuestionarioPDF(resultado: string, tipo: string, disciplina: string, titleOverride?: string) {
   showExportOverlay("A gerar ficheiro PDF...");
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  let container: HTMLDivElement | null = null;
+
   try {
     const parsed = parseQuestionarioContent(resultado);
     const { questions } = parsed;
@@ -176,16 +187,31 @@ export async function exportQuestionarioPDF(resultado: string, tipo: string, dis
 
     console.log("[PDF Export] parsed questions:", questions.length, "title:", title);
 
-    const container = document.createElement("div");
-    container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; color: #000; background: #fff; max-width: 700px; padding: 40px 50px; position: absolute; left: -9999px; top: 0;";
+    const safeTitle = escapeHtml(title || "Questionário");
+    const safeDisciplina = escapeHtml(disciplina || "");
+
+    container = document.createElement("div");
+    container.style.cssText = [
+      "font-family: 'Times New Roman', serif",
+      "font-size: 11pt",
+      "line-height: 1.6",
+      "color: #000",
+      "background: #fff",
+      "width: 794px",
+      "padding: 40px 50px",
+      "position: fixed",
+      "left: 0",
+      "top: 0",
+      "opacity: 0",
+      "pointer-events: none",
+      "z-index: -1",
+      "box-sizing: border-box"
+    ].join(";");
 
     let html = `
       <div style="text-align:center;margin-bottom:20px;">
-        <h1 style="font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">${title}</h1>
-        ${disciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${disciplina}</p>` : ""}
-        <hr style="border:none;border-bottom:2px solid #000;margin-top:12px;"/>
-      </div>
-        ${disciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${disciplina}</p>` : ""}
+        <h1 style="font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">${safeTitle}</h1>
+        ${safeDisciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${safeDisciplina}</p>` : ""}
         <hr style="border:none;border-bottom:2px solid #000;margin-top:12px;"/>
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:10pt;">
@@ -195,12 +221,14 @@ export async function exportQuestionarioPDF(resultado: string, tipo: string, dis
     `;
 
     if (questions.length === 0) {
-      html += `<pre style="white-space:pre-wrap;font-family:'Courier New',monospace;font-size:10pt;">${resultado.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
+      const rawFallback = escapeHtml(resultado || "").replace(/\n/g, "<br/>");
+      html += `<div style="font-family:'Courier New',monospace;font-size:10pt;white-space:normal;">${rawFallback || "Sem conteúdo disponível para exportação."}</div>`;
     } else {
       for (const q of questions) {
+        const safeQuestion = escapeHtml(q.text || "");
         html += `<div style="margin-bottom:${shortAnswer ? "24px" : "16px"};">`;
         html += `<p style="color:#666;font-size:10pt;margin-bottom:2px;">Pergunta ${q.number}:</p>`;
-        html += `<p style="font-weight:bold;font-size:11pt;margin-bottom:6px;">${q.text}</p>`;
+        html += `<p style="font-weight:bold;font-size:11pt;margin-bottom:6px;">${safeQuestion}</p>`;
 
         if (shortAnswer && !q.options) {
           const lineCount = tipo === "dissertativa" ? 4 : 2;
@@ -212,19 +240,21 @@ export async function exportQuestionarioPDF(resultado: string, tipo: string, dis
         if (q.options) {
           html += `<div style="margin-left:16px;">`;
           for (const opt of q.options) {
+            const safeOption = escapeHtml(cleanOptionLabel(opt));
             html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
               <span style="display:inline-block;width:13px;height:13px;border:1.5px solid #000;border-radius:2px;flex-shrink:0;"></span>
-              <span>${cleanOptionLabel(opt)}</span>
+              <span>${safeOption}</span>
             </div>`;
           }
           html += `</div>`;
         }
 
         if (q.answer) {
+          const safeAnswer = escapeHtml(q.answer);
           html += `<div style="margin-top:6px;padding:4px 10px;background:#e8f5e9;border-left:3px solid #2e7d32;border-radius:4px;">`;
-          html += `<p style="font-size:10pt;color:#2e7d32;font-weight:bold;margin:0;">✓ Resposta: <span style="font-weight:normal;color:#1b5e20;">${q.answer}</span></p>`;
+          html += `<p style="font-size:10pt;color:#2e7d32;font-weight:bold;margin:0;">✓ Resposta: <span style="font-weight:normal;color:#1b5e20;">${safeAnswer}</span></p>`;
           if (q.explanation) {
-            html += `<p style="font-size:9pt;color:#555;font-style:italic;margin:2px 0 0;">${q.explanation}</p>`;
+            html += `<p style="font-size:9pt;color:#555;font-style:italic;margin:2px 0 0;">${escapeHtml(q.explanation)}</p>`;
           }
           html += `</div>`;
         }
@@ -238,23 +268,36 @@ export async function exportQuestionarioPDF(resultado: string, tipo: string, dis
     container.innerHTML = html;
     document.body.appendChild(container);
 
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
     const html2pdf = (await import("html2pdf.js")).default;
     await html2pdf()
       .set({
-        margin: [15, 15, 15, 15],
+        margin: [12, 12, 12, 12],
         filename: `questionario-${disciplina || "geral"}.pdf`,
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: container.scrollWidth,
+        },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+        pagebreak: { mode: ["css", "legacy"] },
       } as any)
       .from(container)
       .save();
 
-    document.body.removeChild(container);
     toastSuccess();
   } catch (err) {
     console.error("PDF export error:", err);
+    import("sonner").then(({ toast }) => toast.error("Erro ao exportar PDF"));
   } finally {
+    if (container && container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
     hideExportOverlay();
   }
 }
