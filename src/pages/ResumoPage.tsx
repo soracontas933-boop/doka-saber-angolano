@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { saveProject } from "@/lib/save-project";
-import { exportToPDF, exportToWord } from "@/lib/export-utils";
+import ResumoPreview from "@/components/resumo/ResumoPreview";
 
 const tiposResumo = [
   "Resumo por Tópicos",
