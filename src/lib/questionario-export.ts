@@ -16,6 +16,7 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
     const shortAnswer = isShortAnswerTipo(tipo);
     const paragraphs: Paragraph[] = [];
 
+    console.log("[Word Export] raw resultado length:", resultado?.length, "first 200 chars:", resultado?.substring(0, 200));
     console.log("[Word Export] parsed questions:", questions.length, "title:", title);
 
     paragraphs.push(
