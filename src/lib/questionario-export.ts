@@ -1,5 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
+import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
 import { escapeHtml, exportHtmlToPdf } from "@/lib/pdf-export-helper";
 import { parseQuestionarioContent, isShortAnswerTipo, cleanOptionLabel } from "@/lib/questionario-parser";
 
