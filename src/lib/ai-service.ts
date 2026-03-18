@@ -6,22 +6,46 @@ async function callAI(
   userPrompt: string,
   options: { maxTokens?: number; temperature?: number; service?: string } = {}
 ): Promise<string> {
-  const { data, error } = await supabase.functions.invoke("ai-proxy", {
-    body: {
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: options.maxTokens ?? 8000,
-      temperature: options.temperature ?? 0.7,
-      service: options.service,
-    },
-  });
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-proxy`;
+  const session = (await supabase.auth.getSession()).data.session;
 
-  if (error) throw new Error(`Erro ao chamar IA: ${error.message}`);
-  if (data?.error) throw new Error(data.error);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout
 
-  return data?.choices?.[0]?.message?.content || "";
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: options.maxTokens ?? 8000,
+        temperature: options.temperature ?? 0.7,
+        service: options.service,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`Erro IA (${response.status}): ${errBody}`);
+    }
+
+    const data = await response.json();
+    if (data?.error) throw new Error(data.error);
+    return data?.choices?.[0]?.message?.content || "";
+  } catch (e: any) {
+    if (e.name === "AbortError") throw new Error("A geração demorou demais. Tente com menos conteúdo.");
+    throw new Error(`Erro ao chamar IA: ${e.message}`);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // ─── Geração de Conteúdo Principal ───────────────────────────────
