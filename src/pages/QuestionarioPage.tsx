@@ -210,21 +210,23 @@ const QuestionarioPage = () => {
 
           <div className="space-y-2">
             <Label>Disciplina</Label>
-            <Select value={disciplina} onValueChange={(v) => { setDisciplina(v); if (v !== "__manual__") setDisciplinaManual(""); }}>
-              <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
-              <SelectContent>
-                {disciplinas.filter(d => d !== "__manual__").map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                <SelectItem value="__manual__">✏️ Outra (digitar)</SelectItem>
-              </SelectContent>
-            </Select>
-            {disciplina === "__manual__" && (
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={disciplina} onValueChange={(v) => { setDisciplina(v); if (v !== "__manual__") setDisciplinaManual(""); }}>
+                <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                <SelectContent>
+                  {disciplinas.filter(d => d !== "__manual__").map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  <SelectItem value="__manual__">✏️ Outra (digitar)</SelectItem>
+                </SelectContent>
+              </Select>
               <Input
-                placeholder="Digite o nome da disciplina"
+                placeholder="Ou digite aqui"
                 value={disciplinaManual}
-                onChange={(e) => setDisciplinaManual(e.target.value)}
-                className="mt-2"
+                onChange={(e) => {
+                  setDisciplinaManual(e.target.value);
+                  if (e.target.value) setDisciplina("__manual__");
+                }}
               />
-            )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
