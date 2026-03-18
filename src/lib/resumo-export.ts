@@ -1,19 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
 import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
-
-function toastSuccess() {
-  import("sonner").then(({ toast }) => toast.success("Exportado com sucesso!"));
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+import { escapeHtml, exportHtmlToPdf } from "@/lib/pdf-export-helper";
 
 interface ParsedSection {
   heading: string;
