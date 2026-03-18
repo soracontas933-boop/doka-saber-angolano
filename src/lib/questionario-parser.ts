@@ -136,8 +136,23 @@ function parseFromPlainText(text: string): ParsedQuestionario {
   for (const line of lines) {
     if (line.startsWith("```")) continue;
 
+    // Check for answer lines
+    const answerMatch = line.match(/^(?:✓\s*)?(?:resposta|answer|resposta[_ ]correta)\s*[:=]\s*(.+)/i);
+    if (answerMatch && current) {
+      current.answer = normalizeText(answerMatch[1]);
+      continue;
+    }
+
+    // Check for explanation lines
+    const explanationMatch = line.match(/^(?:explicaç[aã]o|explanation)\s*[:=]\s*(.+)/i);
+    if (explanationMatch && current) {
+      current.explanation = normalizeText(explanationMatch[1]);
+      continue;
+    }
+
     const questionMatch =
-      line.match(/^(?:pergunta\s*)?(\d+)[\.\)\-:]\s*(.+)/i) ||
+      line.match(/^(?:\*\*)?(?:pergunta\s*)?(\d+)[\.\)\-:\s]*(?:\*\*)?\s*(.+)/i) ||
+      line.match(/^#{1,4}\s*(?:pergunta\s*)?(\d+)[\.\)\-:\s]*(.+)/i) ||
       line.match(/^(\d+)\s+[\-–]\s+(.+)/);
 
     if (questionMatch) {

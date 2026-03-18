@@ -10,15 +10,20 @@ function toastSuccess() {
 export async function exportQuestionarioWord(resultado: string, tipo: string, disciplina: string, titleOverride?: string) {
   showExportOverlay("A gerar ficheiro Word...");
   try {
-    const { title, questions } = parseQuestionarioContent(resultado);
+    const parsed = parseQuestionarioContent(resultado);
+    const { questions } = parsed;
+    const title = titleOverride || parsed.title;
     const shortAnswer = isShortAnswerTipo(tipo);
     const paragraphs: Paragraph[] = [];
+
+    console.log("[Word Export] raw resultado length:", resultado?.length, "first 200 chars:", resultado?.substring(0, 200));
+    console.log("[Word Export] parsed questions:", questions.length, "title:", title);
 
     paragraphs.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 200 },
-        children: [new TextRun({ text: (titleOverride || title).toUpperCase(), bold: true, size: 32, font: "Times New Roman" })],
+        children: [new TextRun({ text: title.toUpperCase(), bold: true, size: 32, font: "Times New Roman" })],
       })
     );
 
@@ -51,12 +56,16 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
     );
 
     if (questions.length === 0) {
-      paragraphs.push(
-        new Paragraph({
-          spacing: { after: 80 },
-          children: [new TextRun({ text: resultado, size: 20, font: "Times New Roman" })],
-        })
-      );
+      // Fallback: render raw text line by line
+      const rawLines = resultado.replace(/```[\s\S]*?```/g, '').split('\n').filter(l => l.trim());
+      for (const line of rawLines) {
+        paragraphs.push(
+          new Paragraph({
+            spacing: { after: 80 },
+            children: [new TextRun({ text: line, size: 20, font: "Times New Roman" })],
+          })
+        );
+      }
     } else {
       for (const q of questions) {
         paragraphs.push(
@@ -149,6 +158,9 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `questionario-${disciplina || "geral"}.docx`);
     toastSuccess();
+  } catch (err) {
+    console.error("Word export error:", err);
+    import("sonner").then(({ toast }) => toast.error("Erro ao exportar Word"));
   } finally {
     hideExportOverlay();
   }
@@ -157,15 +169,22 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
 export async function exportQuestionarioPDF(resultado: string, tipo: string, disciplina: string, titleOverride?: string) {
   showExportOverlay("A gerar ficheiro PDF...");
   try {
-    const { title, questions } = parseQuestionarioContent(resultado);
+    const parsed = parseQuestionarioContent(resultado);
+    const { questions } = parsed;
+    const title = titleOverride || parsed.title;
     const shortAnswer = isShortAnswerTipo(tipo);
+
+    console.log("[PDF Export] parsed questions:", questions.length, "title:", title);
 
     const container = document.createElement("div");
     container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; color: #000; background: #fff; max-width: 700px; padding: 40px 50px; position: absolute; left: -9999px; top: 0;";
 
     let html = `
       <div style="text-align:center;margin-bottom:20px;">
-        <h1 style="font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">${titleOverride || title}</h1>
+        <h1 style="font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">${title}</h1>
+        ${disciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${disciplina}</p>` : ""}
+        <hr style="border:none;border-bottom:2px solid #000;margin-top:12px;"/>
+      </div>
         ${disciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${disciplina}</p>` : ""}
         <hr style="border:none;border-bottom:2px solid #000;margin-top:12px;"/>
       </div>

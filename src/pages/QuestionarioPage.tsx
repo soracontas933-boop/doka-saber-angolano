@@ -105,19 +105,26 @@ const QuestionarioPage = () => {
       );
       const questionario = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
 
-      setEtapa("A melhorar perguntas...");
-      const revisado = await reviewWithOpenRouter(questionario);
+      console.log("[Questionario] AI raw output (first 500):", questionario?.substring(0, 500));
 
-      const parsedReviewed = parseQuestionarioContent(revisado);
-      const parsedOriginal = parseQuestionarioContent(questionario);
-      const finalQuestionario = parsedReviewed.questions.length > 0
-        ? revisado
-        : parsedOriginal.questions.length > 0
-          ? questionario
-          : revisado;
+      // Validate parsed result - skip review for structured JSON to avoid breaking the format
+      const parsed = parseQuestionarioContent(questionario);
+      console.log("[Questionario] Parsed questions:", parsed.questions.length);
 
-      if (parsedReviewed.questions.length === 0 && parsedOriginal.questions.length > 0) {
-        toast.warning("Formato revisto inválido. A usar versão original para evitar questionário vazio.");
+      let finalQuestionario = questionario;
+
+      // Only review if we couldn't parse questions (i.e. it's not structured JSON)
+      if (parsed.questions.length === 0) {
+        setEtapa("A melhorar perguntas...");
+        try {
+          const revisado = await reviewWithOpenRouter(questionario);
+          const parsedRevisado = parseQuestionarioContent(revisado);
+          if (parsedRevisado.questions.length > 0) {
+            finalQuestionario = revisado;
+          }
+        } catch {
+          // keep original
+        }
       }
 
       setResultado(finalQuestionario);
