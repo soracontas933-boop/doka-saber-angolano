@@ -2,6 +2,8 @@ export interface ParsedQuestion {
   number: number;
   text: string;
   options?: string[];
+  answer?: string;
+  explanation?: string;
 }
 
 export interface ParsedQuestionario {
