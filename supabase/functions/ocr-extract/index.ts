@@ -8,88 +8,114 @@ const corsHeaders = {
 };
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-async function getGeminiKey(): Promise<string> {
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-  const { data } = await supabase
-    .from("api_keys")
-    .select("chave")
-    .eq("servico", "gemini")
-    .eq("ativo", true)
-    .limit(1)
-    .single();
+async function getApiKeys(): Promise<Record<string, string>> {
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data } = await supabase.from("api_keys").select("servico, chave").eq("ativo", true);
+  const keys: Record<string, string> = {};
+  for (const row of data || []) keys[row.servico] = row.chave;
+  return keys;
+}
 
-  if (!data?.chave) throw new Error("Chave Gemini não configurada. Vá a /setup-api-keys e adicione uma chave Gemini.");
-  return data.chave;
+const OCR_PROMPT = `Você é um OCR especializado. Extraia TODO o texto visível nesta imagem com máxima fidelidade. A imagem pode conter texto manuscrito (escrito à mão), impresso, digitado ou misto. Transcreva exactamente o que está escrito, incluindo títulos, parágrafos, listas, fórmulas, tabelas e anotações. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem formatação JSON, sem comentários adicionais. Se não conseguir ler alguma parte, indique [ilegível].`;
+
+async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: string): Promise<string> {
+  const body = {
+    contents: [{
+      role: "user",
+      parts: [
+        { inline_data: { mime_type, data: image_base64 } },
+        { text: OCR_PROMPT },
+      ],
+    }],
+    generationConfig: { maxOutputTokens: 4096, temperature: 0.2 },
+  };
+
+  const res = await fetch(`${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini OCR error ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
+
+async function ocrWithGroq(image_base64: string, mime_type: string, apiKey: string): Promise<string> {
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "llama-3.2-90b-vision-preview",
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image_url", image_url: { url: `data:${mime_type};base64,${image_base64}` } },
+          { type: "text", text: OCR_PROMPT },
+        ],
+      }],
+      max_tokens: 4096,
+      temperature: 0.2,
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Groq Vision error ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content || "";
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { image_base64, mime_type = "image/jpeg" } = await req.json();
 
     if (!image_base64) {
-      return new Response(
-        JSON.stringify({ error: "image_base64 é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "image_base64 é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const apiKey = await getGeminiKey();
+    const keys = await getApiKeys();
 
-    const prompt = `Você é um OCR especializado. Extraia TODO o texto visível nesta imagem com máxima fidelidade. A imagem pode conter texto manuscrito (escrito à mão), impresso, digitado ou misto. Transcreva exactamente o que está escrito, incluindo títulos, parágrafos, listas, fórmulas, tabelas e anotações. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem formatação JSON, sem comentários adicionais. Se não conseguir ler alguma parte, indique [ilegível].`;
+    // Try providers in order: Gemini → Groq Vision
+    const providers: Array<{ name: string; fn: () => Promise<string> }> = [];
 
-    const body = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { inline_data: { mime_type, data: image_base64 } },
-            { text: prompt },
-          ],
-        },
-      ],
-      generationConfig: { maxOutputTokens: 4096, temperature: 0.2 },
-    };
+    if (keys.gemini) providers.push({ name: "gemini", fn: () => ocrWithGemini(image_base64, mime_type, keys.gemini) });
+    if (keys.groq) providers.push({ name: "groq-vision", fn: () => ocrWithGroq(image_base64, mime_type, keys.groq) });
 
-    const res = await fetch(
-      `${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }
-    );
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("Gemini OCR error:", res.status, errText);
-
-      if (res.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requisições Gemini excedido. Tente novamente em alguns segundos." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ error: `Erro Gemini: ${res.status}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (providers.length === 0) {
+      return new Response(JSON.stringify({ error: "Nenhuma chave de OCR configurada. Adicione Gemini ou Groq em /setup-api-keys." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    let lastError: Error | null = null;
+    for (const provider of providers) {
+      try {
+        console.log(`OCR: trying ${provider.name}...`);
+        const text = await provider.fn();
+        console.log(`OCR: success with ${provider.name}`);
+        return new Response(JSON.stringify({ text }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      } catch (e: any) {
+        console.error(`OCR ${provider.name} failed:`, e.message);
+        lastError = e;
+      }
+    }
 
+    const is429 = lastError?.message?.includes("429");
     return new Response(
-      JSON.stringify({ text }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: is429 ? "Limite de requisições excedido. Tente novamente em alguns segundos." : lastError?.message || "Erro OCR" }),
+      { status: is429 ? 429 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
     console.error("ocr-extract error:", e);
