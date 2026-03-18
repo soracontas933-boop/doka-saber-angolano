@@ -9,7 +9,7 @@ export function escapeHtml(value: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
@@ -19,6 +19,22 @@ interface PdfExportOptions {
   overlayMessage?: string;
   containerWidth?: number;
   padding?: string;
+}
+
+async function waitForImages(root: HTMLElement) {
+  const images = Array.from(root.querySelectorAll("img"));
+  if (images.length === 0) return;
+
+  await Promise.all(
+    images.map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          if (img.complete) return resolve();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+        })
+    )
+  );
 }
 
 export async function exportHtmlToPdf({
@@ -51,16 +67,25 @@ export async function exportHtmlToPdf({
       "left: -10000px",
       "top: 0",
       "opacity: 1",
-      "z-index: -1",
+      "z-index: 0",
+      "pointer-events: none",
       "box-sizing: border-box",
     ].join(";");
 
     container.innerHTML = html;
     document.body.appendChild(container);
 
-    // Wait for fonts + 2 animation frames for stable rendering
     await document.fonts.ready;
+    await waitForImages(container);
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+
+    const hasText = (container.textContent || "").trim().length > 0;
+    const hasRenderableElement = !!container.querySelector("img, table, h1, h2, h3, p, li, div");
+    if (!hasText && !hasRenderableElement) {
+      const { toast } = await import("sonner");
+      toast.error("Sem conteúdo visível para exportar.");
+      return;
+    }
 
     console.log("[PDF Helper] container size:", container.scrollWidth, "x", container.scrollHeight, "html length:", html.length);
 
@@ -77,6 +102,7 @@ export async function exportHtmlToPdf({
           scrollX: 0,
           scrollY: 0,
           windowWidth: containerWidth,
+          windowHeight: Math.max(container.scrollHeight + 40, 1123),
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: ["css", "legacy"] },
