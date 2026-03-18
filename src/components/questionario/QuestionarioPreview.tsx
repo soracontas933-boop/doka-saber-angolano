@@ -145,6 +145,19 @@ const QuestionarioPreview: React.FC<QuestionarioPreviewProps> = ({ resultado, ti
                       ))}
                     </div>
                   )}
+
+                  {q.answer && (
+                    <div style={{ marginTop: "8px", padding: "6px 10px", backgroundColor: "#f0f7f0", borderLeft: "3px solid #2e7d32", borderRadius: "4px" }}>
+                      <p style={{ fontSize: "10pt", color: "#2e7d32", fontWeight: "bold", marginBottom: "2px" }}>
+                        ✓ Resposta: <span style={{ fontWeight: "normal", color: "#1b5e20" }}>{q.answer}</span>
+                      </p>
+                      {q.explanation && (
+                        <p style={{ fontSize: "9pt", color: "#555", fontStyle: "italic", margin: 0 }}>
+                          {q.explanation}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -100,6 +100,31 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
             );
           }
         }
+
+        if (q.answer) {
+          paragraphs.push(
+            new Paragraph({
+              spacing: { before: 60, after: 40 },
+              indent: { left: 360 },
+              shading: { type: "clear" as any, color: "auto", fill: "E8F5E9" },
+              children: [
+                new TextRun({ text: "✓ Resposta: ", bold: true, size: 20, font: "Times New Roman", color: "2E7D32" }),
+                new TextRun({ text: q.answer, size: 20, font: "Times New Roman", color: "1B5E20" }),
+              ],
+            })
+          );
+          if (q.explanation) {
+            paragraphs.push(
+              new Paragraph({
+                spacing: { after: 40 },
+                indent: { left: 360 },
+                children: [
+                  new TextRun({ text: q.explanation, italics: true, size: 18, font: "Times New Roman", color: "555555" }),
+                ],
+              })
+            );
+          }
+        }
       }
     }
 
@@ -172,6 +197,15 @@ export async function exportQuestionarioPDF(resultado: string, tipo: string, dis
               <span style="display:inline-block;width:13px;height:13px;border:1.5px solid #000;border-radius:2px;flex-shrink:0;"></span>
               <span>${cleanOptionLabel(opt)}</span>
             </div>`;
+          }
+          html += `</div>`;
+        }
+
+        if (q.answer) {
+          html += `<div style="margin-top:6px;padding:4px 10px;background:#e8f5e9;border-left:3px solid #2e7d32;border-radius:4px;">`;
+          html += `<p style="font-size:10pt;color:#2e7d32;font-weight:bold;margin:0;">✓ Resposta: <span style="font-weight:normal;color:#1b5e20;">${q.answer}</span></p>`;
+          if (q.explanation) {
+            html += `<p style="font-size:9pt;color:#555;font-style:italic;margin:2px 0 0;">${q.explanation}</p>`;
           }
           html += `</div>`;
         }

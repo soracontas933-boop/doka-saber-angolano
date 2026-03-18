@@ -2,6 +2,8 @@ export interface ParsedQuestion {
   number: number;
   text: string;
   options?: string[];
+  answer?: string;
+  explanation?: string;
 }
 
 export interface ParsedQuestionario {
@@ -95,10 +97,22 @@ function parseFromJson(text: string): ParsedQuestionario | null {
           options = ["Verdadeiro", "Falso"];
         }
 
+        const answer =
+          normalizeText(item?.resposta_correta) ||
+          normalizeText(item?.resposta) ||
+          normalizeText(item?.answer) ||
+          normalizeText(item?.correct_answer);
+
+        const explanation =
+          normalizeText(item?.explicacao) ||
+          normalizeText(item?.explanation);
+
         return {
           number,
           text,
           options: options && options.length > 0 ? options : undefined,
+          answer: answer || undefined,
+          explanation: explanation || undefined,
         };
       })
       .filter((q) => q.text);
