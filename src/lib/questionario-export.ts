@@ -10,9 +10,13 @@ function toastSuccess() {
 export async function exportQuestionarioWord(resultado: string, tipo: string, disciplina: string, titleOverride?: string) {
   showExportOverlay("A gerar ficheiro Word...");
   try {
-    const { title, questions } = parseQuestionarioContent(resultado);
+    const parsed = parseQuestionarioContent(resultado);
+    const { questions } = parsed;
+    const title = titleOverride || parsed.title;
     const shortAnswer = isShortAnswerTipo(tipo);
     const paragraphs: Paragraph[] = [];
+
+    console.log("[Word Export] parsed questions:", questions.length, "title:", title);
 
     paragraphs.push(
       new Paragraph({
