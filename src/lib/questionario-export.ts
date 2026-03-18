@@ -100,6 +100,31 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
             );
           }
         }
+
+        if (q.answer) {
+          paragraphs.push(
+            new Paragraph({
+              spacing: { before: 60, after: 40 },
+              indent: { left: 360 },
+              shading: { type: "clear" as any, color: "auto", fill: "E8F5E9" },
+              children: [
+                new TextRun({ text: "✓ Resposta: ", bold: true, size: 20, font: "Times New Roman", color: "2E7D32" }),
+                new TextRun({ text: q.answer, size: 20, font: "Times New Roman", color: "1B5E20" }),
+              ],
+            })
+          );
+          if (q.explanation) {
+            paragraphs.push(
+              new Paragraph({
+                spacing: { after: 40 },
+                indent: { left: 360 },
+                children: [
+                  new TextRun({ text: q.explanation, italics: true, size: 18, font: "Times New Roman", color: "555555" }),
+                ],
+              })
+            );
+          }
+        }
       }
     }
 
