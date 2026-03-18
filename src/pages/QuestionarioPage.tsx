@@ -3,6 +3,7 @@ import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { HelpCircle, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
+import QuestionarioPreview from "@/components/questionario/QuestionarioPreview";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -283,15 +284,11 @@ const QuestionarioPage = () => {
 
       {resultado && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold">Questionário</h2>
-            <Button size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
-              <Download className="h-4 w-4 mr-1" /> Copiar
-            </Button>
-          </div>
-          <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
-            {resultado}
-          </div>
+          <QuestionarioPreview
+            resultado={resultado}
+            tipo={tipo}
+            disciplina={disciplina === "__manual__" ? disciplinaManual : disciplina}
+          />
         </motion.div>
       )}
     </div>

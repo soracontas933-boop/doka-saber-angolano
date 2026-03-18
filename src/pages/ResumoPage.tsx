@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { BookOpen, Upload, Download, Camera, X, Image, Loader2 } from "lucide-react";
+import { BookOpen, Upload, Download, Camera, X, Image, Loader2, FileDown, FileText, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { saveProject } from "@/lib/save-project";
+import { exportToPDF, exportToWord } from "@/lib/export-utils";
 
 const tiposResumo = [
   "Resumo por Tópicos",
@@ -248,9 +249,17 @@ const ResumoPage = () => {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-semibold">Resumo</h2>
-              <Button size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
-                <Download className="h-4 w-4 mr-1" /> Copiar
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
+                  <Copy className="h-4 w-4 mr-1" /> Copiar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => exportToPDF(resultado, `resumo-${disciplina || "geral"}`)}>
+                  <FileDown className="h-4 w-4 mr-1" /> PDF
+                </Button>
+                <Button size="sm" onClick={() => exportToWord(resultado, `resumo-${disciplina || "geral"}`)}>
+                  <FileText className="h-4 w-4 mr-1" /> Word
+                </Button>
+              </div>
             </div>
             <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
               {resultado}
