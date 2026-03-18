@@ -1,6 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, PageBreak, ImageRun } from "docx";
 import { saveAs } from "file-saver";
 import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
+import { escapeHtml, exportHtmlToPdf } from "@/lib/pdf-export-helper";
 
 export interface CoverPageData {
   nomeEscola?: string;
@@ -20,22 +21,65 @@ export interface CoverPageData {
   modalidade?: "individual" | "grupo";
 }
 
-// ─── Angola Coat of Arms URL ─────────────────────────────────────
 const ANGOLA_COAT_OF_ARMS_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Coat_of_arms_of_Angola.svg/200px-Coat_of_arms_of_Angola.svg.png";
+
+const EMPTY_CONTENT_MESSAGE = "Sem conteúdo suficiente para exportar.";
 
 async function fetchImageAsBuffer(url: string): Promise<ArrayBuffer | null> {
   try {
     const response = await fetch(url);
+    if (!response.ok) return null;
     return await response.arrayBuffer();
   } catch {
     return null;
   }
 }
 
+function decodeBasicHtmlEntities(value: string): string {
+  return value
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function sanitizeTextForDocx(value: string): string {
+  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").replace(/\u00A0/g, " ");
+}
+
+function stripHtmlTags(value: string): string {
+  return value
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|section|article|h1|h2|h3|h4|h5|h6)>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, " ");
+}
+
+function normalizeExportText(content: string): string {
+  const stripped = stripHtmlTags(content || "");
+  return sanitizeTextForDocx(decodeBasicHtmlEntities(stripped))
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function applyInlineBold(value: string): string {
+  return escapeHtml(value).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
+
+function toSafeDocx(value?: string): string {
+  return sanitizeTextForDocx((value || "").trim());
+}
+
 function createCoverPageParagraphs(data: CoverPageData, coatOfArmsBuffer: ArrayBuffer | null): Paragraph[] {
   const paragraphs: Paragraph[] = [];
 
-  // Coat of arms image
   if (coatOfArmsBuffer) {
     paragraphs.push(
       new Paragraph({
@@ -52,35 +96,22 @@ function createCoverPageParagraphs(data: CoverPageData, coatOfArmsBuffer: ArrayB
     );
   }
 
-  // República de Angola
   paragraphs.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 40 },
       children: [new TextRun({ text: "República de Angola", size: 22, font: "Times New Roman" })],
-    })
-  );
-
-  // Ministério da Educação
-  paragraphs.push(
+    }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 40 },
       children: [new TextRun({ text: "Ministério da Educação", size: 22, font: "Times New Roman" })],
-    })
-  );
-
-  // School name
-  paragraphs.push(
+    }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 600 },
-      children: [new TextRun({ text: data.nomeEscola || "Instituto de Ensino", size: 22, font: "Times New Roman" })],
-    })
-  );
-
-  // Type of work (big bold centered with border)
-  paragraphs.push(
+      children: [new TextRun({ text: toSafeDocx(data.nomeEscola) || "Instituto de Ensino", size: 22, font: "Times New Roman" })],
+    }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { before: 200, after: 200 },
@@ -90,41 +121,28 @@ function createCoverPageParagraphs(data: CoverPageData, coatOfArmsBuffer: ArrayB
         left: { style: BorderStyle.SINGLE, size: 6, space: 10, color: "000000" },
         right: { style: BorderStyle.SINGLE, size: 6, space: 10, color: "000000" },
       },
-      children: [
-        new TextRun({ text: data.tipoTrabalho.toUpperCase(), bold: true, size: 48, font: "Times New Roman" }),
-      ],
-    })
-  );
-
-  // TEMA:
-  paragraphs.push(
+      children: [new TextRun({ text: toSafeDocx(data.tipoTrabalho).toUpperCase(), bold: true, size: 48, font: "Times New Roman" })],
+    }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { before: 200, after: 80 },
       children: [new TextRun({ text: "TEMA:", size: 24, font: "Times New Roman" })],
-    })
-  );
-
-  // Theme title
-  paragraphs.push(
+    }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
-      children: [new TextRun({ text: data.tema.toUpperCase(), size: 24, font: "Times New Roman" })],
-    })
+      children: [new TextRun({ text: toSafeDocx(data.tema).toUpperCase(), size: 24, font: "Times New Roman" })],
+    }),
+    new Paragraph({ spacing: { after: 200 }, children: [] })
   );
 
-  // Empty space
-  paragraphs.push(new Paragraph({ spacing: { after: 200 }, children: [] }));
-
-  // Student info section
   const addInfoLine = (label: string, value: string) => {
     paragraphs.push(
       new Paragraph({
         spacing: { after: 60 },
         children: [
           new TextRun({ text: `${label}: `, bold: true, size: 22, font: "Times New Roman" }),
-          new TextRun({ text: value, size: 22, font: "Times New Roman" }),
+          new TextRun({ text: toSafeDocx(value), size: 22, font: "Times New Roman" }),
         ],
       })
     );
@@ -137,17 +155,18 @@ function createCoverPageParagraphs(data: CoverPageData, coatOfArmsBuffer: ArrayB
         children: [new TextRun({ text: "Integrantes:", bold: true, size: 22, font: "Times New Roman" })],
       })
     );
+
     data.nomesIntegrantes.filter(Boolean).forEach((nome, i) => {
       paragraphs.push(
         new Paragraph({
           spacing: { after: 40 },
           indent: { left: 360 },
-          children: [new TextRun({ text: `${i + 1}. ${nome}`, size: 22, font: "Times New Roman" })],
+          children: [new TextRun({ text: `${i + 1}. ${toSafeDocx(nome)}`, size: 22, font: "Times New Roman" })],
         })
       );
     });
-  } else {
-    if (data.nomeAluno) addInfoLine("Nome", data.nomeAluno);
+  } else if (data.nomeAluno) {
+    addInfoLine("Nome", data.nomeAluno);
   }
 
   if (data.numero) addInfoLine("Nº", data.numero);
@@ -157,57 +176,44 @@ function createCoverPageParagraphs(data: CoverPageData, coatOfArmsBuffer: ArrayB
   if (data.disciplina) addInfoLine("Disciplina", data.disciplina);
   if (data.classe) addInfoLine("Classe", data.classe);
 
-  // Empty space
   paragraphs.push(new Paragraph({ spacing: { after: 200 }, children: [] }));
 
-  // Orientador (right-aligned)
   if (data.nomeDocente) {
     paragraphs.push(
       new Paragraph({
         alignment: AlignmentType.RIGHT,
         spacing: { before: 100, after: 40 },
         children: [new TextRun({ text: "ORIENTADOR", bold: true, size: 22, font: "Times New Roman", underline: {} })],
-      })
-    );
-    paragraphs.push(
+      }),
       new Paragraph({
         alignment: AlignmentType.RIGHT,
         spacing: { after: 200 },
-        children: [new TextRun({ text: data.nomeDocente, size: 22, font: "Times New Roman" })],
+        children: [new TextRun({ text: toSafeDocx(data.nomeDocente), size: 22, font: "Times New Roman" })],
       })
     );
   }
 
-  // Empty space
-  paragraphs.push(new Paragraph({ spacing: { after: 400 }, children: [] }));
-
-  // Footer: school + year
   paragraphs.push(
+    new Paragraph({ spacing: { after: 400 }, children: [] }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { before: 200 },
       children: [
         new TextRun({
-          text: `${data.nomeEscola || "Instituto de Ensino"}, ${data.localidade || "Luanda - Angola"}, ${data.anoLectivo || "2025/2026"}`,
+          text: `${toSafeDocx(data.nomeEscola) || "Instituto de Ensino"}, ${toSafeDocx(data.localidade) || "Luanda - Angola"}, ${toSafeDocx(data.anoLectivo) || "2025/2026"}`,
           size: 20,
           font: "Times New Roman",
         }),
       ],
-    })
-  );
-
-  // Page break after cover
-  paragraphs.push(
-    new Paragraph({
-      children: [new PageBreak()],
-    })
+    }),
+    new Paragraph({ children: [new PageBreak()] })
   );
 
   return paragraphs;
 }
 
-function parseMarkdownToParagraphs(text: string): Paragraph[] {
-  const lines = text.split("\n");
+function parseMarkdownToParagraphs(markdown: string): Paragraph[] {
+  const lines = normalizeExportText(markdown).split("\n");
   const paragraphs: Paragraph[] = [];
 
   for (const line of lines) {
@@ -225,7 +231,10 @@ function parseMarkdownToParagraphs(text: string): Paragraph[] {
           spacing: { before: 240, after: 120 },
         })
       );
-    } else if (trimmed.startsWith("## ")) {
+      continue;
+    }
+
+    if (trimmed.startsWith("## ")) {
       paragraphs.push(
         new Paragraph({
           heading: HeadingLevel.HEADING_2,
@@ -233,7 +242,10 @@ function parseMarkdownToParagraphs(text: string): Paragraph[] {
           spacing: { before: 360, after: 120 },
         })
       );
-    } else if (trimmed.startsWith("# ")) {
+      continue;
+    }
+
+    if (trimmed.startsWith("# ")) {
       paragraphs.push(
         new Paragraph({
           heading: HeadingLevel.HEADING_1,
@@ -241,7 +253,10 @@ function parseMarkdownToParagraphs(text: string): Paragraph[] {
           spacing: { before: 480, after: 200 },
         })
       );
-    } else if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
+      continue;
+    }
+
+    if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
       paragraphs.push(
         new Paragraph({
           children: [new TextRun({ text: trimmed.replace(/\*\*/g, ""), bold: true, size: 26, font: "Times New Roman" })],
@@ -249,17 +264,23 @@ function parseMarkdownToParagraphs(text: string): Paragraph[] {
           alignment: trimmed.replace(/\*\*/g, "").length < 40 ? AlignmentType.CENTER : AlignmentType.LEFT,
         })
       );
-    } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-      const content = trimmed.replace(/^[*-]\s*/, "");
+      continue;
+    }
+
+    if (trimmed.startsWith("* ") || trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
+      const content = trimmed.replace(/^[*\-•]\s*/, "");
       const runs: TextRun[] = [];
       const parts = content.split(/(\*\*[^*]+\*\*)/g);
+
       for (const part of parts) {
+        if (!part) continue;
         if (part.startsWith("**") && part.endsWith("**")) {
           runs.push(new TextRun({ text: part.replace(/\*\*/g, ""), bold: true, size: 22, font: "Times New Roman" }));
         } else {
           runs.push(new TextRun({ text: part, size: 22, font: "Times New Roman" }));
         }
       }
+
       paragraphs.push(
         new Paragraph({
           children: [new TextRun({ text: "• ", size: 22, font: "Times New Roman" }), ...runs],
@@ -267,24 +288,27 @@ function parseMarkdownToParagraphs(text: string): Paragraph[] {
           indent: { left: 720 },
         })
       );
-    } else {
-      const runs: TextRun[] = [];
-      const parts = trimmed.split(/(\*\*[^*]+\*\*)/g);
-      for (const part of parts) {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          runs.push(new TextRun({ text: part.replace(/\*\*/g, ""), bold: true, size: 22, font: "Times New Roman" }));
-        } else {
-          runs.push(new TextRun({ text: part, size: 22, font: "Times New Roman" }));
-        }
-      }
-      paragraphs.push(
-        new Paragraph({
-          children: runs,
-          spacing: { before: 60, after: 60 },
-          alignment: AlignmentType.JUSTIFIED,
-        })
-      );
+      continue;
     }
+
+    const runs: TextRun[] = [];
+    const parts = trimmed.split(/(\*\*[^*]+\*\*)/g);
+    for (const part of parts) {
+      if (!part) continue;
+      if (part.startsWith("**") && part.endsWith("**")) {
+        runs.push(new TextRun({ text: part.replace(/\*\*/g, ""), bold: true, size: 22, font: "Times New Roman" }));
+      } else {
+        runs.push(new TextRun({ text: part, size: 22, font: "Times New Roman" }));
+      }
+    }
+
+    paragraphs.push(
+      new Paragraph({
+        children: runs,
+        spacing: { before: 60, after: 60 },
+        alignment: AlignmentType.JUSTIFIED,
+      })
+    );
   }
 
   return paragraphs;
@@ -292,10 +316,18 @@ function parseMarkdownToParagraphs(text: string): Paragraph[] {
 
 export async function exportToWord(content: string, filename: string, coverData?: CoverPageData) {
   showExportOverlay("A gerar ficheiro Word...");
+
   try {
+    const normalizedContent = normalizeExportText(content);
+    if (!normalizedContent) {
+      const { toast } = await import("sonner");
+      toast.error(EMPTY_CONTENT_MESSAGE);
+      return;
+    }
+
     const coatOfArmsBuffer = await fetchImageAsBuffer(ANGOLA_COAT_OF_ARMS_URL);
     const coverParagraphs = coverData ? createCoverPageParagraphs(coverData, coatOfArmsBuffer) : [];
-    const contentParagraphs = parseMarkdownToParagraphs(content);
+    const contentParagraphs = parseMarkdownToParagraphs(normalizedContent);
 
     const doc = new Document({
       sections: [
@@ -303,12 +335,14 @@ export async function exportToWord(content: string, filename: string, coverData?
           properties: {
             page: {
               margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 },
-              borders: coverData ? {
-                pageBorderTop: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-                pageBorderBottom: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-                pageBorderLeft: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-                pageBorderRight: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
-              } : undefined,
+              borders: coverData
+                ? {
+                    pageBorderTop: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                    pageBorderBottom: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                    pageBorderLeft: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                    pageBorderRight: { style: BorderStyle.DOUBLE, size: 6, space: 24, color: "000080" },
+                  }
+                : undefined,
             },
           },
           children: [...coverParagraphs, ...contentParagraphs],
@@ -324,48 +358,59 @@ export async function exportToWord(content: string, filename: string, coverData?
 }
 
 function generateCoverPageHTML(data: CoverPageData): string {
-  const studentsHTML = data.modalidade === "grupo" && data.nomesIntegrantes
-    ? `<p style="margin:4px 0"><strong>Integrantes:</strong></p>` +
-      data.nomesIntegrantes.filter(Boolean).map((n, i) => `<p style="margin:2px 0 2px 20px">${i + 1}. ${n}</p>`).join("")
-    : data.nomeAluno ? `<p style="margin:4px 0"><strong>Nome:</strong> ${data.nomeAluno}</p>` : "";
+  const e = escapeHtml;
+
+  const studentsHTML =
+    data.modalidade === "grupo" && data.nomesIntegrantes
+      ? `<p style="margin:4px 0"><strong>Integrantes:</strong></p>${data.nomesIntegrantes
+          .filter(Boolean)
+          .map((n, i) => `<p style="margin:2px 0 2px 20px">${i + 1}. ${e(n)}</p>`)
+          .join("")}`
+      : data.nomeAluno
+      ? `<p style="margin:4px 0"><strong>Nome:</strong> ${e(data.nomeAluno)}</p>`
+      : "";
 
   return `
-    <div style="font-family: 'Times New Roman', serif; width: 100%; min-height: 1050px; border: 3px double #000080; padding: 40px 50px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; position: relative; page-break-after: always;">
+    <div data-pdf-section style="font-family: 'Times New Roman', serif; width: 100%; min-height: 1050px; border: 3px double #000080; padding: 40px 50px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; position: relative; page-break-after: always; break-inside: avoid;">
       <div style="text-align: center; margin-bottom: 30px;">
         <img src="${ANGOLA_COAT_OF_ARMS_URL}" style="width: 70px; height: 70px; margin-bottom: 8px;" crossorigin="anonymous" />
         <p style="margin: 4px 0; font-size: 13pt;">República de Angola</p>
         <p style="margin: 4px 0; font-size: 13pt;">Ministério da Educação</p>
-        <p style="margin: 4px 0; font-size: 13pt;">${data.nomeEscola || "Instituto de Ensino"}</p>
+        <p style="margin: 4px 0; font-size: 13pt;">${e(data.nomeEscola || "Instituto de Ensino")}</p>
       </div>
-      
+
       <div style="border: 2px solid #000; padding: 30px 40px; margin: 20px 0; text-align: center; width: 85%;">
-        <h1 style="font-size: 28pt; font-weight: bold; margin: 0; letter-spacing: 2px;">${data.tipoTrabalho.toUpperCase()}</h1>
+        <h1 style="font-size: 28pt; font-weight: bold; margin: 0; letter-spacing: 2px;">${e(data.tipoTrabalho.toUpperCase())}</h1>
       </div>
 
       <div style="text-align: center; margin: 15px 0 30px;">
         <p style="margin: 6px 0; font-size: 13pt;">TEMA:</p>
-        <p style="margin: 6px 0; font-size: 13pt; font-weight: 500;">${data.tema.toUpperCase()}</p>
+        <p style="margin: 6px 0; font-size: 13pt; font-weight: 500;">${e(data.tema.toUpperCase())}</p>
       </div>
 
       <div style="width: 100%; text-align: left; margin-top: auto; font-size: 11pt; line-height: 1.8;">
         ${studentsHTML}
-        ${data.numero ? `<p style="margin:4px 0"><strong>Nº</strong> ${data.numero}</p>` : ""}
-        ${data.sala ? `<p style="margin:4px 0"><strong>Sala:</strong> ${data.sala}</p>` : ""}
-        ${data.turma ? `<p style="margin:4px 0"><strong>Turma:</strong> ${data.turma}</p>` : ""}
-        ${data.curso ? `<p style="margin:4px 0"><strong>Curso:</strong> ${data.curso}</p>` : ""}
-        ${data.disciplina ? `<p style="margin:4px 0"><strong>Disciplina:</strong> ${data.disciplina}</p>` : ""}
-        ${data.classe ? `<p style="margin:4px 0"><strong>Classe:</strong> ${data.classe}</p>` : ""}
+        ${data.numero ? `<p style="margin:4px 0"><strong>Nº:</strong> ${e(data.numero)}</p>` : ""}
+        ${data.sala ? `<p style="margin:4px 0"><strong>Sala:</strong> ${e(data.sala)}</p>` : ""}
+        ${data.turma ? `<p style="margin:4px 0"><strong>Turma:</strong> ${e(data.turma)}</p>` : ""}
+        ${data.curso ? `<p style="margin:4px 0"><strong>Curso:</strong> ${e(data.curso)}</p>` : ""}
+        ${data.disciplina ? `<p style="margin:4px 0"><strong>Disciplina:</strong> ${e(data.disciplina)}</p>` : ""}
+        ${data.classe ? `<p style="margin:4px 0"><strong>Classe:</strong> ${e(data.classe)}</p>` : ""}
       </div>
 
-      ${data.nomeDocente ? `
+      ${
+        data.nomeDocente
+          ? `
         <div style="width: 100%; text-align: right; margin-top: 20px; font-size: 11pt;">
           <p style="margin:4px 0"><strong><u>ORIENTADOR</u></strong></p>
-          <p style="margin:4px 0">${data.nomeDocente}</p>
+          <p style="margin:4px 0">${e(data.nomeDocente)}</p>
         </div>
-      ` : ""}
+      `
+          : ""
+      }
 
       <div style="text-align: center; margin-top: auto; padding-top: 30px; font-size: 10pt; color: #333;">
-        <p>${data.nomeEscola || "Instituto de Ensino"}, ${data.localidade || "Luanda - Angola"}, ${data.anoLectivo || "2025/2026"}</p>
+        <p>${e(data.nomeEscola || "Instituto de Ensino")}, ${e(data.localidade || "Luanda - Angola")}, ${e(data.anoLectivo || "2025/2026")}</p>
       </div>
     </div>
   `;
@@ -374,10 +419,11 @@ function generateCoverPageHTML(data: CoverPageData): string {
 async function imageToDataUrl(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
+    if (!res.ok) return null;
     const blob = await res.blob();
     return await new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
+      reader.onloadend = () => resolve((reader.result as string) || null);
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
     });
@@ -386,76 +432,106 @@ async function imageToDataUrl(url: string): Promise<string | null> {
   }
 }
 
-export async function exportToPDF(content: string, filename: string, coverData?: CoverPageData) {
-  showExportOverlay("A gerar ficheiro PDF...");
-  try {
-    // Pre-convert coat of arms to data URL to avoid CORS issues
-    let coatDataUrl: string | null = null;
-    if (coverData) {
-      coatDataUrl = await imageToDataUrl(ANGOLA_COAT_OF_ARMS_URL);
+function buildPdfBodyHtml(content: string): string {
+  const lines = normalizeExportText(content).split("\n");
+  const chunks: string[] = [];
+  let listOpen = false;
+
+  const closeList = () => {
+    if (listOpen) {
+      chunks.push("</ul>");
+      listOpen = false;
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      closeList();
+      chunks.push('<div style="height:8px"></div>');
+      continue;
     }
 
-    const container = document.createElement("div");
-    container.style.cssText = "font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 700px; position: absolute; left: -9999px; top: 0;";
+    if (line.startsWith("### ")) {
+      closeList();
+      chunks.push(`<h3 data-pdf-section style="font-size:14pt;margin:14px 0 8px;break-inside:avoid;">${applyInlineBold(line.replace(/^###\s*/, ""))}</h3>`);
+      continue;
+    }
 
-    if (coverData) {
-      // Replace the image URL with data URL in cover HTML
-      let coverHTML = generateCoverPageHTML(coverData);
-      if (coatDataUrl) {
-        coverHTML = coverHTML.replace(ANGOLA_COAT_OF_ARMS_URL, coatDataUrl);
-      } else {
-        // Remove the img tag entirely if we couldn't load
-        coverHTML = coverHTML.replace(/<img[^>]*>/g, "");
+    if (line.startsWith("## ")) {
+      closeList();
+      chunks.push(`<h2 data-pdf-section style="font-size:16pt;margin:18px 0 10px;break-inside:avoid;">${applyInlineBold(line.replace(/^##\s*/, ""))}</h2>`);
+      continue;
+    }
+
+    if (line.startsWith("# ")) {
+      closeList();
+      chunks.push(`<h1 data-pdf-section style="font-size:18pt;margin:24px 0 12px;text-align:center;break-inside:avoid;">${applyInlineBold(line.replace(/^#\s*/, ""))}</h1>`);
+      continue;
+    }
+
+    if (/^[-*•]\s+/.test(line) || /^\d+[.)]\s+/.test(line)) {
+      const item = line.replace(/^[-*•]\s+/, "").replace(/^\d+[.)]\s+/, "");
+      if (!listOpen) {
+        chunks.push('<ul style="margin:0 0 10px 22px;padding:0;">');
+        listOpen = true;
       }
-      container.innerHTML = coverHTML;
+      chunks.push(`<li data-pdf-section style="margin:0 0 5px;break-inside:avoid;">${applyInlineBold(item)}</li>`);
+      continue;
     }
 
-    const contentDiv = document.createElement("div");
-    contentDiv.style.cssText = "padding: 40px;";
-    const html = content
-      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/^### (.+)$/gm, '<h3 style="font-size: 14pt; margin-top: 18px; margin-bottom: 8px;">$1</h3>')
-      .replace(/^## (.+)$/gm, '<h2 style="font-size: 16pt; margin-top: 24px; margin-bottom: 10px;">$1</h2>')
-      .replace(/^# (.+)$/gm, '<h1 style="font-size: 18pt; margin-top: 30px; margin-bottom: 12px; text-align: center;">$1</h1>')
-      .replace(/^\* (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
-      .replace(/^- (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
-      .replace(/\n\n/g, "<br/><br/>")
-      .replace(/\n/g, "<br/>");
+    closeList();
+    chunks.push(`<p data-pdf-section style="margin:0 0 10px;text-align:justify;break-inside:avoid;">${applyInlineBold(line)}</p>`);
+  }
 
-    contentDiv.innerHTML = html;
-    container.appendChild(contentDiv);
-    document.body.appendChild(container);
+  closeList();
 
-    // Wait for any images to load
-    const images = container.querySelectorAll("img");
-    await Promise.all(
-      Array.from(images).map(
-        (img) => new Promise<void>((resolve) => {
-          if (img.complete) return resolve();
-          img.onload = () => resolve();
-          img.onerror = () => { img.remove(); resolve(); };
-        })
-      )
-    );
+  if (chunks.length === 0) {
+    return `<p>${escapeHtml(EMPTY_CONTENT_MESSAGE)}</p>`;
+  }
 
-    const html2pdf = (await import("html2pdf.js")).default;
+  return chunks.join("");
+}
 
-    await html2pdf()
-      .set({
-        margin: [15, 15, 15, 15],
-        filename: `${filename}.pdf`,
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-      } as any)
-      .from(container)
-      .save();
+export async function exportToPDF(content: string, filename: string, coverData?: CoverPageData) {
+  const normalizedContent = normalizeExportText(content);
+  if (!normalizedContent) {
+    const { toast } = await import("sonner");
+    toast.error(EMPTY_CONTENT_MESSAGE);
+    return;
+  }
 
-    document.body.removeChild(container);
+  try {
+    let coverHtml = "";
+    if (coverData) {
+      let cover = generateCoverPageHTML(coverData);
+      const coatDataUrl = await imageToDataUrl(ANGOLA_COAT_OF_ARMS_URL);
+
+      if (coatDataUrl) {
+        cover = cover.replace(ANGOLA_COAT_OF_ARMS_URL, coatDataUrl);
+      } else {
+        cover = cover.replace(/<img[^>]*>/g, "");
+      }
+
+      coverHtml = cover;
+    }
+
+    const bodyHtml = `
+      <div data-pdf-section style="padding:40px 50px;font-family:'Times New Roman',serif;font-size:12pt;line-height:1.65;color:#000;background:#fff;">
+        ${buildPdfBodyHtml(normalizedContent)}
+      </div>
+    `;
+
+    await exportHtmlToPdf({
+      html: `${coverHtml}${bodyHtml}`,
+      filename: `${filename}.pdf`,
+      overlayMessage: "A gerar ficheiro PDF...",
+      containerWidth: 794,
+      padding: "0",
+    });
   } catch (err) {
     console.error("PDF export error:", err);
     throw err;
-  } finally {
-    hideExportOverlay();
   }
 }
