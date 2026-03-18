@@ -1,6 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
 import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
+import { escapeHtml, exportHtmlToPdf } from "@/lib/pdf-export-helper";
 import { parseQuestionarioContent, isShortAnswerTipo, cleanOptionLabel } from "@/lib/questionario-parser";
 
 function toastSuccess() {
@@ -167,138 +168,76 @@ export async function exportQuestionarioWord(resultado: string, tipo: string, di
 }
 
 export async function exportQuestionarioPDF(resultado: string, tipo: string, disciplina: string, titleOverride?: string) {
-  showExportOverlay("A gerar ficheiro PDF...");
+  const parsed = parseQuestionarioContent(resultado);
+  const { questions } = parsed;
+  const title = titleOverride || parsed.title;
+  const shortAnswer = isShortAnswerTipo(tipo);
 
-  const escapeHtml = (value: string) =>
-    value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+  const safeTitle = escapeHtml(title || "Questionário");
+  const safeDisciplina = escapeHtml(disciplina || "");
 
-  let container: HTMLDivElement | null = null;
+  let html = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <h1 style="font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">${safeTitle}</h1>
+      ${safeDisciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${safeDisciplina}</p>` : ""}
+      <hr style="border:none;border-bottom:2px solid #000;margin-top:12px;"/>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:10pt;">
+      <div><b>Nome:</b> <span style="border-bottom:1px solid #000;display:inline-block;width:250px;">&nbsp;</span></div>
+      <div><b>Data:</b> <span style="border-bottom:1px solid #000;display:inline-block;width:60px;">&nbsp;</span>/<span style="border-bottom:1px solid #000;display:inline-block;width:60px;">&nbsp;</span></div>
+    </div>
+  `;
 
-  try {
-    const parsed = parseQuestionarioContent(resultado);
-    const { questions } = parsed;
-    const title = titleOverride || parsed.title;
-    const shortAnswer = isShortAnswerTipo(tipo);
+  if (questions.length === 0) {
+    const rawFallback = escapeHtml(resultado || "").replace(/\n/g, "<br/>");
+    html += `<div style="font-family:'Courier New',monospace;font-size:10pt;white-space:normal;">${rawFallback || "Sem conteúdo disponível para exportação."}</div>`;
+  } else {
+    for (const q of questions) {
+      const safeQuestion = escapeHtml(q.text || "");
+      html += `<div style="margin-bottom:${shortAnswer ? "24px" : "16px"};break-inside:avoid;">`;
+      html += `<p style="color:#666;font-size:10pt;margin-bottom:2px;">Pergunta ${q.number}:</p>`;
+      html += `<p style="font-weight:bold;font-size:11pt;margin-bottom:6px;">${safeQuestion}</p>`;
 
-    console.log("[PDF Export] parsed questions:", questions.length, "title:", title);
-
-    const safeTitle = escapeHtml(title || "Questionário");
-    const safeDisciplina = escapeHtml(disciplina || "");
-
-    container = document.createElement("div");
-    container.style.cssText = [
-      "font-family: 'Times New Roman', serif",
-      "font-size: 11pt",
-      "line-height: 1.6",
-      "color: #000",
-      "background: #fff",
-      "width: 794px",
-      "padding: 40px 50px",
-      "position: fixed",
-      "left: 0",
-      "top: 0",
-      "opacity: 0",
-      "pointer-events: none",
-      "z-index: -1",
-      "box-sizing: border-box"
-    ].join(";");
-
-    let html = `
-      <div style="text-align:center;margin-bottom:20px;">
-        <h1 style="font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">${safeTitle}</h1>
-        ${safeDisciplina ? `<p style="font-size:11pt;color:#444;">Disciplina: ${safeDisciplina}</p>` : ""}
-        <hr style="border:none;border-bottom:2px solid #000;margin-top:12px;"/>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:10pt;">
-        <div><b>Nome:</b> <span style="border-bottom:1px solid #000;display:inline-block;width:250px;">&nbsp;</span></div>
-        <div><b>Data:</b> <span style="border-bottom:1px solid #000;display:inline-block;width:60px;">&nbsp;</span>/<span style="border-bottom:1px solid #000;display:inline-block;width:60px;">&nbsp;</span></div>
-      </div>
-    `;
-
-    if (questions.length === 0) {
-      const rawFallback = escapeHtml(resultado || "").replace(/\n/g, "<br/>");
-      html += `<div style="font-family:'Courier New',monospace;font-size:10pt;white-space:normal;">${rawFallback || "Sem conteúdo disponível para exportação."}</div>`;
-    } else {
-      for (const q of questions) {
-        const safeQuestion = escapeHtml(q.text || "");
-        html += `<div style="margin-bottom:${shortAnswer ? "24px" : "16px"};">`;
-        html += `<p style="color:#666;font-size:10pt;margin-bottom:2px;">Pergunta ${q.number}:</p>`;
-        html += `<p style="font-weight:bold;font-size:11pt;margin-bottom:6px;">${safeQuestion}</p>`;
-
-        if (shortAnswer && !q.options) {
-          const lineCount = tipo === "dissertativa" ? 4 : 2;
-          for (let i = 0; i < lineCount; i++) {
-            html += `<div style="border-bottom:1px solid #999;height:22px;margin-bottom:4px;"></div>`;
-          }
+      if (shortAnswer && !q.options) {
+        const lineCount = tipo === "dissertativa" ? 4 : 2;
+        for (let i = 0; i < lineCount; i++) {
+          html += `<div style="border-bottom:1px solid #999;height:22px;margin-bottom:4px;"></div>`;
         }
+      }
 
-        if (q.options) {
-          html += `<div style="margin-left:16px;">`;
-          for (const opt of q.options) {
-            const safeOption = escapeHtml(cleanOptionLabel(opt));
-            html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
-              <span style="display:inline-block;width:13px;height:13px;border:1.5px solid #000;border-radius:2px;flex-shrink:0;"></span>
-              <span>${safeOption}</span>
-            </div>`;
-          }
-          html += `</div>`;
+      if (q.options) {
+        html += `<div style="margin-left:16px;">`;
+        for (const opt of q.options) {
+          const safeOption = escapeHtml(cleanOptionLabel(opt));
+          html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+            <span style="display:inline-block;width:13px;height:13px;border:1.5px solid #000;border-radius:2px;flex-shrink:0;"></span>
+            <span>${safeOption}</span>
+          </div>`;
         }
-
-        if (q.answer) {
-          const safeAnswer = escapeHtml(q.answer);
-          html += `<div style="margin-top:6px;padding:4px 10px;background:#e8f5e9;border-left:3px solid #2e7d32;border-radius:4px;">`;
-          html += `<p style="font-size:10pt;color:#2e7d32;font-weight:bold;margin:0;">✓ Resposta: <span style="font-weight:normal;color:#1b5e20;">${safeAnswer}</span></p>`;
-          if (q.explanation) {
-            html += `<p style="font-size:9pt;color:#555;font-style:italic;margin:2px 0 0;">${escapeHtml(q.explanation)}</p>`;
-          }
-          html += `</div>`;
-        }
-
         html += `</div>`;
       }
+
+      if (q.answer) {
+        const safeAnswer = escapeHtml(q.answer);
+        html += `<div style="margin-top:6px;padding:4px 10px;background:#e8f5e9;border-left:3px solid #2e7d32;border-radius:4px;">`;
+        html += `<p style="font-size:10pt;color:#2e7d32;font-weight:bold;margin:0;">✓ Resposta: <span style="font-weight:normal;color:#1b5e20;">${safeAnswer}</span></p>`;
+        if (q.explanation) {
+          html += `<p style="font-size:9pt;color:#555;font-style:italic;margin:2px 0 0;">${escapeHtml(q.explanation)}</p>`;
+        }
+        html += `</div>`;
+      }
+
+      html += `</div>`;
     }
-
-    html += `<div style="border-top:1px solid #ccc;margin-top:24px;padding-top:8px;text-align:center;font-size:9pt;color:#888;">Gerado por Doka — Plataforma de Estudo Inteligente</div>`;
-
-    container.innerHTML = html;
-    document.body.appendChild(container);
-
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-
-    const html2pdf = (await import("html2pdf.js")).default;
-    await html2pdf()
-      .set({
-        margin: [12, 12, 12, 12],
-        filename: `questionario-${disciplina || "geral"}.pdf`,
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: "#ffffff",
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: container.scrollWidth,
-        },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"] },
-      } as any)
-      .from(container)
-      .save();
-
-    toastSuccess();
-  } catch (err) {
-    console.error("PDF export error:", err);
-    import("sonner").then(({ toast }) => toast.error("Erro ao exportar PDF"));
-  } finally {
-    if (container && container.parentNode) {
-      container.parentNode.removeChild(container);
-    }
-    hideExportOverlay();
   }
+
+  html += `<div style="border-top:1px solid #ccc;margin-top:24px;padding-top:8px;text-align:center;font-size:9pt;color:#888;">Gerado por Doka — Plataforma de Estudo Inteligente</div>`;
+
+  await exportHtmlToPdf({
+    html,
+    filename: `questionario-${disciplina || "geral"}.pdf`,
+    overlayMessage: "A gerar ficheiro PDF...",
+    padding: "40px 50px",
+  });
 }
 
