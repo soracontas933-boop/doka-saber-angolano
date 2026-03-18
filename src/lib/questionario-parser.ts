@@ -137,7 +137,8 @@ function parseFromPlainText(text: string): ParsedQuestionario {
     if (line.startsWith("```")) continue;
 
     const questionMatch =
-      line.match(/^(?:pergunta\s*)?(\d+)[\.\)\-:]\s*(.+)/i) ||
+      line.match(/^(?:\*\*)?(?:pergunta\s*)?(\d+)[\.\)\-:\s]*(?:\*\*)?\s*(.+)/i) ||
+      line.match(/^#{1,4}\s*(?:pergunta\s*)?(\d+)[\.\)\-:\s]*(.+)/i) ||
       line.match(/^(\d+)\s+[\-–]\s+(.+)/);
 
     if (questionMatch) {
