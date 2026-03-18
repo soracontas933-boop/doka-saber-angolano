@@ -249,9 +249,17 @@ const ResumoPage = () => {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-semibold">Resumo</h2>
-              <Button size="sm" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
-                <Download className="h-4 w-4 mr-1" /> Copiar
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(resultado); toast.success("Copiado!"); }}>
+                  <Copy className="h-4 w-4 mr-1" /> Copiar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => exportToPDF(resultado, `resumo-${disciplina || "geral"}`)}>
+                  <FileDown className="h-4 w-4 mr-1" /> PDF
+                </Button>
+                <Button size="sm" onClick={() => exportToWord(resultado, `resumo-${disciplina || "geral"}`)}>
+                  <FileText className="h-4 w-4 mr-1" /> Word
+                </Button>
+              </div>
             </div>
             <div className="prose prose-sm max-w-none text-card-foreground whitespace-pre-wrap">
               {resultado}
