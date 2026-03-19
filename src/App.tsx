@@ -8,6 +8,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import HomePage from "@/pages/HomePage";
 import AuthPage from "@/pages/AuthPage";
 import Dashboard from "@/pages/Dashboard";
+import UserHomePage from "@/pages/UserHomePage";
+import GruposPage from "@/pages/GruposPage";
 import MeusProjetosPage from "@/pages/MeusProjetosPage";
 import TrabalhoPage from "@/pages/TrabalhoPage";
 import ResumoPage from "@/pages/ResumoPage";
@@ -37,6 +39,8 @@ const App = () => (
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/home" element={<UserHomePage />} />
+              <Route path="/grupos" element={<GruposPage />} />
               <Route path="/meus-projetos" element={<MeusProjetosPage />} />
               <Route path="/trabalho" element={<TrabalhoPage />} />
               <Route path="/resumo" element={<ResumoPage />} />

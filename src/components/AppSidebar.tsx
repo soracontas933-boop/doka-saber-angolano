@@ -16,6 +16,8 @@ import {
   Crown,
   LifeBuoy,
   MessageSquare,
+  Home,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -27,6 +29,7 @@ import DokaLogo from "./DokaLogo";
 import { useState } from "react";
 
 const navItems = [
+  { to: "/home", icon: Home, label: "Início", userOnly: true },
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true },
   { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
@@ -34,6 +37,7 @@ const navItems = [
   { to: "/questionario", icon: HelpCircle, label: "Questionário" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
   { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
+  { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
   { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
   { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
   { to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true },

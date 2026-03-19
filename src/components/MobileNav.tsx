@@ -12,11 +12,13 @@ import {
   CreditCard,
   LifeBuoy,
   MessageSquare,
+  Home,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 
-const baseNavItems = [
+const adminNavItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho" },
@@ -24,6 +26,17 @@ const baseNavItems = [
   { to: "/questionario", icon: HelpCircle, label: "Quiz" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano" },
   { to: "/correcao", icon: Search, label: "Corrigir" },
+  { to: "/planos", icon: CreditCard, label: "Planos" },
+];
+
+const userNavItems = [
+  { to: "/home", icon: Home, label: "Início" },
+  { to: "/trabalho", icon: FileText, label: "Trabalho" },
+  { to: "/resumo", icon: BookOpen, label: "Resumo" },
+  { to: "/questionario", icon: HelpCircle, label: "Quiz" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Plano" },
+  { to: "/correcao", icon: Search, label: "Corrigir" },
+  { to: "/grupos", icon: Users, label: "Grupos" },
   { to: "/planos", icon: CreditCard, label: "Planos" },
 ];
 
@@ -38,8 +51,8 @@ const MobileNav = () => {
   };
 
   const navItems = !isLoading && isAdmin
-    ? [...baseNavItems.filter(i => i.to !== "/suporte"), { to: "/mensagens", icon: MessageSquare, label: "Msgs" }, { to: "/admin", icon: ShieldCheck, label: "Master" }]
-    : [...baseNavItems, { to: "/suporte", icon: LifeBuoy, label: "Suporte" }];
+    ? [...adminNavItems, { to: "/mensagens", icon: MessageSquare, label: "Msgs" }, { to: "/admin", icon: ShieldCheck, label: "Master" }]
+    : [...userNavItems, { to: "/suporte", icon: LifeBuoy, label: "Suporte" }];
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
