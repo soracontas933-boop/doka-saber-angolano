@@ -16,6 +16,8 @@ import {
   Crown,
   LifeBuoy,
   MessageSquare,
+  Home,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
