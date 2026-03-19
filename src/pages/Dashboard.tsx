@@ -125,7 +125,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (isAuthReady && !isLoadingAdmin && !isAdmin) {
-      navigate("/trabalho");
+      navigate("/home");
     }
   }, [isAdmin, isLoadingAdmin, isAuthReady, navigate]);
 
