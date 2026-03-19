@@ -18,7 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 
-const baseNavItems = [
+const adminNavItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Painel" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho" },
@@ -26,6 +26,17 @@ const baseNavItems = [
   { to: "/questionario", icon: HelpCircle, label: "Quiz" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano" },
   { to: "/correcao", icon: Search, label: "Corrigir" },
+  { to: "/planos", icon: CreditCard, label: "Planos" },
+];
+
+const userNavItems = [
+  { to: "/home", icon: Home, label: "Início" },
+  { to: "/trabalho", icon: FileText, label: "Trabalho" },
+  { to: "/resumo", icon: BookOpen, label: "Resumo" },
+  { to: "/questionario", icon: HelpCircle, label: "Quiz" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Plano" },
+  { to: "/correcao", icon: Search, label: "Corrigir" },
+  { to: "/grupos", icon: Users, label: "Grupos" },
   { to: "/planos", icon: CreditCard, label: "Planos" },
 ];
 
