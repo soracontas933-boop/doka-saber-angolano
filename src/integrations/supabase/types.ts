@@ -329,16 +329,126 @@ export type Database = {
         }
         Relationships: []
       }
+      workgroup_members: {
+        Row: {
+          aceite: boolean
+          convidado_em: string
+          id: string
+          papel: string
+          user_id: string
+          workgroup_id: string
+        }
+        Insert: {
+          aceite?: boolean
+          convidado_em?: string
+          id?: string
+          papel?: string
+          user_id: string
+          workgroup_id: string
+        }
+        Update: {
+          aceite?: boolean
+          convidado_em?: string
+          id?: string
+          papel?: string
+          user_id?: string
+          workgroup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workgroup_members_workgroup_id_fkey"
+            columns: ["workgroup_id"]
+            isOneToOne: false
+            referencedRelation: "workgroups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workgroup_projects: {
+        Row: {
+          adicionado_em: string
+          adicionado_por: string
+          id: string
+          project_id: string
+          workgroup_id: string
+        }
+        Insert: {
+          adicionado_em?: string
+          adicionado_por: string
+          id?: string
+          project_id: string
+          workgroup_id: string
+        }
+        Update: {
+          adicionado_em?: string
+          adicionado_por?: string
+          id?: string
+          project_id?: string
+          workgroup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workgroup_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workgroup_projects_workgroup_id_fkey"
+            columns: ["workgroup_id"]
+            isOneToOne: false
+            referencedRelation: "workgroups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workgroups: {
+        Row: {
+          criado_em: string
+          criado_por: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      find_user_by_email: {
+        Args: { _email: string }
+        Returns: {
+          nome: string
+          user_id: string
+        }[]
+      }
       increment_creditos_usados: {
         Args: { p_user_id: string }
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      is_workgroup_member: {
+        Args: { _user_id: string; _workgroup_id: string }
+        Returns: boolean
+      }
+      is_workgroup_owner: {
+        Args: { _user_id: string; _workgroup_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
