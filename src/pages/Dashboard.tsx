@@ -435,12 +435,13 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 lg:grid-cols-5 gap-4"
       >
         {[
           { label: "Utilizadores", value: totals.totalUsers, sub: "registados", icon: Users },
           { label: "Projectos", value: totals.totalProjects, sub: "criados", icon: FileText },
-          { label: "Tokens", value: totals.totalTokens.toLocaleString(), sub: "consumidos", icon: Zap },
+          { label: "Tokens Total", value: totals.totalTokens.toLocaleString(), sub: "consumidos", icon: Zap },
+          { label: "Tokens Hoje", value: tokensToday.toLocaleString(), sub: "renovação diária", icon: Activity },
           {
             label: "Planos Pagos",
             value: totals.totalUsers - (totals.planDistribution["gratuito"] || 0),
