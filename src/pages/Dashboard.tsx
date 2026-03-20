@@ -114,6 +114,10 @@ const Dashboard = () => {
   const [tokensByService, setTokensByService] = useState<Record<string, number>>({});
   const [projectsByType, setProjectsByType] = useState<Record<string, number>>({});
   const [dailyActivity, setDailyActivity] = useState<{ date: string; projetos: number; tokens: number }[]>([]);
+  const [dailyTokensByService, setDailyTokensByService] = useState<Record<string, any>[]>([]);
+  const [todaySummary, setTodaySummary] = useState<{ servico: string; tokens: number; geracoes: number }[]>([]);
+  const [tokensToday, setTokensToday] = useState(0);
+  const [allServices, setAllServices] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -203,6 +207,49 @@ const Dashboard = () => {
         dailyMap.set(day, entry);
       });
 
+      // Daily tokens by service (last 14 days) + today summary
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const dailyServiceMap = new Map<string, Record<string, { tokens: number; count: number }>>();
+      const serviceSet = new Set<string>();
+
+      logs.forEach((l) => {
+        const svc = l.servico_ia || "desconhecido";
+        serviceSet.add(svc);
+        const day = new Date(l.criado_em).toISOString().slice(0, 10);
+        if (!dailyServiceMap.has(day)) dailyServiceMap.set(day, {});
+        const dayData = dailyServiceMap.get(day)!;
+        if (!dayData[svc]) dayData[svc] = { tokens: 0, count: 0 };
+        dayData[svc].tokens += l.tokens_usados ?? 0;
+        dayData[svc].count += 1;
+      });
+
+      const services = Array.from(serviceSet).sort();
+
+      // Build stacked chart data (last 14 days)
+      const allDays = Array.from(dailyServiceMap.keys()).sort().slice(-14);
+      const stackedData = allDays.map((day) => {
+        const entry: Record<string, any> = {
+          date: new Date(day).toLocaleDateString("pt-AO", { day: "2-digit", month: "short" }),
+        };
+        const dayData = dailyServiceMap.get(day) || {};
+        services.forEach((svc) => {
+          entry[svc] = dayData[svc]?.tokens ?? 0;
+        });
+        return entry;
+      });
+
+      // Today's summary
+      const todayData = dailyServiceMap.get(todayStr) || {};
+      const todaySummaryArr = services
+        .map((svc) => ({
+          servico: svc,
+          tokens: todayData[svc]?.tokens ?? 0,
+          geracoes: todayData[svc]?.count ?? 0,
+        }))
+        .filter((s) => s.tokens > 0 || s.geracoes > 0);
+
+      const totalTokensToday = todaySummaryArr.reduce((s, r) => s + r.tokens, 0);
+
       // Sort daily activity
       const sortedDaily = Array.from(dailyMap.entries())
         .sort(([a], [b]) => a.localeCompare(b))
@@ -220,6 +267,10 @@ const Dashboard = () => {
       setTokensByService(svcTokens);
       setProjectsByType(typeCount);
       setDailyActivity(sortedDaily);
+      setDailyTokensByService(stackedData);
+      setTodaySummary(todaySummaryArr);
+      setTokensToday(totalTokensToday);
+      setAllServices(services);
     } finally {
       setLoading(false);
     }
@@ -339,6 +390,17 @@ const Dashboard = () => {
     [tokensByService]
   );
 
+  const SERVICE_COLORS = [
+    "hsl(var(--primary))",
+    "hsl(220, 70%, 55%)",
+    "hsl(45, 80%, 50%)",
+    "hsl(280, 60%, 55%)",
+    "hsl(150, 60%, 45%)",
+    "hsl(0, 70%, 55%)",
+    "hsl(190, 70%, 50%)",
+    "hsl(330, 60%, 55%)",
+  ];
+
   if (isLoadingAdmin || !isAdmin || loading) {
     return (
       <div className="flex items-center justify-center h-full py-20">
@@ -373,12 +435,13 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 lg:grid-cols-5 gap-4"
       >
         {[
           { label: "Utilizadores", value: totals.totalUsers, sub: "registados", icon: Users },
           { label: "Projectos", value: totals.totalProjects, sub: "criados", icon: FileText },
-          { label: "Tokens", value: totals.totalTokens.toLocaleString(), sub: "consumidos", icon: Zap },
+          { label: "Tokens Total", value: totals.totalTokens.toLocaleString(), sub: "consumidos", icon: Zap },
+          { label: "Tokens Hoje", value: tokensToday.toLocaleString(), sub: "renovação diária", icon: Activity },
           {
             label: "Planos Pagos",
             value: totals.totalUsers - (totals.planDistribution["gratuito"] || 0),
@@ -579,8 +642,97 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </motion.div>
+      {/* Daily Tokens by Service - Stacked Bar Chart */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.17 }}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+      >
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              Consumo Diário por IA (últimos 14 dias)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dailyTokensByService.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Sem dados de consumo.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={dailyTokensByService}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      color: "hsl(var(--foreground))",
+                    }}
+                  />
+                  <Legend />
+                  {allServices.map((svc, i) => (
+                    <Bar
+                      key={svc}
+                      dataKey={svc}
+                      name={svc}
+                      stackId="tokens"
+                      fill={SERVICE_COLORS[i % SERVICE_COLORS.length]}
+                      radius={i === allServices.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Users Table */}
+        {/* Today's Summary Table */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              Resumo de Hoje
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {todaySummary.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhum consumo hoje.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Serviço IA</TableHead>
+                    <TableHead className="text-xs text-right">Tokens</TableHead>
+                    <TableHead className="text-xs text-right">Gerações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {todaySummary.map((row) => (
+                    <TableRow key={row.servico}>
+                      <TableCell className="text-xs font-medium">{row.servico}</TableCell>
+                      <TableCell className="text-xs text-right font-mono">{row.tokens.toLocaleString()}</TableCell>
+                      <TableCell className="text-xs text-right font-mono">{row.geracoes}</TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="border-t-2">
+                    <TableCell className="text-xs font-bold">Total</TableCell>
+                    <TableCell className="text-xs text-right font-mono font-bold">{tokensToday.toLocaleString()}</TableCell>
+                    <TableCell className="text-xs text-right font-mono font-bold">
+                      {todaySummary.reduce((s, r) => s + r.geracoes, 0)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
