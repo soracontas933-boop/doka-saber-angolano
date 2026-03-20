@@ -241,7 +241,7 @@ const HomePage = () => {
             Pronto para começar?
           </h2>
           <p className="text-secondary-foreground/80 mb-6 max-w-md mx-auto">
-            Junte-se a milhares de estudantes e professores angolanos que já usam o DOKA.
+            Junte-se a milhares de estudantes e professores angolanos que já usam o Wame.
           </p>
           <Button
             size="lg"
