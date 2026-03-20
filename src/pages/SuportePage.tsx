@@ -184,7 +184,7 @@ const SuportePage = () => {
             </div>
             <p className="text-sm font-medium text-foreground mb-1">Bem-vindo ao suporte!</p>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Envie sua primeira mensagem e a equipa Doka irá responder o mais rápido possível.
+              Envie sua primeira mensagem e a equipa Wame irá responder o mais rápido possível.
             </p>
           </div>
         ) : (
