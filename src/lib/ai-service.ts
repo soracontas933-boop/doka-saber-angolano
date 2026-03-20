@@ -74,7 +74,18 @@ export async function generateWithGroq(
   maxTokens = 8000,
   temperature = 0.7
 ): Promise<string> {
-  return callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
+  const result = await callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
+  return result.content;
+}
+
+// Returns full AI response with service/token info
+export async function generateWithAI(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens = 8000,
+  temperature = 0.7
+): Promise<AIResponse> {
+  return callAI(systemPrompt, userPrompt, { maxTokens, temperature });
 }
 
 // ─── Revisão de Conteúdo ─────────────────────────────────────────
@@ -83,11 +94,12 @@ export async function reviewWithOpenRouter(
   maxTokens = 4000
 ): Promise<string> {
   try {
-    return await callAI(
+    const result = await callAI(
       "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
       `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
       { maxTokens, temperature: 0.5, service: "openrouter" }
     );
+    return result.content;
   } catch {
     console.warn("Revisão falhou: retornando conteúdo original");
     return content;
