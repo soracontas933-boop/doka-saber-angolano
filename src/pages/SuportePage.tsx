@@ -212,7 +212,7 @@ const SuportePage = () => {
                     }`}
                   >
                     {entry.from === "admin" && (
-                      <p className="text-[10px] font-bold text-primary mb-0.5">Equipa Doka</p>
+                      <p className="text-[10px] font-bold text-primary mb-0.5">Equipa Wame</p>
                     )}
                     {entry.subject && entry.from === "user" && (
                       <p className={`text-[10px] font-bold mb-0.5 ${entry.from === "user" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
