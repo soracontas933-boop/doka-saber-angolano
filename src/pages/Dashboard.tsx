@@ -114,6 +114,10 @@ const Dashboard = () => {
   const [tokensByService, setTokensByService] = useState<Record<string, number>>({});
   const [projectsByType, setProjectsByType] = useState<Record<string, number>>({});
   const [dailyActivity, setDailyActivity] = useState<{ date: string; projetos: number; tokens: number }[]>([]);
+  const [dailyTokensByService, setDailyTokensByService] = useState<Record<string, any>[]>([]);
+  const [todaySummary, setTodaySummary] = useState<{ servico: string; tokens: number; geracoes: number }[]>([]);
+  const [tokensToday, setTokensToday] = useState(0);
+  const [allServices, setAllServices] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
