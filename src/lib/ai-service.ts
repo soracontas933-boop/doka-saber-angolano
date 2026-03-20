@@ -1,11 +1,18 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast as sonnerToast } from "sonner";
+
+export interface AIResponse {
+  content: string;
+  service_used: string;
+  tokens_used: number;
+}
 
 // ─── AI Proxy Call ───────────────────────────────────────────────
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
   options: { maxTokens?: number; temperature?: number; service?: string } = {}
-): Promise<string> {
+): Promise<AIResponse> {
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-proxy`;
   const session = (await supabase.auth.getSession()).data.session;
 
@@ -39,7 +46,19 @@ async function callAI(
 
     const data = await response.json();
     if (data?.error) throw new Error(data.error);
-    return data?.choices?.[0]?.message?.content || "";
+
+    const content = data?.choices?.[0]?.message?.content || "";
+    const serviceUsed = data?.service_used || "desconhecido";
+    const tokensUsed = data?.tokens_used || 0;
+
+    // Show deduction toast
+    if (tokensUsed > 0) {
+      sonnerToast.info(`🤖 ${serviceUsed} — ${tokensUsed.toLocaleString()} tokens usados`, {
+        duration: 4000,
+      });
+    }
+
+    return { content, service_used: serviceUsed, tokens_used: tokensUsed };
   } catch (e: any) {
     if (e.name === "AbortError") throw new Error("A geração demorou demais. Tente com menos conteúdo.");
     throw new Error(`Erro ao chamar IA: ${e.message}`);
