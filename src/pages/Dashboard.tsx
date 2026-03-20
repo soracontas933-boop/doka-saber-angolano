@@ -106,6 +106,19 @@ const CHART_TYPE_COLORS: Record<string, string> = {
   correcao: "hsl(150, 60%, 45%)",
 };
 
+// Daily free tier token limits per AI service (approximate)
+const DAILY_TOKEN_LIMITS: Record<string, number> = {
+  cerebras: 1_000_000,
+  groq: 500_000,
+  together: 500_000,
+  openrouter: 200_000,
+  gemini: 1_500_000,
+  selfhosted: -1, // unlimited
+};
+
+const DAILY_LIMIT_LABEL = (limit: number) =>
+  limit === -1 ? "Ilimitado" : limit.toLocaleString();
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, isLoading: isLoadingAdmin, isAuthReady } = useAdmin();
