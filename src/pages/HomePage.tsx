@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download, Check, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import DokaLogo from "@/components/DokaLogo";
+import WameLogo from "@/components/WameLogo";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Badge } from "@/components/ui/badge";
