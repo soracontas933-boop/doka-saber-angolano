@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 import { Badge } from "@/components/ui/badge";
 
-import DokaLogo from "./DokaLogo";
+import WameLogo from "./WameLogo";
 import { useState } from "react";
 
 const navItems = [
