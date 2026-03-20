@@ -207,6 +207,49 @@ const Dashboard = () => {
         dailyMap.set(day, entry);
       });
 
+      // Daily tokens by service (last 14 days) + today summary
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const dailyServiceMap = new Map<string, Record<string, { tokens: number; count: number }>>();
+      const serviceSet = new Set<string>();
+
+      logs.forEach((l) => {
+        const svc = l.servico_ia || "desconhecido";
+        serviceSet.add(svc);
+        const day = new Date(l.criado_em).toISOString().slice(0, 10);
+        if (!dailyServiceMap.has(day)) dailyServiceMap.set(day, {});
+        const dayData = dailyServiceMap.get(day)!;
+        if (!dayData[svc]) dayData[svc] = { tokens: 0, count: 0 };
+        dayData[svc].tokens += l.tokens_usados ?? 0;
+        dayData[svc].count += 1;
+      });
+
+      const services = Array.from(serviceSet).sort();
+
+      // Build stacked chart data (last 14 days)
+      const allDays = Array.from(dailyServiceMap.keys()).sort().slice(-14);
+      const stackedData = allDays.map((day) => {
+        const entry: Record<string, any> = {
+          date: new Date(day).toLocaleDateString("pt-AO", { day: "2-digit", month: "short" }),
+        };
+        const dayData = dailyServiceMap.get(day) || {};
+        services.forEach((svc) => {
+          entry[svc] = dayData[svc]?.tokens ?? 0;
+        });
+        return entry;
+      });
+
+      // Today's summary
+      const todayData = dailyServiceMap.get(todayStr) || {};
+      const todaySummaryArr = services
+        .map((svc) => ({
+          servico: svc,
+          tokens: todayData[svc]?.tokens ?? 0,
+          geracoes: todayData[svc]?.count ?? 0,
+        }))
+        .filter((s) => s.tokens > 0 || s.geracoes > 0);
+
+      const totalTokensToday = todaySummaryArr.reduce((s, r) => s + r.tokens, 0);
+
       // Sort daily activity
       const sortedDaily = Array.from(dailyMap.entries())
         .sort(([a], [b]) => a.localeCompare(b))
@@ -224,6 +267,10 @@ const Dashboard = () => {
       setTokensByService(svcTokens);
       setProjectsByType(typeCount);
       setDailyActivity(sortedDaily);
+      setDailyTokensByService(stackedData);
+      setTodaySummary(todaySummaryArr);
+      setTokensToday(totalTokensToday);
+      setAllServices(services);
     } finally {
       setLoading(false);
     }
