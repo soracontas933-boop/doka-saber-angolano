@@ -642,8 +642,97 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </motion.div>
+      {/* Daily Tokens by Service - Stacked Bar Chart */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.17 }}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+      >
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              Consumo Diário por IA (últimos 14 dias)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dailyTokensByService.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Sem dados de consumo.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={dailyTokensByService}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      color: "hsl(var(--foreground))",
+                    }}
+                  />
+                  <Legend />
+                  {allServices.map((svc, i) => (
+                    <Bar
+                      key={svc}
+                      dataKey={svc}
+                      name={svc}
+                      stackId="tokens"
+                      fill={SERVICE_COLORS[i % SERVICE_COLORS.length]}
+                      radius={i === allServices.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Users Table */}
+        {/* Today's Summary Table */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              Resumo de Hoje
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {todaySummary.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhum consumo hoje.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Serviço IA</TableHead>
+                    <TableHead className="text-xs text-right">Tokens</TableHead>
+                    <TableHead className="text-xs text-right">Gerações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {todaySummary.map((row) => (
+                    <TableRow key={row.servico}>
+                      <TableCell className="text-xs font-medium">{row.servico}</TableCell>
+                      <TableCell className="text-xs text-right font-mono">{row.tokens.toLocaleString()}</TableCell>
+                      <TableCell className="text-xs text-right font-mono">{row.geracoes}</TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="border-t-2">
+                    <TableCell className="text-xs font-bold">Total</TableCell>
+                    <TableCell className="text-xs text-right font-mono font-bold">{tokensToday.toLocaleString()}</TableCell>
+                    <TableCell className="text-xs text-right font-mono font-bold">
+                      {todaySummary.reduce((s, r) => s + r.geracoes, 0)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
