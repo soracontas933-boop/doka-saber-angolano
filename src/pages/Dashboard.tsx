@@ -390,6 +390,17 @@ const Dashboard = () => {
     [tokensByService]
   );
 
+  const SERVICE_COLORS = [
+    "hsl(var(--primary))",
+    "hsl(220, 70%, 55%)",
+    "hsl(45, 80%, 50%)",
+    "hsl(280, 60%, 55%)",
+    "hsl(150, 60%, 45%)",
+    "hsl(0, 70%, 55%)",
+    "hsl(190, 70%, 50%)",
+    "hsl(330, 60%, 55%)",
+  ];
+
   if (isLoadingAdmin || !isAdmin || loading) {
     return (
       <div className="flex items-center justify-center h-full py-20">
