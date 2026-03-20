@@ -249,7 +249,7 @@ export async function exportResumoPDF(resultado: string, tipoResumo: string, dis
   }
 
   // Footer
-  html += `<div style="border-top:1px solid #ccc;margin-top:28px;padding-top:10px;text-align:center;font-size:9pt;color:#888;">Gerado por Doka — Plataforma de Estudo Inteligente</div>`;
+  html += `<div style="border-top:1px solid #ccc;margin-top:28px;padding-top:10px;text-align:center;font-size:9pt;color:#888;">Gerado por Wame — Plataforma de Estudo Inteligente</div>`;
 
   await exportHtmlToPdf({
     html,

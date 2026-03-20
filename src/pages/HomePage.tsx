@@ -257,9 +257,9 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="px-6 md:px-12 py-8 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <DokaLogo size={28} />
+          <WameLogo size={28} />
           <p className="text-xs text-muted-foreground">
-            © 2026 DOKA — Plataforma Educacional Angolana. Todos os direitos reservados.
+            © 2026 Wame — Plataforma Educacional Angolana. Todos os direitos reservados.
           </p>
         </div>
       </footer>

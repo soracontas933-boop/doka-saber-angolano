@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
       },
       manifest: {
-        name: "DOKA — Plataforma Educacional Angolana",
-        short_name: "DOKA",
+        name: "Wame — Plataforma Educacional Angolana",
+        short_name: "Wame",
         description: "Plataforma educacional angolana com IA",
         start_url: "/",
         display: "standalone",

@@ -165,7 +165,7 @@ const SuportePage = () => {
           <Headphones className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-bold text-foreground">Suporte Doka</h1>
+          <h1 className="text-sm font-bold text-foreground">Suporte Wame</h1>
           <p className="text-xs text-muted-foreground">Normalmente responde em minutos</p>
         </div>
         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />

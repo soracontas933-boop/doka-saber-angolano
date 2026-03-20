@@ -17,7 +17,7 @@ export const useTheme = () => {
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("doka-theme", theme);
+    localStorage.setItem("wame-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));

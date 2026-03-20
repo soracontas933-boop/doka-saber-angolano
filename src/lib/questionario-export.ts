@@ -231,7 +231,7 @@ export async function exportQuestionarioPDF(resultado: string, tipo: string, dis
     }
   }
 
-  html += `<div style="border-top:1px solid #ccc;margin-top:24px;padding-top:8px;text-align:center;font-size:9pt;color:#888;">Gerado por Doka — Plataforma de Estudo Inteligente</div>`;
+  html += `<div style="border-top:1px solid #ccc;margin-top:24px;padding-top:8px;text-align:center;font-size:9pt;color:#888;">Gerado por Wame — Plataforma de Estudo Inteligente</div>`;
 
   await exportHtmlToPdf({
     html,
