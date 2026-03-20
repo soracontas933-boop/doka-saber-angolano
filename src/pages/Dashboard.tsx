@@ -780,12 +780,8 @@ const Dashboard = () => {
             </Table>
           </CardContent>
         </Card>
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
       </motion.div>
+
 
 
       <motion.div
