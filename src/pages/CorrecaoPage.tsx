@@ -275,7 +275,7 @@ const CorrecaoPage = () => {
           🔍 Corrigir Trabalho
         </h1>
         <p className="text-muted-foreground">
-          Envia o teu trabalho e o DOKA analisa e corrige automaticamente
+          Envia o teu trabalho e o Wame analisa e corrige automaticamente
         </p>
       </motion.div>
 

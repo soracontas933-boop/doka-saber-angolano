@@ -5,7 +5,7 @@ type Theme = "light" | "dark";
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("doka-theme") as Theme) || "light";
+      return (localStorage.getItem("wame-theme") as Theme) || "light";
     }
     return "light";
   });
@@ -17,7 +17,7 @@ export const useTheme = () => {
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("doka-theme", theme);
+    localStorage.setItem("wame-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));

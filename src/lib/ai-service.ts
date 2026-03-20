@@ -157,9 +157,12 @@ export const imagePrompts = {
     `Classroom scene Angola Africa, teacher and students, modern educational setting, warm and motivating, flat illustration style`,
 };
 
-// ─── DOKA System Prompt ──────────────────────────────────────────
-export const DOKA_SYSTEM_PROMPT =
-  "Você é DOKA, um assistente educacional especializado no sistema de ensino de Angola. Conhece profundamente o currículo do INIDE, a estrutura de trabalhos escolares angolanos, planos de aula horizontais e verticais do MED Angola, e as disciplinas do ensino primário, I ciclo, II ciclo e III ciclo. Sempre gera conteúdo em Português de Angola, coerente, bem estruturado e adequado ao nível solicitado.";
+// ─── Wame System Prompt ──────────────────────────────────────────
+export const WAME_SYSTEM_PROMPT =
+  "Você é Wame, um assistente educacional especializado no sistema de ensino de Angola. Conhece profundamente o currículo do INIDE, a estrutura de trabalhos escolares angolanos, planos de aula horizontais e verticais do MED Angola, e as disciplinas do ensino primário, I ciclo, II ciclo e III ciclo. Sempre gera conteúdo em Português de Angola, coerente, bem estruturado e adequado ao nível solicitado.";
+
+/** @deprecated Use WAME_SYSTEM_PROMPT instead */
+export const DOKA_SYSTEM_PROMPT = WAME_SYSTEM_PROMPT;
 
 // ─── Module-Specific Prompts ─────────────────────────────────────
 export const prompts = {

@@ -165,7 +165,7 @@ const SuportePage = () => {
           <Headphones className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-bold text-foreground">Suporte Doka</h1>
+          <h1 className="text-sm font-bold text-foreground">Suporte Wame</h1>
           <p className="text-xs text-muted-foreground">Normalmente responde em minutos</p>
         </div>
         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
@@ -184,7 +184,7 @@ const SuportePage = () => {
             </div>
             <p className="text-sm font-medium text-foreground mb-1">Bem-vindo ao suporte!</p>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Envie sua primeira mensagem e a equipa Doka irá responder o mais rápido possível.
+              Envie sua primeira mensagem e a equipa Wame irá responder o mais rápido possível.
             </p>
           </div>
         ) : (
@@ -212,7 +212,7 @@ const SuportePage = () => {
                     }`}
                   >
                     {entry.from === "admin" && (
-                      <p className="text-[10px] font-bold text-primary mb-0.5">Equipa Doka</p>
+                      <p className="text-[10px] font-bold text-primary mb-0.5">Equipa Wame</p>
                     )}
                     {entry.subject && entry.from === "user" && (
                       <p className={`text-[10px] font-bold mb-0.5 ${entry.from === "user" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>

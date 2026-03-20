@@ -166,7 +166,7 @@ export async function exportResumoWord(resultado: string, tipoResumo: string, di
         spacing: { before: 400 },
         alignment: AlignmentType.CENTER,
         border: { top: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC", space: 8 } },
-        children: [new TextRun({ text: "Gerado por Doka — Plataforma de Estudo Inteligente", size: 16, font: "Times New Roman", color: "999999" })],
+        children: [new TextRun({ text: "Gerado por Wame — Plataforma de Estudo Inteligente", size: 16, font: "Times New Roman", color: "999999" })],
       })
     );
 
@@ -249,7 +249,7 @@ export async function exportResumoPDF(resultado: string, tipoResumo: string, dis
   }
 
   // Footer
-  html += `<div style="border-top:1px solid #ccc;margin-top:28px;padding-top:10px;text-align:center;font-size:9pt;color:#888;">Gerado por Doka — Plataforma de Estudo Inteligente</div>`;
+  html += `<div style="border-top:1px solid #ccc;margin-top:28px;padding-top:10px;text-align:center;font-size:9pt;color:#888;">Gerado por Wame — Plataforma de Estudo Inteligente</div>`;
 
   await exportHtmlToPdf({
     html,

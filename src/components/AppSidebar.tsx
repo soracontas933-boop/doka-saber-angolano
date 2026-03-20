@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 import { Badge } from "@/components/ui/badge";
 
-import DokaLogo from "./DokaLogo";
+import WameLogo from "./WameLogo";
 import { useState } from "react";
 
 const navItems = [
@@ -91,7 +91,7 @@ const AppSidebar = () => {
       <div className={`flex items-center flex-shrink-0 ${collapsed ? "p-3 justify-center" : "p-6 justify-between"}`}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <DokaLogo size={36} />
+            <WameLogo size={36} />
             {isAdmin && (
               <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 gap-1 text-[10px] px-1.5 py-0.5">
                 <Crown className="h-3 w-3" />

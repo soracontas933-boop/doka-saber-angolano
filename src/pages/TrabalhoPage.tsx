@@ -595,7 +595,7 @@ const TrabalhoPage = () => {
                 </Button>
                 <Button variant="outline" size="sm" onClick={async () => {
                   try {
-                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_doka";
+                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_wame";
                     await exportToWord(resultadoCompilado, nomeArquivo, getCoverData());
                     toast.success("Ficheiro Word exportado!");
                   } catch { toast.error("Erro ao exportar Word"); }
@@ -604,7 +604,7 @@ const TrabalhoPage = () => {
                 </Button>
                 <Button size="sm" onClick={async () => {
                   try {
-                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_doka";
+                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_wame";
                     await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
                     toast.success("PDF exportado!");
                   } catch { toast.error("Erro ao exportar PDF"); }

@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import DokaLogo from "@/components/DokaLogo";
+import WameLogo from "@/components/WameLogo";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -110,7 +110,7 @@ const AuthPage = () => {
         className="w-full max-w-sm"
       >
         <div className="flex justify-center mb-8">
-          <DokaLogo size={48} />
+          <WameLogo size={48} />
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-card">

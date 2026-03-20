@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download, Check, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import DokaLogo from "@/components/DokaLogo";
+import WameLogo from "@/components/WameLogo";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +38,7 @@ const HomePage = () => {
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Nav */}
       <header className="flex items-center justify-between px-6 md:px-12 py-5">
-        <DokaLogo size={36} />
+        <WameLogo size={36} />
         <div className="flex items-center gap-3">
           {canInstall && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={install}>
@@ -241,7 +241,7 @@ const HomePage = () => {
             Pronto para começar?
           </h2>
           <p className="text-secondary-foreground/80 mb-6 max-w-md mx-auto">
-            Junte-se a milhares de estudantes e professores angolanos que já usam o DOKA.
+            Junte-se a milhares de estudantes e professores angolanos que já usam o Wame.
           </p>
           <Button
             size="lg"
@@ -257,9 +257,9 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="px-6 md:px-12 py-8 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <DokaLogo size={28} />
+          <WameLogo size={28} />
           <p className="text-xs text-muted-foreground">
-            © 2026 DOKA — Plataforma Educacional Angolana. Todos os direitos reservados.
+            © 2026 Wame — Plataforma Educacional Angolana. Todos os direitos reservados.
           </p>
         </div>
       </footer>
