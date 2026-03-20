@@ -206,7 +206,10 @@ serve(async (req) => {
             continue;
         }
         console.log(`Success with ${svc}`);
-        return new Response(JSON.stringify(result), {
+        // Inject service info into response
+        const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
+        const enriched = { ...result, service_used: svc, tokens_used: tokensUsed };
+        return new Response(JSON.stringify(enriched), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       } catch (e: any) {

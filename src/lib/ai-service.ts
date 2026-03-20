@@ -1,11 +1,18 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast as sonnerToast } from "sonner";
+
+export interface AIResponse {
+  content: string;
+  service_used: string;
+  tokens_used: number;
+}
 
 // ─── AI Proxy Call ───────────────────────────────────────────────
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
   options: { maxTokens?: number; temperature?: number; service?: string } = {}
-): Promise<string> {
+): Promise<AIResponse> {
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-proxy`;
   const session = (await supabase.auth.getSession()).data.session;
 
@@ -39,7 +46,19 @@ async function callAI(
 
     const data = await response.json();
     if (data?.error) throw new Error(data.error);
-    return data?.choices?.[0]?.message?.content || "";
+
+    const content = data?.choices?.[0]?.message?.content || "";
+    const serviceUsed = data?.service_used || "desconhecido";
+    const tokensUsed = data?.tokens_used || 0;
+
+    // Show deduction toast
+    if (tokensUsed > 0) {
+      sonnerToast.info(`🤖 ${serviceUsed} — ${tokensUsed.toLocaleString()} tokens usados`, {
+        duration: 4000,
+      });
+    }
+
+    return { content, service_used: serviceUsed, tokens_used: tokensUsed };
   } catch (e: any) {
     if (e.name === "AbortError") throw new Error("A geração demorou demais. Tente com menos conteúdo.");
     throw new Error(`Erro ao chamar IA: ${e.message}`);
@@ -55,7 +74,18 @@ export async function generateWithGroq(
   maxTokens = 8000,
   temperature = 0.7
 ): Promise<string> {
-  return callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
+  const result = await callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
+  return result.content;
+}
+
+// Returns full AI response with service/token info
+export async function generateWithAI(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens = 8000,
+  temperature = 0.7
+): Promise<AIResponse> {
+  return callAI(systemPrompt, userPrompt, { maxTokens, temperature });
 }
 
 // ─── Revisão de Conteúdo ─────────────────────────────────────────
@@ -64,11 +94,12 @@ export async function reviewWithOpenRouter(
   maxTokens = 4000
 ): Promise<string> {
   try {
-    return await callAI(
+    const result = await callAI(
       "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
       `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
       { maxTokens, temperature: 0.5, service: "openrouter" }
     );
+    return result.content;
   } catch {
     console.warn("Revisão falhou: retornando conteúdo original");
     return content;

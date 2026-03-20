@@ -106,6 +106,19 @@ const CHART_TYPE_COLORS: Record<string, string> = {
   correcao: "hsl(150, 60%, 45%)",
 };
 
+// Daily free tier token limits per AI service (approximate)
+const DAILY_TOKEN_LIMITS: Record<string, number> = {
+  cerebras: 1_000_000,
+  groq: 500_000,
+  together: 500_000,
+  openrouter: 200_000,
+  gemini: 1_500_000,
+  selfhosted: -1, // unlimited
+};
+
+const DAILY_LIMIT_LABEL = (limit: number) =>
+  limit === -1 ? "Ilimitado" : limit.toLocaleString();
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, isLoading: isLoadingAdmin, isAuthReady } = useAdmin();
@@ -690,47 +703,85 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Today's Summary Table */}
+        {/* Today's Summary Table with Daily Limits */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" />
-              Resumo de Hoje
+              Quotas Diárias por IA
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {todaySummary.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">Nenhum consumo hoje.</p>
-            ) : (
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Serviço IA</TableHead>
+                  <TableHead className="text-xs text-right">Usados Hoje</TableHead>
+                  <TableHead className="text-xs text-right">Limite Diário</TableHead>
+                  <TableHead className="text-xs text-right">Gerações</TableHead>
+                  <TableHead className="text-xs text-right">%</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allServices.length === 0 ? (
                   <TableRow>
-                    <TableHead className="text-xs">Serviço IA</TableHead>
-                    <TableHead className="text-xs text-right">Tokens</TableHead>
-                    <TableHead className="text-xs text-right">Gerações</TableHead>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6 text-xs">
+                      Nenhum serviço de IA utilizado ainda.
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {todaySummary.map((row) => (
-                    <TableRow key={row.servico}>
-                      <TableCell className="text-xs font-medium">{row.servico}</TableCell>
-                      <TableCell className="text-xs text-right font-mono">{row.tokens.toLocaleString()}</TableCell>
-                      <TableCell className="text-xs text-right font-mono">{row.geracoes}</TableCell>
-                    </TableRow>
-                  ))}
+                ) : (
+                  allServices.map((svc) => {
+                    const row = todaySummary.find((r) => r.servico === svc);
+                    const used = row?.tokens ?? 0;
+                    const gens = row?.geracoes ?? 0;
+                    const limit = DAILY_TOKEN_LIMITS[svc] ?? 0;
+                    const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+                    const isUnlimited = limit === -1;
+                    return (
+                      <TableRow key={svc}>
+                        <TableCell className="text-xs font-medium">{svc}</TableCell>
+                        <TableCell className="text-xs text-right font-mono">{used.toLocaleString()}</TableCell>
+                        <TableCell className="text-xs text-right font-mono">{DAILY_LIMIT_LABEL(limit)}</TableCell>
+                        <TableCell className="text-xs text-right font-mono">{gens}</TableCell>
+                        <TableCell className="text-xs text-right">
+                          {isUnlimited ? (
+                            <Badge variant="secondary" className="text-[10px] px-1.5">∞</Badge>
+                          ) : (
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] px-1.5 ${
+                                pct >= 90
+                                  ? "bg-destructive/15 text-destructive"
+                                  : pct >= 70
+                                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                                  : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                              }`}
+                            >
+                              {pct}%
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+                {allServices.length > 0 && (
                   <TableRow className="border-t-2">
-                    <TableCell className="text-xs font-bold">Total</TableCell>
+                    <TableCell className="text-xs font-bold">Total Hoje</TableCell>
                     <TableCell className="text-xs text-right font-mono font-bold">{tokensToday.toLocaleString()}</TableCell>
+                    <TableCell />
                     <TableCell className="text-xs text-right font-mono font-bold">
                       {todaySummary.reduce((s, r) => s + r.geracoes, 0)}
                     </TableCell>
+                    <TableCell />
                   </TableRow>
-                </TableBody>
-              </Table>
-            )}
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </motion.div>
+
 
 
       <motion.div
