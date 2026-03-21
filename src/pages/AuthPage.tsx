@@ -9,8 +9,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from
+"@/components/ui/select";
 import WameLogo from "@/components/WameLogo";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +44,7 @@ const AuthPage = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
-          password,
+          password
         });
         if (error) {
           if (error.message.includes("Invalid login credentials")) {
@@ -70,10 +70,10 @@ const AuthPage = () => {
               genero,
               idade: idade ? parseInt(idade) : null,
               telefone: telefone.trim() || null,
-              funcao,
+              funcao
             },
-            emailRedirectTo: window.location.origin,
-          },
+            emailRedirectTo: window.location.origin
+          }
         });
         if (error) {
           if (error.message.includes("already registered")) {
@@ -97,18 +97,18 @@ const AuthPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>);
+
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+    <div className="min-h-screen px-4 py-8 bg-[#e0e6f5] flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-sm"
-      >
+        className="w-full max-w-sm">
+        
         <div className="flex justify-center mb-8">
           <WameLogo size={48} />
         </div>
@@ -118,23 +118,23 @@ const AuthPage = () => {
             {isLogin ? "Entrar na sua conta" : "Criar conta"}
           </h1>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            {isLogin
-              ? "Insira os seus dados para continuar"
-              : "Preencha os campos para se registar"}
+            {isLogin ?
+            "Insira os seus dados para continuar" :
+            "Preencha os campos para se registar"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-3">
-            {!isLogin && (
-              <>
+            {!isLogin &&
+            <>
                 <div className="space-y-1.5">
                   <Label htmlFor="name">Nome completo *</Label>
                   <Input
-                    id="name"
-                    placeholder="O seu nome"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required={!isLogin}
-                  />
+                  id="name"
+                  placeholder="O seu nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={!isLogin} />
+                
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -155,26 +155,26 @@ const AuthPage = () => {
                   <div className="space-y-1.5">
                     <Label htmlFor="idade">Idade</Label>
                     <Input
-                      id="idade"
-                      type="number"
-                      placeholder="Ex: 18"
-                      min={10}
-                      max={99}
-                      value={idade}
-                      onChange={(e) => setIdade(e.target.value)}
-                    />
+                    id="idade"
+                    type="number"
+                    placeholder="Ex: 18"
+                    min={10}
+                    max={99}
+                    value={idade}
+                    onChange={(e) => setIdade(e.target.value)} />
+                  
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="telefone">Telefone</Label>
                   <Input
-                    id="telefone"
-                    type="tel"
-                    placeholder="Ex: 923 456 789"
-                    value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
-                  />
+                  id="telefone"
+                  type="tel"
+                  placeholder="Ex: 923 456 789"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)} />
+                
                 </div>
 
                 <div className="space-y-1.5">
@@ -191,7 +191,7 @@ const AuthPage = () => {
                   </Select>
                 </div>
               </>
-            )}
+            }
 
             <div className="space-y-1.5">
               <Label htmlFor="email">Email *</Label>
@@ -201,8 +201,8 @@ const AuthPage = () => {
                 placeholder="email@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+                required />
+              
             </div>
 
             <div className="space-y-1.5">
@@ -214,14 +214,14 @@ const AuthPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
-              />
+                minLength={6} />
+              
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+              {loading ?
+              <Loader2 className="h-4 w-4 animate-spin mr-2" /> :
+              null}
               {loading ? "A processar..." : isLogin ? "Entrar" : "Criar conta"}
             </Button>
           </form>
@@ -230,15 +230,15 @@ const AuthPage = () => {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-primary hover:underline font-medium"
-            >
+              className="text-sm text-primary hover:underline font-medium">
+              
               {isLogin ? "Não tem conta? Registe-se" : "Já tem conta? Entre"}
             </button>
           </div>
         </div>
       </motion.div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default AuthPage;
