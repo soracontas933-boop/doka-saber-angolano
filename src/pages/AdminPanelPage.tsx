@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
+import AdminHeroTab from "@/components/AdminHeroTab";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
