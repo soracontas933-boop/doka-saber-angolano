@@ -876,6 +876,11 @@ const AdminPanelPage = () => {
         <TabsContent value="payments">
           <AdminPaymentsTab />
         </TabsContent>
+
+        {/* Hero / Site Tab */}
+        <TabsContent value="hero">
+          <AdminHeroTab />
+        </TabsContent>
       </Tabs>
 
       {/* User Management Dialog */}
