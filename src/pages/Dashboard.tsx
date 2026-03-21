@@ -539,6 +539,38 @@ const Dashboard = () => {
         ))}
       </motion.div>
 
+      {/* Pending Payments Alert Banner */}
+      {pendingPayments > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-4"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20">
+                <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400 animate-bounce" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">
+                  {pendingPayments} solicitação(ões) de plano pendente(s)
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Utilizadores aguardam aprovação de pagamento
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate("/admin")}
+              className="gap-2 bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              <CreditCard className="h-4 w-4" />
+              Ver Pagamentos
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Charts Row */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
