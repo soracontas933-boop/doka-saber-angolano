@@ -19,9 +19,11 @@ import {
   User,
   Globe,
   Receipt,
+  ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
+import AdminHeroTab from "@/components/AdminHeroTab";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -653,6 +655,10 @@ const AdminPanelPage = () => {
             <Receipt className="h-4 w-4" />
             Pagamentos
           </TabsTrigger>
+          <TabsTrigger value="hero" className="gap-2">
+            <ImageIcon className="h-4 w-4" />
+            Hero / Site
+          </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -869,6 +875,11 @@ const AdminPanelPage = () => {
         {/* Payments Tab */}
         <TabsContent value="payments">
           <AdminPaymentsTab />
+        </TabsContent>
+
+        {/* Hero / Site Tab */}
+        <TabsContent value="hero">
+          <AdminHeroTab />
         </TabsContent>
       </Tabs>
 
