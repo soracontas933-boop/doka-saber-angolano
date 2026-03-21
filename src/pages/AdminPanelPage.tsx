@@ -627,7 +627,7 @@ const AdminPanelPage = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="users" className="space-y-4">
+      <Tabs defaultValue={defaultTab} className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="users" className="gap-2">
             <Users className="h-4 w-4" />
