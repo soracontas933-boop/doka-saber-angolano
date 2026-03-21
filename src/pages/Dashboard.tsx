@@ -561,7 +561,7 @@ const Dashboard = () => {
               </div>
             </div>
             <Button
-              onClick={() => navigate("/admin")}
+              onClick={() => navigate("/admin?tab=payments")}
               className="gap-2 bg-amber-600 hover:bg-amber-700 text-white"
             >
               <CreditCard className="h-4 w-4" />
