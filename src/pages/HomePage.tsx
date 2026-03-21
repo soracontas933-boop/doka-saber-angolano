@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download, Check, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import WameLogo from "@/components/WameLogo";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const features = [
   { icon: FileText, title: "Trabalhos Escolares", desc: "Gere trabalhos completos com estrutura angolana" },
@@ -30,14 +32,103 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
+interface HeroImage {
+  id: string;
+  url: string;
+  ordem: number;
+}
+
+const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % images.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={images[current]?.id}
+          src={images[current]?.url}
+          alt="Hero"
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8 }}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+      </AnimatePresence>
+      <div className="absolute inset-0 bg-background/75 dark:bg-background/85" />
+      {/* Dots */}
+      {images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
+                i === current ? "bg-primary scale-125" : "bg-muted-foreground/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const HeroSingle = ({ image }: { image: HeroImage }) => (
+  <div className="absolute inset-0 overflow-hidden">
+    <img
+      src={image.url}
+      alt="Hero"
+      className="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+      decoding="async"
+      fetchPriority="high"
+    />
+    <div className="absolute inset-0 bg-background/75 dark:bg-background/85" />
+  </div>
+);
+
 const HomePage = () => {
   const navigate = useNavigate();
   const { canInstall, install } = usePwaInstall();
+  const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
+  const [carouselEnabled, setCarouselEnabled] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      const [imgRes, settingsRes] = await Promise.all([
+        supabase
+          .from("hero_images")
+          .select("id, url, ordem")
+          .eq("ativo", true)
+          .order("ordem", { ascending: true }),
+        supabase.from("site_settings").select("valor").eq("chave", "hero_carousel").single(),
+      ]);
+      setHeroImages((imgRes.data as HeroImage[]) ?? []);
+      if (settingsRes.data) {
+        setCarouselEnabled((settingsRes.data as any).valor === "true");
+      }
+    };
+    load();
+  }, []);
+
+  const hasHeroImages = heroImages.length > 0;
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 md:px-12 py-5">
+      <header className="relative z-20 flex items-center justify-between px-6 md:px-12 py-5">
         <WameLogo size={36} />
         <div className="flex items-center gap-3">
           {canInstall && (
@@ -56,11 +147,21 @@ const HomePage = () => {
       </header>
 
       {/* Hero */}
-      <section className="px-6 md:px-12 pt-16 pb-20 max-w-5xl mx-auto text-center">
+      <section className="relative px-6 md:px-12 pt-16 pb-20 max-w-5xl mx-auto text-center">
+        {/* Background image(s) */}
+        {hasHeroImages && (
+          carouselEnabled && heroImages.length > 1 ? (
+            <HeroCarousel images={heroImages} />
+          ) : (
+            <HeroSingle image={heroImages[0]} />
+          )
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="relative z-10"
         >
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent text-accent-foreground text-xs font-medium mb-6">
             <Sparkles className="h-3.5 w-3.5" />
@@ -96,7 +197,7 @@ const HomePage = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="grid grid-cols-3 gap-4 mt-16 max-w-lg mx-auto"
+          className="relative z-10 grid grid-cols-3 gap-4 mt-16 max-w-lg mx-auto"
         >
           {stats.map((s) => (
             <div key={s.label} className="text-center">
