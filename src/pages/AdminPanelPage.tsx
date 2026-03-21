@@ -655,6 +655,10 @@ const AdminPanelPage = () => {
             <Receipt className="h-4 w-4" />
             Pagamentos
           </TabsTrigger>
+          <TabsTrigger value="hero" className="gap-2">
+            <ImageIcon className="h-4 w-4" />
+            Hero / Site
+          </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
