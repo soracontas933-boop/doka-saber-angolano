@@ -134,12 +134,75 @@ const Dashboard = () => {
   const [allServices, setAllServices] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState(0);
+  const prevPendingRef = useRef(0);
 
   // Dialog state
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newPlan, setNewPlan] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Play alert sound using Web Audio API
+  const playAlertSound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const playTone = (freq: number, start: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + duration);
+      };
+      playTone(880, 0, 0.15);
+      playTone(1100, 0.18, 0.15);
+      playTone(880, 0.36, 0.15);
+      playTone(1100, 0.54, 0.2);
+    } catch {}
+  }, []);
+
+  // Fetch pending payments count
+  const fetchPendingPayments = useCallback(async () => {
+    const { count } = await supabase
+      .from("payment_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("estado", "pendente");
+    const newCount = count ?? 0;
+    if (newCount > prevPendingRef.current && prevPendingRef.current >= 0) {
+      playAlertSound();
+      toast({
+        title: "💰 Nova solicitação de plano!",
+        description: `Há ${newCount} pagamento(s) pendente(s) para aprovar.`,
+      });
+    }
+    prevPendingRef.current = newCount;
+    setPendingPayments(newCount);
+  }, [playAlertSound]);
+
+  // Realtime subscription for payment_requests
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchPendingPayments();
+    const channel = supabase
+      .channel("admin-payment-alerts")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "payment_requests" },
+        () => { fetchPendingPayments(); }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "payment_requests" },
+        () => { fetchPendingPayments(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin, fetchPendingPayments]);
 
   useEffect(() => {
     if (isAuthReady && !isLoadingAdmin && !isAdmin) {
