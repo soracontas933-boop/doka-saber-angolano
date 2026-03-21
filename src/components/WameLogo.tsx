@@ -17,8 +17,8 @@ const WameLogo = ({ size = 32, showText = true }: {size?: number;showText?: bool
         
       </motion.div>
       {showText &&
-      <span className="font-display font-bold text-foreground tracking-tight mr-[30px] rounded-lg shadow" style={{ fontSize: size * 0.65 }}>
-          Wame
+      <span className="font-display font-bold tracking-tight mr-[30px] rounded-lg shadow text-stone-950" style={{ fontSize: size * 0.65 }}>
+          ​Wame  
         </span>
       }
     </div>);
