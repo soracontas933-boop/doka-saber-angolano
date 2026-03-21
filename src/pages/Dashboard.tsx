@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -14,6 +14,7 @@ import {
   Eye,
   UserCheck,
   Activity,
+  Bell,
 } from "lucide-react";
 import {
   BarChart,
@@ -133,12 +134,75 @@ const Dashboard = () => {
   const [allServices, setAllServices] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState(0);
+  const prevPendingRef = useRef(0);
 
   // Dialog state
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newPlan, setNewPlan] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Play alert sound using Web Audio API
+  const playAlertSound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const playTone = (freq: number, start: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + duration);
+      };
+      playTone(880, 0, 0.15);
+      playTone(1100, 0.18, 0.15);
+      playTone(880, 0.36, 0.15);
+      playTone(1100, 0.54, 0.2);
+    } catch {}
+  }, []);
+
+  // Fetch pending payments count
+  const fetchPendingPayments = useCallback(async () => {
+    const { count } = await supabase
+      .from("payment_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("estado", "pendente");
+    const newCount = count ?? 0;
+    if (newCount > prevPendingRef.current && prevPendingRef.current >= 0) {
+      playAlertSound();
+      toast({
+        title: "💰 Nova solicitação de plano!",
+        description: `Há ${newCount} pagamento(s) pendente(s) para aprovar.`,
+      });
+    }
+    prevPendingRef.current = newCount;
+    setPendingPayments(newCount);
+  }, [playAlertSound]);
+
+  // Realtime subscription for payment_requests
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchPendingPayments();
+    const channel = supabase
+      .channel("admin-payment-alerts")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "payment_requests" },
+        () => { fetchPendingPayments(); }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "payment_requests" },
+        () => { fetchPendingPayments(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin, fetchPendingPayments]);
 
   useEffect(() => {
     if (isAuthReady && !isLoadingAdmin && !isAdmin) {
@@ -474,6 +538,38 @@ const Dashboard = () => {
           </Card>
         ))}
       </motion.div>
+
+      {/* Pending Payments Alert Banner */}
+      {pendingPayments > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-4"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20">
+                <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400 animate-bounce" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">
+                  {pendingPayments} solicitação(ões) de plano pendente(s)
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Utilizadores aguardam aprovação de pagamento
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate("/admin?tab=payments")}
+              className="gap-2 bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              <CreditCard className="h-4 w-4" />
+              Ver Pagamentos
+            </Button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Charts Row */}
       <motion.div

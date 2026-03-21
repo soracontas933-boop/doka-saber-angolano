@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Users,
   FileText,
@@ -281,6 +281,8 @@ const TrafficPanel = ({
 
 const AdminPanelPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "users";
   const { isAdmin, isLoading: isLoadingAdmin, isAuthReady } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -625,7 +627,7 @@ const AdminPanelPage = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="users" className="space-y-4">
+      <Tabs defaultValue={defaultTab} className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="users" className="gap-2">
             <Users className="h-4 w-4" />
