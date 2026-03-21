@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_images: {
+        Row: {
+          ativo: boolean
+          criado_em: string
+          id: string
+          ordem: number
+          url: string
+        }
+        Insert: {
+          ativo?: boolean
+          criado_em?: string
+          id?: string
+          ordem?: number
+          url: string
+        }
+        Update: {
+          ativo?: boolean
+          criado_em?: string
+          id?: string
+          ordem?: number
+          url?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           criado_em: string
@@ -215,6 +239,27 @@ export type Database = {
           tipo?: string
           titulo?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          atualizado_em: string
+          chave: string
+          id: string
+          valor: string
+        }
+        Insert: {
+          atualizado_em?: string
+          chave: string
+          id?: string
+          valor?: string
+        }
+        Update: {
+          atualizado_em?: string
+          chave?: string
+          id?: string
+          valor?: string
         }
         Relationships: []
       }
