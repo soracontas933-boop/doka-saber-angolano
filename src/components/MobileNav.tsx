@@ -32,6 +32,7 @@ const adminNavItems = [
 const userNavItems = [
   { to: "/home", icon: Home, label: "Início" },
   { to: "/trabalho", icon: FileText, label: "Trabalho" },
+  { to: "/curriculo", icon: FileText, label: "CV" },
   { to: "/resumo", icon: BookOpen, label: "Resumo" },
   { to: "/questionario", icon: HelpCircle, label: "Quiz" },
   { to: "/plano-aula", icon: ClipboardList, label: "Plano" },
