@@ -22,6 +22,7 @@ import ApiKeysSetup from "@/pages/ApiKeysSetup";
 import CorrecaoPage from "@/pages/CorrecaoPage";
 import SuportePage from "@/pages/SuportePage";
 import AdminMensagensPage from "@/pages/AdminMensagensPage";
+import CurriculoPage from "@/pages/CurriculoPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
