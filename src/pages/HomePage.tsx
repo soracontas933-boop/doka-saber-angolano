@@ -67,7 +67,7 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
           fetchPriority="high"
         />
       </AnimatePresence>
-      <div className="absolute inset-0 bg-background/75 dark:bg-background/85" />
+      <div className="absolute inset-0 bg-black/60 dark:bg-black/75" />
       {/* Dots */}
       {images.length > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
