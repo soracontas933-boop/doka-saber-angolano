@@ -5,12 +5,40 @@ import { exportHtmlToPdf } from "@/lib/pdf-export-helper";
 import type { CVData, CVTemplate } from "@/types/cv";
 import { toast } from "sonner";
 
-/* ── Build HTML from template for PDF ── */
-function buildCVHtml(data: CVData, template: CVTemplate): string {
-  // We'll capture the preview element's innerHTML directly
-  const el = document.getElementById("cv-preview-capture");
-  if (!el) return "";
-  return el.innerHTML;
+/* ── Clone element with computed styles for PDF fidelity ── */
+function deepCloneWithStyles(source: HTMLElement): HTMLElement {
+  const clone = source.cloneNode(true) as HTMLElement;
+
+  // Copy computed styles from source tree to clone tree
+  const sourceAll = source.querySelectorAll("*");
+  const cloneAll = clone.querySelectorAll("*");
+
+  // Copy styles on the root element
+  const rootStyles = window.getComputedStyle(source);
+  const importantProps = [
+    "display", "flex-direction", "align-items", "justify-content", "gap",
+    "background-color", "background", "color", "font-family", "font-size",
+    "font-weight", "line-height", "padding", "margin", "border",
+    "border-radius", "width", "min-width", "max-width", "height", "min-height",
+    "text-align", "letter-spacing", "text-transform", "box-sizing",
+    "position", "top", "left", "right", "bottom",
+    "grid-template-columns", "grid-template-rows", "grid-gap",
+  ];
+  importantProps.forEach((prop) => {
+    clone.style.setProperty(prop, rootStyles.getPropertyValue(prop));
+  });
+
+  sourceAll.forEach((srcEl, i) => {
+    if (i < cloneAll.length) {
+      const computed = window.getComputedStyle(srcEl as HTMLElement);
+      const target = cloneAll[i] as HTMLElement;
+      importantProps.forEach((prop) => {
+        target.style.setProperty(prop, computed.getPropertyValue(prop));
+      });
+    }
+  });
+
+  return clone;
 }
 
 export async function exportCVToPdf(data: CVData, template: CVTemplate) {
@@ -20,12 +48,17 @@ export async function exportCVToPdf(data: CVData, template: CVTemplate) {
     return;
   }
 
-  // Clone the preview element for capture
-  const html = el.innerHTML;
+  // Clone with computed styles to preserve visual fidelity
+  const cloned = deepCloneWithStyles(el);
+  // Remove transform scaling from preview
+  cloned.style.transform = "none";
+  cloned.style.transformOrigin = "top left";
+  cloned.style.width = "794px";
+
   const filename = `wame-cv-${data.nomeCompleto?.replace(/\s+/g, "-").toLowerCase() || "curriculo"}.pdf`;
 
   await exportHtmlToPdf({
-    html,
+    element: cloned,
     filename,
     overlayMessage: "A gerar CV em PDF...",
     containerWidth: 794,
