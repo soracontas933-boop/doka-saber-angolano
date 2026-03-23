@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download, Check, Crown } from "lucide-react";
+import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download, Check, Crown, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/use-theme";
 import WameLogo from "@/components/WameLogo";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
@@ -66,7 +67,7 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
           fetchPriority="high"
         />
       </AnimatePresence>
-      <div className="absolute inset-0 bg-background/75 dark:bg-background/85" />
+      <div className="absolute inset-0 bg-black/60 dark:bg-black/75" />
       {/* Dots */}
       {images.length > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
@@ -95,13 +96,14 @@ const HeroSingle = ({ image }: { image: HeroImage }) => (
       decoding="async"
       fetchPriority="high"
     />
-    <div className="absolute inset-0 bg-background/75 dark:bg-background/85" />
+    <div className="absolute inset-0 bg-black/60 dark:bg-black/75" />
   </div>
 );
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { canInstall, install } = usePwaInstall();
+  const { theme, toggleTheme } = useTheme();
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [carouselEnabled, setCarouselEnabled] = useState(false);
 
@@ -131,6 +133,9 @@ const HomePage = () => {
       <header className="relative z-20 flex items-center justify-between px-6 md:px-12 py-5">
         <WameLogo size={36} />
         <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           {canInstall && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={install}>
               <Download className="h-4 w-4" />
