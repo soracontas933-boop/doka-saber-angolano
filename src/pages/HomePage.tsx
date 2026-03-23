@@ -105,6 +105,7 @@ const HomePage = () => {
   const { canInstall, install } = usePwaInstall();
   const { theme, toggleTheme } = useTheme();
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
+  const [carouselEnabled, setCarouselEnabled] = useState(false);
 
   useEffect(() => {
     const load = async () => {
