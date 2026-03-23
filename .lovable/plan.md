@@ -1,30 +1,50 @@
 
 
-## Plano: Contagem Diária de Tokens por IA no Dashboard
+## Plano: Corrigir exportação PDF que gera página em branco
 
-### Objectivo
-Adicionar ao Dashboard admin uma secção dedicada que mostre o consumo de tokens por serviço de IA **por dia**, com renovação diária automática (contagem reseta visualmente a cada dia).
+### Diagnóstico
 
-### O que será feito
+Após análise do código, o `pdf-export-helper.ts` já tem a configuração correcta (`useCORS: true`, container off-screen com `opacity: 1`, `position: absolute; left: -10000px`). O `@media print` no CSS não afecta html2canvas (que usa canvas rendering, não print). Não há `overflow: hidden` problemático.
 
-**Ficheiro: `src/pages/Dashboard.tsx`**
+O problema provável é **timing**: o `requestAnimationFrame` duplo não é suficiente para html2canvas processar conteúdo complexo (especialmente com flex layouts e imagens). A exportação do CV captura `el.innerHTML` mas perde os estilos computados do template.
 
-1. **Novo card KPI "Tokens Hoje"** — mostra total de tokens consumidos hoje (todas as APIs somadas), ao lado dos KPIs existentes.
+### Alterações
 
-2. **Nova secção "Consumo Diário por IA"** — gráfico de barras empilhadas (StackedBarChart via Recharts) mostrando os últimos 14 dias, com cada serviço de IA como uma cor diferente. Isto permite ver quanto cada API consumiu por dia.
+**Ficheiro: `src/lib/pdf-export-helper.ts`**
 
-3. **Tabela resumo do dia actual** — lista cada serviço de IA com:
-   - Tokens usados hoje
-   - Número de gerações hoje
-   - Permite estimar quantas gerações restam (baseado na média de tokens por geração)
+1. Adicionar delay explícito de 500ms após os rAFs e antes da captura html2canvas
+2. Adicionar `allowTaint: true` ao html2canvas config
+3. Forçar `overflow: visible` no container e filhos directos
+4. Aumentar `windowHeight` para garantir render completo
+5. Adicionar log de debug com dimensões do container antes da captura
 
-### Alterações técnicas
+**Ficheiro: `src/lib/cv-export.ts`**
 
-- No `fetchData`, filtrar `usage_logs` por `criado_em` para agrupar por dia + serviço de IA
-- Criar estrutura `dailyTokensByService`: array de `{ date, [servico]: tokens }` para o gráfico empilhado
-- Criar `todaySummary`: array de `{ servico, tokens, geracoes }` para a tabela do dia
-- Nenhuma migração de base de dados necessária — os dados já existem na tabela `usage_logs` com `servico_ia`, `tokens_usados` e `criado_em`
+6. Em vez de capturar apenas `innerHTML` (que perde estilos do template), clonar o elemento completo com `cloneNode(true)` e copiar estilos computados inline para garantir fidelidade visual
+7. Passar o clone directamente ao helper em vez de HTML string
 
-### Ficheiros a alterar
-- `src/pages/Dashboard.tsx` — adicionar nova secção de gráficos e tabela
+**Ficheiro: `src/lib/pdf-export-helper.ts` (extensão)**
+
+8. Adicionar overload que aceita `HTMLElement` directamente (além de `html: string`), para o caso do CV e outros componentes React renderizados
+
+### Detalhes técnicos
+
+```text
+Fluxo actual (falha):
+  innerHTML → container off-screen → html2canvas → canvas vazio (estilos perdidos)
+
+Fluxo corrigido:
+  cloneNode(true) → copiar computed styles → container off-screen 
+  → delay 500ms → forçar overflow:visible → html2canvas → PDF com conteúdo
+```
+
+Alterações no helper:
+- Nova interface `PdfExportOptions` com campo opcional `element: HTMLElement`
+- Se `element` fornecido, usar directamente em vez de `container.innerHTML = html`
+- Delay: `await new Promise(r => setTimeout(r, 500))` após rAFs
+- Estilos do container: adicionar `overflow: visible !important` recursivamente
+
+Ficheiros a alterar:
+- `src/lib/pdf-export-helper.ts`
+- `src/lib/cv-export.ts`
 
