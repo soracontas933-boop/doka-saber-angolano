@@ -14,7 +14,8 @@ export function escapeHtml(value: string) {
 }
 
 interface PdfExportOptions {
-  html: string;
+  html?: string;
+  element?: HTMLElement;
   filename: string;
   overlayMessage?: string;
   containerWidth?: number;
