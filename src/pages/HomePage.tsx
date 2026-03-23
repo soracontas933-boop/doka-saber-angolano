@@ -132,6 +132,9 @@ const HomePage = () => {
       <header className="relative z-20 flex items-center justify-between px-6 md:px-12 py-5">
         <WameLogo size={36} />
         <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           {canInstall && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={install}>
               <Download className="h-4 w-4" />
