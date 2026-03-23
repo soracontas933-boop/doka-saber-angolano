@@ -40,6 +40,7 @@ async function waitForImages(root: HTMLElement) {
 
 export async function exportHtmlToPdf({
   html,
+  element,
   filename,
   overlayMessage = "A gerar ficheiro PDF...",
   containerWidth = 794,
@@ -49,7 +50,7 @@ export async function exportHtmlToPdf({
   let container: HTMLDivElement | null = null;
 
   try {
-    if (!html || html.trim().length < 10) {
+    if (!html && !element) {
       const { toast } = await import("sonner");
       toast.error("Sem conteúdo para exportar.");
       return;
@@ -71,24 +72,42 @@ export async function exportHtmlToPdf({
       "z-index: 0",
       "pointer-events: none",
       "box-sizing: border-box",
+      "overflow: visible",
     ].join(";");
 
-    container.innerHTML = html;
+    if (element) {
+      container.appendChild(element);
+    } else if (html && html.trim().length >= 10) {
+      container.innerHTML = html;
+    } else {
+      const { toast } = await import("sonner");
+      toast.error("Sem conteúdo para exportar.");
+      return;
+    }
+
     document.body.appendChild(container);
+
+    // Force overflow visible on all children
+    const allChildren = container.querySelectorAll("*");
+    allChildren.forEach((child) => {
+      (child as HTMLElement).style.overflow = "visible";
+    });
 
     await document.fonts.ready;
     await waitForImages(container);
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+    // Extra delay for complex layouts (flex, grid, images)
+    await new Promise<void>((r) => setTimeout(r, 500));
 
     const hasText = (container.textContent || "").trim().length > 0;
-    const hasRenderableElement = !!container.querySelector("img, table, h1, h2, h3, p, li, div");
+    const hasRenderableElement = !!container.querySelector("img, table, h1, h2, h3, p, li, div, section, span");
     if (!hasText && !hasRenderableElement) {
       const { toast } = await import("sonner");
       toast.error("Sem conteúdo visível para exportar.");
       return;
     }
 
-    console.log("[PDF Helper] container size:", container.scrollWidth, "x", container.scrollHeight, "html length:", html.length);
+    console.log("[PDF Helper] container size:", container.scrollWidth, "x", container.scrollHeight, "children:", container.childElementCount);
 
     const html2pdf = (await import("html2pdf.js")).default;
     await html2pdf()
@@ -98,12 +117,13 @@ export async function exportHtmlToPdf({
         html2canvas: {
           scale: 2,
           useCORS: true,
+          allowTaint: true,
           logging: false,
           backgroundColor: "#ffffff",
           scrollX: 0,
           scrollY: 0,
           windowWidth: containerWidth,
-          windowHeight: Math.max(container.scrollHeight + 40, 1123),
+          windowHeight: Math.max(container.scrollHeight + 100, 1123),
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: ["css", "legacy"] },
