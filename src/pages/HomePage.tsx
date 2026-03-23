@@ -96,7 +96,7 @@ const HeroSingle = ({ image }: { image: HeroImage }) => (
       decoding="async"
       fetchPriority="high"
     />
-    <div className="absolute inset-0 bg-background/75 dark:bg-background/85" />
+    <div className="absolute inset-0 bg-black/60 dark:bg-black/75" />
   </div>
 );
 
