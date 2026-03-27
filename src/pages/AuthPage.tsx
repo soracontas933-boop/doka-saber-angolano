@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue } from
 "@/components/ui/select";
-import WameLogo from "@/components/WameLogo";
+import DelleLogo from "@/components/DelleLogo";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -110,7 +110,7 @@ const AuthPage = () => {
         className="w-full max-w-sm">
         
         <div className="flex justify-center mb-8">
-          <WameLogo size={48} />
+          <DelleLogo size={48} />
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-card">

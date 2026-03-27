@@ -69,7 +69,7 @@ export async function exportCVToPdf(data: CVData, template: CVTemplate) {
     innerWrapper.style.overflow = "visible";
   }
 
-  const filename = `wame-cv-${data.nomeCompleto?.replace(/\s+/g, "-").toLowerCase() || "curriculo"}.pdf`;
+  const filename = `delle-cv-${data.nomeCompleto?.replace(/\s+/g, "-").toLowerCase() || "curriculo"}.pdf`;
 
   await exportHtmlToPdf({
     element: cloned,
@@ -267,7 +267,7 @@ export async function exportCVToWord(data: CVData) {
     });
 
     const buffer = await Packer.toBlob(doc);
-    const fname = `wame-cv-${data.nomeCompleto?.replace(/\s+/g, "-").toLowerCase() || "curriculo"}.docx`;
+    const fname = `delle-cv-${data.nomeCompleto?.replace(/\s+/g, "-").toLowerCase() || "curriculo"}.docx`;
     saveAs(buffer, fname);
     toast.success("CV exportado em Word!");
   } catch (err) {
