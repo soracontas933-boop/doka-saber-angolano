@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download, Check, Crown, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
-import WameLogo from "@/components/WameLogo";
+import DelleLogo from "@/components/DelleLogo";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Badge } from "@/components/ui/badge";

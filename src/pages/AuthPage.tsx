@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue } from
 "@/components/ui/select";
-import WameLogo from "@/components/WameLogo";
+import DelleLogo from "@/components/DelleLogo";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
