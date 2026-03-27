@@ -50,10 +50,24 @@ export async function exportCVToPdf(data: CVData, template: CVTemplate) {
 
   // Clone with computed styles to preserve visual fidelity
   const cloned = deepCloneWithStyles(el);
-  // Remove transform scaling from preview
+
+  // Remove preview transform scaling — render at true A4 size
   cloned.style.transform = "none";
   cloned.style.transformOrigin = "top left";
-  cloned.style.width = "794px";
+  cloned.style.width = "794px"; // A4 width at 96dpi
+  cloned.style.minHeight = "1123px"; // A4 height at 96dpi
+  cloned.style.overflow = "visible";
+  cloned.style.position = "relative";
+
+  // Also fix the inner wrapper that has the scale transform
+  const innerWrapper = cloned.querySelector(".bg-white.shadow-xl, [style*='scale']") as HTMLElement;
+  if (innerWrapper) {
+    innerWrapper.style.transform = "none";
+    innerWrapper.style.transformOrigin = "top left";
+    innerWrapper.style.width = "100%";
+    innerWrapper.style.minHeight = "1123px";
+    innerWrapper.style.overflow = "visible";
+  }
 
   const filename = `wame-cv-${data.nomeCompleto?.replace(/\s+/g, "-").toLowerCase() || "curriculo"}.pdf`;
 
@@ -63,6 +77,8 @@ export async function exportCVToPdf(data: CVData, template: CVTemplate) {
     overlayMessage: "A gerar CV em PDF...",
     containerWidth: 794,
     padding: "0",
+    scale: 2,
+    margin: [0, 0, 0, 0],
   });
 }
 
