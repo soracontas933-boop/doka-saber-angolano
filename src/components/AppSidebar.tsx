@@ -31,6 +31,7 @@ import { useState } from "react";
 const navItems = [
 { to: "/home", icon: Home, label: "Início", userOnly: true },
 { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true },
+{ to: "/admin", icon: ShieldCheck, label: "Painel Admin", adminOnly: true },
 { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
 { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
 { to: "/curriculo", icon: FileText, label: "Currículo (CV)" },
@@ -112,7 +113,6 @@ const AppSidebar = () => {
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-[sidebar-accent-foreground] text-primary-foreground bg-primary">
         {navItems.map(renderNavItem)}
-        {isAdmin && renderNavItem({ to: "/admin", icon: ShieldCheck, label: "Painel Admin" })}
       </nav>
 
       <div className="p-3 border-t flex-shrink-0 space-y-1 border-[#030303]">
