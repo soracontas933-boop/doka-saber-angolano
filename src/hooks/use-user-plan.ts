@@ -13,6 +13,8 @@ export interface UserPlan {
   creditos_totais: number;
   creditos_usados: number;
   suporte_prioritario: boolean;
+  periodo_inicio: string;
+  criado_em?: string;
 }
 
 export const PLAN_CONFIGS = {
