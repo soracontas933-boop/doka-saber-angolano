@@ -51,11 +51,9 @@ async function callAI(
     const serviceUsed = data?.service_used || "desconhecido";
     const tokensUsed = data?.tokens_used || 0;
 
-    // Show deduction toast
+    // Log internally only — never show service/token info to users
     if (tokensUsed > 0) {
-      sonnerToast.info(`🤖 ${serviceUsed} — ${tokensUsed.toLocaleString()} tokens usados`, {
-        duration: 4000,
-      });
+      console.log(`[AI] ${serviceUsed} — ${tokensUsed.toLocaleString()} tokens`);
     }
 
     return { content, service_used: serviceUsed, tokens_used: tokensUsed };
