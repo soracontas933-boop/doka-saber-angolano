@@ -1,73 +1,31 @@
 
-Plano de correção (PDF em branco ~3.58KB e 1 página)
 
-Diagnóstico confirmado
-- O problema afeta todos os módulos (Trabalho, Resumo, Questionário, Plano de Aula) em navegador e app instalado.
-- Como todos usam o mesmo helper (`src/lib/pdf-export-helper.ts`), a falha está centralizada na pipeline de captura/renderização PDF (não em cada página individual).
+## Plano: Citações automáticas por parágrafo nos trabalhos
 
-Implementação proposta
+### Objectivo
+Após cada parágrafo do corpo do trabalho (Introdução, Capítulos, Conclusão), inserir automaticamente uma citação em texto pequeno referenciando uma das fontes da Bibliografia, no estilo académico (ex: *(Silva, 2022, p. 15)*).
 
-1) Reescrever a pipeline de PDF no helper (núcleo da correção)
-- Arquivo: `src/lib/pdf-export-helper.ts`
-- Substituir o fluxo atual baseado em `html2pdf().from(...).save()` por pipeline explícita:
-  1. montar conteúdo em “staging container” visível para render (não usar `left:-10000px`);
-  2. capturar com `html2canvas` com dimensões explícitas (`width/height/windowWidth/windowHeight`);
-  3. gerar PDF com `jsPDF` via paginação manual por slices.
-- Manter `useCORS: true` e delay adicional antes da captura.
-- Validar canvas: se dimensões 0 ou captura “vazia”, fazer retry automático com config alternativa (escala menor / foreignObject).
+### O que será feito
 
-2) Corrigir paginação multi-página de forma determinística
-- Arquivo: `src/lib/pdf-export-helper.ts`
-- Implementar corte por altura de página (A4 em px proporcional), adicionando páginas com `addPage`.
-- Isso elimina o problema de sair sempre 1 página quando o conteúdo é longo.
+**1. Alterar os prompts da IA para incluir citações inline** — `src/lib/ai-service.ts`
+- Nos prompts `subtema` (introdução, capítulo, conclusão), adicionar instrução explícita: *"Ao final de cada parágrafo, inclui uma citação no formato (Autor, Ano, p. X) entre parênteses, baseada nas referências bibliográficas que serão geradas. Usa autores fictícios mas realistas e relevantes ao tema."*
+- No prompt de `bibliografia`, adicionar: *"As referências devem ser coerentes com os autores citados nos parágrafos dos capítulos anteriores."*
+- No prompt `estruturaTrabalho` do modo completo (linha 181), adicionar a mesma instrução de citação por parágrafo.
 
-3) Tornar o helper configurável por módulo
-- Arquivo: `src/lib/pdf-export-helper.ts`
-- Adicionar opções: `orientation`, `format`, `margin`, `scale`, `pagebreakMode`.
-- Permitir `portrait` e `landscape` sem hacks por largura.
+**2. Estilizar citações no renderizador de markdown** — `src/lib/trabalho-parser.ts`
+- Na função `renderMarkdownToHTML`, adicionar regex para detectar citações no formato `(Autor, Ano)` ou `(Autor, Ano, p. X)` ao final de parágrafos e envolvê-las numa `<span class="citacao-inline">`.
+- Adicionar CSS para `.citacao-inline`: `font-size: 0.75rem; color: #666; font-style: italic;`
 
-4) Ajustar chamadas dos exportadores para usar as novas opções
-- Arquivos:
-  - `src/lib/export-utils.ts` (Trabalho)
-  - `src/lib/resumo-export.ts`
-  - `src/lib/questionario-export.ts`
-  - `src/lib/plano-aula-export.ts`
-- Aplicar parâmetros corretos:
-  - Trabalho/Resumo/Questionário: A4 portrait.
-  - Plano de Aula horizontal: A4 landscape (preservar tabela de 9 colunas).
-- Garantir wrapper raiz de export com largura consistente e `overflow: visible`.
+**3. Adicionar estilos CSS** — `src/index.css`
+- Classe `.citacao-inline` com tamanho de letra reduzido (0.75em), cor cinza, itálico.
 
-5) Endurecer robustez do DOM antes da captura
-- Arquivo: `src/lib/pdf-export-helper.ts`
-- Antes do capture:
-  - aguardar `document.fonts.ready`;
-  - aguardar `img.decode()/load`;
-  - bloquear transições/animações temporariamente no container de export;
-  - verificar `scrollWidth/scrollHeight` reais (abort com erro amigável se 0).
+### Detalhes técnicos
+- As citações são geradas pela IA como parte do texto markdown — não há pós-processamento complexo.
+- O regex no parser detecta padrões como `(Santos, 2021)` ou `(Mendes & Silva, 2020, p. 34)` e aplica a classe de estilo.
+- Funciona tanto em trabalhos novos (gerados após a alteração) como visualmente para trabalhos que já contenham citações no texto.
 
-6) Observabilidade para evitar regressão silenciosa
-- Arquivo: `src/lib/pdf-export-helper.ts`
-- Adicionar logs de diagnóstico úteis:
-  - dimensões finais capturadas,
-  - número de páginas geradas,
-  - fallback acionado ou não.
-- Toast de erro específico quando detectar captura vazia.
+### Ficheiros a alterar
+- `src/lib/ai-service.ts` — prompts com instrução de citação
+- `src/lib/trabalho-parser.ts` — regex para estilizar citações
+- `src/index.css` — classe CSS `.citacao-inline`
 
-Validação (QA) após implementação
-- Testar os 4 fluxos com conteúdo curto e longo:
-  - Trabalho: gerar documento multi-seção (esperado >1 página).
-  - Resumo: texto extenso (esperado >1 página).
-  - Questionário: 30+ perguntas (esperado >1 página).
-  - Plano de Aula: tabela completa em landscape legível.
-- Critérios de sucesso:
-  - PDF não vazio visualmente;
-  - tamanho de arquivo acima do mínimo esperado (não ~3.58KB em casos com conteúdo);
-  - paginação correta;
-  - funciona em navegador e app instalado.
-
-Arquivos a alterar
-- `src/lib/pdf-export-helper.ts` (principal)
-- `src/lib/export-utils.ts`
-- `src/lib/resumo-export.ts`
-- `src/lib/questionario-export.ts`
-- `src/lib/plano-aula-export.ts`
