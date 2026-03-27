@@ -162,10 +162,11 @@ const AdminPaymentsTab = () => {
               limite_planos_aula: config.limite_planos_aula,
               limite_tfc: config.limite_tfc,
               creditos_totais: config.creditos_totais,
-              creditos_usados: 0, // Reset credits on plan upgrade
+              creditos_usados: 0,
               suporte_prioritario: config.suporte_prioritario,
               pago_em: new Date().toISOString(),
               atualizado_em: new Date().toISOString(),
+              periodo_inicio: new Date().toISOString(), // Reset billing period
             })
             .eq("user_id", payment.user_id);
         }

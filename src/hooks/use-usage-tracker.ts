@@ -11,40 +11,59 @@ const MODULE_LIMIT_MAP: Record<ModuloType, keyof typeof PLAN_CONFIGS.gratuito> =
   questionario: "limite_questionarios",
   plano_aula: "limite_planos_aula",
   tfc: "limite_tfc",
-  correcao: "limite_trabalhos", // correcao shares trabalho limits
+  correcao: "limite_trabalhos",
 };
 
 export function useUsageTracker() {
   const { plan, refetch } = useUserPlan();
 
+  // Get the start of the current billing period
+  const getPeriodoInicio = useCallback((): string | null => {
+    if (!plan) return null;
+    return (plan as any).periodo_inicio || plan.criado_em || null;
+  }, [plan]);
+
   const getUsageCount = useCallback(async (modulo: ModuloType): Promise<number> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return 0;
-    const user = session.user;
 
-    const { count, error } = await supabase
+    const periodoInicio = getPeriodoInicio();
+    
+    let query = supabase
       .from("usage_logs")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
+      .eq("user_id", session.user.id)
       .eq("modulo", modulo);
 
+    // Only count usage from current billing period
+    if (periodoInicio) {
+      query = query.gte("criado_em", periodoInicio);
+    }
+
+    const { count, error } = await query;
     if (error) {
       console.error("Error counting usage:", error);
       return 0;
     }
     return count || 0;
-  }, []);
+  }, [getPeriodoInicio]);
 
   const getAllUsageCounts = useCallback(async (): Promise<Record<string, number>> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return {};
-    const user = session.user;
 
-    const { data, error } = await supabase
+    const periodoInicio = getPeriodoInicio();
+
+    let query = supabase
       .from("usage_logs")
       .select("modulo")
-      .eq("user_id", user.id);
+      .eq("user_id", session.user.id);
 
+    if (periodoInicio) {
+      query = query.gte("criado_em", periodoInicio);
+    }
+
+    const { data, error } = await query;
     if (error || !data) return {};
 
     const counts: Record<string, number> = {};
@@ -52,7 +71,7 @@ export function useUsageTracker() {
       counts[row.modulo] = (counts[row.modulo] || 0) + 1;
     }
     return counts;
-  }, []);
+  }, [getPeriodoInicio]);
 
   const checkLimit = useCallback(async (modulo: ModuloType): Promise<boolean> => {
     if (!plan) return false;
@@ -62,9 +81,7 @@ export function useUsageTracker() {
     const limitKey = MODULE_LIMIT_MAP[modulo];
     const limit = cfg[limitKey] as number;
 
-    // -1 = unlimited
     if (limit === -1) return true;
-    // 0 = not available
     if (limit === 0) {
       toast.error(`O módulo não está disponível no plano ${cfg.nome}. Faça upgrade!`);
       return false;
@@ -82,12 +99,11 @@ export function useUsageTracker() {
   const logUsage = useCallback(async (modulo: ModuloType, servicoIa?: string, tokensUsados?: number) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
-    const user = session.user;
 
     const { error } = await supabase
       .from("usage_logs")
       .insert({
-        user_id: user.id,
+        user_id: session.user.id,
         modulo,
         servico_ia: servicoIa || null,
         tokens_usados: tokensUsados || 0,
@@ -97,10 +113,7 @@ export function useUsageTracker() {
       console.error("Error logging usage:", error);
     }
 
-    // Update creditos_usados via secure RPC function
-    await supabase.rpc("increment_creditos_usados", { p_user_id: user.id });
-
-    // Refresh plan data
+    await supabase.rpc("increment_creditos_usados", { p_user_id: session.user.id });
     refetch();
   }, [plan, refetch]);
 
