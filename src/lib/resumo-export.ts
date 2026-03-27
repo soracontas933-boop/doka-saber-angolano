@@ -166,7 +166,7 @@ export async function exportResumoWord(resultado: string, tipoResumo: string, di
         spacing: { before: 400 },
         alignment: AlignmentType.CENTER,
         border: { top: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC", space: 8 } },
-        children: [new TextRun({ text: "Gerado por Wame — Plataforma de Estudo Inteligente", size: 16, font: "Times New Roman", color: "999999" })],
+        children: [new TextRun({ text: "Gerado por Delle — Plataforma de Estudo Inteligente", size: 16, font: "Times New Roman", color: "999999" })],
       })
     );
 

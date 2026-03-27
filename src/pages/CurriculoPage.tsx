@@ -20,8 +20,8 @@ const templates: { id: CVTemplate; label: string; desc: string }[] = [
 ];
 
 const CurriculoPage: React.FC = () => {
-  const [cvData, setCvData] = useLocalStorage<CVData>("wame-cv-data", emptyCVData);
-  const [template, setTemplate] = useLocalStorage<CVTemplate>("wame-cv-template", "moderno");
+  const [cvData, setCvData] = useLocalStorage<CVData>("delle-cv-data", emptyCVData);
+  const [template, setTemplate] = useLocalStorage<CVTemplate>("delle-cv-template", "moderno");
   const [mobileTab, setMobileTab] = useState<string>("form");
 
   const handleSave = async () => {

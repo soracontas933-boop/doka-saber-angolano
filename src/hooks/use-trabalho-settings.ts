@@ -11,7 +11,7 @@ const defaults: TrabalhoSettings = {
 };
 
 export const useTrabalhoSettings = () => {
-  const [settings, setSettings] = useLocalStorage<TrabalhoSettings>("wame-trabalho-settings", defaults);
+  const [settings, setSettings] = useLocalStorage<TrabalhoSettings>("delle-trabalho-settings", defaults);
 
   const updateSettings = (partial: Partial<TrabalhoSettings>) => {
     setSettings((prev) => ({ ...prev, ...partial }));
