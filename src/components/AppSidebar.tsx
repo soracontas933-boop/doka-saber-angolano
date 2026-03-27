@@ -113,7 +113,6 @@ const AppSidebar = () => {
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-[sidebar-accent-foreground] text-primary-foreground bg-primary">
         {navItems.map(renderNavItem)}
-        {isAdmin && renderNavItem({ to: "/admin", icon: ShieldCheck, label: "Painel Admin" })}
       </nav>
 
       <div className="p-3 border-t flex-shrink-0 space-y-1 border-[#030303]">
