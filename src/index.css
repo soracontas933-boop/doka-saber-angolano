@@ -365,6 +365,14 @@
   margin-left: 2em;
 }
 
+/* Citações académicas inline */
+.citacao-inline {
+  font-size: 0.75em;
+  color: #555;
+  font-style: italic;
+  letter-spacing: 0.01em;
+}
+
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVO — Escala A4 em ecrãs pequenos
    ═══════════════════════════════════════════════════════════ */

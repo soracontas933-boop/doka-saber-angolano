@@ -92,7 +92,7 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
  * Renders markdown content to HTML for display inside A4 pages.
  */
 export function renderMarkdownToHTML(content: string): string {
-  return content
+  let html = content
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")
     .replace(/^####\s+(.+)$/gm, '<h4 class="secao-subtitulo-4">$1</h4>')
@@ -106,4 +106,12 @@ export function renderMarkdownToHTML(content: string): string {
     .replace(/\n/g, "<br/>")
     .replace(/^/, '<p class="secao-paragrafo">')
     .replace(/$/, "</p>");
+
+  // Wrap inline academic citations in styled span
+  html = html.replace(
+    /\(([A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][a-záàâãéèêíïóôõöúçñ]+(?:\s*(?:&|e)\s*[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][a-záàâãéèêíïóôõöúçñ]+)*(?:\s+et\s+al\.?)?,\s*\d{4}(?:,\s*p+\.\s*\d+(?:-\d+)?)?)\)/g,
+    '<span class="citacao-inline">($1)</span>'
+  );
+
+  return html;
 }
