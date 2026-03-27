@@ -210,7 +210,7 @@ const TrabalhoPage = () => {
     }
   };
 
-  // Generate all pending subtemas sequentially
+  // Generate all pending subtemas sequentially (bibliography first for real citations)
   const handleGenerateAll = async () => {
     const pendentes = subtemas.filter((s) => s.status !== "gerado");
     if (pendentes.length === 0) {
@@ -218,7 +218,15 @@ const TrabalhoPage = () => {
       return;
     }
 
-    for (const sub of pendentes) {
+    // Generate bibliography first so citations in other sections can reference it
+    const bibPendente = pendentes.find((s) => s.tipo === "bibliografia");
+    if (bibPendente) {
+      await handleGenerateOne(bibPendente.id);
+    }
+
+    // Then generate the rest in order
+    const restantes = pendentes.filter((s) => s.id !== bibPendente?.id);
+    for (const sub of restantes) {
       await handleGenerateOne(sub.id);
     }
   };
