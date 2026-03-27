@@ -131,7 +131,7 @@ const HomePage = () => {
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Nav */}
       <header className="relative z-20 flex items-center justify-between px-6 md:px-12 py-5">
-        <WameLogo size={36} />
+        <DelleLogo size={36} />
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -347,7 +347,7 @@ const HomePage = () => {
             Pronto para começar?
           </h2>
           <p className="text-secondary-foreground/80 mb-6 max-w-md mx-auto">
-            Junte-se a milhares de estudantes e professores angolanos que já usam o Wame.
+            Junte-se a milhares de estudantes e professores angolanos que já usam o Delle.
           </p>
           <Button
             size="lg"
@@ -363,9 +363,9 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="px-6 md:px-12 py-8 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <WameLogo size={28} />
+          <DelleLogo size={28} />
           <p className="text-xs text-muted-foreground">
-            © 2026 Wame — Plataforma Educacional Angolana. Todos os direitos reservados.
+            © 2026 Delle — Plataforma Educacional Angolana. Todos os direitos reservados.
           </p>
         </div>
       </footer>

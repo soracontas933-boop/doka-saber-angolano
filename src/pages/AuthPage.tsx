@@ -110,7 +110,7 @@ const AuthPage = () => {
         className="w-full max-w-sm">
         
         <div className="flex justify-center mb-8">
-          <WameLogo size={48} />
+          <DelleLogo size={48} />
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-card">
