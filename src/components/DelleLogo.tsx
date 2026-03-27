@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import wameLogoImage from "@/assets/doka-logo.png";
+import logoImage from "@/assets/doka-logo.png";
 
-const WameLogo = ({ size = 32, showText = true }: {size?: number;showText?: boolean;}) => {
+const DelleLogo = ({ size = 32, showText = true }: {size?: number;showText?: boolean;}) => {
   return (
     <div className="flex items-center gap-2.5">
       <motion.div
@@ -11,18 +11,17 @@ const WameLogo = ({ size = 32, showText = true }: {size?: number;showText?: bool
         transition={{ type: "spring", stiffness: 400, damping: 17 }}>
         
         <img
-          src={wameLogoImage}
-          alt="Wame Logo"
+          src={logoImage}
+          alt="Delle Logo"
           className="w-full h-full object-cover pl-0 pt-0 py-[10px] pb-0 pr-0 ml-0 mr-[10px]" />
         
       </motion.div>
       {showText &&
-      <span className="font-display font-bold tracking-tight mr-[30px] rounded-lg shadow text-stone-950" style={{ fontSize: size * 0.65 }}>
-          ​Wame  
+      <span className="font-display font-bold tracking-tight mr-[30px] rounded-lg shadow text-foreground" style={{ fontSize: size * 0.65 }}>
+          Delle  
         </span>
       }
     </div>);
-
 };
 
-export default WameLogo;
+export default DelleLogo;
