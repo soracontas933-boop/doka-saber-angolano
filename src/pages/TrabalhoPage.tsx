@@ -176,6 +176,10 @@ const TrabalhoPage = () => {
       const capitulos = subtemas.filter((s) => s.status === "gerado" && s.id !== id);
       const contexto = capitulos.map((s) => `${s.titulo}: ${s.conteudo.substring(0, 200)}`).join("\n");
 
+      // Find bibliography content if already generated
+      const bibSubtema = subtemas.find((s) => s.tipo === "bibliografia" && s.status === "gerado");
+      const bibliografia = bibSubtema?.conteudo || undefined;
+
       const prompt = prompts.subtema({
         temaGeral: tema,
         tituloSubtema: sub.titulo,
@@ -185,6 +189,7 @@ const TrabalhoPage = () => {
         posicao: index + 1,
         totalSubtemas: subtemas.length,
         contexto: contexto || undefined,
+        bibliografia,
       });
 
       const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 6000, 0.7);
