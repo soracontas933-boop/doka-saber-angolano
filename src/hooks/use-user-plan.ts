@@ -97,12 +97,10 @@ export function useUserPlan() {
       .single();
 
     if (error && error.code === "PGRST116") {
-      // No plan found, create one
-      const { data: newPlan } = await (supabase.from("user_plans") as any)
-        .insert({ user_id: user.id })
-        .select()
-        .single();
-      setPlan(newPlan);
+      // No plan found — the trigger should have created one on signup.
+      // Do not insert from client to avoid privilege escalation.
+      console.warn("Plano não encontrado para o utilizador. Aguarde ou contacte o suporte.");
+      setPlan(null);
     } else if (data) {
       setPlan(data);
     }
