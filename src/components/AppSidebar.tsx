@@ -31,6 +31,7 @@ import { useState } from "react";
 const navItems = [
 { to: "/home", icon: Home, label: "Início", userOnly: true },
 { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true },
+{ to: "/admin", icon: ShieldCheck, label: "Painel Admin", adminOnly: true },
 { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
 { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
 { to: "/curriculo", icon: FileText, label: "Currículo (CV)" },
