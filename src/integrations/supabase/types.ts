@@ -336,6 +336,7 @@ export type Database = {
           limite_tfc: number
           limite_trabalhos: number
           pago_em: string | null
+          periodo_inicio: string
           plano: string
           suporte_prioritario: boolean
           user_id: string
@@ -352,6 +353,7 @@ export type Database = {
           limite_tfc?: number
           limite_trabalhos?: number
           pago_em?: string | null
+          periodo_inicio?: string
           plano?: string
           suporte_prioritario?: boolean
           user_id: string
@@ -368,6 +370,7 @@ export type Database = {
           limite_tfc?: number
           limite_trabalhos?: number
           pago_em?: string | null
+          periodo_inicio?: string
           plano?: string
           suporte_prioritario?: boolean
           user_id?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.user_plans ADD COLUMN IF NOT EXISTS periodo_inicio timestamp with time zone NOT NULL DEFAULT now();
