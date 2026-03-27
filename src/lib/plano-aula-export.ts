@@ -113,8 +113,9 @@ export async function exportPlanoAulaPdf(dados: PlanoHorizontalData, fases: Fase
     html,
     filename: `Plano_Aula_${dados.disciplina || "Geral"}.pdf`,
     overlayMessage: "A gerar plano de aula em PDF...",
-    containerWidth: 1060,
-    padding: "32px 24px",
+    containerWidth: 1120,
+    padding: "24px 20px",
+    orientation: "landscape",
   });
 }
 
