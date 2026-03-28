@@ -94,6 +94,7 @@ const getStartDate = (period: FilterPeriod): Date | null => {
 
 const FaturamentoPage = () => {
   const [records, setRecords] = useState<BillingRecord[]>([]);
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<FilterPeriod>("mes");
   const [dialogOpen, setDialogOpen] = useState(false);
