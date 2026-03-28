@@ -20,6 +20,7 @@ import {
   Globe,
   Receipt,
   ImageIcon,
+  Crown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
