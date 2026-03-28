@@ -14,6 +14,7 @@ const PLAN_CONFIGS: Record<string, {
   limite_tfc: number;
   creditos_totais: number;
   suporte_prioritario: boolean;
+  preco: number;
 }> = {
   basico: {
     limite_trabalhos: 3,
@@ -23,6 +24,7 @@ const PLAN_CONFIGS: Record<string, {
     limite_tfc: 0,
     creditos_totais: 0,
     suporte_prioritario: false,
+    preco: 546,
   },
   intermedio: {
     limite_trabalhos: 5,
@@ -32,6 +34,7 @@ const PLAN_CONFIGS: Record<string, {
     limite_tfc: 2,
     creditos_totais: 300,
     suporte_prioritario: false,
+    preco: 1250,
   },
   profissional: {
     limite_trabalhos: 10,
@@ -41,6 +44,7 @@ const PLAN_CONFIGS: Record<string, {
     limite_tfc: 8,
     creditos_totais: 500,
     suporte_prioritario: false,
+    preco: 3850,
   },
   premium: {
     limite_trabalhos: -1,
@@ -50,6 +54,7 @@ const PLAN_CONFIGS: Record<string, {
     limite_tfc: -1,
     creditos_totais: -1,
     suporte_prioritario: true,
+    preco: 7500,
   },
 };
 
@@ -354,7 +359,18 @@ Deno.serve(async (req) => {
         tipo: "sucesso",
       });
 
-      console.log(`Webhook success: plan updated to ${plan} for ${email}`);
+      // Register billing record (revenue)
+      const planPrice = planConfig.preco || Number(amount) || 0;
+      await supabaseAdmin.from("billing_records").insert({
+        tipo: "entrada",
+        descricao: `Assinatura ${planLabel} - ${email}`,
+        valor: planPrice,
+        plano: plan,
+        user_email: email,
+        categoria: "assinatura",
+      });
+
+      console.log(`Webhook success: plan updated to ${plan} for ${email}, billing: ${planPrice} Kz`);
 
       return new Response(
         JSON.stringify({ success: true, action: "plan_updated", plan, email, original_event: rawEvent }),

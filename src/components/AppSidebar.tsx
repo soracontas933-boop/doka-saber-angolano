@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Search,
   LayoutDashboard,
+  Receipt,
   Settings,
   FolderOpen,
   LogOut,
@@ -42,7 +43,8 @@ const navItems = [
 { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
 { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
 { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
-{ to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true }];
+{ to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true },
+{ to: "/faturamento", icon: Receipt, label: "Faturamento", adminOnly: true }];
 
 
 

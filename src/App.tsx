@@ -23,6 +23,7 @@ import CorrecaoPage from "@/pages/CorrecaoPage";
 import SuportePage from "@/pages/SuportePage";
 import AdminMensagensPage from "@/pages/AdminMensagensPage";
 import CurriculoPage from "@/pages/CurriculoPage";
+import FaturamentoPage from "@/pages/FaturamentoPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/suporte" element={<SuportePage />} />
               <Route path="/mensagens" element={<AdminMensagensPage />} />
               <Route path="/curriculo" element={<CurriculoPage />} />
+              <Route path="/faturamento" element={<FaturamentoPage />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFound />} />
