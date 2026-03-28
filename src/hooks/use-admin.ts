@@ -14,6 +14,8 @@ const isMasterEmail = (email?: string | null) =>
 
 export const useAdmin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOriginalMaster, setIsOriginalMaster] = useState(false);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -23,28 +25,44 @@ export const useAdmin = () => {
     
     if (!user) {
       setIsAdmin(false);
+      setIsOriginalMaster(false);
+      setPermissions([]);
       setIsLoading(false);
       return;
     }
 
-    const fallbackByEmail = isMasterEmail(user.email);
+    const isOriginal = isMasterEmail(user.email);
+    if (mounted.current) setIsOriginalMaster(isOriginal);
 
-    // Set admin immediately if email matches, then confirm with RPC
-    if (fallbackByEmail && mounted.current) {
+    // Set admin immediately if email matches
+    if (isOriginal && mounted.current) {
       setIsAdmin(true);
+      setPermissions(["all"]);
       setIsLoading(false);
     }
 
     try {
-      const { data: isAdminByFunction } = await supabase.rpc("is_admin");
+      const [{ data: isAdminByFunction }, { data: perms }] = await Promise.all([
+        supabase.rpc("is_admin"),
+        supabase.rpc("get_admin_permissions", { _user_id: user.id }),
+      ]);
+
       if (mounted.current) {
-        setIsAdmin(Boolean(isAdminByFunction) || fallbackByEmail);
+        const adminStatus = Boolean(isAdminByFunction) || isOriginal;
+        setIsAdmin(adminStatus);
+        if (perms) {
+          setPermissions(perms as string[]);
+        } else if (isOriginal) {
+          setPermissions(["all"]);
+        } else {
+          setPermissions([]);
+        }
         setIsLoading(false);
       }
     } catch {
-      // RPC failed, rely on email fallback
       if (mounted.current) {
-        setIsAdmin(fallbackByEmail);
+        setIsAdmin(isOriginal);
+        setPermissions(isOriginal ? ["all"] : []);
         setIsLoading(false);
       }
     }
@@ -76,5 +94,10 @@ export const useAdmin = () => {
     };
   }, [checkAdmin]);
 
-  return { isAdmin, isLoading, isAuthReady };
+  const hasPermission = useCallback((perm: string) => {
+    if (permissions.includes("all")) return true;
+    return permissions.includes(perm);
+  }, [permissions]);
+
+  return { isAdmin, isOriginalMaster, permissions, hasPermission, isLoading, isAuthReady };
 };
