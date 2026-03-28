@@ -15,6 +15,7 @@ interface Conversation {
   id: string;
   user_id: string;
   assunto: string;
+  mensagem: string;
   estado: string;
   criado_em: string;
   atualizado_em: string;
@@ -178,7 +179,34 @@ const AdminMensagensPage = () => {
       .select("*")
       .in("conversation_id", convoIds)
       .order("created_at", { ascending: true });
-    setChatMessages(data ?? []);
+
+    const dbMessages = (data ?? []) as ChatMsg[];
+
+    // Fallback: include initial support_messages.mensagem when it was never copied to chat_messages
+    const initialMessages: ChatMsg[] = userGroup.conversations
+      .filter((convo) => {
+        const initialContent = (convo.mensagem || "").trim();
+        if (!initialContent) return false;
+        return !dbMessages.some(
+          (msg) =>
+            msg.conversation_id === convo.id &&
+            msg.sender_id === convo.user_id &&
+            msg.content.trim() === initialContent,
+        );
+      })
+      .map((convo) => ({
+        id: `initial-${convo.id}`,
+        conversation_id: convo.id,
+        sender_id: convo.user_id,
+        content: convo.mensagem,
+        created_at: convo.criado_em,
+      }));
+
+    const mergedMessages = [...dbMessages, ...initialMessages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+
+    setChatMessages(mergedMessages);
     setChatLoading(false);
     scrollToBottom();
   }, []);
