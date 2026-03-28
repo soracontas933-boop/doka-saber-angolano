@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Check, X, Users } from "lucide-react";
+import { Bell, Check, X, Users, Trash2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -142,6 +142,13 @@ const NotificationBell = () => {
       .update({ lida: true })
       .in("id", unreadIds);
     setNotifications((prev) => prev.map((n) => ({ ...n, lida: true })));
+  };
+
+  const clearAllNotifications = async () => {
+    if (notifications.length === 0) return;
+    const ids = notifications.map((n) => n.id);
+    await supabase.from("notifications").delete().in("id", ids);
+    setNotifications([]);
   };
 
   // Extract workgroup_id from the notification message pattern
@@ -298,12 +305,20 @@ const NotificationBell = () => {
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h4 className="text-sm font-semibold text-foreground">Notificações</h4>
-          {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={markAllAsRead}>
-              <Check className="h-3 w-3 mr-1" />
-              Marcar todas
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={markAllAsRead}>
+                <Check className="h-3 w-3 mr-1" />
+                Marcar todas
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive hover:text-destructive" onClick={clearAllNotifications}>
+                <Trash2 className="h-3 w-3 mr-1" />
+                Limpar
+              </Button>
+            )}
+          </div>
         </div>
         <ScrollArea className="max-h-80">
           {notifications.length === 0 ? (
