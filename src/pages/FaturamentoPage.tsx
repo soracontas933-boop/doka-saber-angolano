@@ -493,6 +493,63 @@ const FaturamentoPage = () => {
         </motion.div>
       </div>
 
+      {/* Pending Payments Table */}
+      {pendingPayments.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+        >
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-amber-500" />
+                Pagamentos Pendentes ({pendingPayments.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-muted-foreground text-xs">
+                      <th className="text-left py-2 font-medium">Email</th>
+                      <th className="text-left py-2 font-medium">Plano</th>
+                      <th className="text-right py-2 font-medium">Valor</th>
+                      <th className="text-right py-2 font-medium hidden sm:table-cell">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingPayments.map((p) => (
+                      <tr
+                        key={p.id}
+                        className="border-b border-border/50 hover:bg-muted/30 transition-colors"
+                      >
+                        <td className="py-2.5 text-foreground">{p.email_confirmacao}</td>
+                        <td className="py-2.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 capitalize">
+                            {p.plano}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right font-medium text-amber-500">
+                          {formatKz(Number(p.valor))}
+                        </td>
+                        <td className="py-2.5 text-right text-muted-foreground text-xs hidden sm:table-cell">
+                          {new Date(p.criado_em).toLocaleDateString("pt-AO", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Records Table */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
