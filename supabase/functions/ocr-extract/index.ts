@@ -93,8 +93,8 @@ serve(async (req) => {
     // Try providers in order: Gemini → Groq Vision
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [];
 
-    if (keys.gemini) providers.push({ name: "gemini", fn: () => ocrWithGemini(image_base64, mime_type, keys.gemini) });
-    if (keys.groq) providers.push({ name: "groq-vision", fn: () => ocrWithGroq(image_base64, mime_type, keys.groq) });
+    if (keys.gemini) providers.push({ name: "gemini", fn: () => ocrWithGemini(image_base64, mime_type, keys.gemini, promptToUse) });
+    if (keys.groq && !is_document) providers.push({ name: "groq-vision", fn: () => ocrWithGroq(image_base64, mime_type, keys.groq, promptToUse) });
 
     if (providers.length === 0) {
       return new Response(JSON.stringify({ error: "Nenhuma chave de OCR configurada. Adicione Gemini ou Groq em /setup-api-keys." }),
