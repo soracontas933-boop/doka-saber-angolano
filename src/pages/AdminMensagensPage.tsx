@@ -449,17 +449,17 @@ const AdminMensagensPage = () => {
             <div className="flex items-center justify-center py-10">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredConvos.length === 0 ? (
+          ) : userGroups.length === 0 ? (
             <div className="px-4 py-10 text-center text-xs text-muted-foreground">
               Nenhuma conversa encontrada
             </div>
           ) : (
-            filteredConvos.map(convo => (
+            userGroups.map(group => (
               <button
-                key={convo.id}
-                onClick={() => handleSelectConvo(convo)}
+                key={group.user_id}
+                onClick={() => handleSelectUser(group)}
                 className={`w-full text-left flex items-start gap-3 px-4 py-3 border-b border-border/50 transition-colors hover:bg-muted/50 ${
-                  selectedConvo?.id === convo.id ? "bg-primary/5" : ""
+                  selectedUserGroup?.user_id === group.user_id ? "bg-primary/5" : ""
                 }`}
               >
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 shrink-0 mt-0.5">
@@ -467,13 +467,15 @@ const AdminMensagensPage = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-sm font-medium text-foreground truncate">{convo.user_nome}</p>
-                    <span className="text-[10px] text-muted-foreground shrink-0">{formatConvoTime(convo.atualizado_em)}</span>
+                    <p className="text-sm font-medium text-foreground truncate">{group.user_nome}</p>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{formatConvoTime(group.latest_update)}</span>
                   </div>
-                  <p className="text-xs font-medium text-primary/80 truncate">{convo.assunto}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {group.conversations.length} conversa{group.conversations.length > 1 ? "s" : ""} · {group.conversations[0]?.assunto}
+                  </p>
                   <div className="flex items-center justify-between gap-1 mt-0.5">
-                    <p className="text-xs text-muted-foreground truncate">{convo.user_email}</p>
-                    {convo.estado === "aberto" && (
+                    <p className="text-xs text-muted-foreground truncate">{group.user_email}</p>
+                    {group.has_open && (
                       <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-1 shrink-0">!</span>
                     )}
                   </div>
