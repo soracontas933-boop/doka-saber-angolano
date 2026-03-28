@@ -121,8 +121,18 @@ const FaturamentoPage = () => {
     setLoading(false);
   };
 
+  const fetchPendingPayments = async () => {
+    const { data } = await supabase
+      .from("payment_requests")
+      .select("*")
+      .eq("estado", "pendente")
+      .order("criado_em", { ascending: false });
+    if (data) setPendingPayments(data);
+  };
+
   useEffect(() => {
     fetchRecords();
+    fetchPendingPayments();
   }, [period]);
 
   const handleAddExpense = async () => {
