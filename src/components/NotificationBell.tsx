@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Check, X, Users } from "lucide-react";
+import { Bell, Check, X, Users, Trash2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
