@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap } from "lucide-react";
+import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap, Sun, Moon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
