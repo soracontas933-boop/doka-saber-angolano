@@ -1,34 +1,43 @@
 
+Objetivo: corrigir o chat para que cada nova mensagem apareça como nova bolha (append), sem “substituir” a anterior.
 
-## Plano: Adaptar webhook ao formato real da Kuenha
+1) Diagnóstico confirmado
+- O banco está a guardar corretamente várias mensagens em `chat_messages` (cada envio cria novo `id` e novo `created_at`).
+- O problema é de renderização/fallback no frontend:
+  - `support_messages.resposta` guarda só a última resposta.
+  - Em `SuportePage.tsx`, essa `resposta` é injetada como fallback com `id` fixo `resposta-${convo.id}`.
+  - Resultado: quando chega nova resposta, o mesmo item visual é “atualizado” e parece substituição.
 
-### Problema
-O webhook espera campos no nível raiz (`email`, `plan`, `event`) mas a Kuenha envia uma estrutura aninhada com `buyer.email`, `product.name` e `status` com valores como `"PENDING"`, `"COMPLETED"`, `"ABANDONED"`, etc.
+2) Ajuste da fonte de verdade do chat
+- Definir `chat_messages` como timeline principal (fonte oficial do histórico).
+- Manter `support_messages` apenas para metadados da conversa (`estado`, `atualizado_em`, assunto inicial), não para histórico contínuo.
 
-### Solução
+3) Alterações de código (sem mudar arquitetura)
+- `src/pages/AdminMensagensPage.tsx` (handleSendMessage):
+  - Continuar a inserir em `chat_messages`.
+  - Atualizar `support_messages` apenas com `estado` e `atualizado_em`.
+  - Remover escrita contínua de `resposta: newMessage.trim()` (isso é o que gera efeito de substituição no fallback).
+- `src/pages/SuportePage.tsx` (fetchChatMessages):
+  - Remover fallback de `resposta` da timeline, ou deixar só para legado estrito (apenas se não existir nenhuma mensagem admin em `chat_messages`).
+  - Se fallback legado for mantido, usar chave única por versão (ex.: incluir timestamp) e deduplicação mais robusta (não só por `content`).
 
-**Alterar `supabase/functions/payment-webhook/index.ts`** para:
+4) Compatibilidade com conversas antigas
+- Preservar fallback apenas para conversas antigas onde a resposta existe em `support_messages.resposta` mas não existe linha correspondente em `chat_messages`.
+- Assim evitamos “sumir” histórico antigo e eliminamos substituição nas novas mensagens.
 
-1. **Extrair campos da estrutura Kuenha**:
-   - Email: `body.buyer?.email`
-   - Plano: extrair de `body.product?.name` (ex: "Doka Intermédio" → "intermedio")
-   - Evento: `body.status` (ex: "PENDING", "COMPLETED", "ABANDONED")
+5) Validação ponta a ponta (obrigatória)
+- Cenário A: enviar 3 mensagens seguidas com textos diferentes → devem aparecer 3 bolhas.
+- Cenário B: enviar 2 mensagens com texto igual → devem aparecer 2 bolhas distintas.
+- Cenário C: atualizar página do utilizador → histórico mantém ordem e quantidade.
+- Cenário D: trocar entre conversas e voltar → nenhuma bolha anterior é sobrescrita.
+- Cenário E (mobile): repetir testes para garantir mesmo comportamento.
 
-2. **Mapear status da Kuenha para eventos internos**:
-   - `COMPLETED` / `PAID` → `compra_realizada`
-   - `ABANDONED` / `CANCELLED` → `compra_abandonada`
-   - `PENDING` → `compra_iniciada`
-   - `PENDING_REFERENCE` → `pagamento_referencia`
-   - `PENDING_EXPRESS` → `pagamento_express`
-   - `PENDING_INTERNATIONAL` → `pagamento_internacional`
-
-3. **Extrair nome do plano do nome do produto**:
-   - "Doka Intermédio" → procura "intermédio" nos aliases → `intermedio`
-   - "Doka Premium" → `premium`
-   - Percorre `PLAN_ALIASES` e verifica se o nome do produto contém algum alias
-
-4. **Manter retrocompatibilidade** com o formato antigo (campos no nível raiz) como fallback
-
-### Ficheiros a alterar
-- `supabase/functions/payment-webhook/index.ts` — adaptar parsing ao formato Kuenha
-
+Detalhes técnicos
+- Ficheiros a ajustar:
+  - `src/pages/AdminMensagensPage.tsx`
+  - `src/pages/SuportePage.tsx`
+- Banco:
+  - Sem nova tabela obrigatória.
+  - Migração opcional de backfill (se necessário) apenas para converter respostas legadas em linhas de `chat_messages` e reduzir dependência de fallback.
+- Segurança/RLS:
+  - Políticas atuais de `chat_messages` já permitem leitura da conversa pelo dono e admin; não requer alteração para este bug específico.
