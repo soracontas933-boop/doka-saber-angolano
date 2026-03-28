@@ -44,6 +44,7 @@ const UsageItem = ({ icon, label, used, limit }: UsageItemProps) => {
 const CreditsBar = () => {
   const { plan, loading } = useUserPlan();
   const { getAllUsageCounts } = useUsageTracker();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
 
