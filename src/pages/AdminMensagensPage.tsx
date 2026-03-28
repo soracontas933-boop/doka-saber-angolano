@@ -488,13 +488,13 @@ const AdminMensagensPage = () => {
 
       {/* Right: Chat Area */}
       <div className={`${!mobileShowChat ? "hidden md:flex" : "flex"} flex-col flex-1`}>
-        {selectedConvo ? (
+        {selectedUserGroup ? (
           <>
             {/* Chat Header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-primary/5 shrink-0">
               <button
                 className="md:hidden p-1 rounded hover:bg-muted"
-                onClick={() => { setMobileShowChat(false); setSelectedConvo(null); }}
+                onClick={() => { setMobileShowChat(false); setSelectedUserGroup(null); setSelectedConvo(null); }}
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -502,15 +502,12 @@ const AdminMensagensPage = () => {
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-foreground">{selectedConvo.user_nome}</p>
-                <p className="text-xs text-muted-foreground truncate">{selectedConvo.assunto}</p>
+                <p className="text-sm font-bold text-foreground">{selectedUserGroup.user_nome}</p>
+                <p className="text-xs text-muted-foreground truncate">{selectedUserGroup.user_email}</p>
               </div>
-              <Badge className={selectedConvo.estado === "aberto"
-                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-              }>
-                {selectedConvo.estado === "aberto" ? "Aberto" : "Respondido"}
-              </Badge>
+              {selectedUserGroup.has_open && (
+                <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300">Aberto</Badge>
+              )}
             </div>
 
             {/* Messages */}
