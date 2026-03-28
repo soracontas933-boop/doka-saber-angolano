@@ -165,9 +165,12 @@ const PlanosPage = () => {
                       className="w-full text-xs"
                       variant="secondary"
                       onClick={() => {
-                        import('sonner').then(({ toast }) => {
-                          toast.info("Pagamento automático estará disponível em breve!");
-                        });
+                        const link = paymentLinks[`link_${key}`];
+                        if (link) {
+                          window.open(link, "_blank");
+                        } else {
+                          toast.info("Pagamento automático ainda não configurado para este plano.");
+                        }
                       }}
                     >
                       Pagamento Automático
