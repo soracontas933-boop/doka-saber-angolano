@@ -94,7 +94,7 @@ const AppSidebar = () => {
       
       <div className={`flex items-center flex-shrink-0 ${collapsed ? "p-3 justify-center" : "p-6 justify-between"}`}>
         {!collapsed &&
-        <div className="flex items-center gap-2 bg-primary">
+        <div className="flex items-center gap-2 bg-[sidebar-accent-foreground] bg-[#0b0e13]">
             <DelleLogo size={36} />
             {isAdmin &&
           <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 gap-1 text-[10px] px-1.5 py-0.5">
@@ -113,7 +113,7 @@ const AppSidebar = () => {
         </button>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-[sidebar-accent-foreground] text-primary-foreground bg-primary">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-[sidebar-accent-foreground] text-primary-foreground bg-[sidebar-accent-foreground] bg-zinc-950">
         {navItems.map(renderNavItem)}
       </nav>
 
