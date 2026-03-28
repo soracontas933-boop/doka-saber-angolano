@@ -175,6 +175,10 @@ const FaturamentoPage = () => {
     [records]
   );
   const lucro = totalEntradas - totalSaidas;
+  const totalPendentes = useMemo(
+    () => pendingPayments.reduce((s, r) => s + Number(r.valor), 0),
+    [pendingPayments]
+  );
 
   // Chart data: group by day
   const chartData = useMemo(() => {
