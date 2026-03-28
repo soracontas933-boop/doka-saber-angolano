@@ -80,7 +80,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { image_base64, mime_type = "image/jpeg" } = await req.json();
+    const { image_base64, mime_type = "image/jpeg", is_document = false } = await req.json();
 
     if (!image_base64) {
       return new Response(JSON.stringify({ error: "image_base64 é obrigatório" }),
@@ -88,6 +88,7 @@ serve(async (req) => {
     }
 
     const keys = await getApiKeys();
+    const promptToUse = is_document ? DOC_PROMPT : OCR_PROMPT;
 
     // Try providers in order: Gemini → Groq Vision
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [];
