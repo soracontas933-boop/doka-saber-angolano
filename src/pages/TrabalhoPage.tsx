@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { generateWithGroq, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { validarBibliografia } from "@/lib/referencias-reais";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
 import SubtemasEditor, { type Subtema } from "@/components/trabalho/SubtemasEditor";
