@@ -82,7 +82,7 @@ const AppSidebar = () => {
         key={item.to}
         to={item.to}
         title={displayLabel}
-        className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150">
+        className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 bg-ring">
         
         {isActive &&
         <motion.div
@@ -122,7 +122,7 @@ const AppSidebar = () => {
         </button>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-[sidebar-accent-foreground] text-primary-foreground bg-[sidebar-accent-foreground] bg-zinc-950">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-[sidebar-accent-foreground] text-primary-foreground bg-[sidebar-accent-foreground] bg-primary">
         {navItems.map(renderNavItem)}
       </nav>
 

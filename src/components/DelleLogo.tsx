@@ -3,7 +3,7 @@ import logoImage from "@/assets/doka-logo.png";
 
 const DelleLogo = ({ size = 32, showText = true }: {size?: number;showText?: boolean;}) => {
   return (
-    <div className="flex items-center gap-2.5 bg-slate-950">
+    <div className="flex items-center gap-2.5 bg-primary">
       <motion.div
         className="relative flex items-center justify-center overflow-hidden rounded-xl"
         style={{ width: size, height: size }}
