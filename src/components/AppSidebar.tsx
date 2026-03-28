@@ -32,6 +32,7 @@ import { useState } from "react";
 const navItems = [
 { to: "/home", icon: Home, label: "Início", userOnly: true },
 { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true },
+{ to: "/faturamento", icon: Receipt, label: "Faturamento", adminOnly: true },
 { to: "/admin", icon: ShieldCheck, label: "Painel Admin", adminOnly: true },
 { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
 { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
@@ -43,8 +44,7 @@ const navItems = [
 { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
 { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
 { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
-{ to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true },
-{ to: "/faturamento", icon: Receipt, label: "Faturamento", adminOnly: true }];
+{ to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true }];
 
 
 
