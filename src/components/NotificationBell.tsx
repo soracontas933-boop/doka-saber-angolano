@@ -279,7 +279,12 @@ const NotificationBell = () => {
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (isOpen && unreadCount > 0) {
+        markAllAsRead();
+      }
+    }}>
       <PopoverTrigger asChild>
         <button className="relative p-2 rounded-md hover:bg-muted transition-colors">
           <Bell className="h-4.5 w-4.5 text-muted-foreground" />
