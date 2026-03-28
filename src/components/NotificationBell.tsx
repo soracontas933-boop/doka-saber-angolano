@@ -37,6 +37,23 @@ const NotificationBell = () => {
     if (data) setNotifications(data);
   };
 
+  // Play notification sound
+  const playNotificationSound = () => {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      gain.gain.value = 0.15;
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.stop(ctx.currentTime + 0.4);
+    } catch {}
+  };
+
   useEffect(() => {
     fetchNotifications();
 
@@ -46,7 +63,9 @@ const NotificationBell = () => {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications" },
         (payload: any) => {
-          setNotifications((prev) => [payload.new as Notification, ...prev]);
+          const newNotif = payload.new as Notification;
+          setNotifications((prev) => [newNotif, ...prev]);
+          playNotificationSound();
         }
       )
       .subscribe();

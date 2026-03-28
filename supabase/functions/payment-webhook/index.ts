@@ -261,7 +261,30 @@ Deno.serve(async (req) => {
     }
 
     const email = rawEmail.trim().toLowerCase();
+    const saleId = body.saleId || reference || null;
     console.log(`Webhook normalized: event="${event}", plan="${plan}", email="${email}"`);
+
+    // Track checkout session
+    if (event === "compra_iniciada") {
+      await supabaseAdmin.from("checkout_sessions").insert({
+        email,
+        plano: plan,
+        status: "active",
+        sale_id: saleId,
+      });
+    } else if (event === "compra_realizada" || event === "compra_abandonada") {
+      // Mark checkout as completed/abandoned
+      if (saleId) {
+        await supabaseAdmin.from("checkout_sessions")
+          .update({ status: event === "compra_realizada" ? "completed" : "abandoned", atualizado_em: new Date().toISOString() })
+          .eq("sale_id", saleId);
+      } else {
+        await supabaseAdmin.from("checkout_sessions")
+          .update({ status: event === "compra_realizada" ? "completed" : "abandoned", atualizado_em: new Date().toISOString() })
+          .eq("email", email)
+          .eq("status", "active");
+      }
+    }
 
     // Find user by email
     const { data: userData } = await supabaseAdmin.rpc("find_user_by_email", {
@@ -271,9 +294,22 @@ Deno.serve(async (req) => {
     const user = userData?.[0];
     if (!user) {
       console.log(`Webhook user not found: ${email}`);
+      // Still notify admins even if user not found
+      const adminEmails = ["kenymatos943@gmail.com", "manuelmatosjose67@gmail.com"];
+      for (const adminEmail of adminEmails) {
+        const { data: adminUser } = await supabaseAdmin.rpc("find_user_by_email", { _email: adminEmail });
+        if (adminUser?.[0]) {
+          await supabaseAdmin.from("notifications").insert({
+            user_id: adminUser[0].user_id,
+            titulo: `⚠️ ${EVENT_LABELS[event] || event}`,
+            mensagem: `Email: ${email} (não registado) | Plano: ${PLAN_LABELS[plan] || plan}`,
+            tipo: "aviso",
+          });
+        }
+      }
       return new Response(
-        JSON.stringify({ error: "User not found with this email" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, action: "admin_notified_unregistered", event, email }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

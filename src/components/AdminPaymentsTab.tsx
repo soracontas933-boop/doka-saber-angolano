@@ -23,7 +23,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield, ShoppingCart } from "lucide-react";
 
 interface PaymentRequest {
   id: string;
@@ -89,6 +89,9 @@ const AdminPaymentsTab = () => {
   const [editingWebhook, setEditingWebhook] = useState(false);
   const [savingWebhook, setSavingWebhook] = useState(false);
 
+  // Checkout sessions counter (realtime)
+  const [activeCheckouts, setActiveCheckouts] = useState(0);
+
   const fetchPayments = useCallback(async () => {
     setLoading(true);
 
@@ -132,10 +135,37 @@ const AdminPaymentsTab = () => {
     setLoading(false);
   }, []);
 
+  const fetchActiveCheckouts = useCallback(async () => {
+    // Count checkout sessions created in the last 30 minutes with status 'active'
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { count } = await (supabase.from("checkout_sessions") as any)
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .gte("criado_em", thirtyMinAgo);
+    setActiveCheckouts(count || 0);
+  }, []);
+
   useEffect(() => {
     fetchPayments();
     fetchSettings();
-  }, [fetchPayments]);
+    fetchActiveCheckouts();
+
+    // Realtime subscription for checkout sessions
+    const channel = supabase
+      .channel("checkout-sessions-admin")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "checkout_sessions" },
+        () => {
+          fetchActiveCheckouts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchPayments, fetchActiveCheckouts]);
 
   const viewReceipt = async (filePath: string) => {
     const { data } = await supabase.storage
@@ -517,7 +547,19 @@ const AdminPaymentsTab = () => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="border-blue-500/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <ShoppingCart className="h-3.5 w-3.5" />
+              No Checkout
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-blue-600">{activeCheckouts}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Últimos 30 min</p>
+          </CardContent>
+        </Card>
         <Card className="border-amber-500/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">Pendentes</CardTitle>
