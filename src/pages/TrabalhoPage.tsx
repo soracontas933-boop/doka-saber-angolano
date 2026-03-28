@@ -195,8 +195,14 @@ const TrabalhoPage = () => {
 
       const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 6000, 0.7);
 
+      // Validate bibliography against real references
+      let conteudoFinal = conteudo;
+      if (sub.tipo === "bibliografia") {
+        conteudoFinal = validarBibliografia(conteudo, disciplina || "Geral");
+      }
+
       setSubtemas((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, conteudo, status: "gerado" } : s))
+        prev.map((s) => (s.id === id ? { ...s, conteudo: conteudoFinal, status: "gerado" } : s))
       );
       toast.success(`"${sub.titulo}" gerado!`);
     } catch (err) {
