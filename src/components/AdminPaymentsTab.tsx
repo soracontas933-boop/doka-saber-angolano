@@ -74,7 +74,17 @@ const AdminPaymentsTab = () => {
   const [ibanTitular, setIbanTitular] = useState("");
   const [multicaixaNumero, setMulticaixaNumero] = useState("");
 
-  const fetchPayments = useCallback(async () => {
+  // Payment links state (automatic payments)
+  const [editingLinks, setEditingLinks] = useState(false);
+  const [savingLinks, setSavingLinks] = useState(false);
+  const [paymentLinks, setPaymentLinks] = useState<Record<string, string>>({
+    link_basico: "",
+    link_intermedio: "",
+    link_profissional: "",
+    link_premium: "",
+  });
+
+
     setLoading(true);
 
     // Fetch payments
