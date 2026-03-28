@@ -1,45 +1,83 @@
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { MessageSquare, Send, Loader2, RefreshCw, User, Clock, CheckCircle2 } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { MessageSquare, Send, Loader2, Search, User, ArrowLeft, Plus, Headphones } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "framer-motion";
 
-interface SupportMsg {
+interface Conversation {
   id: string;
   user_id: string;
   assunto: string;
-  mensagem: string;
-  resposta: string | null;
   estado: string;
   criado_em: string;
-  // joined
+  atualizado_em: string;
   user_nome?: string;
   user_email?: string;
+  last_message?: string;
+  unread?: boolean;
+}
+
+interface ChatMsg {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+}
+
+interface UserOption {
+  id: string;
+  nome: string;
+  email: string;
 }
 
 const AdminMensagensPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin, isLoading: isLoadingAdmin, isAuthReady } = useAdmin();
-  const [messages, setMessages] = useState<SupportMsg[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [replyingId, setReplyingId] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState("");
+  const [selectedConvo, setSelectedConvo] = useState<Conversation | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [newChatSubject, setNewChatSubject] = useState("");
+  const [newChatMessage, setNewChatMessage] = useState("");
+  const [creatingSending, setCreatingSending] = useState(false);
+  const [adminId, setAdminId] = useState<string>("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [mobileShowChat, setMobileShowChat] = useState(false);
 
   useEffect(() => {
     if (isAuthReady && !isLoadingAdmin && !isAdmin) navigate("/meus-projetos");
   }, [isAdmin, isLoadingAdmin, isAuthReady, navigate]);
 
-  const fetchMessages = useCallback(async () => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setAdminId(session.user.id);
+    });
+  }, []);
+
+  const scrollToBottom = () => {
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+  };
+
+  const fetchConversations = useCallback(async () => {
     if (!isAdmin) return;
     setLoading(true);
 
-    // Get emails
     const { data: { session } } = await supabase.auth.getSession();
     let emailMap: Record<string, string> = {};
     if (session) {
@@ -54,7 +92,7 @@ const AdminMensagensPage = () => {
     const [msgsRes, profilesRes] = await Promise.all([
       (supabase.from("support_messages") as any)
         .select("*")
-        .order("criado_em", { ascending: false }),
+        .order("atualizado_em", { ascending: false }),
       (supabase.from("profiles") as any).select("id, nome"),
     ]);
 
@@ -62,63 +100,216 @@ const AdminMensagensPage = () => {
     const nameMap: Record<string, string> = {};
     profiles.forEach((p) => { nameMap[p.id] = p.nome || "Sem nome"; });
 
-    const msgs: SupportMsg[] = (msgsRes.data ?? []).map((m: any) => ({
+    const convos: Conversation[] = (msgsRes.data ?? []).map((m: any) => ({
       ...m,
       user_nome: nameMap[m.user_id] || "Desconhecido",
       user_email: emailMap[m.user_id] || "",
     }));
 
-    setMessages(msgs);
+    setConversations(convos);
     setLoading(false);
-  }, [isAdmin]);
 
-  useEffect(() => { fetchMessages(); }, [fetchMessages]);
+    // Auto-select from URL param
+    const convoId = searchParams.get("conversa");
+    if (convoId) {
+      const target = convos.find(c => c.id === convoId);
+      if (target) {
+        setSelectedConvo(target);
+        setMobileShowChat(true);
+      }
+    }
+  }, [isAdmin, searchParams]);
 
-  // Realtime
+  useEffect(() => { fetchConversations(); }, [fetchConversations]);
+
+  // Realtime for new conversations
   useEffect(() => {
     const channel = supabase
-      .channel("admin-support")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "support_messages" }, () => {
-        fetchMessages();
+      .channel("admin-support-convos")
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_messages" }, () => {
+        fetchConversations();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [fetchMessages]);
+  }, [fetchConversations]);
 
-  const handleReply = async (msg: SupportMsg) => {
-    if (!replyText.trim()) return;
-    setSending(true);
+  // Fetch chat messages for selected conversation
+  const fetchChatMessages = useCallback(async (convoId: string) => {
+    setChatLoading(true);
+    const { data } = await (supabase.from("chat_messages") as any)
+      .select("*")
+      .eq("conversation_id", convoId)
+      .order("created_at", { ascending: true });
+    setChatMessages(data ?? []);
+    setChatLoading(false);
+    scrollToBottom();
+  }, []);
 
-    const { error } = await (supabase.from("support_messages") as any)
-      .update({
-        resposta: replyText.trim(),
-        estado: "respondido",
-        atualizado_em: new Date().toISOString(),
+  useEffect(() => {
+    if (selectedConvo) {
+      fetchChatMessages(selectedConvo.id);
+    }
+  }, [selectedConvo, fetchChatMessages]);
+
+  // Realtime for chat messages
+  useEffect(() => {
+    if (!selectedConvo) return;
+    const channel = supabase
+      .channel(`chat-${selectedConvo.id}`)
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public", table: "chat_messages",
+        filter: `conversation_id=eq.${selectedConvo.id}`
+      }, (payload: any) => {
+        const newMsg = payload.new as ChatMsg;
+        setChatMessages(prev => [...prev, newMsg]);
+        scrollToBottom();
       })
-      .eq("id", msg.id);
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedConvo]);
 
-    if (!error) {
-      // Notify user
-      await (supabase.from("notifications") as any).insert({
-        user_id: msg.user_id,
-        titulo: "Resposta do suporte",
-        mensagem: `A sua mensagem "${msg.assunto}" foi respondida.`,
-        tipo: "sucesso",
-      });
-    }
-
-    setSending(false);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Resposta enviada" });
-      setReplyingId(null);
-      setReplyText("");
-      fetchMessages();
-    }
+  const handleSelectConvo = (convo: Conversation) => {
+    setSelectedConvo(convo);
+    setMobileShowChat(true);
+    setSearchParams({ conversa: convo.id });
   };
 
-  if (isLoadingAdmin || !isAdmin || loading) {
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedConvo || !adminId) return;
+    setSending(true);
+
+    const { error } = await (supabase.from("chat_messages") as any).insert({
+      conversation_id: selectedConvo.id,
+      sender_id: adminId,
+      content: newMessage.trim(),
+    });
+
+    if (!error) {
+      // Update conversation timestamp
+      await (supabase.from("support_messages") as any)
+        .update({ atualizado_em: new Date().toISOString(), estado: "respondido" })
+        .eq("id", selectedConvo.id);
+
+      // Notify user
+      await (supabase.from("notifications") as any).insert({
+        user_id: selectedConvo.user_id,
+        titulo: "Nova mensagem do suporte",
+        mensagem: `Resposta em "${selectedConvo.assunto}"`,
+        tipo: "sucesso",
+      });
+
+      setNewMessage("");
+    } else {
+      toast({ title: "Erro ao enviar", variant: "destructive" });
+    }
+    setSending(false);
+  };
+
+  // New conversation
+  const fetchUsers = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    try {
+      const res = await supabase.functions.invoke("admin-users", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.data?.users) {
+        const mapped = (res.data.users as any[]).map(u => ({
+          id: u.id,
+          nome: u.nome || "Sem nome",
+          email: u.email || "",
+        }));
+        setUsers(mapped);
+      }
+    } catch {}
+  };
+
+  const handleStartConversation = async (userId: string) => {
+    if (!newChatSubject.trim() || !newChatMessage.trim() || !adminId) return;
+    setCreatingSending(true);
+
+    // Create the conversation
+    const { data: convo, error } = await (supabase.from("support_messages") as any)
+      .insert({
+        user_id: userId,
+        assunto: newChatSubject.trim(),
+        mensagem: newChatMessage.trim(),
+        estado: "aberto",
+      })
+      .select()
+      .single();
+
+    if (!error && convo) {
+      // Add admin's first message to chat_messages
+      await (supabase.from("chat_messages") as any).insert({
+        conversation_id: convo.id,
+        sender_id: adminId,
+        content: newChatMessage.trim(),
+      });
+
+      // Notify user
+      await (supabase.from("notifications") as any).insert({
+        user_id: userId,
+        titulo: "Nova mensagem do suporte",
+        mensagem: `Assunto: "${newChatSubject.trim()}"`,
+        tipo: "info",
+      });
+
+      setShowNewChat(false);
+      setNewChatSubject("");
+      setNewChatMessage("");
+      setUserSearch("");
+      fetchConversations();
+      toast({ title: "Conversa iniciada" });
+    } else {
+      toast({ title: "Erro", description: error?.message, variant: "destructive" });
+    }
+    setCreatingSending(false);
+  };
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString("pt-AO", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatDateSeparator = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return "Hoje";
+    if (date.toDateString() === yesterday.toDateString()) return "Ontem";
+    return date.toLocaleDateString("pt-AO", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const shouldShowDateSeparator = (msgs: ChatMsg[], index: number) => {
+    if (index === 0) return true;
+    return new Date(msgs[index].created_at).toDateString() !== new Date(msgs[index - 1].created_at).toDateString();
+  };
+
+  const formatConvoTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+      return date.toLocaleTimeString("pt-AO", { hour: "2-digit", minute: "2-digit" });
+    }
+    return date.toLocaleDateString("pt-AO", { day: "2-digit", month: "short" });
+  };
+
+  const filteredConvos = conversations.filter(c =>
+    !searchQuery || 
+    c.assunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.user_nome || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.user_email || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredUsers = users.filter(u =>
+    !userSearch ||
+    u.nome.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.email.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
+  if (isLoadingAdmin || !isAdmin) {
     return (
       <div className="flex items-center justify-center h-full py-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -126,120 +317,243 @@ const AdminMensagensPage = () => {
     );
   }
 
-  const openMessages = messages.filter((m) => m.estado === "aberto");
-  const answeredMessages = messages.filter((m) => m.estado === "respondido");
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <MessageSquare className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Mensagens de Suporte</h1>
-          {openMessages.length > 0 && (
-            <Badge className="bg-destructive/15 text-destructive">{openMessages.length} pendente{openMessages.length > 1 ? "s" : ""}</Badge>
-          )}
+    <div className="flex h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3rem)] overflow-hidden rounded-xl border border-border bg-card">
+      {/* Left: Conversation List */}
+      <div className={`${mobileShowChat ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 lg:w-96 border-r border-border`}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <h1 className="text-sm font-bold text-foreground">Mensagens</h1>
+            {conversations.filter(c => c.estado === "aberto").length > 0 && (
+              <Badge className="bg-destructive/15 text-destructive text-[10px] px-1.5">
+                {conversations.filter(c => c.estado === "aberto").length}
+              </Badge>
+            )}
+          </div>
+          <Dialog open={showNewChat} onOpenChange={(open) => {
+            setShowNewChat(open);
+            if (open) fetchUsers();
+          }}>
+            <DialogTrigger asChild>
+              <Button size="icon" variant="ghost" className="h-8 w-8">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nova Conversa</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  placeholder="Pesquisar utilizador..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                />
+                <ScrollArea className="h-40 border rounded-lg">
+                  {filteredUsers.map(u => (
+                    <button
+                      key={u.id}
+                      className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-0"
+                      onClick={() => setUserSearch(u.email)}
+                    >
+                      <p className="text-sm font-medium text-foreground">{u.nome}</p>
+                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                    </button>
+                  ))}
+                </ScrollArea>
+                <Input
+                  placeholder="Assunto..."
+                  value={newChatSubject}
+                  onChange={(e) => setNewChatSubject(e.target.value)}
+                />
+                <Input
+                  placeholder="Mensagem inicial..."
+                  value={newChatMessage}
+                  onChange={(e) => setNewChatMessage(e.target.value)}
+                />
+                <Button
+                  className="w-full"
+                  disabled={creatingSending || !newChatSubject.trim() || !newChatMessage.trim()}
+                  onClick={() => {
+                    const target = users.find(u => u.email === userSearch);
+                    if (target) handleStartConversation(target.id);
+                    else toast({ title: "Seleccione um utilizador", variant: "destructive" });
+                  }}
+                >
+                  {creatingSending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                  Iniciar Conversa
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchMessages} className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Atualizar
-        </Button>
+
+        {/* Search */}
+        <div className="px-3 py-2 border-b border-border">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar conversas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-8 text-xs bg-muted/50 border-none"
+            />
+          </div>
+        </div>
+
+        {/* Conversations */}
+        <ScrollArea className="flex-1">
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredConvos.length === 0 ? (
+            <div className="px-4 py-10 text-center text-xs text-muted-foreground">
+              Nenhuma conversa encontrada
+            </div>
+          ) : (
+            filteredConvos.map(convo => (
+              <button
+                key={convo.id}
+                onClick={() => handleSelectConvo(convo)}
+                className={`w-full text-left flex items-start gap-3 px-4 py-3 border-b border-border/50 transition-colors hover:bg-muted/50 ${
+                  selectedConvo?.id === convo.id ? "bg-primary/5" : ""
+                }`}
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 shrink-0 mt-0.5">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-sm font-medium text-foreground truncate">{convo.user_nome}</p>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{formatConvoTime(convo.atualizado_em)}</span>
+                  </div>
+                  <p className="text-xs font-medium text-primary/80 truncate">{convo.assunto}</p>
+                  <div className="flex items-center justify-between gap-1 mt-0.5">
+                    <p className="text-xs text-muted-foreground truncate">{convo.user_email}</p>
+                    {convo.estado === "aberto" && (
+                      <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-1 shrink-0">!</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))
+          )}
+        </ScrollArea>
       </div>
 
-      {messages.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p>Nenhuma mensagem de suporte recebida.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {/* Open first */}
-          {openMessages.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pendentes</h2>
-              {openMessages.map((m) => (
-                <Card key={m.id} className="border-amber-500/30">
-                  <CardContent className="py-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-foreground">{m.assunto}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                          <User className="h-3 w-3" /> {m.user_nome} {m.user_email && `(${m.user_email})`}
-                        </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(m.criado_em).toLocaleDateString("pt-AO", {
-                            day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
-                      <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300">Aberto</Badge>
-                    </div>
-                    <p className="text-sm text-foreground bg-muted/50 rounded-lg p-3">{m.mensagem}</p>
-
-                    {replyingId === m.id ? (
-                      <div className="space-y-2">
-                        <Textarea
-                          placeholder="Escreva a sua resposta..."
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          rows={3}
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleReply(m)} disabled={sending} className="gap-1">
-                            <Send className="h-3 w-3" />
-                            {sending ? "Enviando..." : "Enviar Resposta"}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => { setReplyingId(null); setReplyText(""); }}>
-                            Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button size="sm" variant="outline" onClick={() => { setReplyingId(m.id); setReplyText(""); }} className="gap-1">
-                        <Send className="h-3 w-3" />
-                        Responder
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+      {/* Right: Chat Area */}
+      <div className={`${!mobileShowChat ? "hidden md:flex" : "flex"} flex-col flex-1`}>
+        {selectedConvo ? (
+          <>
+            {/* Chat Header */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-primary/5 shrink-0">
+              <button
+                className="md:hidden p-1 rounded hover:bg-muted"
+                onClick={() => { setMobileShowChat(false); setSelectedConvo(null); }}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground">{selectedConvo.user_nome}</p>
+                <p className="text-xs text-muted-foreground truncate">{selectedConvo.assunto}</p>
+              </div>
+              <Badge className={selectedConvo.estado === "aberto"
+                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+              }>
+                {selectedConvo.estado === "aberto" ? "Aberto" : "Respondido"}
+              </Badge>
             </div>
-          )}
 
-          {/* Answered */}
-          {answeredMessages.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Respondidas</h2>
-              {answeredMessages.map((m) => (
-                <Card key={m.id} className="opacity-80">
-                  <CardContent className="py-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-foreground">{m.assunto}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                          <User className="h-3 w-3" /> {m.user_nome}
-                        </p>
+            {/* Messages */}
+            <div
+              className="flex-1 overflow-y-auto px-3 py-4 space-y-1"
+              style={{
+                backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+              }}
+            >
+              {chatLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : chatMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                  <p className="text-xs text-muted-foreground">Nenhuma mensagem ainda. Envie a primeira!</p>
+                </div>
+              ) : (
+                <AnimatePresence initial={false}>
+                  {chatMessages.map((msg, index) => {
+                    const isAdmin = msg.sender_id === adminId;
+                    return (
+                      <div key={msg.id}>
+                        {shouldShowDateSeparator(chatMessages, index) && (
+                          <div className="flex justify-center my-3">
+                            <span className="text-[10px] bg-card/80 backdrop-blur-sm text-muted-foreground px-3 py-1 rounded-full shadow-sm border border-border/50">
+                              {formatDateSeparator(msg.created_at)}
+                            </span>
+                          </div>
+                        )}
+                        <motion.div
+                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ duration: 0.2 }}
+                          className={`flex mb-1.5 ${isAdmin ? "justify-end" : "justify-start"}`}
+                        >
+                          <div className={`relative max-w-[80%] sm:max-w-[70%] px-3 py-2 rounded-2xl shadow-sm ${
+                            isAdmin
+                              ? "bg-primary text-primary-foreground rounded-br-md"
+                              : "bg-card text-card-foreground border border-border/50 rounded-bl-md"
+                          }`}>
+                            {!isAdmin && (
+                              <p className="text-[10px] font-bold text-primary mb-0.5">{selectedConvo.user_nome}</p>
+                            )}
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                            <p className={`text-[10px] mt-1 text-right ${isAdmin ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                              {formatTime(msg.created_at)}
+                              {isAdmin && <span className="ml-1">✓✓</span>}
+                            </p>
+                          </div>
+                        </motion.div>
                       </div>
-                      <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                        <CheckCircle2 className="h-3 w-3 mr-1" /> Respondido
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{m.mensagem}</p>
-                    {m.resposta && (
-                      <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
-                        <p className="text-xs font-medium text-primary mb-1">Resposta:</p>
-                        <p className="text-sm text-foreground">{m.resposta}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                    );
+                  })}
+                </AnimatePresence>
+              )}
+              <div ref={messagesEndRef} />
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Input */}
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2 px-3 py-2.5 bg-card border-t border-border shrink-0">
+              <Input
+                placeholder="Digite uma mensagem..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="flex-1 rounded-full bg-muted/50 border-none text-sm h-10 px-4"
+                disabled={sending}
+              />
+              <Button type="submit" size="icon" disabled={sending || !newMessage.trim()} className="rounded-full h-10 w-10 shrink-0">
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </form>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center px-6">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Headphones className="h-10 w-10 text-primary/40" />
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">Mensagens de Suporte</p>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Seleccione uma conversa ou inicie uma nova para comunicar com os utilizadores.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
