@@ -49,20 +49,20 @@ async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: st
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-async function ocrWithGroq(image_base64: string, mime_type: string, apiKey: string): Promise<string> {
+async function ocrWithGroq(image_base64: string, mime_type: string, apiKey: string, prompt: string): Promise<string> {
   const res = await fetch(GROQ_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct", // updated: replaces decommissioned llama-3.2-90b-vision-preview
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: [{
         role: "user",
         content: [
           { type: "image_url", image_url: { url: `data:${mime_type};base64,${image_base64}` } },
-          { type: "text", text: OCR_PROMPT },
+          { type: "text", text: prompt },
         ],
       }],
-      max_tokens: 4096,
+      max_tokens: 8192,
       temperature: 0.2,
     }),
   });
