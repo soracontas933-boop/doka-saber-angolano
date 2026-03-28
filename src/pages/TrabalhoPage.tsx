@@ -292,7 +292,7 @@ const TrabalhoPage = () => {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-10 max-w-3xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-6">
           {fase !== "formulario" && (
@@ -339,7 +339,7 @@ const TrabalhoPage = () => {
           className="space-y-6"
         >
           {/* Tema */}
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
             <div className="space-y-2">
               <Label htmlFor="tema">Tema do Trabalho <span className="text-destructive">*</span></Label>
               <Input
@@ -353,7 +353,7 @@ const TrabalhoPage = () => {
           </div>
 
           {/* Dados da Instituição */}
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
             <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
               Dados da Instituição
             </h2>
@@ -381,7 +381,7 @@ const TrabalhoPage = () => {
           </div>
 
           {/* Dados do Aluno e Turma */}
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
             <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
               Dados do Aluno e Turma
             </h2>
@@ -402,7 +402,7 @@ const TrabalhoPage = () => {
                   <Label>Nome do Aluno</Label>
                   <Input placeholder="Nome completo" value={nomeAluno} onChange={(e) => setNomeAluno(e.target.value)} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Nº</Label>
                     <Input placeholder="Ex: 01" value={numero} onChange={(e) => setNumero(e.target.value)} />
@@ -441,7 +441,7 @@ const TrabalhoPage = () => {
               <Input placeholder="Nome do professor(a)" value={nomeDocente} onChange={(e) => setNomeDocente(e.target.value)} />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Classe <span className="text-destructive">*</span></Label>
                 <Select value={classe} onValueChange={setClasse}>
@@ -457,7 +457,7 @@ const TrabalhoPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Sala</Label>
                 <Input placeholder="Ex: 12" value={sala} onChange={(e) => setSala(e.target.value)} />
@@ -475,7 +475,7 @@ const TrabalhoPage = () => {
           </div>
 
           {/* Configurações do Trabalho */}
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
             <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
               Configurações do Trabalho
             </h2>
@@ -500,7 +500,7 @@ const TrabalhoPage = () => {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Número de Páginas</Label>
                 <div className="flex items-center gap-2">

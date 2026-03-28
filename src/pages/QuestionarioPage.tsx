@@ -151,7 +151,7 @@ const QuestionarioPage = () => {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-10 max-w-3xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
@@ -172,7 +172,7 @@ const QuestionarioPage = () => {
         className="space-y-6"
       >
         {/* Fotos */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
           <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
             Fotos do Conteúdo
           </h2>
@@ -207,7 +207,7 @@ const QuestionarioPage = () => {
           )}
 
           {previews.length > 0 && (
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {previews.map((src, i) => (
                 <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-border">
                   <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
@@ -225,14 +225,14 @@ const QuestionarioPage = () => {
         </div>
 
         {/* Configurações */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
           <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
             Configurações
           </h2>
 
           <div className="space-y-2">
             <Label>Disciplina</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Select value={disciplina} onValueChange={(v) => { setDisciplina(v); if (v !== "__manual__") setDisciplinaManual(""); }}>
                 <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
                 <SelectContent>
@@ -251,7 +251,7 @@ const QuestionarioPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Nº de Perguntas</Label>
               <Input type="number" min={5} max={50} value={numPerguntas} onChange={(e) => setNumPerguntas(e.target.value)} />
@@ -267,7 +267,7 @@ const QuestionarioPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Dificuldade</Label>
               <Select value={dificuldade} onValueChange={setDificuldade}>
@@ -304,7 +304,7 @@ const QuestionarioPage = () => {
       </motion.form>
 
       {resultado && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-card">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card">
           <QuestionarioPreview
             resultado={resultado}
             tipo={tipo}
