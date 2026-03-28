@@ -314,7 +314,20 @@ const NotificationBell = () => {
                 return (
                   <div
                     key={n.id}
-                    className={`w-full text-left px-4 py-3 transition-colors ${
+                    onClick={() => {
+                      if (isGroupInvite) return;
+                      const isSupportNotif = n.titulo.toLowerCase().includes("suporte") || n.titulo.toLowerCase().includes("mensagem");
+                      if (isSupportNotif) {
+                        markAsRead(n.id);
+                        setOpen(false);
+                        // Check if admin or user
+                        const isAdminUser = user?.email === "kenymatos943@gmail.com" || user?.email === "manuelmatosjose67@gmail.com";
+                        navigate(isAdminUser ? "/mensagens" : "/suporte");
+                      } else {
+                        markAsRead(n.id);
+                      }
+                    }}
+                    className={`w-full text-left px-4 py-3 transition-colors cursor-pointer hover:bg-muted/50 ${
                       !n.lida ? "bg-primary/5" : ""
                     }`}
                   >
