@@ -47,7 +47,7 @@ const AnimatedTitle = () => {
   const line2 = "estude melhor";
 
   return (
-    <h1 className="text-4xl md:text-6xl font-display font-extrabold tracking-tight leading-[1.1] mb-5">
+    <h1 className="text-3xl sm:text-4xl md:text-6xl font-display font-extrabold tracking-tight leading-[1.1] mb-4 sm:mb-5">
       <span className="block">
         {line1.split("").map((letter, i) => (
           <motion.span
@@ -153,24 +153,24 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Nav */}
-      <header className="relative z-[30] flex items-center justify-between px-6 md:px-12 py-5">
-        <DelleLogo size={36} />
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      <header className="relative z-[30] flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 sm:py-5">
+        <DelleLogo size={30} />
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-8 w-8 sm:h-10 sm:w-10">
+            {theme === "dark" ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
           {canInstall && (
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={install}>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={install}>
               <Download className="h-4 w-4" /> Baixar App
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>Entrar</Button>
-          <Button size="sm" onClick={() => navigate("/auth")}>Começar grátis</Button>
+          <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate("/auth")}>Entrar</Button>
+          <Button size="sm" className="text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate("/auth")}>Começar grátis</Button>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="relative px-6 md:px-12 pt-16 pb-20 max-w-5xl mx-auto text-center">
+      <section className="relative px-4 sm:px-6 md:px-12 pt-10 sm:pt-16 pb-14 sm:pb-20 max-w-5xl mx-auto text-center">
         {/* Layer 0 — animated paths */}
         <div className="absolute inset-0 z-0">
           <FloatingPaths position={1} />
@@ -198,7 +198,7 @@ const HomePage = () => {
 
           <AnimatedTitle />
 
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-8 leading-relaxed px-2">
             Gere trabalhos escolares, resumos do caderno, questionários e planos de aula — tudo adaptado ao sistema educacional angolano.
           </p>
 
@@ -230,7 +230,7 @@ const HomePage = () => {
       </section>
 
       {/* Features */}
-      <section id="funcionalidades" className="px-6 md:px-12 py-20 bg-card border-t border-border">
+      <section id="funcionalidades" className="px-4 sm:px-6 md:px-12 py-14 sm:py-20 bg-card border-t border-border">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-display font-bold mb-3">Tudo o que precisa, num só lugar</h2>
@@ -253,13 +253,13 @@ const HomePage = () => {
       </section>
 
       {/* Planos */}
-      <section id="planos" className="px-6 md:px-12 py-20 bg-background">
+      <section id="planos" className="px-4 sm:px-6 md:px-12 py-14 sm:py-20 bg-background">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-display font-bold mb-3">Planos & Preços</h2>
             <p className="text-muted-foreground max-w-md mx-auto">Escolha o plano ideal para o seu nível de estudo.</p>
           </motion.div>
-          <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {(["gratuito", "basico", "intermedio", "profissional", "premium"] as PlanKey[]).map((key) => {
               const cfg = PLAN_CONFIGS[key];
               const isPopular = key === "intermedio";
@@ -292,8 +292,8 @@ const HomePage = () => {
       </section>
 
       {/* CTA */}
-      <section className="px-6 md:px-12 py-20">
-        <motion.div initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="max-w-3xl mx-auto text-center bg-gradient-to-br from-primary to-secondary rounded-3xl p-10 md:p-14">
+      <section className="px-4 sm:px-6 md:px-12 py-14 sm:py-20">
+        <motion.div initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="max-w-3xl mx-auto text-center bg-gradient-to-br from-primary to-secondary rounded-3xl p-6 sm:p-10 md:p-14">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-secondary-foreground mb-3">Pronto para começar?</h2>
           <p className="text-secondary-foreground/80 mb-6 max-w-md mx-auto">Junte-se a milhares de estudantes e professores angolanos que já usam o Delle.</p>
           <Button size="lg" variant="secondary" className="gap-2 px-6 bg-background text-foreground hover:bg-background/90" onClick={() => navigate("/auth")}>

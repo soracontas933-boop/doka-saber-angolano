@@ -56,28 +56,28 @@ const MobileNav = () => {
     : [...userNavItems, { to: "/suporte", icon: LifeBuoy, label: "Suporte" }];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
-      <div className="flex items-center justify-around py-2 px-1 overflow-x-auto">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
+      <div className="flex items-center py-1.5 px-1 overflow-x-auto scrollbar-hide gap-0.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (
             <NavLink
               key={item.to}
               to={item.to}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex flex-col items-center gap-0.5 min-w-[3rem] px-1.5 py-1 rounded-lg text-[10px] font-medium transition-colors ${
                 isActive ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
-              <span>{item.label}</span>
+              <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+              <span className="truncate max-w-[3rem]">{item.label}</span>
             </NavLink>
           );
         })}
         <button
           onClick={handleLogout}
-          className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-xs font-medium text-destructive transition-colors"
+          className="flex flex-col items-center gap-0.5 min-w-[3rem] px-1.5 py-1 rounded-lg text-[10px] font-medium text-destructive transition-colors"
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-4 w-4" />
           <span>Sair</span>
         </button>
       </div>
