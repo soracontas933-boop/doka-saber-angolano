@@ -24,6 +24,15 @@ interface Conversation {
   unread?: boolean;
 }
 
+interface UserGroup {
+  user_id: string;
+  user_nome: string;
+  user_email: string;
+  conversations: Conversation[];
+  latest_update: string;
+  has_open: boolean;
+}
+
 interface ChatMsg {
   id: string;
   conversation_id: string;
