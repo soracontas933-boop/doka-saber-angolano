@@ -320,12 +320,28 @@ const AdminMensagensPage = () => {
     return date.toLocaleDateString("pt-AO", { day: "2-digit", month: "short" });
   };
 
-  const filteredConvos = conversations.filter(c =>
-    !searchQuery || 
-    c.assunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.user_nome || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.user_email || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Group conversations by user
+  const userGroups: UserGroup[] = (() => {
+    const grouped: Record<string, Conversation[]> = {};
+    const filtered = conversations.filter(c =>
+      !searchQuery || 
+      c.assunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.user_nome || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.user_email || "").toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    filtered.forEach(c => {
+      if (!grouped[c.user_id]) grouped[c.user_id] = [];
+      grouped[c.user_id].push(c);
+    });
+    return Object.entries(grouped).map(([uid, convos]) => ({
+      user_id: uid,
+      user_nome: convos[0].user_nome || "Desconhecido",
+      user_email: convos[0].user_email || "",
+      conversations: convos,
+      latest_update: convos[0].atualizado_em,
+      has_open: convos.some(c => c.estado === "aberto"),
+    })).sort((a, b) => new Date(b.latest_update).getTime() - new Date(a.latest_update).getTime());
+  })();
 
   const filteredUsers = users.filter(u =>
     !userSearch ||
