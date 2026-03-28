@@ -271,7 +271,11 @@ const AdminMensagensPage = () => {
 
     if (!error) {
       await (supabase.from("support_messages") as any)
-        .update({ atualizado_em: new Date().toISOString(), estado: "respondido" })
+        .update({
+          atualizado_em: new Date().toISOString(),
+          estado: "respondido",
+          resposta: newMessage.trim(),
+        })
         .eq("id", targetConvo.id);
 
       await (supabase.from("notifications") as any).insert({
