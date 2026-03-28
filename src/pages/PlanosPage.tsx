@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Crown, Check, X, Star, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
+import { supabase } from "@/integrations/supabase/client";
 import PagamentoManualDialog from "@/components/PagamentoManualDialog";
+import { toast } from "sonner";
 
 const planOrder: PlanKey[] = ["gratuito", "basico", "intermedio", "profissional", "premium"];
 
@@ -29,8 +31,23 @@ const popularPlan: PlanKey = "profissional";
 const PlanosPage = () => {
   const { plan, loading } = useUserPlan();
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
+  const [paymentLinks, setPaymentLinks] = useState<Record<string, string>>({});
 
   const currentPlanKey = (plan?.plano || "gratuito") as PlanKey;
+
+  useEffect(() => {
+    const fetchLinks = async () => {
+      const { data } = await (supabase.from("payment_settings") as any)
+        .select("chave, valor")
+        .in("chave", ["link_basico", "link_intermedio", "link_profissional", "link_premium"]);
+      if (data) {
+        const map: Record<string, string> = {};
+        data.forEach((d: any) => { map[d.chave] = d.valor; });
+        setPaymentLinks(map);
+      }
+    };
+    fetchLinks();
+  }, []);
 
   if (loading) {
     return (
@@ -148,9 +165,12 @@ const PlanosPage = () => {
                       className="w-full text-xs"
                       variant="secondary"
                       onClick={() => {
-                        import('sonner').then(({ toast }) => {
-                          toast.info("Pagamento automático estará disponível em breve!");
-                        });
+                        const link = paymentLinks[`link_${key}`];
+                        if (link) {
+                          window.open(link, "_blank");
+                        } else {
+                          toast.info("Pagamento automático ainda não configurado para este plano.");
+                        }
                       }}
                     >
                       Pagamento Automático

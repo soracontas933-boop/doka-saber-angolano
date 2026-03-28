@@ -23,7 +23,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2 } from "lucide-react";
 
 interface PaymentRequest {
   id: string;
@@ -73,6 +73,16 @@ const AdminPaymentsTab = () => {
   const [ibanBanco, setIbanBanco] = useState("");
   const [ibanTitular, setIbanTitular] = useState("");
   const [multicaixaNumero, setMulticaixaNumero] = useState("");
+
+  // Payment links state (automatic payments)
+  const [editingLinks, setEditingLinks] = useState(false);
+  const [savingLinks, setSavingLinks] = useState(false);
+  const [paymentLinks, setPaymentLinks] = useState<Record<string, string>>({
+    link_basico: "",
+    link_intermedio: "",
+    link_profissional: "",
+    link_premium: "",
+  });
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
@@ -220,6 +230,12 @@ const AdminPaymentsTab = () => {
       setIbanBanco(map["iban_banco"] || "");
       setIbanTitular(map["iban_titular"] || "");
       setMulticaixaNumero(map["multicaixa_numero"] || "");
+      setPaymentLinks({
+        link_basico: map["link_basico"] || "",
+        link_intermedio: map["link_intermedio"] || "",
+        link_profissional: map["link_profissional"] || "",
+        link_premium: map["link_premium"] || "",
+      });
     }
     setSettingsLoading(false);
   };
@@ -240,6 +256,25 @@ const AdminPaymentsTab = () => {
     setSavingSettings(false);
     setEditingSettings(false);
     toast({ title: "Dados de pagamento actualizados!" });
+  };
+
+  const handleSaveLinks = async () => {
+    setSavingLinks(true);
+    const linkKeys = ["link_basico", "link_intermedio", "link_profissional", "link_premium"];
+    for (const key of linkKeys) {
+      // Try update first, if no row exists, insert
+      const { data } = await (supabase.from("payment_settings") as any)
+        .update({ valor: paymentLinks[key] || "", atualizado_em: new Date().toISOString() })
+        .eq("chave", key)
+        .select();
+      if (!data || data.length === 0) {
+        await (supabase.from("payment_settings") as any)
+          .insert({ chave: key, valor: paymentLinks[key] || "" });
+      }
+    }
+    setSavingLinks(false);
+    setEditingLinks(false);
+    toast({ title: "Links de pagamento automático actualizados!" });
   };
 
   if (loading) {
@@ -316,7 +351,66 @@ const AdminPaymentsTab = () => {
         </CardContent>
       </Card>
 
-      {/* Summary */}
+      {/* Payment Links Card (Automatic Payments) */}
+      <Card className="border-primary/20">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            Links de Pagamento Automático
+          </CardTitle>
+          {!editingLinks ? (
+            <Button variant="outline" size="sm" onClick={() => setEditingLinks(true)} className="gap-1">
+              <Pencil className="h-3.5 w-3.5" />
+              Editar
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => { setEditingLinks(false); fetchSettings(); }}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={handleSaveLinks} disabled={savingLinks} className="gap-1">
+                <Save className="h-3.5 w-3.5" />
+                {savingLinks ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
+          {settingsLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+          ) : editingLinks ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(["basico", "intermedio", "profissional", "premium"] as const).map((plan) => (
+                <div key={plan} className="space-y-2">
+                  <Label className="text-xs">{PLAN_LABELS[plan]}</Label>
+                  <Input
+                    value={paymentLinks[`link_${plan}`] || ""}
+                    onChange={(e) => setPaymentLinks(prev => ({ ...prev, [`link_${plan}`]: e.target.value }))}
+                    placeholder="https://..."
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              {(["basico", "intermedio", "profissional", "premium"] as const).map((plan) => (
+                <div key={plan}>
+                  <p className="text-xs text-muted-foreground mb-0.5">{PLAN_LABELS[plan]}</p>
+                  {paymentLinks[`link_${plan}`] ? (
+                    <a href={paymentLinks[`link_${plan}`]} target="_blank" rel="noopener noreferrer" className="text-primary text-xs font-medium truncate block hover:underline">
+                      {paymentLinks[`link_${plan}`]}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground/50 italic">Não configurado</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
       <div className="grid grid-cols-3 gap-4">
         <Card className="border-amber-500/20">
           <CardHeader className="pb-2">
