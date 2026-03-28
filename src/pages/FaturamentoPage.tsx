@@ -8,6 +8,7 @@ import {
   ArrowDownRight,
   Plus,
   Trash2,
+  Clock,
   Filter,
   Calendar,
 } from "lucide-react";
@@ -94,6 +95,7 @@ const getStartDate = (period: FilterPeriod): Date | null => {
 
 const FaturamentoPage = () => {
   const [records, setRecords] = useState<BillingRecord[]>([]);
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<FilterPeriod>("mes");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -120,8 +122,18 @@ const FaturamentoPage = () => {
     setLoading(false);
   };
 
+  const fetchPendingPayments = async () => {
+    const { data } = await supabase
+      .from("payment_requests")
+      .select("*")
+      .eq("estado", "pendente")
+      .order("criado_em", { ascending: false });
+    if (data) setPendingPayments(data);
+  };
+
   useEffect(() => {
     fetchRecords();
+    fetchPendingPayments();
   }, [period]);
 
   const handleAddExpense = async () => {
@@ -163,6 +175,10 @@ const FaturamentoPage = () => {
     [records]
   );
   const lucro = totalEntradas - totalSaidas;
+  const totalPendentes = useMemo(
+    () => pendingPayments.reduce((s, r) => s + Number(r.valor), 0),
+    [pendingPayments]
+  );
 
   // Chart data: group by day
   const chartData = useMemo(() => {
@@ -299,7 +315,7 @@ const FaturamentoPage = () => {
       </motion.div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
             title: "Receita Total",
@@ -321,6 +337,13 @@ const FaturamentoPage = () => {
             icon: DollarSign,
             color: lucro >= 0 ? "text-emerald-500" : "text-red-500",
             bg: lucro >= 0 ? "bg-emerald-500/10" : "bg-red-500/10",
+          },
+          {
+            title: "Pendentes",
+            value: totalPendentes,
+            icon: Clock,
+            color: "text-amber-500",
+            bg: "bg-amber-500/10",
           },
         ].map((card, i) => (
           <motion.div
@@ -469,6 +492,63 @@ const FaturamentoPage = () => {
           </Card>
         </motion.div>
       </div>
+
+      {/* Pending Payments Table */}
+      {pendingPayments.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+        >
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-amber-500" />
+                Pagamentos Pendentes ({pendingPayments.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-muted-foreground text-xs">
+                      <th className="text-left py-2 font-medium">Email</th>
+                      <th className="text-left py-2 font-medium">Plano</th>
+                      <th className="text-right py-2 font-medium">Valor</th>
+                      <th className="text-right py-2 font-medium hidden sm:table-cell">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingPayments.map((p) => (
+                      <tr
+                        key={p.id}
+                        className="border-b border-border/50 hover:bg-muted/30 transition-colors"
+                      >
+                        <td className="py-2.5 text-foreground">{p.email_confirmacao}</td>
+                        <td className="py-2.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 capitalize">
+                            {p.plano}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right font-medium text-amber-500">
+                          {formatKz(Number(p.valor))}
+                        </td>
+                        <td className="py-2.5 text-right text-muted-foreground text-xs hidden sm:table-cell">
+                          {new Date(p.criado_em).toLocaleDateString("pt-AO", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Records Table */}
       <motion.div
