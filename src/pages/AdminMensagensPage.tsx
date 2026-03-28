@@ -154,12 +154,13 @@ const AdminMensagensPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [fetchConversations]);
 
-  // Fetch chat messages for selected conversation
-  const fetchChatMessages = useCallback(async (convoId: string) => {
+  // Fetch all chat messages for a user (across all their conversations)
+  const fetchUserMessages = useCallback(async (userGroup: UserGroup) => {
     setChatLoading(true);
+    const convoIds = userGroup.conversations.map(c => c.id);
     const { data } = await (supabase.from("chat_messages") as any)
       .select("*")
-      .eq("conversation_id", convoId)
+      .in("conversation_id", convoIds)
       .order("created_at", { ascending: true });
     setChatMessages(data ?? []);
     setChatLoading(false);
@@ -167,32 +168,34 @@ const AdminMensagensPage = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedConvo) {
-      fetchChatMessages(selectedConvo.id);
+    if (selectedUserGroup) {
+      fetchUserMessages(selectedUserGroup);
     }
-  }, [selectedConvo, fetchChatMessages]);
+  }, [selectedUserGroup, fetchUserMessages]);
 
-  // Realtime for chat messages
+  // Realtime for chat messages (listen to all convos of selected user)
   useEffect(() => {
-    if (!selectedConvo) return;
-    const channel = supabase
-      .channel(`chat-${selectedConvo.id}`)
-      .on("postgres_changes", {
-        event: "INSERT", schema: "public", table: "chat_messages",
-        filter: `conversation_id=eq.${selectedConvo.id}`
-      }, (payload: any) => {
-        const newMsg = payload.new as ChatMsg;
-        setChatMessages(prev => [...prev, newMsg]);
-        scrollToBottom();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedConvo]);
+    if (!selectedUserGroup) return;
+    const channels = selectedUserGroup.conversations.map(c =>
+      supabase
+        .channel(`chat-${c.id}`)
+        .on("postgres_changes", {
+          event: "INSERT", schema: "public", table: "chat_messages",
+          filter: `conversation_id=eq.${c.id}`
+        }, (payload: any) => {
+          setChatMessages(prev => [...prev, payload.new as ChatMsg]);
+          scrollToBottom();
+        })
+        .subscribe()
+    );
+    return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
+  }, [selectedUserGroup]);
 
-  const handleSelectConvo = (convo: Conversation) => {
-    setSelectedConvo(convo);
+  const handleSelectUser = (group: UserGroup) => {
+    setSelectedUserGroup(group);
+    setSelectedConvo(group.conversations[0] || null);
     setMobileShowChat(true);
-    setSearchParams({ conversa: convo.id });
+    setSearchParams({ conversa: group.conversations[0]?.id || "" });
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
