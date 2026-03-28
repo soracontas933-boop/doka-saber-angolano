@@ -351,7 +351,66 @@ const AdminPaymentsTab = () => {
         </CardContent>
       </Card>
 
-      {/* Summary */}
+      {/* Payment Links Card (Automatic Payments) */}
+      <Card className="border-primary/20">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            Links de Pagamento Automático
+          </CardTitle>
+          {!editingLinks ? (
+            <Button variant="outline" size="sm" onClick={() => setEditingLinks(true)} className="gap-1">
+              <Pencil className="h-3.5 w-3.5" />
+              Editar
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => { setEditingLinks(false); fetchSettings(); }}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={handleSaveLinks} disabled={savingLinks} className="gap-1">
+                <Save className="h-3.5 w-3.5" />
+                {savingLinks ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
+          {settingsLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+          ) : editingLinks ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(["basico", "intermedio", "profissional", "premium"] as const).map((plan) => (
+                <div key={plan} className="space-y-2">
+                  <Label className="text-xs">{PLAN_LABELS[plan]}</Label>
+                  <Input
+                    value={paymentLinks[`link_${plan}`] || ""}
+                    onChange={(e) => setPaymentLinks(prev => ({ ...prev, [`link_${plan}`]: e.target.value }))}
+                    placeholder="https://..."
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              {(["basico", "intermedio", "profissional", "premium"] as const).map((plan) => (
+                <div key={plan}>
+                  <p className="text-xs text-muted-foreground mb-0.5">{PLAN_LABELS[plan]}</p>
+                  {paymentLinks[`link_${plan}`] ? (
+                    <a href={paymentLinks[`link_${plan}`]} target="_blank" rel="noopener noreferrer" className="text-primary text-xs font-medium truncate block hover:underline">
+                      {paymentLinks[`link_${plan}`]}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground/50 italic">Não configurado</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
       <div className="grid grid-cols-3 gap-4">
         <Card className="border-amber-500/20">
           <CardHeader className="pb-2">
