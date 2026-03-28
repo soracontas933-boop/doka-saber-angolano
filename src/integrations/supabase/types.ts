@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_roles: {
+        Row: {
+          atualizado_em: string
+          concedido_por: string
+          criado_em: string
+          id: string
+          permissions: string[]
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          concedido_por: string
+          criado_em?: string
+          id?: string
+          permissions?: string[]
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          concedido_por?: string
+          criado_em?: string
+          id?: string
+          permissions?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           ativo: boolean
@@ -579,11 +606,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_admin_permissions: { Args: { _user_id: string }; Returns: string[] }
       increment_creditos_usados: {
         Args: { p_user_id: string }
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      is_admin_or_master: { Args: { _user_id: string }; Returns: boolean }
       is_workgroup_member: {
         Args: { _user_id: string; _workgroup_id: string }
         Returns: boolean

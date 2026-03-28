@@ -12,7 +12,6 @@ import {
   LogOut,
   CreditCard,
   PanelLeftClose,
-
   ShieldCheck,
   Crown,
   LifeBuoy,
@@ -29,29 +28,38 @@ import { Badge } from "@/components/ui/badge";
 import DelleLogo from "./DelleLogo";
 import { useState } from "react";
 
-const navItems = [
-{ to: "/home", icon: Home, label: "Início", userOnly: true },
-{ to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true },
-{ to: "/faturamento", icon: Receipt, label: "Faturamento", adminOnly: true },
-{ to: "/admin", icon: ShieldCheck, label: "Painel Admin", adminOnly: true },
-{ to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
-{ to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
-{ to: "/curriculo", icon: FileText, label: "Currículo (CV)" },
-{ to: "/resumo", icon: BookOpen, label: "Resumo" },
-{ to: "/questionario", icon: HelpCircle, label: "Questionário" },
-{ to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
-{ to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
-{ to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
-{ to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
-{ to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
-{ to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true }];
+interface NavItem {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  masterLabel?: string;
+  adminOnly?: boolean;
+  userOnly?: boolean;
+  permission?: string; // Required admin permission
+}
 
-
+const navItems: NavItem[] = [
+  { to: "/home", icon: Home, label: "Início", userOnly: true },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true, permission: "dashboard" },
+  { to: "/faturamento", icon: Receipt, label: "Faturamento", adminOnly: true, permission: "faturamento" },
+  { to: "/admin", icon: ShieldCheck, label: "Painel Admin", adminOnly: true, permission: "admin_panel" },
+  { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
+  { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
+  { to: "/curriculo", icon: FileText, label: "Currículo (CV)" },
+  { to: "/resumo", icon: BookOpen, label: "Resumo" },
+  { to: "/questionario", icon: HelpCircle, label: "Questionário" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
+  { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
+  { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
+  { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
+  { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
+  { to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true, permission: "mensagens" },
+];
 
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, hasPermission } = useAdmin();
 
   const [collapsed, setCollapsed] = useState(false);
 
@@ -60,9 +68,12 @@ const AppSidebar = () => {
     navigate("/");
   };
 
-  const renderNavItem = (item: {to: string;icon: LucideIcon;label: string;masterLabel?: string;adminOnly?: boolean;userOnly?: boolean;}) => {
+  const renderNavItem = (item: NavItem) => {
     if (item.adminOnly && !isAdmin) return null;
     if (item.userOnly && isAdmin) return null;
+    // Check granular permission for admin items
+    if (item.adminOnly && item.permission && !hasPermission(item.permission)) return null;
+    
     const isActive = location.pathname === item.to;
     const displayLabel = isAdmin && item.masterLabel ? item.masterLabel : item.label;
 
@@ -78,12 +89,10 @@ const AppSidebar = () => {
           layoutId="sidebar-active"
           className="absolute inset-0 rounded-lg bg-sidebar-accent"
           transition={{ type: "spring", stiffness: 350, damping: 30 }} />
-
         }
         <item.icon className="relative z-10 h-5 w-5 flex-shrink-0" />
         {!collapsed && <span className="relative z-10">{displayLabel}</span>}
       </NavLink>);
-
   };
 
   return (
@@ -136,7 +145,6 @@ const AppSidebar = () => {
         </button>
       </div>
     </aside>);
-
 };
 
 export default AppSidebar;
