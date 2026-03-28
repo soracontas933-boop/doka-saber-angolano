@@ -2,13 +2,14 @@ import { useState, useRef } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { BookOpen, Upload, Camera, X, Image, Loader2 } from "lucide-react";
+import { BookOpen, Upload, Camera, X, Image, Loader2, FileText, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { extractTextFromImages, extractTextFromDocument, generateWithGroq, reviewWithOpenRouter, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { saveProject } from "@/lib/save-project";
 import ResumoPreview from "@/components/resumo/ResumoPreview";
 
@@ -34,9 +35,10 @@ const ResumoPage = () => {
   const { checkLimit, logUsage } = useUsageTracker();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [docFiles, setDocFiles] = useState<File[]>([]);
   const [tipoResumo, setTipoResumo] = useLocalStorage("doka_resumo_tipo", "Resumo por Tópicos");
   const [disciplina, setDisciplina] = useLocalStorage("doka_resumo_disciplina", "");
-  const [fonte, setFonte] = useState<"upload" | "camera">("upload");
+  const [fonte, setFonte] = useState<"upload" | "camera" | "documento">("upload");
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState("");
   const [resultado, setResultado] = useLocalStorage<string | null>("doka_resumo_resultado", null);
@@ -64,9 +66,25 @@ const ResumoPage = () => {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newDocs = Array.from(e.target.files);
+      setDocFiles((prev) => [...prev, ...newDocs].slice(0, 10));
+      toast.success(`${newDocs.length} documento(s) adicionado(s)`);
+      e.target.value = "";
+    }
+  };
+
+  const removeDoc = (index: number) => {
+    setDocFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleGenerate = async () => {
-    if (files.length === 0) {
-      toast.error("Seleccione pelo menos uma foto do caderno");
+    const hasImages = files.length > 0;
+    const hasDocs = docFiles.length > 0;
+    
+    if (!hasImages && !hasDocs) {
+      toast.error("Seleccione fotos ou documentos para resumir");
       return;
     }
     
@@ -78,13 +96,33 @@ const ResumoPage = () => {
     setImagemResumo(null);
 
     try {
-      // Pipeline: Gemini → Groq → OpenRouter → Pollinations
-      setEtapa("A extrair texto das fotos (Gemini Vision)...");
-      const extractedTexts = await extractTextFromImages(files);
-      const combinedText = extractedTexts.filter(Boolean).join("\n\n---\n\n");
+      let combinedText = "";
+
+      // Extract from images
+      if (hasImages) {
+        setEtapa("A extrair texto das fotos (Gemini Vision)...");
+        const extractedTexts = await extractTextFromImages(files);
+        combinedText += extractedTexts.filter(Boolean).join("\n\n---\n\n");
+      }
+
+      // Extract from documents
+      if (hasDocs) {
+        for (let i = 0; i < docFiles.length; i++) {
+          setEtapa(`A extrair texto do documento ${i + 1}/${docFiles.length}...`);
+          try {
+            const docText = await extractTextFromDocument(docFiles[i]);
+            if (docText.trim()) {
+              combinedText += (combinedText ? "\n\n---\n\n" : "") + docText;
+            }
+          } catch (err) {
+            console.error(`Erro ao extrair documento ${docFiles[i].name}:`, err);
+            toast.error(`Erro ao ler ${docFiles[i].name}`);
+          }
+        }
+      }
 
       if (!combinedText.trim()) {
-        toast.error("Não foi possível extrair texto das fotos. Tente novamente com fotos mais nítidas.");
+        toast.error("Não foi possível extrair texto. Tente com ficheiros mais nítidos ou de melhor qualidade.");
         setLoading(false);
         return;
       }
@@ -166,19 +204,22 @@ const ResumoPage = () => {
           </div>
         </div>
 
-        {/* Fotos */}
+        {/* Fonte de conteúdo */}
         <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
           <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-            Fotos do Caderno (até 100)
+            Conteúdo para Resumir
           </h2>
 
-          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera")}>
+          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera" | "documento")}>
             <TabsList className="w-full">
               <TabsTrigger value="upload" className="flex-1 gap-2">
                 <Upload className="h-4 w-4" /> Galeria
               </TabsTrigger>
               <TabsTrigger value="camera" className="flex-1 gap-2">
                 <Camera className="h-4 w-4" /> Câmera
+              </TabsTrigger>
+              <TabsTrigger value="documento" className="flex-1 gap-2">
+                <FileText className="h-4 w-4" /> Documento
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -190,7 +231,7 @@ const ResumoPage = () => {
               <span className="text-xs text-muted-foreground mt-1">JPG, PNG — máx. 100 fotos</span>
               <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} />
             </label>
-          ) : (
+          ) : fonte === "camera" ? (
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
@@ -201,6 +242,13 @@ const ResumoPage = () => {
               <span className="text-xs text-muted-foreground mt-1">Tire fotos directamente do caderno</span>
               <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture onChange={handleFileChange} />
             </button>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
+              <File className="h-8 w-8 text-muted-foreground mb-2" />
+              <span className="text-sm text-muted-foreground font-medium">Carregar PDF ou Word</span>
+              <span className="text-xs text-muted-foreground mt-1">.pdf, .doc, .docx — máx. 10 ficheiros</span>
+              <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple onChange={handleDocChange} />
+            </label>
           )}
 
           {previews.length > 0 && (
@@ -220,12 +268,29 @@ const ResumoPage = () => {
             </div>
           )}
 
+          {docFiles.length > 0 && (
+            <div className="space-y-2">
+              {docFiles.map((doc, i) => (
+                <div key={i} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 border border-border/50">
+                  <FileText className="h-5 w-5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                    <p className="text-xs text-muted-foreground">{(doc.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                  <button onClick={() => removeDoc(i)} className="p-1 hover:bg-destructive/10 rounded">
+                    <X className="h-4 w-4 text-destructive" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {files.length > 0 && (
             <p className="text-xs text-muted-foreground">{files.length} de 100 fotos</p>
           )}
         </div>
 
-        <Button className="w-full h-12 text-base" onClick={handleGenerate} disabled={loading || files.length === 0}>
+        <Button className="w-full h-12 text-base" onClick={handleGenerate} disabled={loading || (files.length === 0 && docFiles.length === 0)}>
           {loading ? (
             <span className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />

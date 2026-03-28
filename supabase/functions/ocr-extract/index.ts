@@ -20,16 +20,18 @@ async function getApiKeys(): Promise<Record<string, string>> {
 
 const OCR_PROMPT = `Você é um OCR especializado. Extraia TODO o texto visível nesta imagem com máxima fidelidade. A imagem pode conter texto manuscrito (escrito à mão), impresso, digitado ou misto. Transcreva exactamente o que está escrito, incluindo títulos, parágrafos, listas, fórmulas, tabelas e anotações. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem formatação JSON, sem comentários adicionais. Se não conseguir ler alguma parte, indique [ilegível].`;
 
-async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: string): Promise<string> {
+const DOC_PROMPT = `Extraia TODO o texto deste documento com máxima fidelidade. Mantenha a estrutura original: títulos, parágrafos, listas, tabelas, notas de rodapé. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem comentários adicionais. Preserve a formatação e hierarquia do conteúdo.`;
+
+async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: string, prompt: string): Promise<string> {
   const body = {
     contents: [{
       role: "user",
       parts: [
         { inline_data: { mime_type, data: image_base64 } },
-        { text: OCR_PROMPT },
+        { text: prompt },
       ],
     }],
-    generationConfig: { maxOutputTokens: 4096, temperature: 0.2 },
+    generationConfig: { maxOutputTokens: 8192, temperature: 0.2 },
   };
 
   const res = await fetch(`${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`, {
@@ -47,20 +49,20 @@ async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: st
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-async function ocrWithGroq(image_base64: string, mime_type: string, apiKey: string): Promise<string> {
+async function ocrWithGroq(image_base64: string, mime_type: string, apiKey: string, prompt: string): Promise<string> {
   const res = await fetch(GROQ_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct", // updated: replaces decommissioned llama-3.2-90b-vision-preview
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: [{
         role: "user",
         content: [
           { type: "image_url", image_url: { url: `data:${mime_type};base64,${image_base64}` } },
-          { type: "text", text: OCR_PROMPT },
+          { type: "text", text: prompt },
         ],
       }],
-      max_tokens: 4096,
+      max_tokens: 8192,
       temperature: 0.2,
     }),
   });
@@ -78,7 +80,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { image_base64, mime_type = "image/jpeg" } = await req.json();
+    const { image_base64, mime_type = "image/jpeg", is_document = false } = await req.json();
 
     if (!image_base64) {
       return new Response(JSON.stringify({ error: "image_base64 é obrigatório" }),
@@ -86,12 +88,13 @@ serve(async (req) => {
     }
 
     const keys = await getApiKeys();
+    const promptToUse = is_document ? DOC_PROMPT : OCR_PROMPT;
 
     // Try providers in order: Gemini → Groq Vision
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [];
 
-    if (keys.gemini) providers.push({ name: "gemini", fn: () => ocrWithGemini(image_base64, mime_type, keys.gemini) });
-    if (keys.groq) providers.push({ name: "groq-vision", fn: () => ocrWithGroq(image_base64, mime_type, keys.groq) });
+    if (keys.gemini) providers.push({ name: "gemini", fn: () => ocrWithGemini(image_base64, mime_type, keys.gemini, promptToUse) });
+    if (keys.groq && !is_document) providers.push({ name: "groq-vision", fn: () => ocrWithGroq(image_base64, mime_type, keys.groq, promptToUse) });
 
     if (providers.length === 0) {
       return new Response(JSON.stringify({ error: "Nenhuma chave de OCR configurada. Adicione Gemini ou Groq em /setup-api-keys." }),

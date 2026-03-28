@@ -139,6 +139,24 @@ export async function extractTextFromImages(files: File[]): Promise<string[]> {
   return results;
 }
 
+// ─── Extract text from PDF/Word documents ────────────────────────
+export async function extractTextFromDocument(file: File): Promise<string> {
+  const base64 = await fileToBase64(file);
+  const mimeType = file.type || "application/pdf";
+  
+  const { data, error } = await supabase.functions.invoke("ocr-extract", {
+    body: {
+      image_base64: base64,
+      mime_type: mimeType,
+      is_document: true,
+    },
+  });
+
+  if (error) throw new Error(`Erro ao extrair texto: ${error.message}`);
+  if (data?.error) throw new Error(data.error);
+  return data?.text || "";
+}
+
 // ─── Pollinations (Imagens Gratuitas) ────────────────────────────
 export function generateImageUrl(prompt: string, width = 800, height = 600): string {
   const seed = Math.floor(Math.random() * 99999);
