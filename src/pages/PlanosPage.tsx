@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Crown, Check, X, Star, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
+import { supabase } from "@/integrations/supabase/client";
 import PagamentoManualDialog from "@/components/PagamentoManualDialog";
+import { toast } from "sonner";
 
 const planOrder: PlanKey[] = ["gratuito", "basico", "intermedio", "profissional", "premium"];
 
