@@ -37,21 +37,68 @@ const NotificationBell = () => {
     if (data) setNotifications(data);
   };
 
-  // Play notification sound
+  // Persistent AudioContext to avoid browser autoplay blocking
+  const audioCtxRef = useState<AudioContext | null>(null);
+
+  const ensureAudioContext = () => {
+    if (!audioCtxRef[0]) {
+      audioCtxRef[1](new AudioContext());
+    }
+    const ctx = audioCtxRef[0];
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume();
+    }
+    return ctx;
+  };
+
+  // Resume audio context on any user interaction
+  useEffect(() => {
+    const handler = () => ensureAudioContext();
+    document.addEventListener("click", handler, { once: true });
+    document.addEventListener("keydown", handler, { once: true });
+    return () => {
+      document.removeEventListener("click", handler);
+      document.removeEventListener("keydown", handler);
+    };
+  }, []);
+
   const playNotificationSound = () => {
     try {
-      const ctx = new AudioContext();
+      let ctx = audioCtxRef[0];
+      if (!ctx) {
+        ctx = new AudioContext();
+        audioCtxRef[1](ctx);
+      }
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.frequency.value = 880;
       osc.type = "sine";
-      gain.gain.value = 0.15;
+      gain.gain.value = 0.3;
       osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-      osc.stop(ctx.currentTime + 0.4);
-    } catch {}
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.stop(ctx.currentTime + 0.5);
+
+      // Second tone for attention
+      setTimeout(() => {
+        const osc2 = ctx!.createOscillator();
+        const gain2 = ctx!.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx!.destination);
+        osc2.frequency.value = 1100;
+        osc2.type = "sine";
+        gain2.gain.value = 0.25;
+        osc2.start();
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx!.currentTime + 0.4);
+        osc2.stop(ctx!.currentTime + 0.4);
+      }, 200);
+    } catch (e) {
+      console.warn("Could not play notification sound:", e);
+    }
   };
 
   useEffect(() => {
