@@ -554,7 +554,7 @@ const AdminMensagensPage = () => {
                               : "bg-card text-card-foreground border border-border/50 rounded-bl-md"
                           }`}>
                             {!isAdmin && !sameSenderAsPrev && (
-                              <p className="text-[10px] font-bold text-primary mb-0.5">{selectedConvo.user_nome}</p>
+                              <p className="text-[10px] font-bold text-primary mb-0.5">{selectedUserGroup?.user_nome}</p>
                             )}
                             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                             <p className={`text-[10px] mt-1 text-right ${isAdmin ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
