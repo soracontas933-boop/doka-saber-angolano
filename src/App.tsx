@@ -23,6 +23,7 @@ import CorrecaoPage from "@/pages/CorrecaoPage";
 import SuportePage from "@/pages/SuportePage";
 import AdminMensagensPage from "@/pages/AdminMensagensPage";
 import CurriculoPage from "@/pages/CurriculoPage";
+import FaturamentoPage from "@/pages/FaturamentoPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Search,
   LayoutDashboard,
+  Receipt,
   Settings,
   FolderOpen,
   LogOut,
