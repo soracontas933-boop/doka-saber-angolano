@@ -66,6 +66,19 @@ const ResumoPage = () => {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newDocs = Array.from(e.target.files);
+      setDocFiles((prev) => [...prev, ...newDocs].slice(0, 10));
+      toast.success(`${newDocs.length} documento(s) adicionado(s)`);
+      e.target.value = "";
+    }
+  };
+
+  const removeDoc = (index: number) => {
+    setDocFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleGenerate = async () => {
     if (files.length === 0) {
       toast.error("Seleccione pelo menos uma foto do caderno");
