@@ -887,6 +887,11 @@ const AdminPanelPage = () => {
         <TabsContent value="hero">
           <AdminHeroTab />
         </TabsContent>
+
+        {/* Masters Tab */}
+        <TabsContent value="masters">
+          <AdminMastersTab />
+        </TabsContent>
       </Tabs>
 
       {/* User Management Dialog */}
