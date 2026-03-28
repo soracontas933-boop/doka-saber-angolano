@@ -53,18 +53,22 @@ const SuportePage = () => {
     const { data } = await (supabase.from("support_messages") as any)
       .select("*")
       .order("atualizado_em", { ascending: false });
+
     if (data) {
-      setConversations(data);
-      // Auto-select from URL
+      const convos = data as SupportConvo[];
+      setConversations(convos);
+
       const convoId = searchParams.get("conversa");
-      if (convoId) {
-        const target = data.find((c: any) => c.id === convoId);
-        if (target) {
-          setSelectedConvo(target);
-          setMobileShowChat(true);
-        }
-      }
+      const convoFromUrl = convoId ? convos.find((c) => c.id === convoId) : null;
+      if (convoFromUrl) setMobileShowChat(true);
+
+      setSelectedConvo((prev) => {
+        if (convoFromUrl) return convoFromUrl;
+        if (prev) return convos.find((c) => c.id === prev.id) ?? convos[0] ?? null;
+        return convos[0] ?? null;
+      });
     }
+
     setLoading(false);
   }, [searchParams]);
 
@@ -96,6 +100,25 @@ const SuportePage = () => {
   useEffect(() => {
     if (selectedConvo) fetchChatMessages(selectedConvo.id);
   }, [selectedConvo, fetchChatMessages]);
+
+  // Safety refresh: if conversation row changes (ex: admin respondeu), refetch chat from DB
+  useEffect(() => {
+    if (!selectedConvo) return;
+    const ch = supabase
+      .channel(`user-support-refresh-${selectedConvo.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "support_messages", filter: `id=eq.${selectedConvo.id}` },
+        () => {
+          fetchChatMessages(selectedConvo.id);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [selectedConvo?.id, fetchChatMessages]);
 
   // Realtime for messages
   useEffect(() => {
