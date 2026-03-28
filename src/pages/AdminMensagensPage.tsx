@@ -247,13 +247,22 @@ const AdminMensagensPage = () => {
     if (!newMessage.trim() || !selectedUserGroup || !adminId) return;
     setSending(true);
 
-    // Always prioritise the conversation currently open in the chat panel
+    // Prioritize replying in the same conversation as the latest incoming user message
     const selectedConvoInGroup =
       selectedConvo && selectedConvo.user_id === selectedUserGroup.user_id
         ? selectedUserGroup.conversations.find((c) => c.id === selectedConvo.id) ?? selectedConvo
         : null;
 
+    const latestIncomingMsg = [...chatMessages]
+      .reverse()
+      .find((msg) => msg.sender_id !== adminId);
+
+    const latestIncomingConvo = latestIncomingMsg
+      ? selectedUserGroup.conversations.find((c) => c.id === latestIncomingMsg.conversation_id)
+      : null;
+
     const targetConvo =
+      latestIncomingConvo ||
       selectedConvoInGroup ||
       selectedUserGroup.conversations.find((c) => c.estado === "aberto") ||
       selectedUserGroup.conversations[0];
