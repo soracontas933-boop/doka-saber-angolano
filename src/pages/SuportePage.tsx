@@ -88,11 +88,65 @@ const SuportePage = () => {
   // Fetch chat messages
   const fetchChatMessages = useCallback(async (convoId: string) => {
     setChatLoading(true);
-    const { data } = await (supabase.from("chat_messages") as any)
-      .select("*")
-      .eq("conversation_id", convoId)
-      .order("created_at", { ascending: true });
-    setChatMessages(data ?? []);
+
+    const [{ data: chatData }, { data: convoData }] = await Promise.all([
+      (supabase.from("chat_messages") as any)
+        .select("*")
+        .eq("conversation_id", convoId)
+        .order("created_at", { ascending: true }),
+      (supabase.from("support_messages") as any)
+        .select("id, user_id, mensagem, resposta, criado_em, atualizado_em")
+        .eq("id", convoId)
+        .single(),
+    ]);
+
+    const dbMessages = (chatData ?? []) as ChatMsg[];
+    const convo = convoData as
+      | {
+          id: string;
+          user_id: string;
+          mensagem?: string | null;
+          resposta?: string | null;
+          criado_em: string;
+          atualizado_em: string;
+        }
+      | null;
+
+    const fallbackMessages: ChatMsg[] = [];
+
+    if (convo?.mensagem?.trim()) {
+      const hasInitial = dbMessages.some(
+        (m) => m.content.trim() === convo.mensagem!.trim() && m.sender_id === convo.user_id,
+      );
+      if (!hasInitial) {
+        fallbackMessages.push({
+          id: `initial-${convo.id}`,
+          conversation_id: convo.id,
+          sender_id: convo.user_id,
+          content: convo.mensagem.trim(),
+          created_at: convo.criado_em,
+        });
+      }
+    }
+
+    if (convo?.resposta?.trim()) {
+      const hasResposta = dbMessages.some((m) => m.content.trim() === convo.resposta!.trim());
+      if (!hasResposta) {
+        fallbackMessages.push({
+          id: `resposta-${convo.id}`,
+          conversation_id: convo.id,
+          sender_id: "admin",
+          content: convo.resposta.trim(),
+          created_at: convo.atualizado_em,
+        });
+      }
+    }
+
+    const mergedMessages = [...dbMessages, ...fallbackMessages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+
+    setChatMessages(mergedMessages);
     setChatLoading(false);
     scrollToBottom();
   }, []);
