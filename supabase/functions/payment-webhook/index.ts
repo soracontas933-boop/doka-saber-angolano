@@ -204,12 +204,13 @@ Deno.serve(async (req) => {
     const body = await req.json();
     console.log("Webhook received body:", JSON.stringify(body));
 
-    // Try multiple field names the provider might use
-    const rawEvent = body.event || body.evento || body.status || body.type || body.action || "";
-    const rawPlan = body.plan || body.plano || body.product || body.produto || "";
-    const rawEmail = body.email || body.customer_email || body.cliente_email || body.buyer_email || "";
-    const amount = body.amount || body.valor || body.price || body.preco || null;
-    const reference = body.reference || body.referencia || body.ref || body.transaction_id || null;
+    // Kuenha sends nested structure: buyer.email, product.name, status
+    // Also support flat structure as fallback
+    const rawEvent = body.status || body.event || body.evento || body.type || body.action || "";
+    const rawPlan = body.product?.name || body.plan || body.plano || body.produto || "";
+    const rawEmail = body.buyer?.email || body.email || body.customer_email || body.cliente_email || body.buyer_email || "";
+    const amount = body.total || body.valueInAOA || body.amount || body.valor || body.price || null;
+    const reference = body.saleId || body.reference || body.referencia || body.ref || body.transaction_id || null;
 
     console.log(`Webhook parsed: event="${rawEvent}", plan="${rawPlan}", email="${rawEmail}"`);
 
@@ -217,7 +218,7 @@ Deno.serve(async (req) => {
       console.log("Webhook missing fields. Full body:", JSON.stringify(body));
       return new Response(
         JSON.stringify({ 
-          error: "Missing required fields. Expected: event/evento/status, plan/plano/product, email/customer_email",
+          error: "Missing required fields",
           received_keys: Object.keys(body),
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
