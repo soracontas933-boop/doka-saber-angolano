@@ -43,6 +43,11 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey }: PagamentoManualD
 
   useEffect(() => {
     if (open) {
+      // Pre-fill email from authenticated user
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user?.email) setEmail(user.email);
+      });
+
       (supabase.from("payment_settings") as any).select("chave, valor").then(({ data }: any) => {
         if (data) {
           const map: Record<string, string> = {};
