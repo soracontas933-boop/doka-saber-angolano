@@ -38,6 +38,39 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_records: {
+        Row: {
+          categoria: string | null
+          criado_em: string
+          descricao: string
+          id: string
+          plano: string | null
+          tipo: string
+          user_email: string | null
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          criado_em?: string
+          descricao: string
+          id?: string
+          plano?: string | null
+          tipo?: string
+          user_email?: string | null
+          valor?: number
+        }
+        Update: {
+          categoria?: string | null
+          criado_em?: string
+          descricao?: string
+          id?: string
+          plano?: string | null
+          tipo?: string
+          user_email?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       checkout_sessions: {
         Row: {
           atualizado_em: string
