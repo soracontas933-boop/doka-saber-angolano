@@ -247,12 +247,8 @@ const AdminMensagensPage = () => {
     if (!newMessage.trim() || !selectedUserGroup || !adminId) return;
     setSending(true);
 
-    // Prioritize replying in the same conversation as the latest incoming user message
-    const selectedConvoInGroup =
-      selectedConvo && selectedConvo.user_id === selectedUserGroup.user_id
-        ? selectedUserGroup.conversations.find((c) => c.id === selectedConvo.id) ?? selectedConvo
-        : null;
-
+    // Always reply to the conversation where the latest USER message was sent
+    // This ensures the admin reply lands in the same conversation the user is looking at
     const latestIncomingMsg = [...chatMessages]
       .reverse()
       .find((msg) => msg.sender_id !== adminId);
@@ -262,7 +258,6 @@ const AdminMensagensPage = () => {
       : null;
 
     const targetConvo =
-      selectedConvoInGroup ||
       latestIncomingConvo ||
       selectedUserGroup.conversations.find((c) => c.estado === "aberto") ||
       selectedUserGroup.conversations[0];
