@@ -262,8 +262,8 @@ const AdminMensagensPage = () => {
       : null;
 
     const targetConvo =
-      latestIncomingConvo ||
       selectedConvoInGroup ||
+      latestIncomingConvo ||
       selectedUserGroup.conversations.find((c) => c.estado === "aberto") ||
       selectedUserGroup.conversations[0];
 
