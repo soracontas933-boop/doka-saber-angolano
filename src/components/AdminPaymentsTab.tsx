@@ -23,7 +23,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2 } from "lucide-react";
 
 interface PaymentRequest {
   id: string;
