@@ -274,7 +274,6 @@ const AdminMensagensPage = () => {
         .update({
           atualizado_em: new Date().toISOString(),
           estado: "respondido",
-          resposta: newMessage.trim(),
         })
         .eq("id", targetConvo.id);
 
