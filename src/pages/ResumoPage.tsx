@@ -35,9 +35,10 @@ const ResumoPage = () => {
   const { checkLimit, logUsage } = useUsageTracker();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [docFiles, setDocFiles] = useState<File[]>([]);
   const [tipoResumo, setTipoResumo] = useLocalStorage("doka_resumo_tipo", "Resumo por Tópicos");
   const [disciplina, setDisciplina] = useLocalStorage("doka_resumo_disciplina", "");
-  const [fonte, setFonte] = useState<"upload" | "camera">("upload");
+  const [fonte, setFonte] = useState<"upload" | "camera" | "documento">("upload");
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState("");
   const [resultado, setResultado] = useLocalStorage<string | null>("doka_resumo_resultado", null);
