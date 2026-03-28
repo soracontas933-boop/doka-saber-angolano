@@ -492,12 +492,24 @@ const TrabalhoPage = () => {
 
             <div className="space-y-2">
               <Label>Disciplina</Label>
-              <Select value={disciplina} onValueChange={setDisciplina}>
+              <Select value={disciplinas.includes(disciplina) ? disciplina : "__outra__"} onValueChange={(v) => {
+                if (v === "__outra__") setDisciplina("");
+                else setDisciplina(v);
+              }}>
                 <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
                 <SelectContent>
                   {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  <SelectItem value="__outra__">Outra (escrever)</SelectItem>
                 </SelectContent>
               </Select>
+              {!disciplinas.includes(disciplina) && (
+                <Input
+                  placeholder="Escreva a disciplina..."
+                  value={disciplina}
+                  onChange={(e) => setDisciplina(e.target.value)}
+                  className="mt-1"
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
