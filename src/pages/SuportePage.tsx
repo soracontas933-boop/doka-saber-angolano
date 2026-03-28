@@ -129,11 +129,12 @@ const SuportePage = () => {
       }
     }
 
+    // Legacy fallback: only inject resposta if there are NO admin messages in chat_messages
     if (convo?.resposta?.trim()) {
-      const hasResposta = dbMessages.some((m) => m.content.trim() === convo.resposta!.trim());
-      if (!hasResposta) {
+      const hasAnyAdminMsg = dbMessages.some((m) => m.sender_id !== convo.user_id);
+      if (!hasAnyAdminMsg) {
         fallbackMessages.push({
-          id: `resposta-${convo.id}`,
+          id: `resposta-legacy-${convo.id}-${convo.atualizado_em}`,
           conversation_id: convo.id,
           sender_id: "admin",
           content: convo.resposta.trim(),
