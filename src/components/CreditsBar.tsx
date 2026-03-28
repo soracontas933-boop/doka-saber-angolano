@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap } from "lucide-react";
+import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap, Sun, Moon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import NotificationBell from "@/components/NotificationBell";
+import { useTheme } from "@/hooks/use-theme";
 
 interface UsageItemProps {
   icon: React.ReactNode;
@@ -43,6 +44,7 @@ const UsageItem = ({ icon, label, used, limit }: UsageItemProps) => {
 const CreditsBar = () => {
   const { plan, loading } = useUserPlan();
   const { getAllUsageCounts } = useUsageTracker();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
 
@@ -125,6 +127,15 @@ const CreditsBar = () => {
             </span>
           </div>
         ) : null}
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-1.5 rounded-md hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+          title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
 
         {/* Notification Bell */}
         <NotificationBell />
