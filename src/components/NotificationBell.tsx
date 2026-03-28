@@ -23,6 +23,7 @@ interface Notification {
 
 const NotificationBell = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [processingInvite, setProcessingInvite] = useState<string | null>(null);
