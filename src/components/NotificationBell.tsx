@@ -314,19 +314,39 @@ const NotificationBell = () => {
                 return (
                   <div
                     key={n.id}
-                    onClick={() => {
+                    onClick={async () => {
                       if (isGroupInvite) return;
+                      const isAdminUser = user?.email === "kenymatos943@gmail.com" || user?.email === "manuelmatosjose67@gmail.com";
                       const isSupportNotif = n.titulo.toLowerCase().includes("suporte") || n.titulo.toLowerCase().includes("mensagem");
-                      if (isSupportNotif) {
+                      const isPaymentEvent = n.titulo.toLowerCase().includes("evento de pagamento") || n.titulo.toLowerCase().includes("pagamento");
+
+                      if (isPaymentEvent && isAdminUser) {
+                        const uidMatch = n.mensagem.match(/\[uid:([^\]]+)\]/);
+                        const targetUserId = uidMatch?.[1];
                         markAsRead(n.id);
                         setOpen(false);
-                        // Check if admin or user
-                        const isAdminUser = user?.email === "kenymatos943@gmail.com" || user?.email === "manuelmatosjose67@gmail.com";
+                        if (targetUserId) {
+                          const { data: existing } = await (supabase.from("support_messages") as any)
+                            .select("id")
+                            .eq("user_id", targetUserId)
+                            .order("criado_em", { ascending: false })
+                            .limit(1);
+                          if (existing && existing.length > 0) {
+                            navigate(`/mensagens?conversa=${existing[0].id}`);
+                          } else {
+                            navigate("/mensagens");
+                          }
+                        } else {
+                          navigate("/mensagens");
+                        }
+                      } else if (isSupportNotif) {
+                        markAsRead(n.id);
+                        setOpen(false);
                         navigate(isAdminUser ? "/mensagens" : "/suporte");
                       } else {
                         markAsRead(n.id);
                       }
-                    }}
+                    }
                     className={`w-full text-left px-4 py-3 transition-colors cursor-pointer hover:bg-muted/50 ${
                       !n.lida ? "bg-primary/5" : ""
                     }`}
