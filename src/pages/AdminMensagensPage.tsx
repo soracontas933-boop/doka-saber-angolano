@@ -124,6 +124,17 @@ const AdminMensagensPage = () => {
     if (convoId) {
       const target = convos.find(c => c.id === convoId);
       if (target) {
+        // Find or create user group for this conversation
+        const userConvos = convos.filter(c => c.user_id === target.user_id);
+        const group: UserGroup = {
+          user_id: target.user_id,
+          user_nome: target.user_nome || "Desconhecido",
+          user_email: target.user_email || "",
+          conversations: userConvos,
+          latest_update: userConvos[0]?.atualizado_em || "",
+          has_open: userConvos.some(c => c.estado === "aberto"),
+        };
+        setSelectedUserGroup(group);
         setSelectedConvo(target);
         setMobileShowChat(true);
       }
