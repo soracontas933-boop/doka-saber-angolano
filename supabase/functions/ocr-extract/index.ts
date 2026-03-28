@@ -20,6 +20,8 @@ async function getApiKeys(): Promise<Record<string, string>> {
 
 const OCR_PROMPT = `Você é um OCR especializado. Extraia TODO o texto visível nesta imagem com máxima fidelidade. A imagem pode conter texto manuscrito (escrito à mão), impresso, digitado ou misto. Transcreva exactamente o que está escrito, incluindo títulos, parágrafos, listas, fórmulas, tabelas e anotações. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem formatação JSON, sem comentários adicionais. Se não conseguir ler alguma parte, indique [ilegível].`;
 
+const DOC_PROMPT = `Extraia TODO o texto deste documento com máxima fidelidade. Mantenha a estrutura original: títulos, parágrafos, listas, tabelas, notas de rodapé. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem comentários adicionais. Preserve a formatação e hierarquia do conteúdo.`;
+
 async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: string): Promise<string> {
   const body = {
     contents: [{
