@@ -120,7 +120,7 @@ const ResumoPage = () => {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-10 max-w-3xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
@@ -140,7 +140,7 @@ const ResumoPage = () => {
         className="space-y-6"
       >
         {/* Configurações */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
           <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
             Configurações
           </h2>
@@ -167,7 +167,7 @@ const ResumoPage = () => {
         </div>
 
         {/* Fotos */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
           <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
             Fotos do Caderno (até 100)
           </h2>
@@ -204,7 +204,7 @@ const ResumoPage = () => {
           )}
 
           {previews.length > 0 && (
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {previews.map((src, i) => (
                 <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-border">
                   <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
