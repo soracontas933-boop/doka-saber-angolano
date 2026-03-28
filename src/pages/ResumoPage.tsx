@@ -204,19 +204,22 @@ const ResumoPage = () => {
           </div>
         </div>
 
-        {/* Fotos */}
+        {/* Fonte de conteúdo */}
         <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
           <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-            Fotos do Caderno (até 100)
+            Conteúdo para Resumir
           </h2>
 
-          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera")}>
+          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera" | "documento")}>
             <TabsList className="w-full">
               <TabsTrigger value="upload" className="flex-1 gap-2">
                 <Upload className="h-4 w-4" /> Galeria
               </TabsTrigger>
               <TabsTrigger value="camera" className="flex-1 gap-2">
                 <Camera className="h-4 w-4" /> Câmera
+              </TabsTrigger>
+              <TabsTrigger value="documento" className="flex-1 gap-2">
+                <FileText className="h-4 w-4" /> Documento
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -228,7 +231,7 @@ const ResumoPage = () => {
               <span className="text-xs text-muted-foreground mt-1">JPG, PNG — máx. 100 fotos</span>
               <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} />
             </label>
-          ) : (
+          ) : fonte === "camera" ? (
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
@@ -239,6 +242,13 @@ const ResumoPage = () => {
               <span className="text-xs text-muted-foreground mt-1">Tire fotos directamente do caderno</span>
               <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture onChange={handleFileChange} />
             </button>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
+              <File className="h-8 w-8 text-muted-foreground mb-2" />
+              <span className="text-sm text-muted-foreground font-medium">Carregar PDF ou Word</span>
+              <span className="text-xs text-muted-foreground mt-1">.pdf, .doc, .docx — máx. 10 ficheiros</span>
+              <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple onChange={handleDocChange} />
+            </label>
           )}
 
           {previews.length > 0 && (
@@ -258,12 +268,29 @@ const ResumoPage = () => {
             </div>
           )}
 
+          {docFiles.length > 0 && (
+            <div className="space-y-2">
+              {docFiles.map((doc, i) => (
+                <div key={i} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 border border-border/50">
+                  <FileText className="h-5 w-5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                    <p className="text-xs text-muted-foreground">{(doc.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                  <button onClick={() => removeDoc(i)} className="p-1 hover:bg-destructive/10 rounded">
+                    <X className="h-4 w-4 text-destructive" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {files.length > 0 && (
             <p className="text-xs text-muted-foreground">{files.length} de 100 fotos</p>
           )}
         </div>
 
-        <Button className="w-full h-12 text-base" onClick={handleGenerate} disabled={loading || files.length === 0}>
+        <Button className="w-full h-12 text-base" onClick={handleGenerate} disabled={loading || (files.length === 0 && docFiles.length === 0)}>
           {loading ? (
             <span className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
