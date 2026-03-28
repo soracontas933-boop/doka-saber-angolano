@@ -660,6 +660,10 @@ const AdminPanelPage = () => {
             <ImageIcon className="h-4 w-4" />
             Hero / Site
           </TabsTrigger>
+          <TabsTrigger value="masters" className="gap-2">
+            <Crown className="h-4 w-4" />
+            Masters
+          </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
