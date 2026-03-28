@@ -64,7 +64,19 @@ const SuportePage = () => {
 
       setSelectedConvo((prev) => {
         if (convoFromUrl) return convoFromUrl;
-        if (prev) return convos.find((c) => c.id === prev.id) ?? convos[0] ?? null;
+        // Auto-switch to a newly responded conversation so the user sees admin replies
+        if (prev) {
+          const freshPrev = convos.find((c) => c.id === prev.id);
+          // If a different conversation was just responded to, switch to it
+          const justResponded = convos.find(
+            (c) => c.id !== prev.id && c.estado === "respondido" && 
+            new Date(c.atualizado_em).getTime() > new Date(prev.atualizado_em).getTime()
+          );
+          if (justResponded && freshPrev?.estado !== "respondido") {
+            return justResponded;
+          }
+          return freshPrev ?? convos[0] ?? null;
+        }
         return convos[0] ?? null;
       });
     }
