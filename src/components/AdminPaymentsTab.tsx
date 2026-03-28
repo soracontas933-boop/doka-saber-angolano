@@ -258,7 +258,26 @@ const AdminPaymentsTab = () => {
     toast({ title: "Dados de pagamento actualizados!" });
   };
 
-  if (loading) {
+  const handleSaveLinks = async () => {
+    setSavingLinks(true);
+    const linkKeys = ["link_basico", "link_intermedio", "link_profissional", "link_premium"];
+    for (const key of linkKeys) {
+      // Try update first, if no row exists, insert
+      const { data } = await (supabase.from("payment_settings") as any)
+        .update({ valor: paymentLinks[key] || "", atualizado_em: new Date().toISOString() })
+        .eq("chave", key)
+        .select();
+      if (!data || data.length === 0) {
+        await (supabase.from("payment_settings") as any)
+          .insert({ chave: key, valor: paymentLinks[key] || "" });
+      }
+    }
+    setSavingLinks(false);
+    setEditingLinks(false);
+    toast({ title: "Links de pagamento automático actualizados!" });
+  };
+
+
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
