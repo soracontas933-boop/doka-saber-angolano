@@ -393,7 +393,7 @@ const AdminMensagensPage = () => {
               </DialogHeader>
               <div className="space-y-3">
                 <Input
-                  placeholder="Pesquisar utilizador..."
+                  placeholder="Pesquisar por nome, email ou telefone..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                 />
@@ -405,7 +405,7 @@ const AdminMensagensPage = () => {
                       onClick={() => setUserSearch(u.email)}
                     >
                       <p className="text-sm font-medium text-foreground">{u.nome}</p>
-                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                      <p className="text-xs text-muted-foreground">{u.email}{u.telefone ? ` · ${u.telefone}` : ""}</p>
                     </button>
                   ))}
                 </ScrollArea>
