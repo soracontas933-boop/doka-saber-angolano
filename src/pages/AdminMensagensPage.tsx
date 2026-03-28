@@ -120,26 +120,41 @@ const AdminMensagensPage = () => {
     setConversations(convos);
     setLoading(false);
 
-    // Auto-select from URL param
-    const convoId = searchParams.get("conversa");
-    if (convoId) {
-      const target = convos.find(c => c.id === convoId);
-      if (target) {
-        // Find or create user group for this conversation
-        const userConvos = convos.filter(c => c.user_id === target.user_id);
-        const group: UserGroup = {
-          user_id: target.user_id,
-          user_nome: target.user_nome || "Desconhecido",
-          user_email: target.user_email || "",
-          conversations: userConvos,
-          latest_update: userConvos[0]?.atualizado_em || "",
-          has_open: userConvos.some(c => c.estado === "aberto"),
-        };
-        setSelectedUserGroup(group);
-        setSelectedConvo(target);
-        setMobileShowChat(true);
+    // Update selectedUserGroup if it exists (keep it in sync)
+    setSelectedUserGroup(prev => {
+      if (!prev) {
+        // Auto-select from URL param on first load
+        const convoId = searchParams.get("conversa");
+        if (convoId) {
+          const target = convos.find(c => c.id === convoId);
+          if (target) {
+            const userConvos = convos.filter(c => c.user_id === target.user_id);
+            setSelectedConvo(target);
+            setMobileShowChat(true);
+            return {
+              user_id: target.user_id,
+              user_nome: target.user_nome || "Desconhecido",
+              user_email: target.user_email || "",
+              conversations: userConvos,
+              latest_update: userConvos[0]?.atualizado_em || "",
+              has_open: userConvos.some(c => c.estado === "aberto"),
+            };
+          }
+        }
+        return null;
       }
-    }
+      // Update the existing selected group with fresh data
+      const userConvos = convos.filter(c => c.user_id === prev.user_id);
+      if (userConvos.length === 0) return prev;
+      return {
+        ...prev,
+        conversations: userConvos,
+        user_nome: userConvos[0].user_nome || prev.user_nome,
+        user_email: userConvos[0].user_email || prev.user_email,
+        latest_update: userConvos[0]?.atualizado_em || prev.latest_update,
+        has_open: userConvos.some(c => c.estado === "aberto"),
+      };
+    });
   }, [isAdmin, searchParams]);
 
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
