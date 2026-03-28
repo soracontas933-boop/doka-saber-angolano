@@ -200,26 +200,28 @@ const AdminMensagensPage = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConvo || !adminId) return;
+    if (!newMessage.trim() || !selectedUserGroup || !adminId) return;
     setSending(true);
 
+    // Use the latest conversation of this user to send the message
+    const latestConvo = selectedUserGroup.conversations[0];
+    if (!latestConvo) { setSending(false); return; }
+
     const { error } = await (supabase.from("chat_messages") as any).insert({
-      conversation_id: selectedConvo.id,
+      conversation_id: latestConvo.id,
       sender_id: adminId,
       content: newMessage.trim(),
     });
 
     if (!error) {
-      // Update conversation timestamp
       await (supabase.from("support_messages") as any)
         .update({ atualizado_em: new Date().toISOString(), estado: "respondido" })
-        .eq("id", selectedConvo.id);
+        .eq("id", latestConvo.id);
 
-      // Notify user
       await (supabase.from("notifications") as any).insert({
-        user_id: selectedConvo.user_id,
+        user_id: selectedUserGroup.user_id,
         titulo: "Nova mensagem do suporte",
-        mensagem: `Resposta em "${selectedConvo.assunto}"`,
+        mensagem: `Resposta em "${latestConvo.assunto}"`,
         tipo: "sucesso",
       });
 
