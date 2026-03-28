@@ -23,7 +23,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2 } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield } from "lucide-react";
 
 interface PaymentRequest {
   id: string;
@@ -83,6 +83,11 @@ const AdminPaymentsTab = () => {
     link_profissional: "",
     link_premium: "",
   });
+
+  // Webhook settings state
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [editingWebhook, setEditingWebhook] = useState(false);
+  const [savingWebhook, setSavingWebhook] = useState(false);
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
