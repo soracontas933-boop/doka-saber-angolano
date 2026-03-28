@@ -433,6 +433,89 @@ const AdminPaymentsTab = () => {
         </CardContent>
       </Card>
 
+      {/* Webhook Configuration Card */}
+      <Card className="border-primary/20">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Webhook className="h-4 w-4 text-primary" />
+            Webhook de Pagamento
+          </CardTitle>
+          {!editingWebhook ? (
+            <Button variant="outline" size="sm" onClick={() => setEditingWebhook(true)} className="gap-1">
+              <Pencil className="h-3.5 w-3.5" />
+              Editar
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => { setEditingWebhook(false); fetchSettings(); }}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={handleSaveWebhookSecret} disabled={savingWebhook} className="gap-1">
+                <Save className="h-3.5 w-3.5" />
+                {savingWebhook ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Webhook URL */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">URL do Webhook (cole no provedor de pagamento)</Label>
+            <div className="flex items-center gap-2">
+              <Input value={webhookUrl} readOnly className="font-mono text-xs bg-muted" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1"
+                onClick={() => {
+                  navigator.clipboard.writeText(webhookUrl);
+                  toast({ title: "URL copiado!" });
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Copiar
+              </Button>
+            </div>
+          </div>
+
+          {/* Webhook Secret */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              Secret (enviado no header X-Webhook-Secret)
+            </Label>
+            {editingWebhook ? (
+              <Input
+                value={webhookSecret}
+                onChange={(e) => setWebhookSecret(e.target.value)}
+                placeholder="Insira um secret seguro..."
+                type="password"
+              />
+            ) : (
+              <p className="font-mono text-sm text-foreground">
+                {webhookSecret ? "••••••••••••" : <span className="text-muted-foreground/50 italic">Não configurado</span>}
+              </p>
+            )}
+          </div>
+
+          {/* Payload example */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Exemplo de payload (JSON)</Label>
+            <pre className="bg-muted rounded-md p-3 text-xs font-mono overflow-x-auto">
+{`{
+  "event": "compra_realizada",
+  "plan": "basico",
+  "email": "usuario@email.com",
+  "amount": 546,
+  "reference": "REF123"
+}`}
+            </pre>
+            <p className="text-[11px] text-muted-foreground">
+              Eventos: <code className="bg-muted px-1 rounded">compra_realizada</code> (auto), <code className="bg-muted px-1 rounded">compra_abandonada</code>, <code className="bg-muted px-1 rounded">pagamento_referencia</code>, <code className="bg-muted px-1 rounded">pagamento_express</code>, <code className="bg-muted px-1 rounded">pagamento_internacional</code>, <code className="bg-muted px-1 rounded">compra_iniciada</code> (notificam admin)
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-3 gap-4">
         <Card className="border-amber-500/20">
