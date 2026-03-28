@@ -338,6 +338,13 @@ const FaturamentoPage = () => {
             color: lucro >= 0 ? "text-emerald-500" : "text-red-500",
             bg: lucro >= 0 ? "bg-emerald-500/10" : "bg-red-500/10",
           },
+          {
+            title: "Pendentes",
+            value: totalPendentes,
+            icon: Clock,
+            color: "text-amber-500",
+            bg: "bg-amber-500/10",
+          },
         ].map((card, i) => (
           <motion.div
             key={card.title}
