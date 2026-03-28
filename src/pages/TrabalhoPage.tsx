@@ -249,10 +249,15 @@ const TrabalhoPage = () => {
         : s.tipo === "conclusao"
         ? "## Conclusão"
         : "## Bibliografia";
-      return `${tituloPrefix}\n\n${s.conteudo}`;
+      return { titulo: tituloPrefix.replace("## ", ""), markdown: `${tituloPrefix}\n\n${s.conteudo}` };
     });
 
-    const fullContent = sections.join("\n\n");
+    // Generate Índice automatically with page numbers
+    // Page 1 = Capa, Page 2 = Índice, Pages 3+ = content sections
+    const indiceLinhas = sections.map((s, i) => `- ${s.titulo} .......... ${i + 3}`);
+    const indiceMarkdown = `## Índice\n\n${indiceLinhas.join("\n")}`;
+
+    const fullContent = [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n");
     setResultadoCompilado(fullContent);
 
     // Generate cover image
