@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
+import { getReferenciasParaDisciplina, formatarReferenciasParaPrompt } from "@/lib/referencias-reais";
 
 export interface AIResponse {
   content: string;
@@ -312,15 +313,18 @@ Retorna em JSON:
     contexto?: string;
     bibliografia?: string;
   }) => {
+    const refsReais = getReferenciasParaDisciplina(dados.disciplina);
+    const refsTexto = formatarReferenciasParaPrompt(refsReais);
+
     const bibRef = dados.bibliografia
       ? `\n\nREFERÊNCIAS BIBLIOGRÁFICAS DISPONÍVEIS (usa APENAS estas para citações):\n${dados.bibliografia}`
-      : `\n\nIMPORTANTE: Usa APENAS citações de autores e obras REAIS e VERIFICÁVEIS. Não inventes referências. Prioriza autores africanos e lusófonos conhecidos como: Paulo Freire, Joseph Ki-Zerbo, Agostinho Neto, Pepetela, Mário Pinto de Andrade, Amílcar Cabral, Carlos Ervedosa, Henrique Abranches, entre outros relevantes ao tema.`;
+      : `\n\nREFERÊNCIAS REAIS DISPONÍVEIS (usa APENAS estas para citações — NÃO inventes outras):\n${refsTexto}`;
     
     const instrucoes: Record<string, string> = {
-      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, objectivos do trabalho (geral e específicos), justificativa/importância do tema, e metodologia utilizada. Deve ter pelo menos 2-3 parágrafos bem desenvolvidos. Ao final de cada parágrafo, inclui uma citação académica REAL entre parênteses no formato (Apelido, Ano, p. X). Os autores e obras citados DEVEM existir na realidade.${bibRef}`,
-      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 3-4 parágrafos densos. Ao final de cada parágrafo, inclui uma citação académica REAL entre parênteses no formato (Apelido, Ano, p. X). Os autores e obras citados DEVEM existir na realidade.${bibRef}`,
-      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais abordados nos capítulos, apresenta as principais constatações, e sugere recomendações ou perspectivas futuras. Deve ter 2-3 parágrafos. Ao final de cada parágrafo, inclui uma citação académica REAL entre parênteses no formato (Apelido, Ano, p. X).${bibRef}`,
-      bibliografia: `Gera a Bibliografia/Referências do trabalho sobre "${dados.temaGeral}" para ${dados.disciplina}, ${dados.classe}. Inclui pelo menos 5-8 referências em formato APA. TODAS as referências DEVEM ser de livros, artigos e obras REAIS que existem de facto e são verificáveis. Prioriza autores africanos e lusófonos quando relevante. Não inventes nenhuma referência fictícia. Exemplos de autores reais que podes usar (se relevantes ao tema): Paulo Freire, Joseph Ki-Zerbo, Pepetela, Carlos Ervedosa, Henrique Abranches, Mário António, Boaventura de Sousa Santos, Amílcar Cabral, etc.`,
+      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, objectivos do trabalho (geral e específicos), justificativa/importância do tema, e metodologia utilizada. Deve ter pelo menos 2-3 parágrafos bem desenvolvidos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
+      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 3-4 parágrafos densos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
+      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais abordados nos capítulos, apresenta as principais constatações, e sugere recomendações ou perspectivas futuras. Deve ter 2-3 parágrafos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
+      bibliografia: `Selecciona 5-8 referências da lista abaixo que sejam mais relevantes para o trabalho sobre "${dados.temaGeral}" na disciplina ${dados.disciplina}, ${dados.classe}. NÃO INVENTES nenhuma referência — usa APENAS as que estão nesta lista. Formata cada uma em APA.\n\nREFERÊNCIAS DISPONÍVEIS (escolhe apenas destas):\n${refsTexto}`,
     };
     const tipo = dados.tipoSubtema as keyof typeof instrucoes;
     return `${instrucoes[tipo] || instrucoes.capitulo} Disciplina: ${dados.disciplina}, Nível: ${dados.classe}. ${dados.contexto ? `Contexto dos capítulos anteriores: ${dados.contexto}` : ""} Retorna APENAS o conteúdo em markdown (sem título de nível 1 ou 2, começa directo no texto).`;

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { generateWithGroq, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { validarBibliografia } from "@/lib/referencias-reais";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
 import SubtemasEditor, { type Subtema } from "@/components/trabalho/SubtemasEditor";
@@ -194,8 +195,14 @@ const TrabalhoPage = () => {
 
       const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 6000, 0.7);
 
+      // Validate bibliography against real references
+      let conteudoFinal = conteudo;
+      if (sub.tipo === "bibliografia") {
+        conteudoFinal = validarBibliografia(conteudo, disciplina || "Geral");
+      }
+
       setSubtemas((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, conteudo, status: "gerado" } : s))
+        prev.map((s) => (s.id === id ? { ...s, conteudo: conteudoFinal, status: "gerado" } : s))
       );
       toast.success(`"${sub.titulo}" gerado!`);
     } catch (err) {
