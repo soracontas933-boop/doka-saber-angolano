@@ -359,7 +359,18 @@ Deno.serve(async (req) => {
         tipo: "sucesso",
       });
 
-      console.log(`Webhook success: plan updated to ${plan} for ${email}`);
+      // Register billing record (revenue)
+      const planPrice = planConfig.preco || Number(amount) || 0;
+      await supabaseAdmin.from("billing_records").insert({
+        tipo: "entrada",
+        descricao: `Assinatura ${planLabel} - ${email}`,
+        valor: planPrice,
+        plano: plan,
+        user_email: email,
+        categoria: "assinatura",
+      });
+
+      console.log(`Webhook success: plan updated to ${plan} for ${email}, billing: ${planPrice} Kz`);
 
       return new Response(
         JSON.stringify({ success: true, action: "plan_updated", plan, email, original_event: rawEvent }),
