@@ -66,7 +66,7 @@ const CreditsBar = () => {
 
   return (
     <div className="sticky top-0 z-40 w-full border-b border-border bg-card/90 backdrop-blur-md">
-      <div className="flex items-center justify-between px-3 md:px-6 py-1.5 max-w-screen-2xl mx-auto gap-2 bg-zinc-950">
+      <div className="flex items-center justify-between px-3 md:px-6 py-1.5 max-w-screen-2xl mx-auto gap-2 bg-destructive-foreground">
         {/* Plano */}
         <button
           onClick={() => navigate("/planos")}
