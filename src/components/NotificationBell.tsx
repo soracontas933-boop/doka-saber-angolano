@@ -346,7 +346,7 @@ const NotificationBell = () => {
                       } else {
                         markAsRead(n.id);
                       }
-                    }
+                    }}
                     className={`w-full text-left px-4 py-3 transition-colors cursor-pointer hover:bg-muted/50 ${
                       !n.lida ? "bg-primary/5" : ""
                     }`}
