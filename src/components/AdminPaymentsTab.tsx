@@ -224,6 +224,17 @@ const AdminPaymentsTab = () => {
           tipo: "sucesso",
         });
 
+        // 4. Register billing record (revenue)
+        const planPrice = config ? config.preco : payment.valor;
+        await (supabase.from("billing_records") as any).insert({
+          tipo: "entrada",
+          descricao: `Assinatura ${PLAN_LABELS[planKey] || planKey} - ${payment.email_confirmacao}`,
+          valor: planPrice || payment.valor,
+          plano: planKey,
+          user_email: payment.email_confirmacao,
+          categoria: "assinatura",
+        });
+
         toast({ title: "Pagamento aprovado e plano actualizado!" });
       } else {
         // Reject
