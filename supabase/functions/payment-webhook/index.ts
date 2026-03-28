@@ -62,11 +62,19 @@ const EVENT_ALIASES: Record<string, string> = {
   "pagamento_express": "pagamento_express",
   "pagamento_internacional": "pagamento_internacional",
   "compra_iniciada": "compra_iniciada",
+  // Kuenha status values (uppercase)
+  "completed": "compra_realizada",
+  "paid": "compra_realizada",
+  "abandoned": "compra_abandonada",
+  "cancelled": "compra_abandonada",
+  "pending": "compra_iniciada",
+  "pending_reference": "pagamento_referencia",
+  "pending_express": "pagamento_express",
+  "pending_international": "pagamento_internacional",
   // Variações da Kuenha (lowercase normalizado)
   "compre o prêmio": "compra_realizada",
   "compre o premio": "compra_realizada",
   "compra realizada": "compra_realizada",
-  "compra_realizada": "compra_realizada",
   "via expresso": "pagamento_express",
   "via express": "pagamento_express",
   "expresso": "pagamento_express",
@@ -149,10 +157,12 @@ function normalizePlan(raw: string): string | null {
   const lower = raw.trim().toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   
+  // Exact match first
   if (PLAN_ALIASES[raw.trim().toLowerCase()]) {
     return PLAN_ALIASES[raw.trim().toLowerCase()];
   }
   
+  // Check if any alias is contained within the product name (e.g. "Doka Intermédio" contains "intermédio")
   for (const [alias, internal] of Object.entries(PLAN_ALIASES)) {
     const aliasNorm = alias.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     if (lower === aliasNorm || lower.includes(aliasNorm)) {
