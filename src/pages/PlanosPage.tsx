@@ -134,17 +134,28 @@ const PlanosPage = () => {
                     Plano Gratuito
                   </Button>
                 ) : (
-                  <>
+                  <div className="space-y-1.5">
                     <Button
                       size="sm"
                       className="w-full text-xs"
                       variant={isPopular ? "default" : "outline"}
                       onClick={() => setSelectedPlan(key)}
                     >
-                      Selecionar
+                      Pagamento Manual
                     </Button>
-                    <p className="text-[10px] text-center text-muted-foreground">Pagamento Manual</p>
-                  </>
+                    <Button
+                      size="sm"
+                      className="w-full text-xs"
+                      variant="secondary"
+                      onClick={() => {
+                        import('sonner').then(({ toast }) => {
+                          toast.info("Pagamento automático estará disponível em breve!");
+                        });
+                      }}
+                    >
+                      Pagamento Automático
+                    </Button>
+                  </div>
                 )}
               </div>
             </motion.div>
