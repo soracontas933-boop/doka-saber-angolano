@@ -31,8 +31,23 @@ const popularPlan: PlanKey = "profissional";
 const PlanosPage = () => {
   const { plan, loading } = useUserPlan();
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
+  const [paymentLinks, setPaymentLinks] = useState<Record<string, string>>({});
 
   const currentPlanKey = (plan?.plano || "gratuito") as PlanKey;
+
+  useEffect(() => {
+    const fetchLinks = async () => {
+      const { data } = await (supabase.from("payment_settings") as any)
+        .select("chave, valor")
+        .in("chave", ["link_basico", "link_intermedio", "link_profissional", "link_premium"]);
+      if (data) {
+        const map: Record<string, string> = {};
+        data.forEach((d: any) => { map[d.chave] = d.valor; });
+        setPaymentLinks(map);
+      }
+    };
+    fetchLinks();
+  }, []);
 
   if (loading) {
     return (
