@@ -47,13 +47,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Return id -> email map
-    const emailMap: Record<string, string> = {};
-    for (const u of users) {
-      emailMap[u.id] = u.email || "";
+    // Fetch profiles for nome and telefone
+    const { data: profiles } = await adminClient.from("profiles").select("id, nome, telefone");
+    const profileMap: Record<string, { nome: string | null; telefone: string | null }> = {};
+    for (const p of profiles || []) {
+      profileMap[p.id] = { nome: p.nome, telefone: p.telefone };
     }
 
-    return new Response(JSON.stringify({ emailMap }), {
+    // Return id -> email map + users array with profile data
+    const emailMap: Record<string, string> = {};
+    const usersList: { id: string; email: string; nome: string; telefone: string }[] = [];
+    for (const u of users) {
+      emailMap[u.id] = u.email || "";
+      const profile = profileMap[u.id];
+      usersList.push({
+        id: u.id,
+        email: u.email || "",
+        nome: profile?.nome || "",
+        telefone: profile?.telefone || "",
+      });
+    }
+
+    return new Response(JSON.stringify({ emailMap, users: usersList }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

@@ -45,6 +45,7 @@ interface UserOption {
   id: string;
   nome: string;
   email: string;
+  telefone: string;
 }
 
 const AdminMensagensPage = () => {
@@ -245,6 +246,7 @@ const AdminMensagensPage = () => {
           id: u.id,
           nome: u.nome || "Sem nome",
           email: u.email || "",
+          telefone: u.telefone || "",
         }));
         setUsers(mapped);
       }
@@ -345,11 +347,13 @@ const AdminMensagensPage = () => {
     })).sort((a, b) => new Date(b.latest_update).getTime() - new Date(a.latest_update).getTime());
   })();
 
-  const filteredUsers = users.filter(u =>
-    !userSearch ||
-    u.nome.toLowerCase().includes(userSearch.toLowerCase()) ||
-    u.email.toLowerCase().includes(userSearch.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+    if (!userSearch) return true;
+    const q = userSearch.toLowerCase();
+    return u.nome.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.telefone.toLowerCase().includes(q);
+  });
 
   if (isLoadingAdmin || !isAdmin) {
     return (
@@ -389,7 +393,7 @@ const AdminMensagensPage = () => {
               </DialogHeader>
               <div className="space-y-3">
                 <Input
-                  placeholder="Pesquisar utilizador..."
+                  placeholder="Pesquisar por nome, email ou telefone..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                 />
@@ -401,7 +405,7 @@ const AdminMensagensPage = () => {
                       onClick={() => setUserSearch(u.email)}
                     >
                       <p className="text-sm font-medium text-foreground">{u.nome}</p>
-                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                      <p className="text-xs text-muted-foreground">{u.email}{u.telefone ? ` · ${u.telefone}` : ""}</p>
                     </button>
                   ))}
                 </ScrollArea>
