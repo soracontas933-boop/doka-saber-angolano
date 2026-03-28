@@ -80,8 +80,11 @@ const ResumoPage = () => {
   };
 
   const handleGenerate = async () => {
-    if (files.length === 0) {
-      toast.error("Seleccione pelo menos uma foto do caderno");
+    const hasImages = files.length > 0;
+    const hasDocs = docFiles.length > 0;
+    
+    if (!hasImages && !hasDocs) {
+      toast.error("Seleccione fotos ou documentos para resumir");
       return;
     }
     
@@ -93,13 +96,33 @@ const ResumoPage = () => {
     setImagemResumo(null);
 
     try {
-      // Pipeline: Gemini → Groq → OpenRouter → Pollinations
-      setEtapa("A extrair texto das fotos (Gemini Vision)...");
-      const extractedTexts = await extractTextFromImages(files);
-      const combinedText = extractedTexts.filter(Boolean).join("\n\n---\n\n");
+      let combinedText = "";
+
+      // Extract from images
+      if (hasImages) {
+        setEtapa("A extrair texto das fotos (Gemini Vision)...");
+        const extractedTexts = await extractTextFromImages(files);
+        combinedText += extractedTexts.filter(Boolean).join("\n\n---\n\n");
+      }
+
+      // Extract from documents
+      if (hasDocs) {
+        for (let i = 0; i < docFiles.length; i++) {
+          setEtapa(`A extrair texto do documento ${i + 1}/${docFiles.length}...`);
+          try {
+            const docText = await extractTextFromDocument(docFiles[i]);
+            if (docText.trim()) {
+              combinedText += (combinedText ? "\n\n---\n\n" : "") + docText;
+            }
+          } catch (err) {
+            console.error(`Erro ao extrair documento ${docFiles[i].name}:`, err);
+            toast.error(`Erro ao ler ${docFiles[i].name}`);
+          }
+        }
+      }
 
       if (!combinedText.trim()) {
-        toast.error("Não foi possível extrair texto das fotos. Tente novamente com fotos mais nítidas.");
+        toast.error("Não foi possível extrair texto. Tente com ficheiros mais nítidos ou de melhor qualidade.");
         setLoading(false);
         return;
       }
