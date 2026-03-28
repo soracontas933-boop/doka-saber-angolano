@@ -241,9 +241,27 @@ const AdminPaymentsTab = () => {
         link_profissional: map["link_profissional"] || "",
         link_premium: map["link_premium"] || "",
       });
+      setWebhookSecret(map["webhook_secret"] || "");
     }
     setSettingsLoading(false);
   };
+
+  const handleSaveWebhookSecret = async () => {
+    setSavingWebhook(true);
+    const { data } = await (supabase.from("payment_settings") as any)
+      .update({ valor: webhookSecret, atualizado_em: new Date().toISOString() })
+      .eq("chave", "webhook_secret")
+      .select();
+    if (!data || data.length === 0) {
+      await (supabase.from("payment_settings") as any)
+        .insert({ chave: "webhook_secret", valor: webhookSecret });
+    }
+    setSavingWebhook(false);
+    setEditingWebhook(false);
+    toast({ title: "Webhook secret actualizado!" });
+  };
+
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || ""}/functions/v1/payment-webhook`;
 
   const handleSaveSettings = async () => {
     setSavingSettings(true);
