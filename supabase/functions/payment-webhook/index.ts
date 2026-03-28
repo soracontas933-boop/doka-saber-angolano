@@ -393,7 +393,7 @@ Deno.serve(async (req) => {
         await supabaseAdmin.from("notifications").insert({
           user_id: adminUser[0].user_id,
           titulo: `⚠️ Evento de Pagamento: ${eventLabel}`,
-          mensagem: `Email: ${email} | Plano: ${planLabel}${amountStr}${refStr}. Verifique e confirme manualmente o reset de créditos se necessário.`,
+          mensagem: `Email: ${email} | Plano: ${planLabel}${amountStr}${refStr}. Verifique e confirme manualmente o reset de créditos se necessário. [uid:${userId}]`,
           tipo: "aviso",
         });
       }
