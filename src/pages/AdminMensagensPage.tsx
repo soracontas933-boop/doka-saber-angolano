@@ -247,18 +247,10 @@ const AdminMensagensPage = () => {
     if (!newMessage.trim() || !selectedUserGroup || !adminId) return;
     setSending(true);
 
-    // Always reply to the conversation where the latest USER message was sent
-    // This ensures the admin reply lands in the same conversation the user is looking at
-    const latestIncomingMsg = [...chatMessages]
-      .reverse()
-      .find((msg) => msg.sender_id !== adminId);
-
-    const latestIncomingConvo = latestIncomingMsg
-      ? selectedUserGroup.conversations.find((c) => c.id === latestIncomingMsg.conversation_id)
-      : null;
-
     const targetConvo =
-      latestIncomingConvo ||
+      (selectedConvo && selectedUserGroup.conversations.some((c) => c.id === selectedConvo.id)
+        ? selectedConvo
+        : null) ||
       selectedUserGroup.conversations.find((c) => c.estado === "aberto") ||
       selectedUserGroup.conversations[0];
 
