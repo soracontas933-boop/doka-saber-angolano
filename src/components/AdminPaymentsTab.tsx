@@ -230,6 +230,12 @@ const AdminPaymentsTab = () => {
       setIbanBanco(map["iban_banco"] || "");
       setIbanTitular(map["iban_titular"] || "");
       setMulticaixaNumero(map["multicaixa_numero"] || "");
+      setPaymentLinks({
+        link_basico: map["link_basico"] || "",
+        link_intermedio: map["link_intermedio"] || "",
+        link_profissional: map["link_profissional"] || "",
+        link_premium: map["link_premium"] || "",
+      });
     }
     setSettingsLoading(false);
   };
