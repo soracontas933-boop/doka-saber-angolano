@@ -247,8 +247,14 @@ const AdminMensagensPage = () => {
     if (!newMessage.trim() || !selectedUserGroup || !adminId) return;
     setSending(true);
 
-    // Use the latest conversation with no admin response yet, fallback to most recent
+    // Always prioritise the conversation currently open in the chat panel
+    const selectedConvoInGroup =
+      selectedConvo && selectedConvo.user_id === selectedUserGroup.user_id
+        ? selectedUserGroup.conversations.find((c) => c.id === selectedConvo.id) ?? selectedConvo
+        : null;
+
     const targetConvo =
+      selectedConvoInGroup ||
       selectedUserGroup.conversations.find((c) => c.estado === "aberto") ||
       selectedUserGroup.conversations[0];
 
