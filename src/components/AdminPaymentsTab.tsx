@@ -84,7 +84,7 @@ const AdminPaymentsTab = () => {
     link_premium: "",
   });
 
-
+  const fetchPayments = useCallback(async () => {
     setLoading(true);
 
     // Fetch payments
