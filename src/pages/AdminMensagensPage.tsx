@@ -15,6 +15,7 @@ interface Conversation {
   id: string;
   user_id: string;
   assunto: string;
+  mensagem: string;
   estado: string;
   criado_em: string;
   atualizado_em: string;
@@ -178,7 +179,34 @@ const AdminMensagensPage = () => {
       .select("*")
       .in("conversation_id", convoIds)
       .order("created_at", { ascending: true });
-    setChatMessages(data ?? []);
+
+    const dbMessages = (data ?? []) as ChatMsg[];
+
+    // Fallback: include initial support_messages.mensagem when it was never copied to chat_messages
+    const initialMessages: ChatMsg[] = userGroup.conversations
+      .filter((convo) => {
+        const initialContent = (convo.mensagem || "").trim();
+        if (!initialContent) return false;
+        return !dbMessages.some(
+          (msg) =>
+            msg.conversation_id === convo.id &&
+            msg.sender_id === convo.user_id &&
+            msg.content.trim() === initialContent,
+        );
+      })
+      .map((convo) => ({
+        id: `initial-${convo.id}`,
+        conversation_id: convo.id,
+        sender_id: convo.user_id,
+        content: convo.mensagem,
+        created_at: convo.criado_em,
+      }));
+
+    const mergedMessages = [...dbMessages, ...initialMessages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+
+    setChatMessages(mergedMessages);
     setChatLoading(false);
     scrollToBottom();
   }, []);
@@ -219,12 +247,18 @@ const AdminMensagensPage = () => {
     if (!newMessage.trim() || !selectedUserGroup || !adminId) return;
     setSending(true);
 
-    // Use the latest conversation of this user to send the message
-    const latestConvo = selectedUserGroup.conversations[0];
-    if (!latestConvo) { setSending(false); return; }
+    // Use the latest conversation with no admin response yet, fallback to most recent
+    const targetConvo =
+      selectedUserGroup.conversations.find((c) => c.estado === "aberto") ||
+      selectedUserGroup.conversations[0];
+
+    if (!targetConvo) {
+      setSending(false);
+      return;
+    }
 
     const { error } = await (supabase.from("chat_messages") as any).insert({
-      conversation_id: latestConvo.id,
+      conversation_id: targetConvo.id,
       sender_id: adminId,
       content: newMessage.trim(),
     });
@@ -232,12 +266,12 @@ const AdminMensagensPage = () => {
     if (!error) {
       await (supabase.from("support_messages") as any)
         .update({ atualizado_em: new Date().toISOString(), estado: "respondido" })
-        .eq("id", latestConvo.id);
+        .eq("id", targetConvo.id);
 
       await (supabase.from("notifications") as any).insert({
         user_id: selectedUserGroup.user_id,
         titulo: "Nova mensagem do suporte",
-        mensagem: `Resposta em "${latestConvo.assunto}"`,
+        mensagem: `Resposta em "${targetConvo.assunto}"`,
         tipo: "sucesso",
       });
 
