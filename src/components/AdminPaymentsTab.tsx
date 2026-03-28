@@ -277,7 +277,7 @@ const AdminPaymentsTab = () => {
     toast({ title: "Links de pagamento automático actualizados!" });
   };
 
-
+  if (loading) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
