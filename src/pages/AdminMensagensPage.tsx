@@ -54,6 +54,7 @@ const AdminMensagensPage = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConvo, setSelectedConvo] = useState<Conversation | null>(null);
+  const [selectedUserGroup, setSelectedUserGroup] = useState<UserGroup | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
