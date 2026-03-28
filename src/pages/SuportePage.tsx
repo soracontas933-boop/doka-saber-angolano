@@ -346,6 +346,8 @@ const SuportePage = () => {
                 <AnimatePresence initial={false}>
                   {chatMessages.map((msg, index) => {
                     const isMine = msg.sender_id === userId;
+                    const prevMsg = index > 0 ? chatMessages[index - 1] : null;
+                    const sameSenderAsPrev = prevMsg && prevMsg.sender_id === msg.sender_id && !shouldShowDateSeparator(chatMessages, index);
                     return (
                       <div key={msg.id}>
                         {shouldShowDateSeparator(chatMessages, index) && (
@@ -359,14 +361,14 @@ const SuportePage = () => {
                           initial={{ opacity: 0, y: 8, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           transition={{ duration: 0.2 }}
-                          className={`flex mb-1.5 ${isMine ? "justify-end" : "justify-start"}`}
+                          className={`flex ${sameSenderAsPrev ? "mb-0.5" : "mb-1.5"} ${isMine ? "justify-end" : "justify-start"}`}
                         >
                           <div className={`relative max-w-[80%] sm:max-w-[70%] px-3 py-2 rounded-2xl shadow-sm ${
                             isMine
                               ? "bg-primary text-primary-foreground rounded-br-md"
                               : "bg-card text-card-foreground border border-border/50 rounded-bl-md"
                           }`}>
-                            {!isMine && (
+                            {!isMine && !sameSenderAsPrev && (
                               <p className="text-[10px] font-bold text-primary mb-0.5">Equipa Delle</p>
                             )}
                             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>

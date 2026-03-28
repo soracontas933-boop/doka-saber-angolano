@@ -24,6 +24,15 @@ interface Conversation {
   unread?: boolean;
 }
 
+interface UserGroup {
+  user_id: string;
+  user_nome: string;
+  user_email: string;
+  conversations: Conversation[];
+  latest_update: string;
+  has_open: boolean;
+}
+
 interface ChatMsg {
   id: string;
   conversation_id: string;
@@ -45,6 +54,7 @@ const AdminMensagensPage = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConvo, setSelectedConvo] = useState<Conversation | null>(null);
+  const [selectedUserGroup, setSelectedUserGroup] = useState<UserGroup | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
@@ -114,6 +124,17 @@ const AdminMensagensPage = () => {
     if (convoId) {
       const target = convos.find(c => c.id === convoId);
       if (target) {
+        // Find or create user group for this conversation
+        const userConvos = convos.filter(c => c.user_id === target.user_id);
+        const group: UserGroup = {
+          user_id: target.user_id,
+          user_nome: target.user_nome || "Desconhecido",
+          user_email: target.user_email || "",
+          conversations: userConvos,
+          latest_update: userConvos[0]?.atualizado_em || "",
+          has_open: userConvos.some(c => c.estado === "aberto"),
+        };
+        setSelectedUserGroup(group);
         setSelectedConvo(target);
         setMobileShowChat(true);
       }
@@ -133,12 +154,13 @@ const AdminMensagensPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [fetchConversations]);
 
-  // Fetch chat messages for selected conversation
-  const fetchChatMessages = useCallback(async (convoId: string) => {
+  // Fetch all chat messages for a user (across all their conversations)
+  const fetchUserMessages = useCallback(async (userGroup: UserGroup) => {
     setChatLoading(true);
+    const convoIds = userGroup.conversations.map(c => c.id);
     const { data } = await (supabase.from("chat_messages") as any)
       .select("*")
-      .eq("conversation_id", convoId)
+      .in("conversation_id", convoIds)
       .order("created_at", { ascending: true });
     setChatMessages(data ?? []);
     setChatLoading(false);
@@ -146,56 +168,60 @@ const AdminMensagensPage = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedConvo) {
-      fetchChatMessages(selectedConvo.id);
+    if (selectedUserGroup) {
+      fetchUserMessages(selectedUserGroup);
     }
-  }, [selectedConvo, fetchChatMessages]);
+  }, [selectedUserGroup, fetchUserMessages]);
 
-  // Realtime for chat messages
+  // Realtime for chat messages (listen to all convos of selected user)
   useEffect(() => {
-    if (!selectedConvo) return;
-    const channel = supabase
-      .channel(`chat-${selectedConvo.id}`)
-      .on("postgres_changes", {
-        event: "INSERT", schema: "public", table: "chat_messages",
-        filter: `conversation_id=eq.${selectedConvo.id}`
-      }, (payload: any) => {
-        const newMsg = payload.new as ChatMsg;
-        setChatMessages(prev => [...prev, newMsg]);
-        scrollToBottom();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedConvo]);
+    if (!selectedUserGroup) return;
+    const channels = selectedUserGroup.conversations.map(c =>
+      supabase
+        .channel(`chat-${c.id}`)
+        .on("postgres_changes", {
+          event: "INSERT", schema: "public", table: "chat_messages",
+          filter: `conversation_id=eq.${c.id}`
+        }, (payload: any) => {
+          setChatMessages(prev => [...prev, payload.new as ChatMsg]);
+          scrollToBottom();
+        })
+        .subscribe()
+    );
+    return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
+  }, [selectedUserGroup]);
 
-  const handleSelectConvo = (convo: Conversation) => {
-    setSelectedConvo(convo);
+  const handleSelectUser = (group: UserGroup) => {
+    setSelectedUserGroup(group);
+    setSelectedConvo(group.conversations[0] || null);
     setMobileShowChat(true);
-    setSearchParams({ conversa: convo.id });
+    setSearchParams({ conversa: group.conversations[0]?.id || "" });
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConvo || !adminId) return;
+    if (!newMessage.trim() || !selectedUserGroup || !adminId) return;
     setSending(true);
 
+    // Use the latest conversation of this user to send the message
+    const latestConvo = selectedUserGroup.conversations[0];
+    if (!latestConvo) { setSending(false); return; }
+
     const { error } = await (supabase.from("chat_messages") as any).insert({
-      conversation_id: selectedConvo.id,
+      conversation_id: latestConvo.id,
       sender_id: adminId,
       content: newMessage.trim(),
     });
 
     if (!error) {
-      // Update conversation timestamp
       await (supabase.from("support_messages") as any)
         .update({ atualizado_em: new Date().toISOString(), estado: "respondido" })
-        .eq("id", selectedConvo.id);
+        .eq("id", latestConvo.id);
 
-      // Notify user
       await (supabase.from("notifications") as any).insert({
-        user_id: selectedConvo.user_id,
+        user_id: selectedUserGroup.user_id,
         titulo: "Nova mensagem do suporte",
-        mensagem: `Resposta em "${selectedConvo.assunto}"`,
+        mensagem: `Resposta em "${latestConvo.assunto}"`,
         tipo: "sucesso",
       });
 
@@ -296,12 +322,28 @@ const AdminMensagensPage = () => {
     return date.toLocaleDateString("pt-AO", { day: "2-digit", month: "short" });
   };
 
-  const filteredConvos = conversations.filter(c =>
-    !searchQuery || 
-    c.assunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.user_nome || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.user_email || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Group conversations by user
+  const userGroups: UserGroup[] = (() => {
+    const grouped: Record<string, Conversation[]> = {};
+    const filtered = conversations.filter(c =>
+      !searchQuery || 
+      c.assunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.user_nome || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.user_email || "").toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    filtered.forEach(c => {
+      if (!grouped[c.user_id]) grouped[c.user_id] = [];
+      grouped[c.user_id].push(c);
+    });
+    return Object.entries(grouped).map(([uid, convos]) => ({
+      user_id: uid,
+      user_nome: convos[0].user_nome || "Desconhecido",
+      user_email: convos[0].user_email || "",
+      conversations: convos,
+      latest_update: convos[0].atualizado_em,
+      has_open: convos.some(c => c.estado === "aberto"),
+    })).sort((a, b) => new Date(b.latest_update).getTime() - new Date(a.latest_update).getTime());
+  })();
 
   const filteredUsers = users.filter(u =>
     !userSearch ||
@@ -409,17 +451,17 @@ const AdminMensagensPage = () => {
             <div className="flex items-center justify-center py-10">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredConvos.length === 0 ? (
+          ) : userGroups.length === 0 ? (
             <div className="px-4 py-10 text-center text-xs text-muted-foreground">
               Nenhuma conversa encontrada
             </div>
           ) : (
-            filteredConvos.map(convo => (
+            userGroups.map(group => (
               <button
-                key={convo.id}
-                onClick={() => handleSelectConvo(convo)}
+                key={group.user_id}
+                onClick={() => handleSelectUser(group)}
                 className={`w-full text-left flex items-start gap-3 px-4 py-3 border-b border-border/50 transition-colors hover:bg-muted/50 ${
-                  selectedConvo?.id === convo.id ? "bg-primary/5" : ""
+                  selectedUserGroup?.user_id === group.user_id ? "bg-primary/5" : ""
                 }`}
               >
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 shrink-0 mt-0.5">
@@ -427,13 +469,15 @@ const AdminMensagensPage = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <p className="text-sm font-medium text-foreground truncate">{convo.user_nome}</p>
-                    <span className="text-[10px] text-muted-foreground shrink-0">{formatConvoTime(convo.atualizado_em)}</span>
+                    <p className="text-sm font-medium text-foreground truncate">{group.user_nome}</p>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{formatConvoTime(group.latest_update)}</span>
                   </div>
-                  <p className="text-xs font-medium text-primary/80 truncate">{convo.assunto}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {group.conversations.length} conversa{group.conversations.length > 1 ? "s" : ""} · {group.conversations[0]?.assunto}
+                  </p>
                   <div className="flex items-center justify-between gap-1 mt-0.5">
-                    <p className="text-xs text-muted-foreground truncate">{convo.user_email}</p>
-                    {convo.estado === "aberto" && (
+                    <p className="text-xs text-muted-foreground truncate">{group.user_email}</p>
+                    {group.has_open && (
                       <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-1 shrink-0">!</span>
                     )}
                   </div>
@@ -446,13 +490,13 @@ const AdminMensagensPage = () => {
 
       {/* Right: Chat Area */}
       <div className={`${!mobileShowChat ? "hidden md:flex" : "flex"} flex-col flex-1`}>
-        {selectedConvo ? (
+        {selectedUserGroup ? (
           <>
             {/* Chat Header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-primary/5 shrink-0">
               <button
                 className="md:hidden p-1 rounded hover:bg-muted"
-                onClick={() => { setMobileShowChat(false); setSelectedConvo(null); }}
+                onClick={() => { setMobileShowChat(false); setSelectedUserGroup(null); setSelectedConvo(null); }}
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -460,15 +504,12 @@ const AdminMensagensPage = () => {
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-foreground">{selectedConvo.user_nome}</p>
-                <p className="text-xs text-muted-foreground truncate">{selectedConvo.assunto}</p>
+                <p className="text-sm font-bold text-foreground">{selectedUserGroup.user_nome}</p>
+                <p className="text-xs text-muted-foreground truncate">{selectedUserGroup.user_email}</p>
               </div>
-              <Badge className={selectedConvo.estado === "aberto"
-                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-              }>
-                {selectedConvo.estado === "aberto" ? "Aberto" : "Respondido"}
-              </Badge>
+              {selectedUserGroup.has_open && (
+                <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300">Aberto</Badge>
+              )}
             </div>
 
             {/* Messages */}
@@ -490,6 +531,8 @@ const AdminMensagensPage = () => {
                 <AnimatePresence initial={false}>
                   {chatMessages.map((msg, index) => {
                     const isAdmin = msg.sender_id === adminId;
+                    const prevMsg = index > 0 ? chatMessages[index - 1] : null;
+                    const sameSenderAsPrev = prevMsg && prevMsg.sender_id === msg.sender_id && !shouldShowDateSeparator(chatMessages, index);
                     return (
                       <div key={msg.id}>
                         {shouldShowDateSeparator(chatMessages, index) && (
@@ -503,15 +546,15 @@ const AdminMensagensPage = () => {
                           initial={{ opacity: 0, y: 8, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           transition={{ duration: 0.2 }}
-                          className={`flex mb-1.5 ${isAdmin ? "justify-end" : "justify-start"}`}
+                          className={`flex ${sameSenderAsPrev ? "mb-0.5" : "mb-1.5"} ${isAdmin ? "justify-end" : "justify-start"}`}
                         >
                           <div className={`relative max-w-[80%] sm:max-w-[70%] px-3 py-2 rounded-2xl shadow-sm ${
                             isAdmin
                               ? "bg-primary text-primary-foreground rounded-br-md"
                               : "bg-card text-card-foreground border border-border/50 rounded-bl-md"
                           }`}>
-                            {!isAdmin && (
-                              <p className="text-[10px] font-bold text-primary mb-0.5">{selectedConvo.user_nome}</p>
+                            {!isAdmin && !sameSenderAsPrev && (
+                              <p className="text-[10px] font-bold text-primary mb-0.5">{selectedUserGroup?.user_nome}</p>
                             )}
                             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                             <p className={`text-[10px] mt-1 text-right ${isAdmin ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
