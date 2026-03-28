@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
 
     const storedSecret = secretRow?.valor || "";
 
-    if (!storedSecret || webhookSecret !== storedSecret) {
+    if (storedSecret && webhookSecret !== storedSecret) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
