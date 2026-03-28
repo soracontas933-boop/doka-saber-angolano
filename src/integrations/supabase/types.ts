@@ -38,6 +38,36 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_sessions: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          email: string
+          id: string
+          plano: string
+          sale_id: string | null
+          status: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          email: string
+          id?: string
+          plano: string
+          sale_id?: string | null
+          status?: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          email?: string
+          id?: string
+          plano?: string
+          sale_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       hero_images: {
         Row: {
           ativo: boolean
