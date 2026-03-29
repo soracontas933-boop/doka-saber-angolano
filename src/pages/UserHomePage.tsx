@@ -13,7 +13,9 @@ import {
   ArrowRight,
   Sparkles,
   Globe,
+  Download,
 } from "lucide-react";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 const InteractiveGlobe = lazy(() => import("@/components/home/InteractiveGlobe"));
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +44,7 @@ interface RecentProject {
 const UserHomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { canInstall, install } = usePwaInstall();
   const [profile, setProfile] = useState<{ nome: string | null }>({ nome: null });
   const [plan, setPlan] = useState<{ plano: string; creditos_usados: number; creditos_totais: number } | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
@@ -260,6 +263,14 @@ const UserHomePage = () => {
           </CardContent>
         </Card>
       </motion.div>
+      {/* Fixed Mobile Download Button */}
+      {canInstall && (
+        <div className="md:hidden fixed bottom-20 left-4 right-4 z-40">
+          <Button className="w-full gap-2 shadow-lg" size="lg" onClick={install}>
+            <Download className="h-5 w-5" /> Baixar App
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
