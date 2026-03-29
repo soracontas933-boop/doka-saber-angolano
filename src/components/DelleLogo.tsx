@@ -3,7 +3,7 @@ import logoImage from "@/assets/doka-logo.png";
 
 const DelleLogo = ({ size = 32, showText = true }: {size?: number;showText?: boolean;}) => {
   return (
-    <div className="flex items-center gap-2.5 bg-sidebar">
+    <div className="flex items-center gap-2.5 bg-[#070808]/[0.01]">
       <motion.div
         className="relative flex items-center justify-center overflow-hidden rounded-xl"
         style={{ width: size, height: size }}
@@ -13,7 +13,7 @@ const DelleLogo = ({ size = 32, showText = true }: {size?: number;showText?: boo
         <img
           src={logoImage}
           alt="Delle Logo"
-          className="w-full h-full object-cover pl-0 pt-0 py-[10px] pb-0 pr-0 ml-0 mr-[10px]" />
+          className="w-full h-full object-cover pl-0 pt-0 py-[10px] pb-0 pr-0 ml-0 mr-[10px] bg-black/[0.01]" />
         
       </motion.div>
       {showText &&
