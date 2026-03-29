@@ -262,6 +262,14 @@ const UserHomePage = () => {
           </CardContent>
         </Card>
       </motion.div>
+      {/* Fixed Mobile Download Button */}
+      {canInstall && (
+        <div className="md:hidden fixed bottom-20 left-4 right-4 z-40">
+          <Button className="w-full gap-2 shadow-lg" size="lg" onClick={install}>
+            <Download className="h-5 w-5" /> Baixar App
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
