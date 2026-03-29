@@ -13,32 +13,32 @@ import { FloatingPaths } from "@/components/ui/background-paths";
 
 /* ── static data ── */
 const features = [
-  { icon: FileText, title: "Trabalhos Escolares", desc: "Gere trabalhos completos com capa, índice, introdução e conclusão no formato angolano." },
-  { icon: BookOpen, title: "Resumos Inteligentes", desc: "Transforme fotos do caderno em resumos estruturados e flashcards de estudo." },
-  { icon: HelpCircle, title: "Questionários", desc: "Crie questionários interativos com correção automática e gabaritos." },
-  { icon: ClipboardList, title: "Planos de Aula", desc: "Planos no formato INIDE, prontos para entregar e usar na sala de aula." },
-];
+{ icon: FileText, title: "Trabalhos Escolares", desc: "Gere trabalhos completos com capa, índice, introdução e conclusão no formato angolano." },
+{ icon: BookOpen, title: "Resumos Inteligentes", desc: "Transforme fotos do caderno em resumos estruturados e flashcards de estudo." },
+{ icon: HelpCircle, title: "Questionários", desc: "Crie questionários interativos com correção automática e gabaritos." },
+{ icon: ClipboardList, title: "Planos de Aula", desc: "Planos no formato INIDE, prontos para entregar e usar na sala de aula." }];
+
 
 const stats = [
-  { icon: Sparkles, label: "Conteúdo com IA", value: "Inteligente" },
-  { icon: Zap, label: "Geração rápida", value: "Instantâneo" },
-  { icon: Shield, label: "Formato angolano", value: "Certificado" },
-];
+{ icon: Sparkles, label: "Conteúdo com IA", value: "Inteligente" },
+{ icon: Zap, label: "Geração rápida", value: "Instantâneo" },
+{ icon: Shield, label: "Formato angolano", value: "Certificado" }];
+
 
 const voceSabia = [
-  { icon: Lightbulb, fact: "Estudantes que usam resumos estruturados memorizam até 40% mais conteúdo.", highlight: "40% mais" },
-  { icon: GraduationCap, fact: "Professores poupam em média 3 horas por semana usando planos de aula automáticos.", highlight: "3 horas" },
-  { icon: Users, fact: "Trabalhos em grupo com ferramentas digitais têm 60% mais chances de ter nota máxima.", highlight: "60% mais" },
-  { icon: Star, fact: "Angola tem mais de 10 milhões de estudantes — a Delle foi feita para cada um deles.", highlight: "10 milhões" },
-];
+{ icon: Lightbulb, fact: "Estudantes que usam resumos estruturados memorizam até 40% mais conteúdo.", highlight: "40% mais" },
+{ icon: GraduationCap, fact: "Professores poupam em média 3 horas por semana usando planos de aula automáticos.", highlight: "3 horas" },
+{ icon: Users, fact: "Trabalhos em grupo com ferramentas digitais têm 60% mais chances de ter nota máxima.", highlight: "60% mais" },
+{ icon: Star, fact: "Angola tem mais de 10 milhões de estudantes — a Delle foi feita para cada um deles.", highlight: "10 milhões" }];
+
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 const item = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
 };
 
 /* ── hero image types ── */
@@ -56,37 +56,37 @@ const AnimatedTitle = () => {
   return (
     <h1 className="text-3xl sm:text-4xl md:text-6xl font-display font-extrabold tracking-tight leading-[1.1] mb-4 sm:mb-5">
       <span className="block">
-        {line1.split("").map((letter, i) => (
-          <motion.span
-            key={`l1-${i}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + i * 0.03, duration: 0.3 }}
-            className="inline-block text-foreground"
-          >
+        {line1.split("").map((letter, i) =>
+        <motion.span
+          key={`l1-${i}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 + i * 0.03, duration: 0.3 }}
+          className="inline-block text-foreground">
+          
             {letter === " " ? "\u00A0" : letter}
           </motion.span>
-        ))}
+        )}
       </span>
       <span className="block">
-        {line2.split("").map((letter, i) => (
-          <motion.span
-            key={`l2-${i}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + (line1.length + i) * 0.03, duration: 0.3 }}
-            className="inline-block bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent"
-          >
+        {line2.split("").map((letter, i) =>
+        <motion.span
+          key={`l2-${i}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 + (line1.length + i) * 0.03, duration: 0.3 }}
+          className="inline-block bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+          
             {letter === " " ? "\u00A0" : letter}
           </motion.span>
-        ))}
+        )}
       </span>
-    </h1>
-  );
+    </h1>);
+
 };
 
 /* ── Hero carousel / single ── */
-const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
+const HeroCarousel = ({ images }: {images: HeroImage[];}) => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -109,31 +109,31 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
           className="absolute inset-0 w-full h-full object-cover"
           loading="eager"
           decoding="async"
-          fetchPriority="high"
-        />
+          fetchPriority="high" />
+        
       </AnimatePresence>
       <div className="absolute inset-0 bg-black/70 z-[10]" />
-      {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
-          {images.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${i === current ? "bg-primary scale-125" : "bg-white/40"}`}
-            />
-          ))}
+      {images.length > 1 &&
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
+          {images.map((_, i) =>
+        <button
+          key={i}
+          onClick={() => setCurrent(i)}
+          className={`w-2.5 h-2.5 rounded-full transition-all ${i === current ? "bg-primary scale-125" : "bg-white/40"}`} />
+
+        )}
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
-const HeroSingle = ({ image }: { image: HeroImage }) => (
-  <div className="absolute inset-0 overflow-hidden z-[5]">
+const HeroSingle = ({ image }: {image: HeroImage;}) =>
+<div className="absolute inset-0 overflow-hidden z-[5]">
     <img src={image.url} alt="Hero" className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
-    <div className="absolute inset-0 bg-black/70 z-[10]" />
-  </div>
-);
+    <div className="absolute inset-0 bg-black/70 z-[10] mb-[10px]" />
+  </div>;
+
 
 /* ── page ── */
 const HomePage = () => {
@@ -146,10 +146,10 @@ const HomePage = () => {
   useEffect(() => {
     const load = async () => {
       const [imgRes, settingsRes] = await Promise.all([
-        supabase.from("hero_images").select("id, url, ordem").eq("ativo", true).order("ordem", { ascending: true }),
-        supabase.from("site_settings").select("valor").eq("chave", "hero_carousel").single(),
-      ]);
-      setHeroImages((imgRes.data as HeroImage[]) ?? []);
+      supabase.from("hero_images").select("id, url, ordem").eq("ativo", true).order("ordem", { ascending: true }),
+      supabase.from("site_settings").select("valor").eq("chave", "hero_carousel").single()]
+      );
+      setHeroImages(imgRes.data as HeroImage[] ?? []);
       if (settingsRes.data) setCarouselEnabled((settingsRes.data as any).valor === "true");
     };
     load();
@@ -166,11 +166,11 @@ const HomePage = () => {
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-8 w-8 sm:h-10 sm:w-10">
             {theme === "dark" ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
-          {canInstall && (
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={install}>
+          {canInstall &&
+          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={install}>
               <Download className="h-4 w-4" /> Baixar App
             </Button>
-          )}
+          }
           <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate("/auth")}>Entrar</Button>
           <Button size="sm" className="text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate("/auth")}>Começar grátis</Button>
         </div>
@@ -184,17 +184,17 @@ const HomePage = () => {
         </div>
 
         {hasHeroImages && (
-          carouselEnabled && heroImages.length > 1
-            ? <HeroCarousel images={heroImages} />
-            : <HeroSingle image={heroImages[0]} />
-        )}
+        carouselEnabled && heroImages.length > 1 ?
+        <HeroCarousel images={heroImages} /> :
+        <HeroSingle image={heroImages[0]} />)
+        }
 
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="relative z-[20]"
-        >
+          className="relative z-[20]">
+          
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6 border border-primary/20">
             <Sparkles className="h-3.5 w-3.5" />
             Plataforma educacional angolana com IA
@@ -202,8 +202,8 @@ const HomePage = () => {
 
           <AnimatedTitle />
 
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-8 leading-relaxed px-2">
-            Gere trabalhos escolares, resumos do caderno, questionários e planos de aula — tudo adaptado ao sistema educacional angolano.
+          <p className="sm:text-lg md:text-xl max-w-2xl mx-auto mb-6 sm:mb-8 leading-relaxed px-2 text-sm text-[#a7abb4]">Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aula 
+
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -221,15 +221,15 @@ const HomePage = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="relative z-[20] grid grid-cols-3 gap-4 mt-16 max-w-lg mx-auto"
-        >
-          {stats.map((s) => (
-            <div key={s.label} className="text-center">
+          className="relative z-[20] grid grid-cols-3 gap-4 mt-16 max-w-lg mx-auto">
+          
+          {stats.map((s) =>
+          <div key={s.label} className="text-center">
               <s.icon className="h-5 w-5 text-primary mx-auto mb-1.5" />
               <p className="text-sm font-semibold text-foreground">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
             </div>
-          ))}
+          )}
         </motion.div>
       </section>
 
@@ -256,16 +256,16 @@ const HomePage = () => {
               <div className="bg-gradient-to-br from-primary/20 to-blue-400/10 rounded-3xl p-8 border border-primary/10">
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { value: "5+", label: "Ferramentas IA" },
-                    { value: "24/7", label: "Disponível" },
-                    { value: "100%", label: "Formato angolano" },
-                    { value: "0 Kz", label: "Para começar" },
-                  ].map((stat) => (
-                    <div key={stat.label} className="text-center p-4 bg-background/80 rounded-2xl">
+                  { value: "5+", label: "Ferramentas IA" },
+                  { value: "24/7", label: "Disponível" },
+                  { value: "100%", label: "Formato angolano" },
+                  { value: "0 Kz", label: "Para começar" }].
+                  map((stat) =>
+                  <div key={stat.label} className="text-center p-4 bg-background/80 rounded-2xl">
                       <p className="text-2xl md:text-3xl font-display font-bold text-primary">{stat.value}</p>
                       <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -282,8 +282,8 @@ const HomePage = () => {
             <p className="text-muted-foreground max-w-md mx-auto">Ferramentas inteligentes feitas para estudantes e professores angolanos.</p>
           </motion.div>
           <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {features.map((f) => (
-              <motion.div key={f.title} variants={item} className="group flex gap-4 p-5 rounded-2xl border border-border bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+            {features.map((f) =>
+            <motion.div key={f.title} variants={item} className="group flex gap-4 p-5 rounded-2xl border border-border bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
                 <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
                   <f.icon className="h-5 w-5 text-primary-foreground" />
                 </div>
@@ -292,7 +292,7 @@ const HomePage = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
                 </div>
               </motion.div>
-            ))}
+            )}
           </motion.div>
         </div>
       </section>
@@ -306,29 +306,29 @@ const HomePage = () => {
             <p className="text-muted-foreground max-w-md mx-auto">Descubra porque milhares de estudantes já escolheram a Delle.</p>
           </motion.div>
           <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {voceSabia.map((v, i) => (
-              <motion.div
-                key={i}
-                variants={item}
-                className="relative overflow-hidden rounded-2xl border border-border bg-background p-6 hover:border-primary/30 transition-all duration-300"
-              >
+            {voceSabia.map((v, i) =>
+            <motion.div
+              key={i}
+              variants={item}
+              className="relative overflow-hidden rounded-2xl border border-border bg-background p-6 hover:border-primary/30 transition-all duration-300">
+              
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <v.icon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-foreground leading-relaxed">
-                      {v.fact.split(v.highlight).map((part, pi, arr) => (
-                        <span key={pi}>
+                      {v.fact.split(v.highlight).map((part, pi, arr) =>
+                    <span key={pi}>
                           {part}
                           {pi < arr.length - 1 && <span className="font-bold text-primary">{v.highlight}</span>}
                         </span>
-                      ))}
+                    )}
                     </p>
                   </div>
                 </div>
               </motion.div>
-            ))}
+            )}
           </motion.div>
         </div>
       </section>
@@ -345,7 +345,7 @@ const HomePage = () => {
             {(["gratuito", "basico", "intermedio", "profissional", "premium"] as PlanKey[]).map((key) => {
               const cfg = PLAN_CONFIGS[key];
               const isPopular = key === "intermedio";
-              const fmt = (v: number) => (v === -1 ? "∞" : v === 0 ? "—" : String(v));
+              const fmt = (v: number) => v === -1 ? "∞" : v === 0 ? "—" : String(v);
               return (
                 <motion.div key={key} variants={item} className={`relative flex flex-col rounded-2xl border p-5 transition-all duration-300 ${isPopular ? "border-primary bg-primary/5 shadow-lg scale-[1.02]" : "border-border bg-card hover:shadow-lg hover:border-primary/20"}`}>
                   {isPopular && <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px]">Popular</Badge>}
@@ -366,8 +366,8 @@ const HomePage = () => {
                   <Button size="sm" variant={isPopular ? "default" : "outline"} className="mt-4 w-full" onClick={() => navigate("/auth")}>
                     {cfg.preco === 0 ? "Começar grátis" : "Escolher plano"}
                   </Button>
-                </motion.div>
-              );
+                </motion.div>);
+
             })}
           </motion.div>
         </div>
@@ -396,15 +396,15 @@ const HomePage = () => {
       </footer>
 
       {/* Mobile install button - fixed */}
-      {canInstall && (
-        <div className="sm:hidden fixed bottom-4 left-4 right-4 z-50">
+      {canInstall &&
+      <div className="sm:hidden fixed bottom-4 left-4 right-4 z-50">
           <Button className="w-full gap-2 bg-primary shadow-lg" size="lg" onClick={install}>
             <Download className="h-5 w-5" /> Baixar App
           </Button>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default HomePage;
