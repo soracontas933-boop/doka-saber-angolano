@@ -209,6 +209,33 @@ const UserHomePage = () => {
         </motion.div>
       </div>
 
+      {/* 3D Globe Section */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 items-center">
+              <div className="p-6 md:p-8 space-y-4">
+                <div className="inline-flex p-2.5 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
+                  <Globe className="h-5 w-5" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Aprendizagem Global</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  A Delle conecta estudantes angolanos ao conhecimento global. Usa inteligência artificial para criar conteúdos académicos de qualidade, adaptados ao teu contexto.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {["IA Avançada", "Conteúdo Local", "Sempre Disponível"].map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                  ))}
+                </div>
+              </div>
+              <Suspense fallback={<div className="h-[350px] md:h-[420px] flex items-center justify-center text-muted-foreground">A carregar 3D...</div>}>
+                <InteractiveGlobe />
+              </Suspense>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Groups Card */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
