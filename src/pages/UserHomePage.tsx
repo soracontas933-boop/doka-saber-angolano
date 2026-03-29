@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -12,7 +12,10 @@ import {
   Zap,
   ArrowRight,
   Sparkles,
+  Globe,
 } from "lucide-react";
+
+const InteractiveGlobe = lazy(() => import("@/components/home/InteractiveGlobe"));
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
