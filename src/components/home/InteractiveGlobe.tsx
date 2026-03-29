@@ -75,9 +75,7 @@ const GlobeMesh = () => {
         const points = arc.curve.getPoints(50);
         const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
         return (
-          <line key={i} geometry={lineGeo}>
-            <lineBasicMaterial color="#f59e0b" transparent opacity={0.6} linewidth={1} />
-          </line>
+          <primitive key={i} object={new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: "#f59e0b", transparent: true, opacity: 0.6 }))} />
         );
       })}
 
