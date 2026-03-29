@@ -44,6 +44,7 @@ interface RecentProject {
 const UserHomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { canInstall, install } = usePwaInstall();
   const [profile, setProfile] = useState<{ nome: string | null }>({ nome: null });
   const [plan, setPlan] = useState<{ plano: string; creditos_usados: number; creditos_totais: number } | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
