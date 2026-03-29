@@ -13,7 +13,9 @@ import {
   ArrowRight,
   Sparkles,
   Globe,
+  Download,
 } from "lucide-react";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 const InteractiveGlobe = lazy(() => import("@/components/home/InteractiveGlobe"));
 import { supabase } from "@/integrations/supabase/client";
