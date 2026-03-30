@@ -13,15 +13,14 @@ const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
 const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
 
-// Self-hosted endpoint (OpenAI-compatible API format)
+// --- Provider call functions ---
+
 async function callSelfHosted(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
   const [url, token] = apiKey.split("|");
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-
   const res = await fetch(url.trim(), {
-    method: "POST",
-    headers,
+    method: "POST", headers,
     body: JSON.stringify({ model: "default", messages, max_tokens: maxTokens, temperature }),
   });
   if (!res.ok) throw new Error(`Self-hosted error ${res.status}: ${await res.text()}`);
@@ -42,8 +41,7 @@ async function callOpenRouter(messages: any[], apiKey: string, maxTokens: number
   const res = await fetch(OPENROUTER_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json",
       "HTTP-Referer": "https://doka-angola-smart-learn.lovable.app",
       "X-Title": "DOKA Angola",
     },
@@ -80,9 +78,7 @@ async function callGemini(messages: any[], apiKey: string, maxTokens: number, te
   if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction.content }] };
 
   const res = await fetch(`${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Gemini error ${res.status}: ${await res.text()}`);
   const data = await res.json();
@@ -110,31 +106,65 @@ async function callTogether(messages: any[], apiKey: string, maxTokens: number, 
   return res.json();
 }
 
-async function callWithRetry(fn: () => Promise<any>, retries = 2, delay = 2000): Promise<any> {
-  for (let i = 0; i <= retries; i++) {
-    try {
-      return await fn();
-    } catch (e: any) {
-      if (i === retries || !e.message?.includes("429")) throw e;
-      console.log(`Rate limited, retrying in ${delay}ms...`);
-      await new Promise((r) => setTimeout(r, delay));
-      delay *= 2;
-    }
-  }
+// --- Multi-key infrastructure ---
+
+function isQuotaError(error: Error): boolean {
+  const msg = error.message.toLowerCase();
+  return msg.includes("429") || msg.includes("rate limit") || msg.includes("quota")
+    || msg.includes("exceeded") || msg.includes("too many") || msg.includes("403");
 }
 
-// Round-robin state
-let lastServiceIndex = 0;
+let roundRobinIndex = 0;
 
-async function getApiKeys() {
+interface KeyEntry { id: string; chave: string; prioridade: number }
+
+async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const { data } = await supabase.from("api_keys").select("servico, chave").eq("ativo", true);
-  const keys: Record<string, string> = {};
-  for (const row of data || []) keys[row.servico] = row.chave;
+  
+  // Only use keys that haven't errored in the last 6 hours (auto-reset)
+  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  
+  const { data } = await supabase
+    .from("api_keys")
+    .select("id, servico, chave, prioridade, ultimo_erro")
+    .eq("ativo", true)
+    .or(`ultimo_erro.is.null,ultimo_erro.lt.${sixHoursAgo}`)
+    .order("prioridade", { ascending: true });
+
+  const keys: Record<string, KeyEntry[]> = {};
+  for (const row of data || []) {
+    if (!keys[row.servico]) keys[row.servico] = [];
+    keys[row.servico].push({ id: row.id, chave: row.chave, prioridade: row.prioridade });
+  }
   return keys;
 }
 
-function getServiceOrder(keys: Record<string, string>, hasImages: boolean, preferredService?: string): string[] {
+async function markKeyExhausted(keyId: string) {
+  try {
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    await supabase.from("api_keys").update({ ultimo_erro: new Date().toISOString() }).eq("id", keyId);
+  } catch (e) {
+    console.error("Failed to mark key exhausted:", e);
+  }
+}
+
+function getCallFn(svc: string): ((msgs: any[], key: string, mt: number, t: number) => Promise<any>) | null {
+  switch (svc) {
+    case "selfhosted": return callSelfHosted;
+    case "groq": return callGroq;
+    case "openrouter": return callOpenRouter;
+    case "gemini": return callGemini;
+    case "cerebras": return callCerebras;
+    case "together": return callTogether;
+    default: return null;
+  }
+}
+
+function supportsImages(svc: string): boolean {
+  return svc === "gemini";
+}
+
+function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, preferredService?: string): string[] {
   const textServices = ["selfhosted", "cerebras", "groq", "together", "openrouter", "gemini"];
   const imageServices = ["gemini"];
 
@@ -145,11 +175,12 @@ function getServiceOrder(keys: Record<string, string>, hasImages: boolean, prefe
 
   if (hasImages) return imageServices;
 
-  const available = textServices.filter((s) => keys[s]);
+  const available = textServices.filter((s) => keys[s]?.length > 0);
   if (available.length === 0) return textServices;
 
-  lastServiceIndex = (lastServiceIndex + 1) % available.length;
-  return [...available.slice(lastServiceIndex), ...available.slice(0, lastServiceIndex)];
+  // Round-robin across services
+  roundRobinIndex = (roundRobinIndex + 1) % available.length;
+  return [...available.slice(roundRobinIndex), ...available.slice(0, roundRobinIndex)];
 }
 
 serve(async (req) => {
@@ -172,49 +203,35 @@ serve(async (req) => {
     let lastError: Error | null = null;
 
     for (const svc of servicePriority) {
-      const key = keys[svc];
-      if (!key) continue;
+      const svcKeys = keys[svc];
+      if (!svcKeys || svcKeys.length === 0) continue;
+      if (hasImages && !supportsImages(svc)) continue;
 
-      try {
-        console.log(`Trying ${svc}...`);
-        let result;
-        switch (svc) {
-          case "selfhosted":
-            if (hasImages) continue;
-            result = await callWithRetry(() => callSelfHosted(messages, key, max_tokens, temperature));
-            break;
-          case "groq":
-            if (hasImages) continue;
-            result = await callWithRetry(() => callGroq(messages, key, max_tokens, temperature));
-            break;
-          case "openrouter":
-            if (hasImages) continue;
-            result = await callWithRetry(() => callOpenRouter(messages, key, max_tokens, temperature));
-            break;
-          case "gemini":
-            result = await callWithRetry(() => callGemini(messages, key, max_tokens, temperature));
-            break;
-          case "cerebras":
-            if (hasImages) continue;
-            result = await callWithRetry(() => callCerebras(messages, key, max_tokens, temperature));
-            break;
-          case "together":
-            if (hasImages) continue;
-            result = await callWithRetry(() => callTogether(messages, key, max_tokens, temperature));
-            break;
-          default:
-            continue;
+      const callFn = getCallFn(svc);
+      if (!callFn) continue;
+
+      // Try each key for this service
+      for (const keyEntry of svcKeys) {
+        try {
+          console.log(`Trying ${svc} (key ${keyEntry.id.substring(0, 8)}...)...`);
+          const result = await callFn(messages, keyEntry.chave, max_tokens, temperature);
+          console.log(`Success with ${svc} (key ${keyEntry.id.substring(0, 8)}...)`);
+
+          const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
+          return new Response(JSON.stringify({ ...result, service_used: svc, tokens_used: tokensUsed }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        } catch (e: any) {
+          console.error(`${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, e.message);
+          lastError = e;
+
+          if (isQuotaError(e)) {
+            await markKeyExhausted(keyEntry.id);
+            console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
+            continue; // try next key for same service
+          }
+          break; // non-quota error → skip this service entirely
         }
-        console.log(`Success with ${svc}`);
-        // Inject service info into response
-        const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
-        const enriched = { ...result, service_used: svc, tokens_used: tokensUsed };
-        return new Response(JSON.stringify(enriched), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      } catch (e: any) {
-        console.error(`${svc} failed:`, e.message);
-        lastError = e;
       }
     }
 
