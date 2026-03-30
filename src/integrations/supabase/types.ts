@@ -47,21 +47,27 @@ export type Database = {
           chave: string
           criado_em: string
           id: string
+          prioridade: number
           servico: string
+          ultimo_erro: string | null
         }
         Insert: {
           ativo?: boolean
           chave: string
           criado_em?: string
           id?: string
+          prioridade?: number
           servico: string
+          ultimo_erro?: string | null
         }
         Update: {
           ativo?: boolean
           chave?: string
           criado_em?: string
           id?: string
+          prioridade?: number
           servico?: string
+          ultimo_erro?: string | null
         }
         Relationships: []
       }
