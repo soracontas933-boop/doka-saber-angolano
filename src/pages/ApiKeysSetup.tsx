@@ -170,9 +170,9 @@ export default function ApiKeysSetup() {
                         />
                       </div>
                       {exhausted ? (
-                        <AlertCircle className="h-4 w-4 text-destructive shrink-0" title="Quota esgotada" />
+                        <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
                       ) : keyRow.chave?.trim() ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                       ) : null}
                       <Button
                         variant="ghost"
