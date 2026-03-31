@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const PROVIDERS = [
   { key: "gemini", label: "Google AI Studio (Gemini)", placeholder: "AIzaSy...", description: "OCR + texto. Gratuito com limite diário." },
@@ -29,6 +30,7 @@ export default function ApiKeysSetup() {
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [hiddenKeys, setHiddenKeys] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchKeys();
@@ -43,12 +45,19 @@ export default function ApiKeysSetup() {
       .order("servico")
       .order("prioridade");
 
-    if (data && data.length > 0) {
-      setKeys(data.map(r => ({ ...r, prioridade: r.prioridade ?? 0 })));
-    } else {
-      // Seed with default empty rows
-      setKeys(PROVIDERS.map((p, i) => ({ servico: p.key, chave: "", prioridade: i, isNew: true })));
+    const loaded: KeyRow[] = data?.map(r => ({ ...r, prioridade: r.prioridade ?? 0 })) ?? [];
+
+    // Ensure every provider has at least 1 empty slot
+    const result: KeyRow[] = [...loaded];
+    for (const p of PROVIDERS) {
+      const hasEmpty = result.some(k => k.servico === p.key && !k.chave?.trim());
+      if (!hasEmpty) {
+        const existing = result.filter(k => k.servico === p.key);
+        const maxPrio = existing.length > 0 ? Math.max(...existing.map(k => k.prioridade)) + 1 : 0;
+        result.push({ servico: p.key, chave: "", prioridade: maxPrio, isNew: true });
+      }
     }
+    setKeys(result);
     setFetching(false);
   };
 
@@ -68,15 +77,22 @@ export default function ApiKeysSetup() {
     setKeys(updated);
   };
 
+  const toggleVisibility = (index: number) => {
+    setHiddenKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index); else next.add(index);
+      return next;
+    });
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Delete all existing keys
       await supabase.from("api_keys").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
       const entries = keys
         .filter(k => k.chave?.trim())
-        .map((k, i) => ({
+        .map((k) => ({
           servico: k.servico,
           chave: k.chave.trim(),
           ativo: true,
@@ -94,7 +110,7 @@ export default function ApiKeysSetup() {
 
       toast({
         title: "Chaves salvas!",
-        description: `${entries.length} chave(s) API configurada(s). Sistema de substituição automática activo.`,
+        description: `${entries.length} chave(s) API configurada(s). Substituição automática activa.`,
       });
       fetchKeys();
     } catch (error) {
@@ -110,11 +126,11 @@ export default function ApiKeysSetup() {
 
   const isExhausted = (k: KeyRow) => {
     if (!k.ultimo_erro) return false;
-    const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000;
-    return new Date(k.ultimo_erro).getTime() > sixHoursAgo;
+    return new Date(k.ultimo_erro).getTime() > Date.now() - 6 * 60 * 60 * 1000;
   };
 
   const getProviderKeys = (providerKey: string) => keys.filter(k => k.servico === providerKey);
+  const getFilledCount = (providerKey: string) => keys.filter(k => k.servico === providerKey && k.chave?.trim()).length;
   const totalActiveKeys = keys.filter(k => k.chave?.trim()).length;
 
   if (fetching) return <div className="min-h-screen flex items-center justify-center"><p>Carregando...</p></div>;
@@ -125,55 +141,58 @@ export default function ApiKeysSetup() {
         <CardHeader>
           <CardTitle>Configurar Chaves API</CardTitle>
           <CardDescription>
-            Adicione múltiplas chaves por provedor para substituição automática quando uma esgota.
+            Cole as chaves directamente nos campos abaixo. Clique em <strong>"+ Adicionar outra chave"</strong> para adicionar mais do mesmo provedor.
             <span className="block mt-1 font-medium text-primary">
-              {totalActiveKeys} chave(s) activa(s) — quanto mais, maior a capacidade diária!
+              {totalActiveKeys} chave(s) activa(s) no total
             </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {PROVIDERS.map((provider) => {
             const providerKeys = getProviderKeys(provider.key);
+            const filledCount = getFilledCount(provider.key);
             return (
-              <div key={provider.key} className="space-y-2 border rounded-lg p-3">
+              <div key={provider.key} className="space-y-3 border rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-sm font-semibold">{provider.label}</Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-semibold">{provider.label}</Label>
+                      {filledCount > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {filledCount} chave{filledCount > 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">{provider.description}</p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addKey(provider.key)}
-                    className="shrink-0"
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Chave
-                  </Button>
                 </div>
-
-                {providerKeys.length === 0 && (
-                  <p className="text-xs text-muted-foreground italic">Nenhuma chave adicionada</p>
-                )}
 
                 {providerKeys.map((keyRow) => {
                   const globalIndex = keys.indexOf(keyRow);
                   const exhausted = isExhausted(keyRow);
+                  const isHidden = hiddenKeys.has(globalIndex);
                   return (
                     <div key={globalIndex} className="flex items-center gap-2">
                       <div className="relative flex-1">
                         <Input
-                          type="password"
+                          type={isHidden ? "password" : "text"}
                           value={keyRow.chave}
                           onChange={(e) => updateKey(globalIndex, e.target.value)}
-                          placeholder={provider.placeholder}
-                          className={exhausted ? "border-destructive" : ""}
+                          placeholder={`Cole aqui a chave ${provider.label}...`}
+                          className={exhausted ? "border-destructive pr-16" : "pr-16"}
                         />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => toggleVisibility(globalIndex)}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        >
+                          {isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </Button>
                       </div>
-                      {exhausted ? (
-                        <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
-                      ) : keyRow.chave?.trim() ? (
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                      ) : null}
+                      {exhausted && <AlertCircle className="h-4 w-4 text-destructive shrink-0" />}
+                      {!exhausted && keyRow.chave?.trim() && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -185,6 +204,16 @@ export default function ApiKeysSetup() {
                     </div>
                   );
                 })}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addKey(provider.key)}
+                  className="w-full border-dashed"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Adicionar outra chave {provider.label.split(" ")[0]}
+                </Button>
               </div>
             );
           })}
@@ -194,8 +223,8 @@ export default function ApiKeysSetup() {
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            O sistema usa substituição automática: se uma chave esgota, passa para a próxima do mesmo provedor.
-            Chaves exaustas são reactivadas automaticamente após 6 horas.
+            Substituição automática: se uma chave esgota, passa para a próxima do mesmo provedor.
+            Chaves exaustas são reactivadas após 6 horas.
           </p>
         </CardContent>
       </Card>
