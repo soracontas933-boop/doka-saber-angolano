@@ -574,6 +574,24 @@ const TrabalhoPage = () => {
                 </div>
               </div>
             </div>
+
+            {elementosVisuais > 0 && (
+              <div className="space-y-2">
+                <Label>Estilo das Imagens</Label>
+                <Select value={estiloImagem} onValueChange={(v) => setEstiloImagem(v as ImageStyle)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="realista">📷 Realista</SelectItem>
+                    <SelectItem value="ilustracao">🎨 Ilustração Educativa</SelectItem>
+                    <SelectItem value="diagrama">📊 Diagrama</SelectItem>
+                    <SelectItem value="minimalista">✨ Minimalista</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {elementosVisuais} {elementosVisuais === 1 ? "imagem será gerada" : "imagens serão geradas"} pela IA e inseridas no corpo do trabalho
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Personalização da Capa */}
