@@ -1,5 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
+  Key,
   FileText,
   BookOpen,
   HelpCircle,
@@ -53,7 +54,8 @@ const navItems: NavItem[] = [
 { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
 { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
 { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
-{ to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true, permission: "mensagens" }];
+{ to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true, permission: "mensagens" },
+{ to: "/setup-api-keys", icon: Key, label: "Chaves API", adminOnly: true, permission: "admin_panel" }];
 
 
 const AppSidebar = () => {
