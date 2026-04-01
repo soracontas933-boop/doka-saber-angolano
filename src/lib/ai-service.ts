@@ -174,52 +174,6 @@ export const imagePrompts = {
     `Classroom scene Angola Africa, teacher and students, modern educational setting, warm and motivating, flat illustration style`,
 };
 
-// ─── Geração de Imagens via image-proxy (Multi-IA) ──────────────
-export type ImageStyle = "realista" | "ilustracao" | "diagrama" | "minimalista";
-
-export async function generateImage(
-  prompt: string,
-  style: ImageStyle = "realista",
-  width = 800,
-  height = 600
-): Promise<string> {
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy`;
-  const session = (await supabase.auth.getSession()).data.session;
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      },
-      body: JSON.stringify({ prompt, style, width, height }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erro ao gerar imagem (${response.status})`);
-    }
-
-    const data = await response.json();
-    if (data?.error) throw new Error(data.error);
-    
-    console.log(`[Image] Gerada via ${data.provider}`);
-    return data.url;
-  } catch (e: any) {
-    console.warn("Fallback para Pollinations:", e.message);
-    return generateImageUrl(prompt, width, height);
-  }
-}
-
-export function buildImagePromptForSubtema(
-  subtemaTitle: string,
-  temaGeral: string,
-  disciplina: string
-): string {
-  return `${subtemaTitle} related to ${temaGeral}, academic context of ${disciplina} in Angola education system, educational visual`;
-}
-
 // ─── Delle System Prompt ──────────────────────────────────────────
 export const DELLE_SYSTEM_PROMPT =
   "Você é Delle, um assistente educacional especializado no sistema de ensino de Angola. Conhece profundamente o currículo do INIDE, a estrutura de trabalhos escolares angolanos, planos de aula horizontais e verticais do MED Angola, e as disciplinas do ensino primário, I ciclo, II ciclo e III ciclo. Sempre gera conteúdo em Português de Angola, coerente, bem estruturado e adequado ao nível solicitado.";

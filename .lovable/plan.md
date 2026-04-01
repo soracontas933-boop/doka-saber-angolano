@@ -1,71 +1,22 @@
 
 
-# Plano: Sistema Multi-IA de Geração de Imagens para Trabalhos
+# Plano: Melhorar UX da Página de Chaves API
 
-## Situação Actual
-- Apenas usa **Pollinations** (URL estática, sem autenticação) — qualidade limitada e pouco fiável
-- O campo "Elementos Visuais" existe no formulário mas as imagens não são inseridas no corpo do trabalho, apenas na capa
+## Problema
+A página `/setup-api-keys` existe e tem o botão "+ Chave", mas a experiência não é intuitiva — o utilizador quer ver imediatamente campos para colar chaves, com um botão claro para adicionar mais do mesmo provedor.
 
-## Arquitectura Proposta
+## Mudanças no ficheiro `src/pages/ApiKeysSetup.tsx`
 
-```text
-Utilizador escolhe:
-  - Nº de imagens (0-10)
-  - Estilo: Realista | Ilustração | Diagrama | Minimalista
-  
-Compilação do trabalho → Para cada imagem:
-  ↓
-  Gera prompt contextual baseado no subtema
-  ↓
-  Tenta Provedor 1 (Nano Banana / Gemini Flash Image) → Falhou?
-  ↓
-  Tenta Provedor 2 (Nano Banana Pro / Gemini Pro Image) → Falhou?
-  ↓
-  Tenta Provedor 3 (Pollinations - fallback gratuito ilimitado)
-  ↓
-  Imagem gerada → Inserida no subtema correspondente
-```
+1. **Cada provedor começa sempre com 1 campo vazio visível** — mesmo quando já existem chaves salvas, garantir que há sempre pelo menos um campo input vazio pronto para colar uma nova chave.
 
-## Provedores de Imagens (Todos Gratuitos via Lovable AI)
+2. **Botão "+ Adicionar outra chave Gemini/Groq/etc." mais visível** — texto completo em vez de apenas "+ Chave", com estilo mais destacado (primary variant ou outline com cor).
 
-| Provedor | Modelo | Qualidade | Velocidade |
-|----------|--------|-----------|------------|
-| **Nano Banana 2** | gemini-3.1-flash-image-preview | Alta | Rápido |
-| **Nano Banana** | gemini-2.5-flash-image | Boa | Rápido |
-| **Nano Banana Pro** | gemini-3-pro-image-preview | Máxima | Lento |
-| **Pollinations** | Flux (URL) | Básica | Instantâneo |
+3. **Input type="text" em vez de "password"** — para que o utilizador veja o que cola (com opção de ocultar depois).
 
-Estes modelos estão disponíveis via Lovable AI Gateway (`LOVABLE_API_KEY`) — sem necessidade de chaves adicionais do utilizador.
+4. **Mostrar contador por provedor** — ex: "Gemini: 3 chaves" para feedback imediato.
 
-## Mudanças
+5. **Seed inteligente** — Quando carrega dados existentes do banco, adicionar automaticamente 1 campo vazio extra por provedor para facilitar a adição de novas chaves sem precisar clicar em nada.
 
-### 1. Nova Edge Function `image-proxy`
-- Recebe: `prompt`, `style` (realista/ilustração/diagrama), `width`, `height`
-- Tenta gerar com Gemini Flash Image → fallback Pro → fallback Pollinations URL
-- Retorna: imagem em base64 ou URL
-- Usa `LOVABLE_API_KEY` (já configurado) para chamar o Lovable AI Gateway
-
-### 2. `src/lib/ai-service.ts` — Nova função `generateImage()`
-- Chama a edge function `image-proxy`
-- Gera prompts contextuais baseados no subtema e disciplina
-- Retorna URL da imagem gerada
-
-### 3. `src/pages/TrabalhoPage.tsx` — Opções de Imagem no Formulário
-- Adicionar selector de **estilo de imagem**: Realista, Ilustração Educativa, Diagrama, Minimalista
-- Na fase de compilação: gerar imagens contextualmente e inseri-las entre os subtemas
-- Mostrar progresso: "A gerar imagem 2 de 5..."
-
-### 4. `src/components/trabalho/TrabalhoCompleto.tsx` — Renderizar Imagens
-- Inserir imagens geradas nas secções correspondentes do trabalho
-- Legendas automáticas: "Figura 1: [descrição contextual]"
-
-### 5. Exportação (PDF/Word)
-- Incluir as imagens geradas nos exports existentes
-
-## Ficheiros Afectados
-1. **`supabase/functions/image-proxy/index.ts`** — nova edge function
-2. **`src/lib/ai-service.ts`** — adicionar `generateImage()` e prompts de imagem contextuais
-3. **`src/pages/TrabalhoPage.tsx`** — opções de estilo + lógica de geração na compilação
-4. **`src/components/trabalho/TrabalhoCompleto.tsx`** — renderizar imagens inline
-5. **`src/lib/export-utils.ts`** — incluir imagens nos exports
+## Ficheiro afectado
+- `src/pages/ApiKeysSetup.tsx` — redesign da interface de gestão de chaves
 
