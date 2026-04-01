@@ -34,7 +34,7 @@ const SectionContent: React.FC<{ titulo: string; html: string; tipo: string }> =
   );
 };
 
-const TrabalhoCompleto: React.FC<TrabalhoCompletoProps> = ({ conteudo, coverData, capaImageUrl, editable = false, onContentChange }) => {
+const TrabalhoCompleto: React.FC<TrabalhoCompletoProps> = ({ conteudo, coverData, capaImageUrl, sectionImages, editable = false, onContentChange }) => {
   const sections = parseTrabalhoSections(conteudo);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
