@@ -70,6 +70,7 @@ const TrabalhoPage = () => {
   const [subtemas, setSubtemas] = useState<Subtema[]>([]);
   const [resultadoCompilado, setResultadoCompilado] = useState<string | null>(null);
   const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
+  const [generatedImages, setGeneratedImages] = useState<Map<number, { url: string; caption: string }>>(new Map());
   const [editMode, setEditMode] = useState(false);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
