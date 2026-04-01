@@ -74,30 +74,46 @@ const TrabalhoCompleto: React.FC<TrabalhoCompletoProps> = ({ conteudo, coverData
       </PaginaA4>
 
       {/* DEMAIS PÁGINAS */}
-      {sections.map((section, index) => (
-        <PaginaA4
-          key={index}
-          tipo={section.tipo === "indice" ? "indice" : "conteudo"}
-          numero={section.numero}
-        >
-          {editable ? (
-            <EditableSection
-              titulo={section.titulo}
-              html={renderMarkdownToHTML(section.conteudo)}
-              tipo={section.tipo}
-              index={index}
-              onContentChange={handleSectionChange}
-              registerRef={registerRef}
-            />
-          ) : (
-            <SectionContent
-              titulo={section.titulo}
-              html={renderMarkdownToHTML(section.conteudo)}
-              tipo={section.tipo}
-            />
-          )}
-        </PaginaA4>
-      ))}
+      {sections.map((section, index) => {
+        const sectionImage = sectionImages?.get(index);
+        return (
+          <PaginaA4
+            key={index}
+            tipo={section.tipo === "indice" ? "indice" : "conteudo"}
+            numero={section.numero}
+          >
+            {editable ? (
+              <EditableSection
+                titulo={section.titulo}
+                html={renderMarkdownToHTML(section.conteudo)}
+                tipo={section.tipo}
+                index={index}
+                onContentChange={handleSectionChange}
+                registerRef={registerRef}
+              />
+            ) : (
+              <SectionContent
+                titulo={section.titulo}
+                html={renderMarkdownToHTML(section.conteudo)}
+                tipo={section.tipo}
+              />
+            )}
+            {sectionImage && (
+              <div className="secao-imagem" style={{ marginTop: "16px", textAlign: "center" }}>
+                <img
+                  src={sectionImage.url}
+                  alt={sectionImage.caption}
+                  style={{ maxWidth: "85%", margin: "0 auto", borderRadius: "4px", border: "1px solid #e0e0e0" }}
+                  loading="lazy"
+                />
+                <p style={{ fontSize: "10px", color: "#666", marginTop: "6px", fontStyle: "italic" }}>
+                  {sectionImage.caption}
+                </p>
+              </div>
+            )}
+          </PaginaA4>
+        );
+      })}
     </div>
   );
 };
