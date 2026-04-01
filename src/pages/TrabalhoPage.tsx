@@ -241,7 +241,9 @@ const TrabalhoPage = () => {
   };
 
   // Phase 3: Compile
-  const handleCompile = () => {
+  const handleCompile = async () => {
+    setLoading(true);
+
     // Build full markdown from all subtemas
     const sections = subtemas.map((s) => {
       const tituloPrefix = s.tipo === "capitulo"
@@ -251,13 +253,44 @@ const TrabalhoPage = () => {
         : s.tipo === "conclusao"
         ? "## Conclusão"
         : "## Bibliografia";
-      return { titulo: tituloPrefix.replace("## ", ""), markdown: `${tituloPrefix}\n\n${s.conteudo}` };
+      return { titulo: tituloPrefix.replace("## ", ""), markdown: `${tituloPrefix}\n\n${s.conteudo}`, tipo: s.tipo };
     });
 
     // Generate Índice automatically with page numbers
-    // Page 1 = Capa, Page 2 = Índice, Pages 3+ = content sections
     const indiceLinhas = sections.map((s, i) => `- ${s.titulo} .......... ${i + 3}`);
     const indiceMarkdown = `## Índice\n\n${indiceLinhas.join("\n")}`;
+
+    // Generate images for content sections (capitulos)
+    const newImages = new Map<number, { url: string; caption: string }>();
+    if (elementosVisuais > 0) {
+      const contentSections = sections
+        .map((s, i) => ({ ...s, originalIndex: i }))
+        .filter((s) => s.tipo === "capitulo");
+
+      // Distribute images across content sections
+      const imagesPerSection = Math.max(1, Math.floor(elementosVisuais / Math.max(1, contentSections.length)));
+      let imagesRemaining = elementosVisuais;
+      
+      for (const section of contentSections) {
+        if (imagesRemaining <= 0) break;
+        const count = Math.min(imagesPerSection, imagesRemaining);
+        
+        for (let j = 0; j < count; j++) {
+          setEtapa(`A gerar imagem ${elementosVisuais - imagesRemaining + j + 1} de ${elementosVisuais}...`);
+          try {
+            const prompt = buildImagePromptForSubtema(section.titulo, tema, disciplina || "Educação");
+            const url = await generateImage(prompt, estiloImagem, 800, 600);
+            const figNum = newImages.size + 1;
+            // +1 because index is section 0 in the sections array (after indice)
+            newImages.set(section.originalIndex, { url, caption: `Figura ${figNum}: ${section.titulo}` });
+          } catch (err) {
+            console.error("Erro ao gerar imagem:", err);
+          }
+        }
+        imagesRemaining -= count;
+      }
+    }
+    setGeneratedImages(newImages);
 
     const fullContent = [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n");
     setResultadoCompilado(fullContent);
@@ -269,9 +302,10 @@ const TrabalhoPage = () => {
     }
 
     setFase("resultado");
+    setLoading(false);
+    setEtapa("");
     toast.success("Trabalho compilado com sucesso!");
     
-    // Log usage after successful compilation
     logUsage("trabalho");
 
     saveProject("trabalho", tema || "Trabalho sem título", {
