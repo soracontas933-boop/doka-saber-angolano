@@ -42,13 +42,6 @@ async function callAI(
 
     if (!response.ok) {
       const errBody = await response.text();
-      // Tentar extrair mensagem de erro amigável se for JSON
-      try {
-        const errJson = JSON.parse(errBody);
-        if (errJson.error) throw new Error(errJson.error);
-      } catch (e) {
-        // Se não for JSON, lança o texto bruto
-      }
       throw new Error(`Erro IA (${response.status}): ${errBody}`);
     }
 
@@ -67,25 +60,20 @@ async function callAI(
     return { content, service_used: serviceUsed, tokens_used: tokensUsed };
   } catch (e: any) {
     if (e.name === "AbortError") throw new Error("A geração demorou demais. Tente com menos conteúdo.");
-    throw new Error(e.message);
+    throw new Error(`Erro ao chamar IA: ${e.message}`);
   } finally {
     clearTimeout(timeoutId);
   }
 }
 
 // ─── Geração de Conteúdo Principal ───────────────────────────────
-/** 
- * @deprecated Agora o ai-proxy faz rotação automática. 
- * Use generateWithAI para permitir fallback entre Groq, Gemini, etc.
- */
 export async function generateWithGroq(
   systemPrompt: string,
   userPrompt: string,
   maxTokens = 8000,
   temperature = 0.7
 ): Promise<string> {
-  // Alterado para não forçar "groq", permitindo que o proxy escolha a melhor disponível
-  const result = await callAI(systemPrompt, userPrompt, { maxTokens, temperature });
+  const result = await callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
   return result.content;
 }
 
@@ -108,7 +96,7 @@ export async function reviewWithOpenRouter(
     const result = await callAI(
       "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
       `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
-      { maxTokens, temperature: 0.5 }
+      { maxTokens, temperature: 0.5, service: "openrouter" }
     );
     return result.content;
   } catch {
@@ -170,17 +158,14 @@ export async function extractTextFromDocument(file: File): Promise<string> {
 }
 
 // ─── Pollinations (Imagens Gratuitas) ────────────────────────────
-export function generateImageUrl(prompt: string, width = 800, height = 450): string {
+export function generateImageUrl(prompt: string, width = 800, height = 600): string {
   const seed = Math.floor(Math.random() * 99999);
-  const cleanPrompt = prompt.replace(/[^\w\s,.-]/gi, '').substring(0, 300);
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true`;
 }
 
 export const imagePrompts = {
   capaTrabaho: (titulo: string, disciplina: string) =>
-    `High-quality educational cover illustration for a school project about "${titulo}", subject: ${disciplina}. Cinematic lighting, academic aesthetic, professional composition, 16:9 aspect ratio, vibrant colors, no text, ultra-detailed, 4k.`,
-  subtema: (titulo: string, temaGeral: string) =>
-    `Detailed educational illustration specifically about "${titulo}" within the broader topic of "${temaGeral}". Scientific or historical diagram style, clear visual explanation, high resolution, 16:9 aspect ratio, professional academic style, no text, vibrant and engaging.`,
+    `Educational cover page illustration for school assignment about ${titulo}, subject ${disciplina}, Angola education system, minimalist design, blue and white colors, clean academic style, no text`,
   resumo: (tema: string) =>
     `Simple educational illustration representing ${tema}, colorful diagram style, memory aid visual, Angola school context, flat design, bright colors`,
   flashcard: (conceito: string) =>
@@ -306,7 +291,7 @@ Verifica obrigatoriamente e retorna em JSON:
   "nivel_trabalho": "fraco|suficiente|bom|muito_bom|excelente"
 }
 
-Verifica: CAPA (campos completos), ÍNDICE (existência e numeração), ESTRUTURA (paginação, numeração de capítulos/subcapítulos), INTRODUÇÃO (contextualização, objectivos geral e específicos, justificativa, metodologia, estrutura do trabalho, 1-2 páginas), DESENVOLVIMENTO (mín 2 capítulos, profundidade, sem repetição, examples), CONCLUSÃO (retoma objectivos, síntese crítica, perspectivas futuras), BIBLIOGRAFIA (mín 5 referências APA, fontes angolanas), FORMATAÇÃO (fonte, espaçamento, margens, linguagem académica).`,
+Verifica: CAPA (campos completos), ÍNDICE (existência e numeração), ESTRUTURA (paginação, numeração de capítulos/subcapítulos), INTRODUÇÃO (contextualização, objectivos geral e específicos, justificativa, metodologia, estrutura do trabalho, 1-2 páginas), DESENVOLVIMENTO (mín 2 capítulos, profundidade, sem repetição, exemplos), CONCLUSÃO (retoma objectivos, síntese crítica, perspectivas futuras), BIBLIOGRAFIA (mín 5 referências APA, fontes angolanas), FORMATAÇÃO (fonte, espaçamento, margens, linguagem académica).`,
 
   correcaoGerar: (original: string, problemas: string, dadosCapa: string) =>
     `Com base neste trabalho original e nos problemas identificados, gera uma versão COMPLETAMENTE CORRIGIDA E MELHORADA.

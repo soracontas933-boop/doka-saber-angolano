@@ -93,8 +93,6 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
  */
 export function renderMarkdownToHTML(content: string): string {
   let html = content
-    // Handle images first
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<div class="secao-imagem-wrapper"><img src="$2" alt="$1" class="secao-imagem" /><p class="secao-imagem-legenda">$1</p></div>')
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")
     .replace(/^####\s+(.+)$/gm, '<h4 class="secao-subtitulo-4">$1</h4>')
@@ -114,9 +112,6 @@ export function renderMarkdownToHTML(content: string): string {
     /\(([A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][a-záàâãéèêíïóôõöúçñ]+(?:\s*(?:&|e)\s*[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][a-záàâãéèêíïóôõöúçñ]+)*(?:\s+et\s+al\.?)?,\s*\d{4}(?:,\s*p+\.\s*\d+(?:-\d+)?)?)\)/g,
     '<span class="citacao-inline">($1)</span>'
   );
-
-  // Clean up empty paragraphs
-  html = html.replace(/<p class="secao-paragrafo">\s*<\/p>/g, '');
 
   return html;
 }

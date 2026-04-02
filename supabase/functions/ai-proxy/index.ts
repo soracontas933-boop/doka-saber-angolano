@@ -12,8 +12,6 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
 const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
-const SAMBANOVA_URL = "https://api.sambanova.ai/v1/chat/completions";
-const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
 
 async function callSelfHosted(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
   const [url, token] = apiKey.split("|");
@@ -91,11 +89,7 @@ async function callGemini(messages: any[], apiKey: string, maxTokens: number, te
     body: JSON.stringify(body),
   });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Gemini error ${res.status}: ${errorText}`);
-  }
-  
+  if (!res.ok) throw new Error(`Gemini error ${res.status}: ${await res.text()}`);
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
   return { choices: [{ message: { content: text } }] };
@@ -105,7 +99,7 @@ async function callCerebras(messages: any[], apiKey: string, maxTokens: number, 
   const res = await fetch(CEREBRAS_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "llama-3.3-70b-speculative", messages, max_tokens: maxTokens, temperature }),
+    body: JSON.stringify({ model: "llama-3.3-70b", messages, max_tokens: maxTokens, temperature }),
   });
 
   if (!res.ok) throw new Error(`Cerebras error ${res.status}: ${await res.text()}`);
@@ -123,37 +117,12 @@ async function callTogether(messages: any[], apiKey: string, maxTokens: number, 
   return res.json();
 }
 
-async function callSambaNova(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const res = await fetch(SAMBANOVA_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "Meta-Llama-3.3-70B-Instruct", messages, max_tokens: maxTokens, temperature }),
-  });
-
-  if (!res.ok) throw new Error(`SambaNova error ${res.status}: ${await res.text()}`);
-  return res.json();
-}
-
-async function callDeepSeek(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const res = await fetch(DEEPSEEK_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "deepseek-chat", messages, max_tokens: maxTokens, temperature }),
-  });
-
-  if (!res.ok) throw new Error(`DeepSeek error ${res.status}: ${await res.text()}`);
-  return res.json();
-}
-
 function isRetryableError(error: Error): boolean {
   const msg = error.message.toLowerCase();
-  return msg.includes("429") || msg.includes("rate limit") || msg.includes("quota")
-    || msg.includes("exceeded") || msg.includes("too many");
-}
-
-function isFatalError(error: Error): boolean {
-  const msg = error.message.toLowerCase();
-  return msg.includes("401") || msg.includes("403") || msg.includes("wrong_api_key") || msg.includes("invalid");
+  return msg.includes("429") || msg.includes("401") || msg.includes("403")
+    || msg.includes("400") || msg.includes("rate limit") || msg.includes("quota")
+    || msg.includes("exceeded") || msg.includes("too many")
+    || msg.includes("wrong_api_key") || msg.includes("invalid");
 }
 
 let roundRobinIndex = 0;
@@ -177,13 +146,13 @@ function isDatabaseKeyId(keyId: string): boolean {
 
 async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
+  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
     .from("api_keys")
     .select("id, servico, chave, prioridade, ultimo_erro")
     .eq("ativo", true)
-    .or(`ultimo_erro.is.null,ultimo_erro.lt.${oneHourAgo}`)
+    .or(`ultimo_erro.is.null,ultimo_erro.lt.${sixHoursAgo}`)
     .order("prioridade", { ascending: true });
 
   if (error) {
@@ -224,6 +193,7 @@ async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
 
 async function markKeyExhausted(keyId: string) {
   if (!isDatabaseKeyId(keyId)) return;
+
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     await supabase.from("api_keys").update({ ultimo_erro: new Date().toISOString() }).eq("id", keyId);
@@ -232,27 +202,22 @@ async function markKeyExhausted(keyId: string) {
   }
 }
 
-async function deactivateKey(keyId: string) {
-  if (!isDatabaseKeyId(keyId)) return;
-  try {
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    await supabase.from("api_keys").update({ ativo: false, ultimo_erro: new Date().toISOString() }).eq("id", keyId);
-  } catch (error) {
-    console.error("Failed to deactivate key:", error);
-  }
-}
-
 function getCallFn(svc: string): ((msgs: any[], key: string, mt: number, t: number) => Promise<any>) | null {
   switch (svc) {
-    case "selfhosted": return callSelfHosted;
-    case "groq": return callGroq;
-    case "openrouter": return callOpenRouter;
-    case "gemini": return callGemini;
-    case "cerebras": return callCerebras;
-    case "together": return callTogether;
-    case "sambanova": return callSambaNova;
-    case "deepseek": return callDeepSeek;
-    default: return null;
+    case "selfhosted":
+      return callSelfHosted;
+    case "groq":
+      return callGroq;
+    case "openrouter":
+      return callOpenRouter;
+    case "gemini":
+      return callGemini;
+    case "cerebras":
+      return callCerebras;
+    case "together":
+      return callTogether;
+    default:
+      return null;
   }
 }
 
@@ -261,8 +226,7 @@ function supportsImages(svc: string): boolean {
 }
 
 function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, preferredService?: string): string[] {
-  // Priorizamos Groq e Cerebras para texto puro devido à velocidade
-  const textServices = ["groq", "cerebras", "sambanova", "together", "deepseek", "openrouter", "gemini", "selfhosted"];
+  const textServices = ["selfhosted", "cerebras", "groq", "together", "openrouter", "gemini"];
   const imageServices = ["gemini"];
 
   if (preferredService) {
@@ -299,56 +263,50 @@ serve(async (req) => {
 
     const servicePriority = getServiceOrder(keys, hasImages, service);
     let lastError: Error | null = null;
-    let attemptedServices: string[] = [];
 
     for (const svc of servicePriority) {
       const svcKeys = keys[svc];
       if (!svcKeys || svcKeys.length === 0) continue;
       if (hasImages && !supportsImages(svc)) continue;
 
-      attemptedServices.push(svc);
       const callFn = getCallFn(svc);
       if (!callFn) continue;
 
       for (const keyEntry of svcKeys) {
         try {
-          console.log(`[Proxy] Tentando ${svc} (chave: ${keyEntry.id.substring(0, 8)}...)`);
+          console.log(`Trying ${svc} (key ${keyEntry.id.substring(0, 8)}...)...`);
           const result = await callFn(messages, keyEntry.chave, max_tokens, temperature);
-          
+          console.log(`Success with ${svc} (key ${keyEntry.id.substring(0, 8)}...)`);
+
           const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
           return new Response(JSON.stringify({ ...result, service_used: svc, tokens_used: tokensUsed }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         } catch (caughtError: any) {
           const error = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
-          console.error(`[Proxy] Falha em ${svc} (chave: ${keyEntry.id.substring(0, 8)}...):`, error.message);
+          console.error(`${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, error.message);
           lastError = error;
 
-          if (isFatalError(error)) {
-            await deactivateKey(keyEntry.id);
-          } else if (isRetryableError(error)) {
+          if (isRetryableError(error)) {
             await markKeyExhausted(keyEntry.id);
+            console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
+          } else {
+            console.log(`Skipping failed ${svc} key ${keyEntry.id.substring(0, 8)}... and trying next option...`);
           }
-          // Continua para a próxima chave/serviço
+
           continue;
         }
       }
     }
 
-    // Se falhou tudo, retorna um erro detalhado para ajudar no debug
-    const errorMessage = lastError?.message || "Nenhuma API disponível.";
     return new Response(
-      JSON.stringify({ 
-        error: `Falha total após tentar os serviços: ${attemptedServices.join(", ")}. Último erro: ${errorMessage}`,
-        details: lastError?.message,
-        attempted_services: attemptedServices
-      }),
+      JSON.stringify({ error: lastError?.message || "Nenhuma API disponível. Configure suas chaves em /setup-api-keys." }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("ai-proxy fatal error:", error);
+    console.error("ai-proxy error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro interno no servidor" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
