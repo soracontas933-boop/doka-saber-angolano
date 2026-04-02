@@ -42,6 +42,13 @@ async function callAI(
 
     if (!response.ok) {
       const errBody = await response.text();
+      // Tentar extrair mensagem de erro amigável se for JSON
+      try {
+        const errJson = JSON.parse(errBody);
+        if (errJson.error) throw new Error(errJson.error);
+      } catch (e) {
+        // Se não for JSON, lança o texto bruto
+      }
       throw new Error(`Erro IA (${response.status}): ${errBody}`);
     }
 
@@ -60,20 +67,25 @@ async function callAI(
     return { content, service_used: serviceUsed, tokens_used: tokensUsed };
   } catch (e: any) {
     if (e.name === "AbortError") throw new Error("A geração demorou demais. Tente com menos conteúdo.");
-    throw new Error(`Erro ao chamar IA: ${e.message}`);
+    throw new Error(e.message);
   } finally {
     clearTimeout(timeoutId);
   }
 }
 
 // ─── Geração de Conteúdo Principal ───────────────────────────────
+/** 
+ * @deprecated Agora o ai-proxy faz rotação automática. 
+ * Use generateWithAI para permitir fallback entre Groq, Gemini, etc.
+ */
 export async function generateWithGroq(
   systemPrompt: string,
   userPrompt: string,
   maxTokens = 8000,
   temperature = 0.7
 ): Promise<string> {
-  const result = await callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
+  // Alterado para não forçar "groq", permitindo que o proxy escolha a melhor disponível
+  const result = await callAI(systemPrompt, userPrompt, { maxTokens, temperature });
   return result.content;
 }
 
@@ -96,7 +108,7 @@ export async function reviewWithOpenRouter(
     const result = await callAI(
       "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
       `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
-      { maxTokens, temperature: 0.5, service: "openrouter" }
+      { maxTokens, temperature: 0.5 }
     );
     return result.content;
   } catch {

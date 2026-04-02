@@ -89,7 +89,11 @@ async function callGemini(messages: any[], apiKey: string, maxTokens: number, te
     body: JSON.stringify(body),
   });
 
-  if (!res.ok) throw new Error(`Gemini error ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gemini error ${res.status}: ${errorText}`);
+  }
+  
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
   return { choices: [{ message: { content: text } }] };
@@ -149,7 +153,6 @@ function isDatabaseKeyId(keyId: string): boolean {
 
 async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  // Reduce cooldown to 1 hour for rate limits, but we'll still use database keys first
   const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
@@ -197,7 +200,6 @@ async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
 
 async function markKeyExhausted(keyId: string) {
   if (!isDatabaseKeyId(keyId)) return;
-
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     await supabase.from("api_keys").update({ ultimo_erro: new Date().toISOString() }).eq("id", keyId);
@@ -208,7 +210,6 @@ async function markKeyExhausted(keyId: string) {
 
 async function deactivateKey(keyId: string) {
   if (!isDatabaseKeyId(keyId)) return;
-
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     await supabase.from("api_keys").update({ ativo: false, ultimo_erro: new Date().toISOString() }).eq("id", keyId);
@@ -219,20 +220,13 @@ async function deactivateKey(keyId: string) {
 
 function getCallFn(svc: string): ((msgs: any[], key: string, mt: number, t: number) => Promise<any>) | null {
   switch (svc) {
-    case "selfhosted":
-      return callSelfHosted;
-    case "groq":
-      return callGroq;
-    case "openrouter":
-      return callOpenRouter;
-    case "gemini":
-      return callGemini;
-    case "cerebras":
-      return callCerebras;
-    case "together":
-      return callTogether;
-    default:
-      return null;
+    case "selfhosted": return callSelfHosted;
+    case "groq": return callGroq;
+    case "openrouter": return callOpenRouter;
+    case "gemini": return callGemini;
+    case "cerebras": return callCerebras;
+    case "together": return callTogether;
+    default: return null;
   }
 }
 
@@ -241,7 +235,7 @@ function supportsImages(svc: string): boolean {
 }
 
 function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, preferredService?: string): string[] {
-  const textServices = ["selfhosted", "groq", "cerebras", "together", "openrouter", "gemini"];
+  const textServices = ["groq", "cerebras", "together", "openrouter", "gemini", "selfhosted"];
   const imageServices = ["gemini"];
 
   if (preferredService) {
@@ -254,7 +248,6 @@ function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, p
   const available = textServices.filter((svc) => keys[svc]?.length > 0);
   if (available.length === 0) return textServices;
 
-  // Round robin to distribute load across providers
   roundRobinIndex = (roundRobinIndex + 1) % available.length;
   return [...available.slice(roundRobinIndex), ...available.slice(0, roundRobinIndex)];
 }
@@ -292,8 +285,7 @@ serve(async (req) => {
         try {
           console.log(`Trying ${svc} (key ${keyEntry.id.substring(0, 8)}...)...`);
           const result = await callFn(messages, keyEntry.chave, max_tokens, temperature);
-          console.log(`Success with ${svc} (key ${keyEntry.id.substring(0, 8)}...)`);
-
+          
           const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
           return new Response(JSON.stringify({ ...result, service_used: svc, tokens_used: tokensUsed }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -305,21 +297,19 @@ serve(async (req) => {
 
           if (isFatalError(error)) {
             await deactivateKey(keyEntry.id);
-            console.log(`Key ${keyEntry.id.substring(0, 8)}... deactivated (FATAL ERROR), trying next...`);
           } else if (isRetryableError(error)) {
             await markKeyExhausted(keyEntry.id);
-            console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
-          } else {
-            console.log(`Skipping failed ${svc} key ${keyEntry.id.substring(0, 8)}... and trying next option...`);
           }
-
+          // Continue loop to try next key/service
           continue;
         }
       }
     }
 
+    // Se chegou aqui, nada funcionou
+    const errorMessage = lastError?.message || "Nenhuma API disponível. Configure suas chaves em /setup-api-keys.";
     return new Response(
-      JSON.stringify({ error: lastError?.message || "Nenhuma API disponível. Configure suas chaves em /setup-api-keys." }),
+      JSON.stringify({ error: errorMessage }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
