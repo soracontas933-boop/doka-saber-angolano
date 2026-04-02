@@ -119,10 +119,13 @@ async function callTogether(messages: any[], apiKey: string, maxTokens: number, 
 
 function isRetryableError(error: Error): boolean {
   const msg = error.message.toLowerCase();
-  return msg.includes("429") || msg.includes("401") || msg.includes("403")
-    || msg.includes("400") || msg.includes("rate limit") || msg.includes("quota")
-    || msg.includes("exceeded") || msg.includes("too many")
-    || msg.includes("wrong_api_key") || msg.includes("invalid");
+  return msg.includes("429") || msg.includes("rate limit") || msg.includes("quota")
+    || msg.includes("exceeded") || msg.includes("too many");
+}
+
+function isFatalError(error: Error): boolean {
+  const msg = error.message.toLowerCase();
+  return msg.includes("401") || msg.includes("403") || msg.includes("wrong_api_key") || msg.includes("invalid");
 }
 
 let roundRobinIndex = 0;
@@ -146,13 +149,14 @@ function isDatabaseKeyId(keyId: string): boolean {
 
 async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  // Reduce cooldown to 1 hour for rate limits, but we'll still use database keys first
+  const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
     .from("api_keys")
     .select("id, servico, chave, prioridade, ultimo_erro")
     .eq("ativo", true)
-    .or(`ultimo_erro.is.null,ultimo_erro.lt.${sixHoursAgo}`)
+    .or(`ultimo_erro.is.null,ultimo_erro.lt.${oneHourAgo}`)
     .order("prioridade", { ascending: true });
 
   if (error) {
@@ -202,6 +206,17 @@ async function markKeyExhausted(keyId: string) {
   }
 }
 
+async function deactivateKey(keyId: string) {
+  if (!isDatabaseKeyId(keyId)) return;
+
+  try {
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    await supabase.from("api_keys").update({ ativo: false, ultimo_erro: new Date().toISOString() }).eq("id", keyId);
+  } catch (error) {
+    console.error("Failed to deactivate key:", error);
+  }
+}
+
 function getCallFn(svc: string): ((msgs: any[], key: string, mt: number, t: number) => Promise<any>) | null {
   switch (svc) {
     case "selfhosted":
@@ -226,7 +241,7 @@ function supportsImages(svc: string): boolean {
 }
 
 function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, preferredService?: string): string[] {
-  const textServices = ["selfhosted", "cerebras", "groq", "together", "openrouter", "gemini"];
+  const textServices = ["selfhosted", "groq", "cerebras", "together", "openrouter", "gemini"];
   const imageServices = ["gemini"];
 
   if (preferredService) {
@@ -239,6 +254,7 @@ function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, p
   const available = textServices.filter((svc) => keys[svc]?.length > 0);
   if (available.length === 0) return textServices;
 
+  // Round robin to distribute load across providers
   roundRobinIndex = (roundRobinIndex + 1) % available.length;
   return [...available.slice(roundRobinIndex), ...available.slice(0, roundRobinIndex)];
 }
@@ -287,7 +303,10 @@ serve(async (req) => {
           console.error(`${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, error.message);
           lastError = error;
 
-          if (isRetryableError(error)) {
+          if (isFatalError(error)) {
+            await deactivateKey(keyEntry.id);
+            console.log(`Key ${keyEntry.id.substring(0, 8)}... deactivated (FATAL ERROR), trying next...`);
+          } else if (isRetryableError(error)) {
             await markKeyExhausted(keyEntry.id);
             console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
           } else {

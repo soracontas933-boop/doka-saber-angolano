@@ -158,14 +158,17 @@ export async function extractTextFromDocument(file: File): Promise<string> {
 }
 
 // ─── Pollinations (Imagens Gratuitas) ────────────────────────────
-export function generateImageUrl(prompt: string, width = 800, height = 600): string {
+export function generateImageUrl(prompt: string, width = 800, height = 450): string {
   const seed = Math.floor(Math.random() * 99999);
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true`;
+  const cleanPrompt = prompt.replace(/[^\w\s,.-]/gi, '').substring(0, 300);
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true`;
 }
 
 export const imagePrompts = {
   capaTrabaho: (titulo: string, disciplina: string) =>
     `Educational cover page illustration for school assignment about ${titulo}, subject ${disciplina}, Angola education system, minimalist design, blue and white colors, clean academic style, no text`,
+  subtema: (titulo: string, temaGeral: string) =>
+    `Educational illustration about ${titulo} in the context of ${temaGeral}, Angola school context, flat design, bright colors, clear and academic style, no text`,
   resumo: (tema: string) =>
     `Simple educational illustration representing ${tema}, colorful diagram style, memory aid visual, Angola school context, flat design, bright colors`,
   flashcard: (conceito: string) =>
@@ -291,7 +294,7 @@ Verifica obrigatoriamente e retorna em JSON:
   "nivel_trabalho": "fraco|suficiente|bom|muito_bom|excelente"
 }
 
-Verifica: CAPA (campos completos), ÍNDICE (existência e numeração), ESTRUTURA (paginação, numeração de capítulos/subcapítulos), INTRODUÇÃO (contextualização, objectivos geral e específicos, justificativa, metodologia, estrutura do trabalho, 1-2 páginas), DESENVOLVIMENTO (mín 2 capítulos, profundidade, sem repetição, exemplos), CONCLUSÃO (retoma objectivos, síntese crítica, perspectivas futuras), BIBLIOGRAFIA (mín 5 referências APA, fontes angolanas), FORMATAÇÃO (fonte, espaçamento, margens, linguagem académica).`,
+Verifica: CAPA (campos completos), ÍNDICE (existência e numeração), ESTRUTURA (paginação, numeração de capítulos/subcapítulos), INTRODUÇÃO (contextualização, objectivos geral e específicos, justificativa, metodologia, estrutura do trabalho, 1-2 páginas), DESENVOLVIMENTO (mín 2 capítulos, profundidade, sem repetição, examples), CONCLUSÃO (retoma objectivos, síntese crítica, perspectivas futuras), BIBLIOGRAFIA (mín 5 referências APA, fontes angolanas), FORMATAÇÃO (fonte, espaçamento, margens, linguagem académica).`,
 
   correcaoGerar: (original: string, problemas: string, dadosCapa: string) =>
     `Com base neste trabalho original e nos problemas identificados, gera uma versão COMPLETAMENTE CORRIGIDA E MELHORADA.

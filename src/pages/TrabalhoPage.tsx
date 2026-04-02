@@ -201,6 +201,13 @@ const TrabalhoPage = () => {
         conteudoFinal = validarBibliografia(conteudo, disciplina || "Geral");
       }
 
+      // ─── ADICIONAR IMAGEM TEMÁTICA AO CAPÍTULO ───
+      if (sub.tipo === "capitulo" || sub.tipo === "introducao") {
+        const imgPrompt = imagePrompts.subtema(sub.titulo, tema);
+        const imgUrl = generateImageUrl(imgPrompt);
+        conteudoFinal = `![Ilustração: ${sub.titulo}](${imgUrl})\n\n${conteudoFinal}`;
+      }
+
       setSubtemas((prev) =>
         prev.map((s) => (s.id === id ? { ...s, conteudo: conteudoFinal, status: "gerado" } : s))
       );
@@ -253,9 +260,15 @@ const TrabalhoPage = () => {
     });
 
     // Generate Índice automatically with page numbers
-    // Page 1 = Capa, Page 2 = Índice, Pages 3+ = content sections
-    const indiceLinhas = sections.map((s, i) => `- ${s.titulo} .......... ${i + 3}`);
-    const indiceMarkdown = `## Índice\n\n${indiceLinhas.join("\n")}`;
+    let currentPos = 3;
+    const indiceItems = sections.map(s => {
+      const item = { titulo: s.titulo, pagina: currentPos };
+      // Estimativa simples de páginas: cada capítulo longo ~2 páginas, introdução/conclusão ~1
+      currentPos += (s.titulo.toLowerCase().includes('introdução') || s.titulo.toLowerCase().includes('conclusão') || s.titulo.toLowerCase().includes('bibliografia')) ? 1 : 2;
+      return item;
+    });
+
+    const indiceMarkdown = `## Índice\n\n${indiceItems.map(item => `${item.titulo} .................................................. ${item.pagina}`).join('\n')}`;
 
     const fullContent = [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n");
     setResultadoCompilado(fullContent);
@@ -503,104 +516,71 @@ const TrabalhoPage = () => {
                 </SelectContent>
               </Select>
               {!disciplinas.includes(disciplina) && (
-                <Input
-                  placeholder="Escreva a disciplina..."
-                  value={disciplina}
-                  onChange={(e) => setDisciplina(e.target.value)}
-                  className="mt-1"
+                <Input 
+                  className="mt-2"
+                  placeholder="Nome da disciplina" 
+                  value={disciplina} 
+                  onChange={(e) => setDisciplina(e.target.value)} 
                 />
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Número de Páginas</Label>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setPaginas(Math.max(3, paginas - 1))}>
-                    <Minus className="h-3.5 w-3.5" />
-                  </Button>
-                  <span className="text-sm font-medium flex-1 text-center">{paginas} páginas</span>
-                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setPaginas(Math.min(30, paginas + 1))}>
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Número de Páginas (Aprox.)</Label>
+                <span className="text-sm font-medium text-primary">{paginas} páginas</span>
               </div>
-              <div className="space-y-2">
-                <Label>Elementos Visuais</Label>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setElementosVisuais(Math.max(0, elementosVisuais - 1))}>
-                    <Minus className="h-3.5 w-3.5" />
-                  </Button>
-                  <span className="text-sm font-medium flex-1 text-center">{elementosVisuais}</span>
-                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setElementosVisuais(Math.min(10, elementosVisuais + 1))}>
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+              <input
+                type="range"
+                min="3"
+                max="30"
+                step="1"
+                value={paginas}
+                onChange={(e) => setPaginas(parseInt(e.target.value))}
+                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground px-1">
+                <span>3 pág.</span>
+                <span>15 pág.</span>
+                <span>30 pág.</span>
               </div>
             </div>
           </div>
 
-          {/* Personalização da Capa */}
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
-            <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-              Personalização da Capa
-            </h2>
-            <p className="text-xs text-muted-foreground">Escolha entre capa padrão, upload ou personalizada</p>
-
-            <Tabs value={tipoCapa} onValueChange={(v) => setTipoCapa(v as "padrao" | "upload" | "personalizada")}>
-              <TabsList className="w-full">
-                <TabsTrigger value="padrao" className="flex-1">Padrão</TabsTrigger>
-                <TabsTrigger value="upload" className="flex-1">Upload</TabsTrigger>
-                <TabsTrigger value="personalizada" className="flex-1">Personalizada</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {tipoCapa === "padrao" && (
-              <p className="text-sm text-muted-foreground">
-                A capa será gerada automaticamente com os dados preenchidos acima.
-              </p>
-            )}
-
-            {tipoCapa === "upload" && (
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
-                <Image className="h-7 w-7 text-muted-foreground mb-2" />
-                <span className="text-sm text-muted-foreground font-medium">
-                  {capaUpload ? capaUpload.name : "Carregar imagem da capa"}
-                </span>
-                <input type="file" className="hidden" accept="image/*" onChange={handleCapaUpload} />
-              </label>
-            )}
-
-            {tipoCapa === "personalizada" && (
-              <p className="text-sm text-muted-foreground">
-                A capa personalizada será gerada pela IA com design exclusivo baseado no tema do trabalho.
-              </p>
-            )}
-          </div>
-
-          {/* Submit */}
-          <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20"
+            disabled={loading}
+          >
             {loading ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {etapa || "A gerar..."}
-              </span>
-            ) : "Gerar Estrutura"}
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                {etapa || "A processar..."}
+              </>
+            ) : (
+              <>
+                <FileText className="mr-2 h-5 w-5" />
+                Gerar Estrutura do Trabalho
+              </>
+            )}
           </Button>
         </motion.form>
       )}
 
-      {/* PHASE 2: SUBTEMAS EDITOR */}
+      {/* PHASE 2: STRUCTURE & GENERATION */}
       {fase === "estrutura" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <SubtemasEditor
-            subtemas={subtemas}
-            onUpdate={setSubtemas}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="space-y-6"
+        >
+          <SubtemasEditor 
+            subtemas={subtemas} 
+            setSubtemas={setSubtemas} 
             onGenerateOne={handleGenerateOne}
             onGenerateAll={handleGenerateAll}
             onCompile={handleCompile}
             loading={loading}
-            etapa={etapa}
           />
         </motion.div>
       )}
@@ -608,63 +588,34 @@ const TrabalhoPage = () => {
       {/* PHASE 3: RESULT */}
       {fase === "resultado" && resultadoCompilado && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="space-y-6"
         >
-          {/* Action buttons */}
-          <div className="bg-card border border-border rounded-2xl p-4 shadow-card">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="font-display font-semibold">Resultado</h2>
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant={editMode ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setEditMode(!editMode);
-                    toast.info(editMode ? "Modo visualização" : "Modo edição — clique no texto para editar");
-                  }}
-                >
-                  {editMode ? <><Eye className="h-4 w-4 mr-1" /> Visualizar</> : <><Pencil className="h-4 w-4 mr-1" /> Editar</>}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultadoCompilado); toast.success("Copiado!"); }}>
-                  <Copy className="h-4 w-4 mr-1" /> Copiar
-                </Button>
-                <Button variant="outline" size="sm" onClick={async () => {
-                  try {
-                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
-                    await exportToWord(resultadoCompilado, nomeArquivo, getCoverData());
-                    toast.success("Ficheiro Word exportado!");
-                  } catch { toast.error("Erro ao exportar Word"); }
-                }}>
-                  <FileDown className="h-4 w-4 mr-1" /> Word
-                </Button>
-                <Button size="sm" onClick={async () => {
-                  try {
-                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
-                    await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
-                    toast.success("PDF exportado!");
-                  } catch { toast.error("Erro ao exportar PDF"); }
-                }}>
-                  <Download className="h-4 w-4 mr-1" /> PDF
-                </Button>
-              </div>
-            </div>
-            {editMode && (
-              <p className="text-xs text-muted-foreground mt-2">
-                💡 Clique em qualquer texto para editar. Seleccione texto para ver a barra de formatação.
-              </p>
-            )}
+          <div className="flex flex-wrap gap-3 mb-4">
+            <Button variant="outline" size="sm" onClick={() => setEditMode(!editMode)}>
+              {editMode ? <Eye className="mr-2 h-4 w-4" /> : <Pencil className="mr-2 h-4 w-4" />}
+              {editMode ? "Visualizar" : "Editar"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportToWord(resultadoCompilado, getCoverData())}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Word
+            </Button>
+            <Button variant="default" size="sm" onClick={() => exportToPDF("trabalho-completo", `${tema}.pdf`)}>
+              <Download className="mr-2 h-4 w-4" />
+              PDF
+            </Button>
           </div>
 
-          {/* Paginated A4 display */}
-          <TrabalhoCompleto
-            conteudo={resultadoCompilado}
-            coverData={getCoverData()}
-            capaImageUrl={capaImageUrl}
-            editable={editMode}
-            onContentChange={(updatedHtml) => setResultadoCompilado(updatedHtml)}
-          />
+          <div className="bg-white rounded-xl shadow-2xl overflow-hidden border border-border">
+            <TrabalhoCompleto 
+              conteudo={resultadoCompilado} 
+              coverData={getCoverData()} 
+              capaImageUrl={capaImageUrl}
+              editable={editMode}
+              onContentChange={setResultadoCompilado}
+            />
+          </div>
         </motion.div>
       )}
     </div>
