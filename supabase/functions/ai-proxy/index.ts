@@ -235,6 +235,7 @@ function supportsImages(svc: string): boolean {
 }
 
 function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, preferredService?: string): string[] {
+  // Priorizamos Groq e Cerebras para texto puro devido à velocidade
   const textServices = ["groq", "cerebras", "together", "openrouter", "gemini", "selfhosted"];
   const imageServices = ["gemini"];
 
@@ -272,18 +273,20 @@ serve(async (req) => {
 
     const servicePriority = getServiceOrder(keys, hasImages, service);
     let lastError: Error | null = null;
+    let attemptedServices: string[] = [];
 
     for (const svc of servicePriority) {
       const svcKeys = keys[svc];
       if (!svcKeys || svcKeys.length === 0) continue;
       if (hasImages && !supportsImages(svc)) continue;
 
+      attemptedServices.push(svc);
       const callFn = getCallFn(svc);
       if (!callFn) continue;
 
       for (const keyEntry of svcKeys) {
         try {
-          console.log(`Trying ${svc} (key ${keyEntry.id.substring(0, 8)}...)...`);
+          console.log(`[Proxy] Tentando ${svc} (chave: ${keyEntry.id.substring(0, 8)}...)`);
           const result = await callFn(messages, keyEntry.chave, max_tokens, temperature);
           
           const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
@@ -292,7 +295,7 @@ serve(async (req) => {
           });
         } catch (caughtError: any) {
           const error = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
-          console.error(`${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, error.message);
+          console.error(`[Proxy] Falha em ${svc} (chave: ${keyEntry.id.substring(0, 8)}...):`, error.message);
           lastError = error;
 
           if (isFatalError(error)) {
@@ -300,22 +303,26 @@ serve(async (req) => {
           } else if (isRetryableError(error)) {
             await markKeyExhausted(keyEntry.id);
           }
-          // Continue loop to try next key/service
+          // Continua para a próxima chave/serviço
           continue;
         }
       }
     }
 
-    // Se chegou aqui, nada funcionou
-    const errorMessage = lastError?.message || "Nenhuma API disponível. Configure suas chaves em /setup-api-keys.";
+    // Se falhou tudo, retorna um erro detalhado para ajudar no debug
+    const errorMessage = lastError?.message || "Nenhuma API disponível.";
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: `Falha total após tentar os serviços: ${attemptedServices.join(", ")}. Último erro: ${errorMessage}`,
+        details: lastError?.message,
+        attempted_services: attemptedServices
+      }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("ai-proxy error:", error);
+    console.error("ai-proxy fatal error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Erro interno no servidor" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
