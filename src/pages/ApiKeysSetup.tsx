@@ -1,9 +1,18 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +22,11 @@ const PROVIDERS = [
   { key: "groq", label: "Groq", placeholder: "gsk_...", description: "Llama 3.3 70B + Vision OCR. Muito rápido e gratuito." },
   { key: "cerebras", label: "Cerebras", placeholder: "csk-...", description: "Llama 3.3 70B. Extremamente rápido e gratuito." },
   { key: "together", label: "Together AI", placeholder: "tok_...", description: "Llama 3.3 70B free tier. Gratuito." },
-  { key: "openrouter", label: "OpenRouter", placeholder: "sk-or-v1-...", description: "DeepSeek V3 gratuito. Fallback robusto." },
+  { key: "openrouter", label: "OpenRouter", placeholder: "sk-or-v1-...", description: "Fallback robusto para geração de texto." },
 ] as const;
+
+type ProviderKey = (typeof PROVIDERS)[number]["key"];
+type ProviderConfig = (typeof PROVIDERS)[number];
 
 interface KeyRow {
   id?: string;
@@ -25,12 +37,49 @@ interface KeyRow {
   isNew?: boolean;
 }
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return "Erro desconhecido";
+};
+
 export default function ApiKeysSetup() {
   const { toast } = useToast();
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [hiddenKeys, setHiddenKeys] = useState<Set<number>>(new Set());
+  const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
+  const [bulkProvider, setBulkProvider] = useState<ProviderConfig | null>(null);
+  const [bulkValue, setBulkValue] = useState("");
+
+  const getNextPriority = (items: KeyRow[], servico: ProviderKey) => {
+    const existing = items.filter((item) => item.servico === servico);
+    return existing.length > 0 ? Math.max(...existing.map((item) => item.prioridade)) + 1 : 0;
+  };
+
+  const ensureProviderHasEmptySlot = (items: KeyRow[], servico: ProviderKey) => {
+    const nextItems = [...items];
+    const hasEmpty = nextItems.some((item) => item.servico === servico && !item.chave?.trim());
+
+    if (!hasEmpty) {
+      nextItems.push({
+        servico,
+        chave: "",
+        prioridade: getNextPriority(nextItems, servico),
+        isNew: true,
+      });
+    }
+
+    return nextItems;
+  };
+
+  const ensureAllProvidersHaveEmptySlots = (items: KeyRow[]) => {
+    return PROVIDERS.reduce<KeyRow[]>((acc, provider) => ensureProviderHasEmptySlot(acc, provider.key), [...items]);
+  };
+
+  const getRowKey = (row: KeyRow, fallbackIndex: number) => row.id ?? `${row.servico}-${row.prioridade}-${fallbackIndex}`;
 
   useEffect(() => {
     fetchKeys();
@@ -38,85 +87,190 @@ export default function ApiKeysSetup() {
 
   const fetchKeys = async () => {
     setFetching(true);
-    const { data } = await supabase
-      .from("api_keys")
-      .select("id, servico, chave, prioridade, ultimo_erro")
-      .eq("ativo", true)
-      .order("servico")
-      .order("prioridade");
+    try {
+      const { data, error } = await supabase
+        .from("api_keys")
+        .select("id, servico, chave, prioridade, ultimo_erro")
+        .eq("ativo", true)
+        .order("servico")
+        .order("prioridade");
 
-    const loaded: KeyRow[] = data?.map(r => ({ ...r, prioridade: r.prioridade ?? 0 })) ?? [];
+      if (error) throw error;
 
-    // Ensure every provider has at least 1 empty slot
-    const result: KeyRow[] = [...loaded];
-    for (const p of PROVIDERS) {
-      const hasEmpty = result.some(k => k.servico === p.key && !k.chave?.trim());
-      if (!hasEmpty) {
-        const existing = result.filter(k => k.servico === p.key);
-        const maxPrio = existing.length > 0 ? Math.max(...existing.map(k => k.prioridade)) + 1 : 0;
-        result.push({ servico: p.key, chave: "", prioridade: maxPrio, isNew: true });
-      }
+      const loaded: KeyRow[] = data?.map((row) => ({
+        ...row,
+        prioridade: row.prioridade ?? 0,
+      })) ?? [];
+
+      setKeys(ensureAllProvidersHaveEmptySlots(loaded));
+    } catch (error) {
+      setKeys(ensureAllProvidersHaveEmptySlots([]));
+      toast({
+        title: "Erro ao carregar chaves",
+        description: getErrorMessage(error),
+        variant: "destructive",
+      });
+    } finally {
+      setFetching(false);
     }
-    setKeys(result);
-    setFetching(false);
   };
 
-  const addKey = (servico: string) => {
-    const existing = keys.filter(k => k.servico === servico);
-    const maxPrio = existing.length > 0 ? Math.max(...existing.map(k => k.prioridade)) + 1 : 0;
-    setKeys([...keys, { servico, chave: "", prioridade: maxPrio, isNew: true }]);
+  const addKey = (servico: ProviderKey) => {
+    setKeys((current) => [
+      ...current,
+      { servico, chave: "", prioridade: getNextPriority(current, servico), isNew: true },
+    ]);
   };
 
   const removeKey = (index: number) => {
-    setKeys(keys.filter((_, i) => i !== index));
+    setKeys((current) => {
+      const removed = current[index];
+      const updated = current.filter((_, itemIndex) => itemIndex !== index);
+      return removed ? ensureProviderHasEmptySlot(updated, removed.servico as ProviderKey) : updated;
+    });
   };
 
   const updateKey = (index: number, value: string) => {
-    const updated = [...keys];
-    updated[index] = { ...updated[index], chave: value };
-    setKeys(updated);
+    setKeys((current) => {
+      const updated = [...current];
+      updated[index] = { ...updated[index], chave: value };
+      return updated;
+    });
   };
 
-  const toggleVisibility = (index: number) => {
-    setHiddenKeys(prev => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index); else next.add(index);
+  const toggleVisibility = (rowKey: string) => {
+    setHiddenKeys((current) => {
+      const next = new Set(current);
+      if (next.has(rowKey)) next.delete(rowKey);
+      else next.add(rowKey);
       return next;
     });
+  };
+
+  const openBulkModal = (provider: ProviderConfig) => {
+    setBulkProvider(provider);
+    setBulkValue("");
+  };
+
+  const closeBulkModal = () => {
+    setBulkProvider(null);
+    setBulkValue("");
+  };
+
+  const handleBulkAdd = () => {
+    if (!bulkProvider) return;
+
+    const parsedKeys = Array.from(
+      new Set(
+        bulkValue
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+      )
+    );
+
+    if (parsedKeys.length === 0) {
+      toast({
+        title: "Nada para adicionar",
+        description: "Cole pelo menos uma chave, uma por linha.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const existingValues = new Set(
+      keys
+        .filter((row) => row.servico === bulkProvider.key)
+        .map((row) => row.chave.trim())
+        .filter(Boolean)
+    );
+
+    const newKeys = parsedKeys.filter((value) => !existingValues.has(value));
+
+    if (newKeys.length === 0) {
+      toast({
+        title: "Sem novas chaves",
+        description: `As chaves coladas para ${bulkProvider.label} já estão na lista.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setKeys((current) => {
+      const updated = [...current];
+      const emptyIndexes = updated
+        .map((row, index) => (row.servico === bulkProvider.key && !row.chave.trim() ? index : -1))
+        .filter((index) => index >= 0);
+
+      let nextPriority = getNextPriority(updated, bulkProvider.key);
+
+      newKeys.forEach((value) => {
+        const emptyIndex = emptyIndexes.shift();
+
+        if (emptyIndex !== undefined) {
+          updated[emptyIndex] = { ...updated[emptyIndex], chave: value };
+          return;
+        }
+
+        updated.push({
+          servico: bulkProvider.key,
+          chave: value,
+          prioridade: nextPriority,
+          isNew: true,
+        });
+        nextPriority += 1;
+      });
+
+      return ensureProviderHasEmptySlot(updated, bulkProvider.key);
+    });
+
+    toast({
+      title: "Chaves adicionadas",
+      description: `${newKeys.length} nova(s) chave(s) adicionada(s) em ${bulkProvider.label}.`,
+    });
+
+    closeBulkModal();
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      await supabase.from("api_keys").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
-      const entries = keys
-        .filter(k => k.chave?.trim())
-        .map((k) => ({
-          servico: k.servico,
-          chave: k.chave.trim(),
-          ativo: true,
-          prioridade: k.prioridade,
-        }));
+      const entries = PROVIDERS.flatMap((provider) =>
+        keys
+          .filter((row) => row.servico === provider.key && row.chave?.trim())
+          .map((row, index) => ({
+            servico: provider.key,
+            chave: row.chave.trim(),
+            ativo: true,
+            prioridade: index,
+          }))
+      );
 
       if (entries.length === 0) {
         toast({ title: "Nenhuma chave inserida", variant: "destructive" });
-        setLoading(false);
         return;
       }
 
-      const { error } = await supabase.from("api_keys").insert(entries);
-      if (error) throw error;
+      const { error: deleteError } = await supabase
+        .from("api_keys")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (deleteError) throw deleteError;
+
+      const { error: insertError } = await supabase.from("api_keys").insert(entries);
+      if (insertError) throw insertError;
 
       toast({
         title: "Chaves salvas!",
-        description: `${entries.length} chave(s) API configurada(s). Substituição automática activa.`,
+        description: `${entries.length} chave(s) API configurada(s). O fallback automático está activo.`,
       });
+
       fetchKeys();
     } catch (error) {
       toast({
         title: "Erro ao salvar",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -124,110 +278,164 @@ export default function ApiKeysSetup() {
     }
   };
 
-  const isExhausted = (k: KeyRow) => {
-    if (!k.ultimo_erro) return false;
-    return new Date(k.ultimo_erro).getTime() > Date.now() - 6 * 60 * 60 * 1000;
+  const isExhausted = (row: KeyRow) => {
+    if (!row.ultimo_erro) return false;
+    return new Date(row.ultimo_erro).getTime() > Date.now() - 6 * 60 * 60 * 1000;
   };
 
-  const getProviderKeys = (providerKey: string) => keys.filter(k => k.servico === providerKey);
-  const getFilledCount = (providerKey: string) => keys.filter(k => k.servico === providerKey && k.chave?.trim()).length;
-  const totalActiveKeys = keys.filter(k => k.chave?.trim()).length;
+  const getProviderKeys = (providerKey: ProviderKey) => keys.filter((row) => row.servico === providerKey);
+  const getFilledCount = (providerKey: ProviderKey) => keys.filter((row) => row.servico === providerKey && row.chave?.trim()).length;
+  const totalActiveKeys = keys.filter((row) => row.chave?.trim()).length;
 
-  if (fetching) return <div className="min-h-screen flex items-center justify-center"><p>Carregando...</p></div>;
+  if (fetching) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <p className="text-sm text-muted-foreground">Carregando chaves...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>Configurar Chaves API</CardTitle>
-          <CardDescription>
-            Cole as chaves directamente nos campos abaixo. Clique em <strong>"+ Adicionar outra chave"</strong> para adicionar mais do mesmo provedor.
-            <span className="block mt-1 font-medium text-primary">
-              {totalActiveKeys} chave(s) activa(s) no total
-            </span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {PROVIDERS.map((provider) => {
-            const providerKeys = getProviderKeys(provider.key);
-            const filledCount = getFilledCount(provider.key);
-            return (
-              <div key={provider.key} className="space-y-3 border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-semibold">{provider.label}</Label>
-                      {filledCount > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {filledCount} chave{filledCount > 1 ? "s" : ""}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{provider.description}</p>
-                  </div>
-                </div>
+    <>
+      <div className="min-h-screen bg-background p-4 md:p-6">
+        <div className="mx-auto max-w-4xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurar Chaves API</CardTitle>
+              <CardDescription>
+                Use os campos abaixo ou o modal de colagem para adicionar novas chaves. Pode colar várias chaves do mesmo provedor, uma por linha.
+                <span className="mt-2 block font-medium text-primary">
+                  {totalActiveKeys} chave(s) activa(s) no total
+                </span>
+              </CardDescription>
+            </CardHeader>
 
-                {providerKeys.map((keyRow) => {
-                  const globalIndex = keys.indexOf(keyRow);
-                  const exhausted = isExhausted(keyRow);
-                  const isHidden = hiddenKeys.has(globalIndex);
-                  return (
-                    <div key={globalIndex} className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <Input
-                          type={isHidden ? "password" : "text"}
-                          value={keyRow.chave}
-                          onChange={(e) => updateKey(globalIndex, e.target.value)}
-                          placeholder={`Cole aqui a chave ${provider.label}...`}
-                          className={exhausted ? "border-destructive pr-16" : "pr-16"}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleVisibility(globalIndex)}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                        >
-                          {isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            <CardContent className="space-y-6">
+              {PROVIDERS.map((provider) => {
+                const providerKeys = getProviderKeys(provider.key);
+                const filledCount = getFilledCount(provider.key);
+                const exhaustedCount = providerKeys.filter(isExhausted).length;
+
+                return (
+                  <div key={provider.key} className="space-y-4 rounded-xl border border-border bg-card p-4">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Label className="text-sm font-semibold">{provider.label}</Label>
+                          <Badge variant="secondary">
+                            {filledCount} chave{filledCount === 1 ? "" : "s"}
+                          </Badge>
+                          {exhaustedCount > 0 && (
+                            <Badge variant="secondary">{exhaustedCount} indisponível(eis)</Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{provider.description}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => openBulkModal(provider)}>
+                          Colar chaves
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => addKey(provider.key)}>
+                          <Plus className="mr-1.5 h-3.5 w-3.5" />
+                          Adicionar campo
                         </Button>
                       </div>
-                      {exhausted && <AlertCircle className="h-4 w-4 text-destructive shrink-0" />}
-                      {!exhausted && keyRow.chave?.trim() && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeKey(globalIndex)}
-                        className="shrink-0 h-8 w-8"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
                     </div>
-                  );
-                })}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addKey(provider.key)}
-                  className="w-full border-dashed"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  Adicionar outra chave {provider.label.split(" ")[0]}
-                </Button>
-              </div>
-            );
-          })}
+                    <div className="space-y-3">
+                      {providerKeys.map((keyRow) => {
+                        const globalIndex = keys.findIndex((row) => row === keyRow);
+                        const rowKey = getRowKey(keyRow, globalIndex);
+                        const exhausted = isExhausted(keyRow);
+                        const isHidden = hiddenKeys.has(rowKey);
 
-          <Button onClick={handleSave} disabled={loading} className="w-full">
-            {loading ? "Salvando..." : "Salvar Todas as Chaves"}
-          </Button>
+                        return (
+                          <div key={rowKey} className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <Input
+                                type={isHidden ? "password" : "text"}
+                                value={keyRow.chave}
+                                onChange={(event) => updateKey(globalIndex, event.target.value)}
+                                placeholder={`Cole aqui a chave ${provider.placeholder}`}
+                                className={exhausted ? "border-destructive pr-16" : "pr-16"}
+                              />
 
-          <p className="text-xs text-muted-foreground text-center">
-            Substituição automática: se uma chave esgota, passa para a próxima do mesmo provedor.
-            Chaves exaustas são reactivadas após 6 horas.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => toggleVisibility(rowKey)}
+                                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                              >
+                                {isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              </Button>
+                            </div>
+
+                            {exhausted && <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />}
+                            {!exhausted && keyRow.chave?.trim() && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeKey(globalIndex)}
+                              className="h-8 w-8 shrink-0"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <Button onClick={handleSave} disabled={loading} className="w-full">
+                {loading ? "Salvando..." : "Salvar Todas as Chaves"}
+              </Button>
+
+              <p className="text-center text-xs text-muted-foreground">
+                Se uma chave falhar ou atingir limite, o sistema tenta automaticamente a próxima chave do mesmo provedor e depois outros provedores disponíveis.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <Dialog open={!!bulkProvider} onOpenChange={(open) => !open && closeBulkModal()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Colar novas chaves {bulkProvider ? `de ${bulkProvider.label}` : "API"}
+            </DialogTitle>
+            <DialogDescription>
+              Cole uma ou várias chaves, uma por linha. Ao confirmar, elas serão adicionadas imediatamente aos campos deste provedor.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="bulk-api-keys">Chaves API</Label>
+            <Textarea
+              id="bulk-api-keys"
+              value={bulkValue}
+              onChange={(event) => setBulkValue(event.target.value)}
+              placeholder={bulkProvider ? `Uma chave ${bulkProvider.label} por linha...` : "Cole as chaves aqui..."}
+              className="min-h-40"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={closeBulkModal}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleBulkAdd}>
+              Adicionar chaves
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
