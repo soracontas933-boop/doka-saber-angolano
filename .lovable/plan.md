@@ -1,22 +1,15 @@
 
 
-# Plano: Melhorar UX da Página de Chaves API
+# Correcção: Modelo OpenRouter Indisponível
 
 ## Problema
-A página `/setup-api-keys` existe e tem o botão "+ Chave", mas a experiência não é intuitiva — o utilizador quer ver imediatamente campos para colar chaves, com um botão claro para adicionar mais do mesmo provedor.
+O modelo `deepseek/deepseek-chat-v3-0324:free` foi removido/descontinuado do OpenRouter, causando erro 404 em todas as chamadas.
 
-## Mudanças no ficheiro `src/pages/ApiKeysSetup.tsx`
+## Solução
+Actualizar o modelo no ficheiro `supabase/functions/ai-proxy/index.ts` (linha 48) para um modelo gratuito disponível no OpenRouter. A melhor alternativa actual é `deepseek/deepseek-chat-v3-0324` (sem o sufixo `:free`) ou `meta-llama/llama-3.3-70b-instruct:free`.
 
-1. **Cada provedor começa sempre com 1 campo vazio visível** — mesmo quando já existem chaves salvas, garantir que há sempre pelo menos um campo input vazio pronto para colar uma nova chave.
-
-2. **Botão "+ Adicionar outra chave Gemini/Groq/etc." mais visível** — texto completo em vez de apenas "+ Chave", com estilo mais destacado (primary variant ou outline com cor).
-
-3. **Input type="text" em vez de "password"** — para que o utilizador veja o que cola (com opção de ocultar depois).
-
-4. **Mostrar contador por provedor** — ex: "Gemini: 3 chaves" para feedback imediato.
-
-5. **Seed inteligente** — Quando carrega dados existentes do banco, adicionar automaticamente 1 campo vazio extra por provedor para facilitar a adição de novas chaves sem precisar clicar em nada.
+Adicionalmente, actualizar o `HTTP-Referer` de `doka-angola-smart-learn` para `wame-angola-smart-learn` (linha 45) para corresponder ao domínio actual.
 
 ## Ficheiro afectado
-- `src/pages/ApiKeysSetup.tsx` — redesign da interface de gestão de chaves
+- `supabase/functions/ai-proxy/index.ts` — linha 48: trocar modelo para `meta-llama/llama-3.3-70b-instruct:free`
 
