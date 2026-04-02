@@ -178,9 +178,9 @@ export function generateImageUrl(prompt: string, width = 800, height = 450): str
 
 export const imagePrompts = {
   capaTrabaho: (titulo: string, disciplina: string) =>
-    `Educational cover page illustration for school assignment about ${titulo}, subject ${disciplina}, Angola education system, minimalist design, blue and white colors, clean academic style, no text`,
+    `High-quality educational cover illustration for a school project about "${titulo}", subject: ${disciplina}. Cinematic lighting, academic aesthetic, professional composition, 16:9 aspect ratio, vibrant colors, no text, ultra-detailed, 4k.`,
   subtema: (titulo: string, temaGeral: string) =>
-    `Educational illustration about ${titulo} in the context of ${temaGeral}, Angola school context, flat design, bright colors, clear and academic style, no text`,
+    `Detailed educational illustration specifically about "${titulo}" within the broader topic of "${temaGeral}". Scientific or historical diagram style, clear visual explanation, high resolution, 16:9 aspect ratio, professional academic style, no text, vibrant and engaging.`,
   resumo: (tema: string) =>
     `Simple educational illustration representing ${tema}, colorful diagram style, memory aid visual, Angola school context, flat design, bright colors`,
   flashcard: (conceito: string) =>

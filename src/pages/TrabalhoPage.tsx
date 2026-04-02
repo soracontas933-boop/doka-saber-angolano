@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { generateWithGroq, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { generateWithAI, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { validarBibliografia } from "@/lib/referencias-reais";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
@@ -132,7 +132,7 @@ const TrabalhoPage = () => {
         tipo: tipoTrabalho,
       });
 
-      const response = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 4000, 0.7);
+      const { content: response } = await generateWithAI(DOKA_SYSTEM_PROMPT, prompt, 4000, 0.7);
       
       // Parse JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -193,7 +193,7 @@ const TrabalhoPage = () => {
         bibliografia,
       });
 
-      const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 6000, 0.7);
+      const { content: conteudo } = await generateWithAI(DOKA_SYSTEM_PROMPT, prompt, 6000, 0.7);
 
       // Validate bibliography against real references
       let conteudoFinal = conteudo;

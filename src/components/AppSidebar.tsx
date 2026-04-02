@@ -27,7 +27,9 @@ import { useAdmin } from "@/hooks/use-admin";
 import { Badge } from "@/components/ui/badge";
 
 import DelleLogo from "./DelleLogo";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavItem {
   to: string;
@@ -64,6 +66,50 @@ const AppSidebar = () => {
   const { isAdmin, hasPermission } = useAdmin();
 
   const [collapsed, setCollapsed] = useState(false);
+  const [quickKey, setQuickKey] = useState("");
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const { toast } = useToast();
+
+  const handleQuickKeySave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickKey.trim() || !isAdmin) return;
+
+    setIsSavingKey(true);
+    try {
+      const key = quickKey.trim();
+      let service = "groq"; // Default
+
+      if (key.startsWith("gsk_")) service = "groq";
+      else if (key.startsWith("AIzaSy")) service = "gemini";
+      else if (key.startsWith("csk-")) service = "cerebras";
+      else if (key.startsWith("sk-or-")) service = "openrouter";
+      else if (key.startsWith("tok_")) service = "together";
+      else if (key.startsWith("sk-")) service = "deepseek";
+
+      const { error } = await supabase.from("api_keys").insert([{
+        servico: service,
+        chave: key,
+        ativo: true,
+        prioridade: 0
+      }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Chave adicionada!",
+        description: `Identificada como ${service}.`,
+      });
+      setQuickKey("");
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingKey(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -126,6 +172,27 @@ const AppSidebar = () => {
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-[sidebar-accent-foreground] text-primary-foreground bg-[sidebar-accent-foreground] bg-sidebar">
         {navItems.map(renderNavItem)}
+        
+        {isAdmin && !collapsed && (
+          <div className="mt-6 px-3 py-4 rounded-xl bg-zinc-900/50 border border-white/5 space-y-3">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+              <Key className="h-3 w-3" />
+              <span>Acesso Rápido API</span>
+            </div>
+            <form onSubmit={handleQuickKeySave} className="space-y-2">
+              <Input
+                value={quickKey}
+                onChange={(e) => setQuickKey(e.target.value)}
+                placeholder="Cole sua chave aqui..."
+                className="h-8 text-xs bg-black/40 border-white/10 focus:border-amber-500/50 transition-all"
+                disabled={isSavingKey}
+              />
+              <p className="text-[9px] text-zinc-500 leading-tight">
+                Cole e pressione Enter. O sistema detecta o provedor automaticamente.
+              </p>
+            </form>
+          </div>
+        )}
       </nav>
 
       <div className="p-3 border-t flex-shrink-0 space-y-1 border-[#030303]">

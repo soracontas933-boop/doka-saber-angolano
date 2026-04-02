@@ -21,7 +21,9 @@ const PROVIDERS = [
   { key: "gemini", label: "Google AI Studio (Gemini)", placeholder: "AIzaSy...", description: "OCR + texto. Gratuito com limite diário." },
   { key: "groq", label: "Groq", placeholder: "gsk_...", description: "Llama 3.3 70B + Vision OCR. Muito rápido e gratuito." },
   { key: "cerebras", label: "Cerebras", placeholder: "csk-...", description: "Llama 3.3 70B. Extremamente rápido e gratuito." },
+  { key: "sambanova", label: "SambaNova AI", placeholder: "...", description: "Llama 3.3 70B. Rápido e gratuito." },
   { key: "together", label: "Together AI", placeholder: "tok_...", description: "Llama 3.3 70B free tier. Gratuito." },
+  { key: "deepseek", label: "DeepSeek", placeholder: "sk-...", description: "DeepSeek Chat. Alta qualidade." },
   { key: "openrouter", label: "OpenRouter", placeholder: "sk-or-v1-...", description: "Fallback robusto para geração de texto." },
 ] as const;
 

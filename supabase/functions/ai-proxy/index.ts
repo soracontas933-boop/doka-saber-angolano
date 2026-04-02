@@ -12,6 +12,8 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
 const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
+const SAMBANOVA_URL = "https://api.sambanova.ai/v1/chat/completions";
+const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
 
 async function callSelfHosted(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
   const [url, token] = apiKey.split("|");
@@ -103,7 +105,7 @@ async function callCerebras(messages: any[], apiKey: string, maxTokens: number, 
   const res = await fetch(CEREBRAS_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "llama-3.3-70b", messages, max_tokens: maxTokens, temperature }),
+    body: JSON.stringify({ model: "llama-3.3-70b-speculative", messages, max_tokens: maxTokens, temperature }),
   });
 
   if (!res.ok) throw new Error(`Cerebras error ${res.status}: ${await res.text()}`);
@@ -118,6 +120,28 @@ async function callTogether(messages: any[], apiKey: string, maxTokens: number, 
   });
 
   if (!res.ok) throw new Error(`Together error ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function callSambaNova(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
+  const res = await fetch(SAMBANOVA_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "Meta-Llama-3.3-70B-Instruct", messages, max_tokens: maxTokens, temperature }),
+  });
+
+  if (!res.ok) throw new Error(`SambaNova error ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function callDeepSeek(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
+  const res = await fetch(DEEPSEEK_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "deepseek-chat", messages, max_tokens: maxTokens, temperature }),
+  });
+
+  if (!res.ok) throw new Error(`DeepSeek error ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
@@ -226,6 +250,8 @@ function getCallFn(svc: string): ((msgs: any[], key: string, mt: number, t: numb
     case "gemini": return callGemini;
     case "cerebras": return callCerebras;
     case "together": return callTogether;
+    case "sambanova": return callSambaNova;
+    case "deepseek": return callDeepSeek;
     default: return null;
   }
 }
@@ -236,7 +262,7 @@ function supportsImages(svc: string): boolean {
 
 function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, preferredService?: string): string[] {
   // Priorizamos Groq e Cerebras para texto puro devido à velocidade
-  const textServices = ["groq", "cerebras", "together", "openrouter", "gemini", "selfhosted"];
+  const textServices = ["groq", "cerebras", "sambanova", "together", "deepseek", "openrouter", "gemini", "selfhosted"];
   const imageServices = ["gemini"];
 
   if (preferredService) {
