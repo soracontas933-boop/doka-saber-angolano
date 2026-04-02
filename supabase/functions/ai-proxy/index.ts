@@ -226,13 +226,9 @@ serve(async (req) => {
         } catch (e: any) {
           console.error(`${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, e.message);
           lastError = e;
-
-          if (isQuotaError(e)) {
-            await markKeyExhausted(keyEntry.id);
-            console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
-            continue; // try next key for same service
-          }
-          break; // non-quota error → skip this service entirely
+          await markKeyExhausted(keyEntry.id);
+          console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
+          continue; // always try next key/service
         }
       }
     }
