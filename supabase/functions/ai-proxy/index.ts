@@ -42,10 +42,10 @@ async function callOpenRouter(messages: any[], apiKey: string, maxTokens: number
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json",
-      "HTTP-Referer": "https://doka-angola-smart-learn.lovable.app",
-      "X-Title": "DOKA Angola",
+      "HTTP-Referer": "https://wame-angola-smart-learn.lovable.app",
+      "X-Title": "WAME Angola",
     },
-    body: JSON.stringify({ model: "deepseek/deepseek-chat-v3-0324:free", messages, max_tokens: maxTokens, temperature }),
+    body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct:free", messages, max_tokens: maxTokens, temperature }),
   });
   if (!res.ok) throw new Error(`OpenRouter error ${res.status}: ${await res.text()}`);
   return res.json();
