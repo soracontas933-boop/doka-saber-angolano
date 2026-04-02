@@ -108,10 +108,12 @@ async function callTogether(messages: any[], apiKey: string, maxTokens: number, 
 
 // --- Multi-key infrastructure ---
 
-function isQuotaError(error: Error): boolean {
+function isRetryableError(error: Error): boolean {
   const msg = error.message.toLowerCase();
-  return msg.includes("429") || msg.includes("rate limit") || msg.includes("quota")
-    || msg.includes("exceeded") || msg.includes("too many") || msg.includes("403");
+  return msg.includes("429") || msg.includes("401") || msg.includes("403")
+    || msg.includes("400") || msg.includes("rate limit") || msg.includes("quota")
+    || msg.includes("exceeded") || msg.includes("too many")
+    || msg.includes("wrong_api_key") || msg.includes("invalid");
 }
 
 let roundRobinIndex = 0;
@@ -224,13 +226,9 @@ serve(async (req) => {
         } catch (e: any) {
           console.error(`${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, e.message);
           lastError = e;
-
-          if (isQuotaError(e)) {
-            await markKeyExhausted(keyEntry.id);
-            console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
-            continue; // try next key for same service
-          }
-          break; // non-quota error → skip this service entirely
+          await markKeyExhausted(keyEntry.id);
+          console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
+          continue; // always try next key/service
         }
       }
     }
