@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const PROVIDERS = [
@@ -48,6 +49,7 @@ const getErrorMessage = (error: unknown) => {
 
 export default function ApiKeysSetup() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -300,6 +302,16 @@ export default function ApiKeysSetup() {
     <>
       <div className="min-h-screen bg-background p-4 md:p-6">
         <div className="mx-auto max-w-4xl">
+          <div className="mb-6">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)} 
+              className="gap-2 hover:bg-accent"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar ao Painel
+            </Button>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>Configurar Chaves API</CardTitle>
