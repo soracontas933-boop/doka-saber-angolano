@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingPaths } from "@/components/ui/background-paths";
+import sobreEstudantes from "@/assets/sobre-estudantes.jpg";
+import sobreProfessor from "@/assets/sobre-professor.jpg";
 
 /* ── static data ── */
 const features = [
