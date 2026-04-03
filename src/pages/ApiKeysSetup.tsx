@@ -259,10 +259,16 @@ export default function ApiKeysSetup() {
         .delete()
         .neq("id", "00000000-0000-0000-0000-000000000000");
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Erro ao deletar chaves antigas:", deleteError);
+        throw new Error(`Erro ao limpar chaves antigas: ${deleteError.message}. Verifique se você tem permissão de Admin.`);
+      }
 
       const { error: insertError } = await supabase.from("api_keys").insert(entries);
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Erro ao inserir novas chaves:", insertError);
+        throw new Error(`Erro ao salvar novas chaves: ${insertError.message}. Verifique se você tem permissão de Admin.`);
+      }
 
       toast({
         title: "Chaves salvas!",

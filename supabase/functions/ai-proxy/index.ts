@@ -145,21 +145,42 @@ function isDatabaseKeyId(keyId: string): boolean {
 }
 
 async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
 
+  // Buscamos todas as chaves ativas. 
+  // O uso do SERVICE_ROLE_KEY ignora as políticas de RLS, garantindo que a função sempre veja as chaves.
   const { data, error } = await supabase
     .from("api_keys")
     .select("id, servico, chave, prioridade, ultimo_erro")
     .eq("ativo", true)
     .order("prioridade", { ascending: true });
 
-  if (error) console.error("Failed to load API keys:", error.message);
+  if (error) {
+    console.error("Erro ao carregar chaves API do banco:", error.message);
+    return {};
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("Nenhuma chave API ativa encontrada na tabela public.api_keys.");
+    return {};
+  }
 
   const keys: Record<string, KeyEntry[]> = {};
-  for (const row of data || []) {
+  for (const row of data) {
     if (!keys[row.servico]) keys[row.servico] = [];
     keys[row.servico].push({ id: row.id, chave: row.chave, prioridade: row.prioridade ?? 0 });
   }
+  
+  console.log(`Carregadas ${data.length} chaves de API com sucesso.`);
   return keys;
 }
 
