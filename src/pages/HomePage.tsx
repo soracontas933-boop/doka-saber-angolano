@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingPaths } from "@/components/ui/background-paths";
+import sobreEstudantes from "@/assets/sobre-estudantes.jpg";
+import sobreProfessor from "@/assets/sobre-professor.jpg";
 
 /* ── static data ── */
 const features = [
@@ -234,10 +236,11 @@ const HomePage = () => {
       </section>
 
       {/* Sobre / About */}
-      <section className="px-4 sm:px-6 md:px-12 py-14 sm:py-20 bg-card border-t border-border">
-        <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <div className="space-y-5">
+      <section className="px-4 sm:px-6 md:px-12 py-14 sm:py-20 bg-card border-t border-border overflow-hidden">
+        <div className="max-w-6xl mx-auto space-y-16">
+          {/* Row 1: Text + Image */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="space-y-5">
               <Badge variant="outline" className="text-primary border-primary/30">Sobre a Delle</Badge>
               <h2 className="text-2xl md:text-4xl font-display font-bold text-foreground leading-tight">
                 A primeira plataforma educacional feita <span className="text-primary">em Angola, para Angola</span>
@@ -245,31 +248,86 @@ const HomePage = () => {
               <p className="text-muted-foreground leading-relaxed">
                 A Delle nasceu da necessidade de modernizar o ensino angolano. Combinamos inteligência artificial com o currículo nacional para criar ferramentas que realmente fazem diferença na vida de estudantes e professores.
               </p>
-              <p className="text-muted-foreground leading-relaxed">
-                Desde trabalhos escolares no formato ABNT/INIDE até planos de aula completos, cada funcionalidade foi pensada para poupar tempo e melhorar a qualidade do trabalho académico.
-              </p>
               <Button variant="outline" className="gap-2" onClick={() => navigate("/auth")}>
                 Conhecer mais <ChevronRight className="h-4 w-4" />
               </Button>
-            </div>
-            <div className="relative">
-              <div className="bg-gradient-to-br from-primary/20 to-blue-400/10 rounded-3xl p-8 border border-primary/10">
-                <div className="grid grid-cols-2 gap-4">
-                  {[
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 40, scale: 0.9 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.7, delay: 0.15 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="rounded-2xl overflow-hidden shadow-xl border border-border">
+                <img src={sobreEstudantes} alt="Estudantes angolanos a aprender com tecnologia" loading="lazy" width={800} height={600} className="w-full h-auto object-cover" />
+              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                viewport={{ once: true }}
+                className="absolute -bottom-4 -left-4 bg-primary text-primary-foreground px-4 py-2 rounded-xl shadow-lg text-sm font-semibold"
+              >
+                🇦🇴 Feito em Angola
+              </motion.div>
+            </motion.div>
+          </div>
+
+          {/* Row 2: Image + Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -40, scale: 0.9 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.7 }}
+              viewport={{ once: true }}
+              className="relative order-2 md:order-1"
+            >
+              <div className="rounded-2xl overflow-hidden shadow-xl border border-border">
+                <img src={sobreProfessor} alt="Professor angolano usando tecnologia na sala de aula" loading="lazy" width={800} height={600} className="w-full h-auto object-cover" />
+              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                viewport={{ once: true }}
+                className="absolute -bottom-4 -right-4 bg-card text-foreground px-4 py-2 rounded-xl shadow-lg text-sm font-semibold border border-border"
+              >
+                <GraduationCap className="inline h-4 w-4 mr-1 text-primary" /> Para professores
+              </motion.div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              viewport={{ once: true }}
+              className="space-y-5 order-1 md:order-2"
+            >
+              <p className="text-muted-foreground leading-relaxed">
+                Desde trabalhos escolares no formato ABNT/INIDE até planos de aula completos, cada funcionalidade foi pensada para poupar tempo e melhorar a qualidade do trabalho académico.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                {[
                   { value: "5+", label: "Ferramentas IA" },
                   { value: "24/7", label: "Disponível" },
                   { value: "100%", label: "Formato angolano" },
-                  { value: "0 Kz", label: "Para começar" }].
-                  map((stat) =>
-                  <div key={stat.label} className="text-center p-4 bg-background/80 rounded-2xl">
-                      <p className="text-2xl md:text-3xl font-display font-bold text-primary">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-                    </div>
-                  )}
-                </div>
+                  { value: "0 Kz", label: "Para começar" },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + i * 0.1 }}
+                    viewport={{ once: true }}
+                    className="text-center p-4 bg-background/80 rounded-2xl border border-border"
+                  >
+                    <p className="text-2xl md:text-3xl font-display font-bold text-primary">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                  </motion.div>
+                ))}
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
