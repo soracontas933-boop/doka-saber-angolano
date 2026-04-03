@@ -23,6 +23,7 @@ const PROVIDERS = [
   { key: "cerebras", label: "Cerebras", placeholder: "csk-...", description: "Llama 3.3 70B. Extremamente rápido e gratuito." },
   { key: "together", label: "Together AI", placeholder: "tok_...", description: "Llama 3.3 70B free tier. Gratuito." },
   { key: "openrouter", label: "OpenRouter", placeholder: "sk-or-v1-...", description: "Fallback robusto para geração de texto." },
+  { key: "mistral", label: "Mistral AI", placeholder: "CET6...", description: "Mistral Small. Fallback adicional gratuito." },
 ] as const;
 
 type ProviderKey = (typeof PROVIDERS)[number]["key"];
