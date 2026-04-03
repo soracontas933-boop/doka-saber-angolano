@@ -7,40 +7,40 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ─── Provider URLs ──────────────────────────────────────────────
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
 const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
+const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 
-async function callSelfHosted(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const [url, token] = apiKey.split("|");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+const CALL_TIMEOUT_MS = 30_000; // 30s per individual call
 
-  const res = await fetch(url.trim(), {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ model: "default", messages, max_tokens: maxTokens, temperature }),
-  });
+// ─── Provider call functions ────────────────────────────────────
 
-  if (!res.ok) throw new Error(`Self-hosted error ${res.status}: ${await res.text()}`);
-  return res.json();
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = CALL_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function callGroq(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const res = await fetch(GROQ_URL, {
+  const res = await fetchWithTimeout(GROQ_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, max_tokens: maxTokens, temperature }),
   });
-
   if (!res.ok) throw new Error(`Groq error ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
 async function callOpenRouter(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const res = await fetch(OPENROUTER_URL, {
+  const res = await fetchWithTimeout(OPENROUTER_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -50,21 +50,19 @@ async function callOpenRouter(messages: any[], apiKey: string, maxTokens: number
     },
     body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct:free", messages, max_tokens: maxTokens, temperature }),
   });
-
   if (!res.ok) throw new Error(`OpenRouter error ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
 async function callGemini(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
   const contents = messages
-    .filter((message: any) => message.role !== "system")
-    .map((message: any) => {
-      if (typeof message.content === "string") {
-        return { role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] };
+    .filter((m: any) => m.role !== "system")
+    .map((m: any) => {
+      if (typeof m.content === "string") {
+        return { role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] };
       }
-
       const parts: any[] = [];
-      for (const part of message.content) {
+      for (const part of m.content) {
         if (part.type === "text") parts.push({ text: part.text });
         else if (part.type === "image_url") {
           const url = part.image_url.url;
@@ -75,20 +73,18 @@ async function callGemini(messages: any[], apiKey: string, maxTokens: number, te
           }
         }
       }
-
       return { role: "user", parts };
     });
 
-  const systemInstruction = messages.find((message: any) => message.role === "system");
+  const systemInstruction = messages.find((m: any) => m.role === "system");
   const body: any = { contents, generationConfig: { maxOutputTokens: maxTokens, temperature } };
   if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction.content }] };
 
-  const res = await fetch(`${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+  const res = await fetchWithTimeout(`${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-
   if (!res.ok) throw new Error(`Gemini error ${res.status}: ${await res.text()}`);
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -96,49 +92,53 @@ async function callGemini(messages: any[], apiKey: string, maxTokens: number, te
 }
 
 async function callCerebras(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const res = await fetch(CEREBRAS_URL, {
+  const res = await fetchWithTimeout(CEREBRAS_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model: "llama-3.3-70b", messages, max_tokens: maxTokens, temperature }),
   });
-
   if (!res.ok) throw new Error(`Cerebras error ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
 async function callTogether(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const res = await fetch(TOGETHER_URL, {
+  const res = await fetchWithTimeout(TOGETHER_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model: "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free", messages, max_tokens: maxTokens, temperature }),
   });
-
   if (!res.ok) throw new Error(`Together error ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
-function isRetryableError(error: Error): boolean {
-  const msg = error.message.toLowerCase();
-  return msg.includes("429") || msg.includes("401") || msg.includes("403")
-    || msg.includes("400") || msg.includes("rate limit") || msg.includes("quota")
-    || msg.includes("exceeded") || msg.includes("too many")
-    || msg.includes("wrong_api_key") || msg.includes("invalid");
+async function callMistral(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
+  const res = await fetchWithTimeout(MISTRAL_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "mistral-small-latest", messages, max_tokens: maxTokens, temperature }),
+  });
+  if (!res.ok) throw new Error(`Mistral error ${res.status}: ${await res.text()}`);
+  return res.json();
 }
 
-let roundRobinIndex = 0;
-
-interface KeyEntry {
-  id: string;
-  chave: string;
-  prioridade: number;
+async function callSelfHosted(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
+  const [url, token] = apiKey.split("|");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetchWithTimeout(url.trim(), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ model: "default", messages, max_tokens: maxTokens, temperature }),
+  });
+  if (!res.ok) throw new Error(`Self-hosted error ${res.status}: ${await res.text()}`);
+  return res.json();
 }
 
-const ENV_FALLBACKS: Array<{ service: string; envName: string }> = [
-  { service: "groq", envName: "groq" },
-  { service: "gemini", envName: "googleiaestudio" },
-  { service: "cerebras", envName: "Cerebras" },
-  { service: "openrouter", envName: "OpenRouter" },
-];
+// ─── Key management ─────────────────────────────────────────────
+
+interface KeyEntry { id: string; chave: string; prioridade: number; }
+
+const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
 
 function isDatabaseKeyId(keyId: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(keyId);
@@ -146,102 +146,105 @@ function isDatabaseKeyId(keyId: string): boolean {
 
 async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  const cooldownTime = new Date(Date.now() - COOLDOWN_MS).toISOString();
 
   const { data, error } = await supabase
     .from("api_keys")
     .select("id, servico, chave, prioridade, ultimo_erro")
     .eq("ativo", true)
-    .or(`ultimo_erro.is.null,ultimo_erro.lt.${sixHoursAgo}`)
+    .or(`ultimo_erro.is.null,ultimo_erro.lt.${cooldownTime}`)
     .order("prioridade", { ascending: true });
 
-  if (error) {
-    console.error("Failed to load database API keys:", error.message);
-  }
+  if (error) console.error("Failed to load API keys:", error.message);
 
   const keys: Record<string, KeyEntry[]> = {};
-
   for (const row of data || []) {
     if (!keys[row.servico]) keys[row.servico] = [];
-    keys[row.servico].push({
-      id: row.id,
-      chave: row.chave,
-      prioridade: row.prioridade ?? 0,
-    });
+    keys[row.servico].push({ id: row.id, chave: row.chave, prioridade: row.prioridade ?? 0 });
   }
-
-  for (const { service, envName } of ENV_FALLBACKS) {
-    const envKey = Deno.env.get(envName)?.trim();
-    if (!envKey) continue;
-
-    if (!keys[service]) keys[service] = [];
-
-    const alreadyExists = keys[service].some((entry) => entry.chave === envKey);
-    if (!alreadyExists) {
-      keys[service].push({
-        id: `env-${service}-${keys[service].length}`,
-        chave: envKey,
-        prioridade: 999,
-      });
-    }
-
-    keys[service].sort((a, b) => a.prioridade - b.prioridade);
-  }
-
   return keys;
 }
 
 async function markKeyExhausted(keyId: string) {
   if (!isDatabaseKeyId(keyId)) return;
-
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     await supabase.from("api_keys").update({ ultimo_erro: new Date().toISOString() }).eq("id", keyId);
-  } catch (error) {
-    console.error("Failed to mark key exhausted:", error);
+  } catch (e) {
+    console.error("Failed to mark key exhausted:", e);
   }
 }
 
-function getCallFn(svc: string): ((msgs: any[], key: string, mt: number, t: number) => Promise<any>) | null {
-  switch (svc) {
-    case "selfhosted":
-      return callSelfHosted;
-    case "groq":
-      return callGroq;
-    case "openrouter":
-      return callOpenRouter;
-    case "gemini":
-      return callGemini;
-    case "cerebras":
-      return callCerebras;
-    case "together":
-      return callTogether;
-    default:
-      return null;
+// ─── Provider registry ──────────────────────────────────────────
+
+type CallFn = (msgs: any[], key: string, mt: number, t: number) => Promise<any>;
+
+const CALL_FNS: Record<string, CallFn> = {
+  selfhosted: callSelfHosted,
+  gemini: callGemini,
+  groq: callGroq,
+  cerebras: callCerebras,
+  openrouter: callOpenRouter,
+  mistral: callMistral,
+  together: callTogether,
+};
+
+const IMAGE_SERVICES = new Set(["gemini"]);
+
+// Service priority order
+const SERVICE_ORDER = ["gemini", "groq", "cerebras", "openrouter", "mistral", "together"];
+
+// ─── Interleaved round-robin ────────────────────────────────────
+// Instead of exhausting all keys of one service before moving to the next,
+// interleave: gemini-key1, groq-key1, cerebras-key1, ..., gemini-key2, groq-key2, ...
+
+let globalRoundRobin = 0;
+
+interface KeyAttempt { service: string; keyEntry: KeyEntry; }
+
+function buildInterleavedQueue(
+  keys: Record<string, KeyEntry[]>,
+  hasImages: boolean,
+  preferredService?: string
+): KeyAttempt[] {
+  const services = hasImages
+    ? SERVICE_ORDER.filter(s => IMAGE_SERVICES.has(s))
+    : SERVICE_ORDER;
+
+  // Reorder to put preferred service first
+  const ordered = preferredService
+    ? [preferredService, ...services.filter(s => s !== preferredService)]
+    : services;
+
+  // Find max number of keys across all services
+  let maxKeys = 0;
+  for (const svc of ordered) {
+    const count = keys[svc]?.length || 0;
+    if (count > maxKeys) maxKeys = count;
   }
-}
 
-function supportsImages(svc: string): boolean {
-  return svc === "gemini";
-}
+  const queue: KeyAttempt[] = [];
 
-function getServiceOrder(keys: Record<string, KeyEntry[]>, hasImages: boolean, preferredService?: string): string[] {
-  const textServices = ["selfhosted", "cerebras", "groq", "together", "openrouter", "gemini"];
-  const imageServices = ["gemini"];
-
-  if (preferredService) {
-    const base = hasImages ? imageServices : textServices;
-    return [preferredService, ...base.filter((svc) => svc !== preferredService)];
+  // Interleave: round 0 (key index 0 of each service), round 1 (key index 1), etc.
+  for (let round = 0; round < maxKeys; round++) {
+    for (const svc of ordered) {
+      const svcKeys = keys[svc];
+      if (!svcKeys || round >= svcKeys.length) continue;
+      queue.push({ service: svc, keyEntry: svcKeys[round] });
+    }
   }
 
-  if (hasImages) return imageServices;
+  // Rotate start position for load distribution
+  if (queue.length > 1) {
+    globalRoundRobin = (globalRoundRobin + 1) % queue.length;
+    const rotated = [...queue.slice(globalRoundRobin), ...queue.slice(0, globalRoundRobin)];
+    return rotated;
+  }
 
-  const available = textServices.filter((svc) => keys[svc]?.length > 0);
-  if (available.length === 0) return textServices;
-
-  roundRobinIndex = (roundRobinIndex + 1) % available.length;
-  return [...available.slice(roundRobinIndex), ...available.slice(0, roundRobinIndex)];
+  return queue;
 }
+
+// ─── Main handler ───────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -257,50 +260,49 @@ serve(async (req) => {
     }
 
     const keys = await getApiKeys();
-    const hasImages = messages.some((message: any) =>
-      Array.isArray(message.content) && message.content.some((part: any) => part.type === "image_url")
+    const hasImages = messages.some((m: any) =>
+      Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
     );
 
-    const servicePriority = getServiceOrder(keys, hasImages, service);
+    const queue = buildInterleavedQueue(keys, hasImages, service);
+
+    if (queue.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Nenhuma API disponível. Configure suas chaves em /setup-api-keys." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let lastError: Error | null = null;
 
-    for (const svc of servicePriority) {
-      const svcKeys = keys[svc];
-      if (!svcKeys || svcKeys.length === 0) continue;
-      if (hasImages && !supportsImages(svc)) continue;
+    for (const { service: svc, keyEntry } of queue) {
+      if (hasImages && !IMAGE_SERVICES.has(svc)) continue;
 
-      const callFn = getCallFn(svc);
+      const callFn = CALL_FNS[svc];
       if (!callFn) continue;
 
-      for (const keyEntry of svcKeys) {
-        try {
-          console.log(`Trying ${svc} (key ${keyEntry.id.substring(0, 8)}...)...`);
-          const result = await callFn(messages, keyEntry.chave, max_tokens, temperature);
-          console.log(`Success with ${svc} (key ${keyEntry.id.substring(0, 8)}...)`);
+      try {
+        console.log(`Trying ${svc} (key ${keyEntry.id.substring(0, 8)}...)...`);
+        const result = await callFn(messages, keyEntry.chave, max_tokens, temperature);
+        console.log(`✓ Success with ${svc} (key ${keyEntry.id.substring(0, 8)}...)`);
 
-          const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
-          return new Response(JSON.stringify({ ...result, service_used: svc, tokens_used: tokensUsed }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        } catch (caughtError: any) {
-          const error = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
-          console.error(`${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, error.message);
-          lastError = error;
+        const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
+        return new Response(JSON.stringify({ ...result, service_used: svc, tokens_used: tokensUsed }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (caughtError: any) {
+        const error = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
+        console.error(`✗ ${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, error.message);
+        lastError = error;
 
-          if (isRetryableError(error)) {
-            await markKeyExhausted(keyEntry.id);
-            console.log(`Key ${keyEntry.id.substring(0, 8)}... marked as exhausted, trying next...`);
-          } else {
-            console.log(`Skipping failed ${svc} key ${keyEntry.id.substring(0, 8)}... and trying next option...`);
-          }
-
-          continue;
-        }
+        // ALL errors mark key as exhausted and continue to next
+        await markKeyExhausted(keyEntry.id);
+        continue;
       }
     }
 
     return new Response(
-      JSON.stringify({ error: lastError?.message || "Nenhuma API disponível. Configure suas chaves em /setup-api-keys." }),
+      JSON.stringify({ error: lastError?.message || "Todas as APIs falharam. Tente novamente em alguns minutos." }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

@@ -18,7 +18,7 @@ async function callAI(
   const session = (await supabase.auth.getSession()).data.session;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+  const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 min timeout
 
   try {
     const response = await fetch(url, {
