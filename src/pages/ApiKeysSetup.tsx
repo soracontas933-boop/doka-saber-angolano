@@ -280,8 +280,8 @@ export default function ApiKeysSetup() {
   };
 
   const isExhausted = (row: KeyRow) => {
-    if (!row.ultimo_erro) return false;
-    return new Date(row.ultimo_erro).getTime() > Date.now() - 6 * 60 * 60 * 1000;
+    // Desativado para manter as chaves sempre ativas visualmente
+    return false;
   };
 
   const getProviderKeys = (providerKey: ProviderKey) => keys.filter((row) => row.servico === providerKey);

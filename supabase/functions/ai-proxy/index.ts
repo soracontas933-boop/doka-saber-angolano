@@ -146,13 +146,11 @@ function isDatabaseKeyId(keyId: string): boolean {
 
 async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const cooldownTime = new Date(Date.now() - COOLDOWN_MS).toISOString();
 
   const { data, error } = await supabase
     .from("api_keys")
     .select("id, servico, chave, prioridade, ultimo_erro")
     .eq("ativo", true)
-    .or(`ultimo_erro.is.null,ultimo_erro.lt.${cooldownTime}`)
     .order("prioridade", { ascending: true });
 
   if (error) console.error("Failed to load API keys:", error.message);
@@ -166,13 +164,8 @@ async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
 }
 
 async function markKeyExhausted(keyId: string) {
-  if (!isDatabaseKeyId(keyId)) return;
-  try {
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    await supabase.from("api_keys").update({ ultimo_erro: new Date().toISOString() }).eq("id", keyId);
-  } catch (e) {
-    console.error("Failed to mark key exhausted:", e);
-  }
+  // Desativado para manter as chaves sempre ativas conforme solicitação do usuário
+  return;
 }
 
 // ─── Provider registry ──────────────────────────────────────────
