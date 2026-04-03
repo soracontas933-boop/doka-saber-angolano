@@ -1,45 +1,54 @@
 
 
-# Correcção: Erro 401 Bloqueia Todo o Sistema de Fallback
+# Plano: Nova Arquitectura do Orquestrador de IA — DELLE
 
-## Problema
-O erro `Cerebras error 401: Wrong API Key` está a impedir a geração de trabalhos. O problema é duplo:
+## Problema Actual
+O sistema de fallback actual falha porque: o cooldown de 6 horas é excessivo (chaves ficam bloqueadas o dia todo), falta o provedor Mistral AI, e as 24+ chaves fornecidas não estão na base de dados.
 
-1. **Chave Cerebras inválida** — a chave guardada na base de dados está errada ou expirada
-2. **Bug no fallback** — quando ocorre um erro 401 (chave inválida), o código actual faz `break` (linha 233), abandonando **todo o serviço e todos os seguintes**. Ou seja, uma única chave má do Cerebras impede que o sistema tente Groq, Together, OpenRouter ou Gemini.
+## Mudanças
 
-O `isQuotaError()` só detecta erros 429/403, mas um 401 ("Wrong API Key") não é capturado, então o sistema trata-o como erro fatal e para.
+### 1. Migração SQL — Inserir todas as chaves API
+Inserir na tabela `api_keys` todas as chaves fornecidas (6 Gemini, 6 Groq, 4 Cerebras, 7 OpenRouter, 1 Mistral), com prioridades distribuídas para round-robin eficaz. Limpar chaves antigas/inválidas primeiro.
 
-## Solução
+### 2. Reescrever `supabase/functions/ai-proxy/index.ts`
+- **Adicionar Mistral AI** como novo provedor (endpoint `https://api.mistral.ai/v1/chat/completions`, modelo `mistral-small-latest`)
+- **Reduzir cooldown de 6h para 15 minutos** — as APIs gratuitas reiniciam os limites rapidamente
+- **Melhorar round-robin** — distribuir chamadas uniformemente entre TODAS as chaves de TODOS os provedores em vez de esgotar um provedor inteiro antes de passar ao próximo
+- **Adicionar timeout por chamada** — 30 segundos max por tentativa individual para não bloquear o sistema
+- **Tratar TODOS os erros como retryable** — qualquer falha marca a chave e avança, nunca para
+- **Ordem de serviços**: gemini → groq → cerebras → openrouter → mistral → together (priorizar os mais rápidos e com mais chaves)
 
-### 1. Corrigir `isQuotaError` → renomear para `isRetryableError` (ai-proxy/index.ts)
-Expandir a detecção para incluir erros 401 (chave inválida) e 400 (bad request) como erros recuperáveis que devem marcar a chave como exausta e continuar para a próxima:
+### 3. Actualizar `src/lib/ai-service.ts`
+- Remover referência fixa a `service: "groq"` na função `generateWithGroq` — deixar o orquestrador decidir
+- Aumentar timeout de 2min para 3min para trabalhos grandes com muitos subtemas
 
+### 4. Actualizar `src/pages/ApiKeysSetup.tsx`
+- Adicionar "mistral" à lista de serviços disponíveis na interface
+
+## Detalhe Técnico — Nova função `callMistral`
 ```typescript
-function isRetryableError(error: Error): boolean {
-  const msg = error.message.toLowerCase();
-  return msg.includes("429") || msg.includes("401") || msg.includes("403")
-    || msg.includes("rate limit") || msg.includes("quota")
-    || msg.includes("exceeded") || msg.includes("too many")
-    || msg.includes("wrong_api_key") || msg.includes("invalid");
+const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
+
+async function callMistral(messages, apiKey, maxTokens, temperature) {
+  const res = await fetch(MISTRAL_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "mistral-small-latest", messages, max_tokens: maxTokens, temperature }),
+  });
+  if (!res.ok) throw new Error(`Mistral error ${res.status}: ${await res.text()}`);
+  return res.json();
 }
 ```
 
-### 2. Mudar o `break` para `continue` no loop de serviços (ai-proxy/index.ts)
-Actualmente, quando um erro não-quota ocorre, o código faz `break` e abandona o serviço inteiro. Em vez disso, deve marcar a chave como exausta e **continuar para o próximo serviço**:
+## Detalhe Técnico — Round-Robin melhorado
+Em vez de tentar todas as chaves de um serviço antes de passar ao próximo, o novo sistema intercala: Gemini-key1 → Groq-key1 → Cerebras-key1 → OpenRouter-key1 → Mistral-key1 → Gemini-key2 → Groq-key2... Isto distribui a carga uniformemente.
 
-```typescript
-// Em vez de break no catch:
-await markKeyExhausted(keyEntry.id);
-continue; // sempre tentar próxima chave/serviço
-```
-
-### 3. Reorganizar o loop principal
-Após esgotar todas as chaves de um serviço (quota ou chave má), o loop exterior deve continuar automaticamente para o próximo serviço na lista de prioridade. Remover o `break` que corta essa cadeia.
-
-## Ficheiro afectado
-- `supabase/functions/ai-proxy/index.ts` — corrigir lógica de fallback para nunca parar num erro de chave inválida
+## Ficheiros afectados
+1. **Migração SQL** — inserir 24 chaves, limpar inválidas
+2. **`supabase/functions/ai-proxy/index.ts`** — reescrever orquestrador
+3. **`src/lib/ai-service.ts`** — ajustar timeouts
+4. **`src/pages/ApiKeysSetup.tsx`** — adicionar Mistral à UI
 
 ## Resultado esperado
-Com esta correcção, mesmo que a chave Cerebras esteja errada, o sistema marca-a como exausta e tenta imediatamente Groq → Together → OpenRouter → Gemini, garantindo que a geração de trabalhos funciona enquanto houver pelo menos 1 chave válida em qualquer provedor.
+Com 24 chaves distribuídas por 5 provedores, cooldown de 15 min, e round-robin intercalado, o sistema suportará facilmente 10.000+ gerações/dia.
 
