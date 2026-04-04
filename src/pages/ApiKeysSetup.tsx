@@ -354,7 +354,7 @@ export default function ApiKeysSetup() {
                             {filledCount} chave{filledCount === 1 ? "" : "s"}
                           </Badge>
                           {exhaustedCount > 0 && (
-                            <Badge variant="secondary">{exhaustedCount} indisponível(eis)</Badge>
+                            <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">{provider.description}</p>
