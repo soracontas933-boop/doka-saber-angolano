@@ -287,18 +287,20 @@ export default function ApiKeysSetup() {
     }
   };
 
-  const isExhausted = (row: KeyRow) => {
-    if (!row.ultimo_erro) return false;
-    const errorTime = new Date(row.ultimo_erro).getTime();
-    const now = Date.now();
-    return now - errorTime < 15 * 60 * 1000; // 15 min cooldown
+  const getCooldownUntil = (row: KeyRow) => {
+    if (!row.ultimo_erro) return 0;
+    const timestamp = new Date(row.ultimo_erro).getTime();
+    return Number.isFinite(timestamp) ? timestamp : 0;
   };
 
+  const isExhausted = (row: KeyRow) => getCooldownUntil(row) > Date.now();
+
   const getCooldownRemaining = (row: KeyRow) => {
-    if (!row.ultimo_erro) return 0;
-    const errorTime = new Date(row.ultimo_erro).getTime();
-    const remaining = (errorTime + 15 * 60 * 1000) - Date.now();
-    return remaining > 0 ? Math.ceil(remaining / 60000) : 0;
+    const remaining = getCooldownUntil(row) - Date.now();
+    if (remaining <= 0) return "0s";
+    if (remaining < 60_000) return `${Math.ceil(remaining / 1000)}s`;
+    if (remaining < 60 * 60 * 1000) return `${Math.ceil(remaining / 60_000)}min`;
+    return `${Math.ceil(remaining / (60 * 60 * 1000))}h`;
   };
 
   const getProviderKeys = (providerKey: ProviderKey) => keys.filter((row) => row.servico === providerKey);
@@ -401,9 +403,9 @@ export default function ApiKeysSetup() {
                             </div>
 
                             {exhausted && (
-                              <span className="text-xs text-destructive whitespace-nowrap" title={`Cooldown: ${getCooldownRemaining(keyRow)}min restantes`}>
+                              <span className="text-xs text-destructive whitespace-nowrap" title={`Cooldown restante: ${getCooldownRemaining(keyRow)}`}>
                                 <AlertCircle className="h-4 w-4 inline mr-1" />
-                                {getCooldownRemaining(keyRow)}min
+                                {getCooldownRemaining(keyRow)}
                               </span>
                             )}
                             {!exhausted && keyRow.chave?.trim() && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
@@ -430,7 +432,7 @@ export default function ApiKeysSetup() {
               </Button>
 
               <p className="text-center text-xs text-muted-foreground">
-                Se uma chave falhar ou atingir limite, o sistema tenta automaticamente a próxima chave do mesmo provedor e depois outros provedores disponíveis.
+                Se uma chave falhar ou atingir limite, ela entra em cooldown dinâmico e o sistema avança logo para a próxima opção saudável.
               </p>
             </CardContent>
           </Card>
