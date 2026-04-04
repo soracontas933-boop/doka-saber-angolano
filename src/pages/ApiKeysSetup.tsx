@@ -288,8 +288,17 @@ export default function ApiKeysSetup() {
   };
 
   const isExhausted = (row: KeyRow) => {
-    // Desativado para manter as chaves sempre ativas visualmente
-    return false;
+    if (!row.ultimo_erro) return false;
+    const errorTime = new Date(row.ultimo_erro).getTime();
+    const now = Date.now();
+    return now - errorTime < 15 * 60 * 1000; // 15 min cooldown
+  };
+
+  const getCooldownRemaining = (row: KeyRow) => {
+    if (!row.ultimo_erro) return 0;
+    const errorTime = new Date(row.ultimo_erro).getTime();
+    const remaining = (errorTime + 15 * 60 * 1000) - Date.now();
+    return remaining > 0 ? Math.ceil(remaining / 60000) : 0;
   };
 
   const getProviderKeys = (providerKey: ProviderKey) => keys.filter((row) => row.servico === providerKey);
@@ -345,7 +354,7 @@ export default function ApiKeysSetup() {
                             {filledCount} chave{filledCount === 1 ? "" : "s"}
                           </Badge>
                           {exhaustedCount > 0 && (
-                            <Badge variant="secondary">{exhaustedCount} indisponível(eis)</Badge>
+                            <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">{provider.description}</p>
@@ -391,7 +400,12 @@ export default function ApiKeysSetup() {
                               </Button>
                             </div>
 
-                            {exhausted && <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />}
+                            {exhausted && (
+                              <span className="text-xs text-destructive whitespace-nowrap" title={`Cooldown: ${getCooldownRemaining(keyRow)}min restantes`}>
+                                <AlertCircle className="h-4 w-4 inline mr-1" />
+                                {getCooldownRemaining(keyRow)}min
+                              </span>
+                            )}
                             {!exhausted && keyRow.chave?.trim() && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
 
                             <Button

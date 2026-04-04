@@ -15,7 +15,8 @@ const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
 const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 
-const CALL_TIMEOUT_MS = 30_000; // 30s per individual call
+const CALL_TIMEOUT_MS = 30_000;
+const COOLDOWN_MS = 15 * 60 * 1000; // 15 min
 
 // ─── Provider call functions ────────────────────────────────────
 
@@ -39,19 +40,36 @@ async function callGroq(messages: any[], apiKey: string, maxTokens: number, temp
   return res.json();
 }
 
+const OPENROUTER_MODELS = [
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "mistralai/mistral-7b-instruct:free",
+  "google/gemma-2-9b-it:free",
+];
+
 async function callOpenRouter(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const res = await fetchWithTimeout(OPENROUTER_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://wame-angola-smart-learn.lovable.app",
-      "X-Title": "WAME Angola",
-    },
-    body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct:free", messages, max_tokens: maxTokens, temperature }),
-  });
-  if (!res.ok) throw new Error(`OpenRouter error ${res.status}: ${await res.text()}`);
-  return res.json();
+  let lastErr: Error | null = null;
+  for (const model of OPENROUTER_MODELS) {
+    try {
+      const res = await fetchWithTimeout(OPENROUTER_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://wame-angola-smart-learn.lovable.app",
+          "X-Title": "DELLE Angola",
+        },
+        body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature }),
+      });
+      if (!res.ok) {
+        lastErr = new Error(`OpenRouter error ${res.status} (${model}): ${await res.text()}`);
+        continue;
+      }
+      return res.json();
+    } catch (e) {
+      lastErr = e instanceof Error ? e : new Error(String(e));
+    }
+  }
+  throw lastErr || new Error("OpenRouter: all models failed");
 }
 
 async function callGemini(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
@@ -121,43 +139,21 @@ async function callMistral(messages: any[], apiKey: string, maxTokens: number, t
   return res.json();
 }
 
-async function callSelfHosted(messages: any[], apiKey: string, maxTokens: number, temperature: number) {
-  const [url, token] = apiKey.split("|");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetchWithTimeout(url.trim(), {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ model: "default", messages, max_tokens: maxTokens, temperature }),
-  });
-  if (!res.ok) throw new Error(`Self-hosted error ${res.status}: ${await res.text()}`);
-  return res.json();
-}
-
 // ─── Key management ─────────────────────────────────────────────
 
-interface KeyEntry { id: string; chave: string; prioridade: number; }
+interface KeyEntry { id: string; chave: string; prioridade: number; ultimo_erro: string | null; }
 
-const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
-
-function isDatabaseKeyId(keyId: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(keyId);
+function createSupabaseAdmin() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 }
 
 async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
+  const supabase = createSupabaseAdmin();
 
-  // Buscamos todas as chaves ativas. 
-  // O uso do SERVICE_ROLE_KEY ignora as políticas de RLS, garantindo que a função sempre veja as chaves.
   const { data, error } = await supabase
     .from("api_keys")
     .select("id, servico, chave, prioridade, ultimo_erro")
@@ -165,28 +161,55 @@ async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
     .order("prioridade", { ascending: true });
 
   if (error) {
-    console.error("Erro ao carregar chaves API do banco:", error.message);
+    console.error("Erro ao carregar chaves API:", error.message);
     return {};
   }
 
   if (!data || data.length === 0) {
-    console.warn("Nenhuma chave API ativa encontrada na tabela public.api_keys.");
+    console.warn("Nenhuma chave API ativa encontrada.");
     return {};
   }
 
+  const now = Date.now();
   const keys: Record<string, KeyEntry[]> = {};
+  let skipped = 0;
+
   for (const row of data) {
+    // Skip keys in cooldown
+    if (row.ultimo_erro) {
+      const errorTime = new Date(row.ultimo_erro).getTime();
+      if (now - errorTime < COOLDOWN_MS) {
+        skipped++;
+        continue;
+      }
+    }
+
     if (!keys[row.servico]) keys[row.servico] = [];
-    keys[row.servico].push({ id: row.id, chave: row.chave, prioridade: row.prioridade ?? 0 });
+    keys[row.servico].push({
+      id: row.id,
+      chave: row.chave,
+      prioridade: row.prioridade ?? 0,
+      ultimo_erro: row.ultimo_erro,
+    });
   }
-  
-  console.log(`Carregadas ${data.length} chaves de API com sucesso.`);
+
+  const total = data.length;
+  const healthy = total - skipped;
+  console.log(`Chaves: ${healthy}/${total} saudáveis (${skipped} em cooldown)`);
   return keys;
 }
 
-async function markKeyExhausted(keyId: string) {
-  // Desativado para manter as chaves sempre ativas conforme solicitação do usuário
-  return;
+async function markKeyExhausted(keyId: string, errorMsg: string) {
+  try {
+    const supabase = createSupabaseAdmin();
+    await supabase
+      .from("api_keys")
+      .update({ ultimo_erro: new Date().toISOString() })
+      .eq("id", keyId);
+    console.log(`⏸ Key ${keyId.substring(0, 8)}... em cooldown (15min): ${errorMsg.substring(0, 80)}`);
+  } catch (e) {
+    console.error("Falha ao marcar chave:", e);
+  }
 }
 
 // ─── Provider registry ──────────────────────────────────────────
@@ -194,7 +217,6 @@ async function markKeyExhausted(keyId: string) {
 type CallFn = (msgs: any[], key: string, mt: number, t: number) => Promise<any>;
 
 const CALL_FNS: Record<string, CallFn> = {
-  selfhosted: callSelfHosted,
   gemini: callGemini,
   groq: callGroq,
   cerebras: callCerebras,
@@ -204,13 +226,9 @@ const CALL_FNS: Record<string, CallFn> = {
 };
 
 const IMAGE_SERVICES = new Set(["gemini"]);
-
-// Service priority order
 const SERVICE_ORDER = ["gemini", "groq", "cerebras", "openrouter", "mistral", "together"];
 
 // ─── Interleaved round-robin ────────────────────────────────────
-// Instead of exhausting all keys of one service before moving to the next,
-// interleave: gemini-key1, groq-key1, cerebras-key1, ..., gemini-key2, groq-key2, ...
 
 let globalRoundRobin = 0;
 
@@ -219,40 +237,30 @@ interface KeyAttempt { service: string; keyEntry: KeyEntry; }
 function buildInterleavedQueue(
   keys: Record<string, KeyEntry[]>,
   hasImages: boolean,
-  preferredService?: string
 ): KeyAttempt[] {
   const services = hasImages
     ? SERVICE_ORDER.filter(s => IMAGE_SERVICES.has(s))
     : SERVICE_ORDER;
 
-  // Reorder to put preferred service first
-  const ordered = preferredService
-    ? [preferredService, ...services.filter(s => s !== preferredService)]
-    : services;
-
-  // Find max number of keys across all services
   let maxKeys = 0;
-  for (const svc of ordered) {
+  for (const svc of services) {
     const count = keys[svc]?.length || 0;
     if (count > maxKeys) maxKeys = count;
   }
 
   const queue: KeyAttempt[] = [];
-
-  // Interleave: round 0 (key index 0 of each service), round 1 (key index 1), etc.
   for (let round = 0; round < maxKeys; round++) {
-    for (const svc of ordered) {
+    for (const svc of services) {
       const svcKeys = keys[svc];
       if (!svcKeys || round >= svcKeys.length) continue;
       queue.push({ service: svc, keyEntry: svcKeys[round] });
     }
   }
 
-  // Rotate start position for load distribution
+  // Rotate for load distribution
   if (queue.length > 1) {
     globalRoundRobin = (globalRoundRobin + 1) % queue.length;
-    const rotated = [...queue.slice(globalRoundRobin), ...queue.slice(0, globalRoundRobin)];
-    return rotated;
+    return [...queue.slice(globalRoundRobin), ...queue.slice(0, globalRoundRobin)];
   }
 
   return queue;
@@ -264,7 +272,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, max_tokens = 8000, temperature = 0.7, service } = await req.json();
+    const { messages, max_tokens = 8000, temperature = 0.7 } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "Parâmetro 'messages' é obrigatório" }), {
@@ -278,14 +286,16 @@ serve(async (req) => {
       Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
     );
 
-    const queue = buildInterleavedQueue(keys, hasImages, service);
+    const queue = buildInterleavedQueue(keys, hasImages);
 
     if (queue.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Nenhuma API disponível. Configure suas chaves em /setup-api-keys." }),
+        JSON.stringify({ error: "Nenhuma API disponível. Todas as chaves podem estar em cooldown. Tente novamente em 15 minutos ou adicione novas chaves em /setup-api-keys." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log(`Fila: ${queue.map(q => `${q.service}[${q.keyEntry.id.substring(0,4)}]`).join(" → ")}`);
 
     let lastError: Error | null = null;
 
@@ -296,9 +306,9 @@ serve(async (req) => {
       if (!callFn) continue;
 
       try {
-        console.log(`Trying ${svc} (key ${keyEntry.id.substring(0, 8)}...)...`);
+        console.log(`→ ${svc} (${keyEntry.id.substring(0, 8)}...)`);
         const result = await callFn(messages, keyEntry.chave, max_tokens, temperature);
-        console.log(`✓ Success with ${svc} (key ${keyEntry.id.substring(0, 8)}...)`);
+        console.log(`✓ ${svc} OK`);
 
         const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || 0;
         return new Response(JSON.stringify({ ...result, service_used: svc, tokens_used: tokensUsed }), {
@@ -306,12 +316,12 @@ serve(async (req) => {
         });
       } catch (caughtError: any) {
         const error = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
-        console.error(`✗ ${svc} key ${keyEntry.id.substring(0, 8)}... failed:`, error.message);
+        console.error(`✗ ${svc} ${keyEntry.id.substring(0, 8)}...: ${error.message.substring(0, 120)}`);
         lastError = error;
 
-        // ALL errors mark key as exhausted and continue to next
-        await markKeyExhausted(keyEntry.id);
-        continue;
+        // Mark key as exhausted — cooldown for 15 min
+        await markKeyExhausted(keyEntry.id, error.message);
+        continue; // ALWAYS continue to next key/provider
       }
     }
 
