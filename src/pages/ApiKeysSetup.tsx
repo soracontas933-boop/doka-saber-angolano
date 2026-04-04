@@ -288,8 +288,17 @@ export default function ApiKeysSetup() {
   };
 
   const isExhausted = (row: KeyRow) => {
-    // Desativado para manter as chaves sempre ativas visualmente
-    return false;
+    if (!row.ultimo_erro) return false;
+    const errorTime = new Date(row.ultimo_erro).getTime();
+    const now = Date.now();
+    return now - errorTime < 15 * 60 * 1000; // 15 min cooldown
+  };
+
+  const getCooldownRemaining = (row: KeyRow) => {
+    if (!row.ultimo_erro) return 0;
+    const errorTime = new Date(row.ultimo_erro).getTime();
+    const remaining = (errorTime + 15 * 60 * 1000) - Date.now();
+    return remaining > 0 ? Math.ceil(remaining / 60000) : 0;
   };
 
   const getProviderKeys = (providerKey: ProviderKey) => keys.filter((row) => row.servico === providerKey);

@@ -67,13 +67,14 @@ async function callAI(
 }
 
 // ─── Geração de Conteúdo Principal ───────────────────────────────
+// No longer pins to Groq — lets the orchestrator choose the healthiest provider
 export async function generateWithGroq(
   systemPrompt: string,
   userPrompt: string,
   maxTokens = 8000,
   temperature = 0.7
 ): Promise<string> {
-  const result = await callAI(systemPrompt, userPrompt, { maxTokens, temperature, service: "groq" });
+  const result = await callAI(systemPrompt, userPrompt, { maxTokens, temperature });
   return result.content;
 }
 
