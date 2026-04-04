@@ -400,7 +400,12 @@ export default function ApiKeysSetup() {
                               </Button>
                             </div>
 
-                            {exhausted && <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />}
+                            {exhausted && (
+                              <span className="text-xs text-destructive whitespace-nowrap" title={`Cooldown: ${getCooldownRemaining(keyRow)}min restantes`}>
+                                <AlertCircle className="h-4 w-4 inline mr-1" />
+                                {getCooldownRemaining(keyRow)}min
+                              </span>
+                            )}
                             {!exhausted && keyRow.chave?.trim() && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
 
                             <Button
