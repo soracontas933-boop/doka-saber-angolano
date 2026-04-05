@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface UserPlan {
   id: string;
@@ -36,7 +37,7 @@ export const PLAN_CONFIGS = {
     label_preco: "546 Kz",
     limite_trabalhos: 3,
     limite_resumos: 4,
-    limite_questionarios: -1, // ilimitado
+    limite_questionarios: -1,
     limite_planos_aula: 0,
     limite_tfc: 0,
     creditos_totais: 0,
@@ -83,13 +84,12 @@ export const PLAN_CONFIGS = {
 export type PlanKey = keyof typeof PLAN_CONFIGS;
 
 export function useUserPlan() {
+  const { user, isLoading: authLoading } = useAuth();
   const [plan, setPlan] = useState<UserPlan | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchPlan = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) { setLoading(false); return; }
-    const user = session.user;
+    if (!user) { setLoading(false); return; }
 
     const { data, error } = await (supabase.from("user_plans") as any)
       .select("*")
@@ -97,8 +97,6 @@ export function useUserPlan() {
       .single();
 
     if (error && error.code === "PGRST116") {
-      // No plan found — the trigger should have created one on signup.
-      // Do not insert from client to avoid privilege escalation.
       console.warn("Plano não encontrado para o utilizador. Aguarde ou contacte o suporte.");
       setPlan(null);
     } else if (data) {
@@ -107,7 +105,10 @@ export function useUserPlan() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchPlan(); }, []);
+  useEffect(() => {
+    if (authLoading) return;
+    fetchPlan();
+  }, [user, authLoading]);
 
   return { plan, loading, refetch: fetchPlan };
 }

@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import HomePage from "@/pages/HomePage";
@@ -34,32 +35,34 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/home" element={<UserHomePage />} />
-              <Route path="/grupos" element={<GruposPage />} />
-              <Route path="/meus-projetos" element={<MeusProjetosPage />} />
-              <Route path="/trabalho" element={<TrabalhoPage />} />
-              <Route path="/resumo" element={<ResumoPage />} />
-              <Route path="/questionario" element={<QuestionarioPage />} />
-              <Route path="/plano-aula" element={<PlanoAulaPage />} />
-              <Route path="/correcao" element={<CorrecaoPage />} />
-              <Route path="/admin" element={<AdminPanelPage />} />
-              <Route path="/configuracoes" element={<SettingsPage />} />
-              <Route path="/planos" element={<PlanosPage />} />
-              <Route path="/suporte" element={<SuportePage />} />
-              <Route path="/mensagens" element={<AdminMensagensPage />} />
-              <Route path="/curriculo" element={<CurriculoPage />} />
-              <Route path="/faturamento" element={<FaturamentoPage />} />
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/home" element={<UserHomePage />} />
+                <Route path="/grupos" element={<GruposPage />} />
+                <Route path="/meus-projetos" element={<MeusProjetosPage />} />
+                <Route path="/trabalho" element={<TrabalhoPage />} />
+                <Route path="/resumo" element={<ResumoPage />} />
+                <Route path="/questionario" element={<QuestionarioPage />} />
+                <Route path="/plano-aula" element={<PlanoAulaPage />} />
+                <Route path="/correcao" element={<CorrecaoPage />} />
+                <Route path="/admin" element={<AdminPanelPage />} />
+                <Route path="/configuracoes" element={<SettingsPage />} />
+                <Route path="/planos" element={<PlanosPage />} />
+                <Route path="/suporte" element={<SuportePage />} />
+                <Route path="/mensagens" element={<AdminMensagensPage />} />
+                <Route path="/curriculo" element={<CurriculoPage />} />
+                <Route path="/faturamento" element={<FaturamentoPage />} />
+              </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
