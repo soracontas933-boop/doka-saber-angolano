@@ -1,64 +1,53 @@
 
 
-# Correcção: Tela Branca Após Login (Link Publicado)
+# Correcção: Resumos de PDF e Word Não Funcionam
 
-## Causa Raiz
+## Problemas Identificados
 
-O app tem **5+ hooks independentes** que chamam `supabase.auth.getSession()` ou `supabase.auth.getUser()` em simultâneo ao carregar a página:
-- `useAuth` (ProtectedRoute) → `getSession()`
-- `useAdmin` (AppSidebar) → `getSession()`
-- `useUserPlan` (CreditsBar) → `getSession()`
-- `usePageTracking` (AppLayout) → `getUser()`
-- `useUsageTracker` (CreditsBar) → provavelmente `getSession()`
+Analisei o fluxo completo — `ResumoPage.tsx` → `ai-service.ts` → `ocr-extract` edge function — e encontrei 3 problemas:
 
-Cada chamada tenta adquirir o mesmo lock do navegador (`lock:sb-...-auth-token`). Quando várias competem, umas "roubam" o lock das outras, causando o erro nos logs: *"Lock was released because another request stole it"*. Isto resulta em sessões que retornam `null` intermitentemente, fazendo o `ProtectedRoute` redirigir para `/auth` ou os componentes renderizarem sem dados — **tela branca**.
+### 1. Documentos Word (.doc/.docx) não são suportados pelo Gemini
+O `ocr-extract` envia o ficheiro base64 como `inline_data` para o Gemini. O Gemini suporta PDF via `inline_data`, mas **não suporta** `.doc` nem `.docx`. A chamada falha silenciosamente ou devolve erro.
+
+### 2. Groq Vision é excluído para documentos
+Na linha 97 do `ocr-extract`, a condição `!is_document` exclui o Groq como fallback quando `is_document = true`. Se o Gemini falhar (429, quota, mime type inválido), **não há fallback nenhum**.
+
+### 3. Só uma chave por serviço é usada
+A função `getApiKeys()` faz `keys[row.servico] = row.chave` — se existem 6 chaves Gemini, só a última é usada. Se essa chave estiver em cooldown ou exausta, a extracção falha.
+
+### 4. PDFs grandes excedem limites da edge function
+Enviar um PDF de vários MB como base64 no corpo do request pode exceder o limite de 150MB de memória ou o timeout da edge function.
 
 ## Solução
 
-Centralizar TODA a lógica de autenticação num único `AuthProvider` (React Context) que chama `getSession()` **uma única vez**. Todos os outros hooks passam a consumir o contexto em vez de chamar o Supabase Auth directamente.
+### A. Extrair texto de Word no cliente (sem edge function)
+- Instalar `mammoth` no frontend para `.docx`
+- Extrair texto de Word **antes** de enviar ao AI — directamente no browser
+- Elimina a dependência do Gemini para Word
 
-### 1. Criar `src/contexts/AuthContext.tsx`
-- Um único `useEffect` que:
-  1. Regista `onAuthStateChange` primeiro
-  2. Chama `getSession()` uma vez para restaurar a sessão
-  3. Expõe `user`, `session`, `isLoading`, `signOut`
-- Exporta `AuthProvider` e `useAuth`
+### B. Rotação de chaves Gemini no `ocr-extract`
+- Alterar `getApiKeys()` para devolver **todas** as chaves Gemini (array)
+- Tentar cada chave Gemini em sequência até uma funcionar
+- Se todas falharem, tentar Groq Vision (remover a exclusão `!is_document` para PDFs)
 
-### 2. Actualizar `src/hooks/use-auth.ts`
-- Re-exportar o `useAuth` do novo contexto (manter compatibilidade de imports)
-
-### 3. Actualizar `src/App.tsx`
-- Envolver as `Routes` com `<AuthProvider>`
-
-### 4. Actualizar `src/hooks/use-admin.ts`
-- Remover `supabase.auth.getSession()` e `onAuthStateChange` internos
-- Importar `useAuth()` do contexto e usar `user` directamente
-
-### 5. Actualizar `src/hooks/use-user-plan.ts`
-- Remover `supabase.auth.getSession()`
-- Usar `useAuth()` para obter o `user`
-- Usar `enabled` flag do React Query ou useEffect condicionado a `!isLoading`
-
-### 6. Actualizar `src/hooks/use-page-tracking.ts`
-- Remover `supabase.auth.getUser()`
-- Usar `useAuth()` para obter o `user`
-
-### 7. Actualizar `src/hooks/use-usage-tracker.ts`
-- Remover qualquer chamada directa ao auth
-- Usar `useAuth()` do contexto
-
-## Resultado
-- Uma única chamada `getSession()` em toda a app
-- Zero contenção de locks
-- Fim da tela branca após login
-- Carregamento mais rápido (menos chamadas de rede paralelas ao auth)
+### C. Manter Gemini para PDFs, com fallback real
+- PDFs funcionam via Gemini `inline_data` — manter esse caminho
+- Adicionar Groq como fallback para PDFs (pode processar imagens de páginas)
+- Adicionar logging para diagnosticar falhas futuras
 
 ## Ficheiros afectados
-1. `src/contexts/AuthContext.tsx` — **novo**
-2. `src/hooks/use-auth.ts` — re-exportar do contexto
-3. `src/App.tsx` — adicionar `AuthProvider`
-4. `src/hooks/use-admin.ts` — usar contexto
-5. `src/hooks/use-user-plan.ts` — usar contexto
-6. `src/hooks/use-page-tracking.ts` — usar contexto
-7. `src/hooks/use-usage-tracker.ts` — usar contexto (se aplicável)
+
+1. **`package.json`** — adicionar dependência `mammoth`
+2. **`src/lib/ai-service.ts`** — `extractTextFromDocument()`:
+   - Se `.docx`: usar mammoth no cliente, devolver texto directamente
+   - Se `.pdf`: manter chamada ao `ocr-extract`
+3. **`supabase/functions/ocr-extract/index.ts`**:
+   - `getApiKeys()` → devolver array de chaves Gemini
+   - Rodar por todas as chaves antes de falhar
+   - Remover exclusão de Groq para documentos PDF
+
+## Resultado
+- Word (.docx) funciona sempre via extracção local (sem depender de API)
+- PDFs usam todas as chaves Gemini disponíveis com fallback Groq
+- Resumos de documentos voltam a funcionar de forma fiável
 
