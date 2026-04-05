@@ -10,12 +10,12 @@ const corsHeaders = {
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-async function getApiKeys(): Promise<Record<string, string>> {
+interface ApiKey { servico: string; chave: string; }
+
+async function getAllApiKeys(): Promise<ApiKey[]> {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data } = await supabase.from("api_keys").select("servico, chave").eq("ativo", true);
-  const keys: Record<string, string> = {};
-  for (const row of data || []) keys[row.servico] = row.chave;
-  return keys;
+  return data || [];
 }
 
 const OCR_PROMPT = `Você é um OCR especializado. Extraia TODO o texto visível nesta imagem com máxima fidelidade. A imagem pode conter texto manuscrito (escrito à mão), impresso, digitado ou misto. Transcreva exactamente o que está escrito, incluindo títulos, parágrafos, listas, fórmulas, tabelas e anotações. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem formatação JSON, sem comentários adicionais. Se não conseguir ler alguma parte, indique [ilegível].`;
@@ -87,14 +87,23 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const keys = await getApiKeys();
+    const allKeys = await getAllApiKeys();
     const promptToUse = is_document ? DOC_PROMPT : OCR_PROMPT;
 
-    // Try providers in order: Gemini → Groq Vision
+    // Collect ALL keys per provider
+    const geminiKeys = allKeys.filter(k => k.servico === "gemini").map(k => k.chave);
+    const groqKeys = allKeys.filter(k => k.servico === "groq").map(k => k.chave);
+
+    // Build provider list: try every Gemini key, then every Groq key
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [];
 
-    if (keys.gemini) providers.push({ name: "gemini", fn: () => ocrWithGemini(image_base64, mime_type, keys.gemini, promptToUse) });
-    if (keys.groq && !is_document) providers.push({ name: "groq-vision", fn: () => ocrWithGroq(image_base64, mime_type, keys.groq, promptToUse) });
+    for (const key of geminiKeys) {
+      providers.push({ name: `gemini`, fn: () => ocrWithGemini(image_base64, mime_type, key, promptToUse) });
+    }
+    // Groq Vision works for images; also allow for PDFs as fallback
+    for (const key of groqKeys) {
+      providers.push({ name: `groq-vision`, fn: () => ocrWithGroq(image_base64, mime_type, key, promptToUse) });
+    }
 
     if (providers.length === 0) {
       return new Response(JSON.stringify({ error: "Nenhuma chave de OCR configurada. Adicione Gemini ou Groq em /setup-api-keys." }),
@@ -106,9 +115,12 @@ serve(async (req) => {
       try {
         console.log(`OCR: trying ${provider.name}...`);
         const text = await provider.fn();
-        console.log(`OCR: success with ${provider.name}`);
-        return new Response(JSON.stringify({ text }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (text && text.trim().length > 0) {
+          console.log(`OCR: success with ${provider.name} (${text.length} chars)`);
+          return new Response(JSON.stringify({ text }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        console.warn(`OCR: ${provider.name} returned empty text, trying next...`);
       } catch (e: any) {
         console.error(`OCR ${provider.name} failed:`, e.message);
         lastError = e;

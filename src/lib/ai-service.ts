@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
+import mammoth from "mammoth";
 import { getReferenciasParaDisciplina, formatarReferenciasParaPrompt } from "@/lib/referencias-reais";
 
 export interface AIResponse {
@@ -142,6 +143,25 @@ export async function extractTextFromImages(files: File[]): Promise<string[]> {
 
 // ─── Extract text from PDF/Word documents ────────────────────────
 export async function extractTextFromDocument(file: File): Promise<string> {
+  const ext = file.name?.split(".").pop()?.toLowerCase();
+
+  // Word files: extract locally with mammoth (no API needed)
+  if (ext === "docx" || ext === "doc" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      const text = result.value?.trim();
+      if (text && text.length > 20) {
+        console.log(`[DOC] Extracted ${text.length} chars locally via mammoth`);
+        return text;
+      }
+      console.warn("[DOC] mammoth returned very little text, falling back to OCR");
+    } catch (e: any) {
+      console.warn("[DOC] mammoth extraction failed, falling back to OCR:", e.message);
+    }
+  }
+
+  // PDF and fallback: use ocr-extract edge function
   const base64 = await fileToBase64(file);
   const mimeType = file.type || "application/pdf";
   
