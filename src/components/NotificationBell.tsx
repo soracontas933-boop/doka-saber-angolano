@@ -106,8 +106,9 @@ const NotificationBell = () => {
   useEffect(() => {
     fetchNotifications();
 
+    const channelName = `user-notifications-${Date.now()}`;
     const channel = supabase
-      .channel("user-notifications")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications" },
