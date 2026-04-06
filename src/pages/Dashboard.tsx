@@ -146,7 +146,10 @@ const Dashboard = () => {
   // Play alert sound using Web Audio API
   const playAlertSound = useCallback(() => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      
+      const ctx = new AudioContextClass();
       const playTone = (freq: number, start: number, duration: number) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -163,7 +166,9 @@ const Dashboard = () => {
       playTone(1100, 0.18, 0.15);
       playTone(880, 0.36, 0.15);
       playTone(1100, 0.54, 0.2);
-    } catch {}
+    } catch (e) {
+      console.warn("Erro ao reproduzir som de alerta:", e);
+    }
   }, []);
 
   // Fetch pending payments count

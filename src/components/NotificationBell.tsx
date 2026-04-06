@@ -31,22 +31,30 @@ const NotificationBell = () => {
   const unreadCount = notifications.filter((n) => !n.lida).length;
 
   const fetchNotifications = async () => {
+    if (!user) return;
     const { data } = await supabase
       .from("notifications")
       .select("*")
+      .eq("user_id", user.id)
       .order("criado_em", { ascending: false })
       .limit(20);
     if (data) setNotifications(data);
   };
 
   // Persistent AudioContext to avoid browser autoplay blocking
-  const audioCtxRef = useState<AudioContext | null>(null);
+  const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
 
   const ensureAudioContext = () => {
-    if (!audioCtxRef[0]) {
-      audioCtxRef[1](new AudioContext());
+    let ctx = audioCtx;
+    if (!ctx) {
+      try {
+        ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        setAudioCtx(ctx);
+      } catch (e) {
+        console.warn("AudioContext not supported", e);
+        return null;
+      }
     }
-    const ctx = audioCtxRef[0];
     if (ctx && ctx.state === "suspended") {
       ctx.resume();
     }
@@ -66,14 +74,9 @@ const NotificationBell = () => {
 
   const playNotificationSound = () => {
     try {
-      let ctx = audioCtxRef[0];
-      if (!ctx) {
-        ctx = new AudioContext();
-        audioCtxRef[1](ctx);
-      }
-      if (ctx.state === "suspended") {
-        ctx.resume();
-      }
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -87,16 +90,17 @@ const NotificationBell = () => {
 
       // Second tone for attention
       setTimeout(() => {
-        const osc2 = ctx!.createOscillator();
-        const gain2 = ctx!.createGain();
+        if (!ctx) return;
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
         osc2.connect(gain2);
-        gain2.connect(ctx!.destination);
+        gain2.connect(ctx.destination);
         osc2.frequency.value = 1100;
         osc2.type = "sine";
         gain2.gain.value = 0.25;
         osc2.start();
-        gain2.gain.exponentialRampToValueAtTime(0.001, ctx!.currentTime + 0.4);
-        osc2.stop(ctx!.currentTime + 0.4);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc2.stop(ctx.currentTime + 0.4);
       }, 200);
     } catch (e) {
       console.warn("Could not play notification sound:", e);
@@ -111,7 +115,12 @@ const NotificationBell = () => {
       .channel(channelName)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications" },
+        { 
+          event: "INSERT", 
+          schema: "public", 
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`
+        },
         (payload: any) => {
           const newNotif = payload.new as Notification;
           setNotifications((prev) => [newNotif, ...prev]);

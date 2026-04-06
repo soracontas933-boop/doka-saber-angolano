@@ -57,16 +57,21 @@ const UserHomePage = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [profileRes, planRes, projectsRes, groupsRes] = await Promise.all([
-        supabase.from("profiles").select("nome").eq("id", user.id).single(),
-        supabase.from("user_plans").select("plano, creditos_usados, creditos_totais").eq("user_id", user.id).single(),
-        supabase.from("projects").select("id, titulo, tipo, criado_em").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(5),
-        supabase.from("workgroup_members").select("id").eq("user_id", user.id).eq("aceite", true),
-      ]);
-      if (profileRes.data) setProfile(profileRes.data);
-      if (planRes.data) setPlan(planRes.data);
-      if (projectsRes.data) setRecentProjects(projectsRes.data);
-      if (groupsRes.data) setGroupCount(groupsRes.data.length);
+      try {
+        const [profileRes, planRes, projectsRes, groupsRes] = await Promise.all([
+          supabase.from("profiles").select("nome").eq("id", user.id).single(),
+          supabase.from("user_plans").select("plano, creditos_usados, creditos_totais").eq("user_id", user.id).single(),
+          supabase.from("projects").select("id, titulo, tipo, criado_em").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(5),
+          supabase.from("workgroup_members").select("id").eq("user_id", user.id).eq("aceite", true),
+        ]);
+        
+        if (profileRes.data) setProfile(profileRes.data);
+        if (planRes.data) setPlan(planRes.data);
+        if (projectsRes.data) setRecentProjects(projectsRes.data);
+        if (groupsRes.data) setGroupCount(groupsRes.data.length || 0);
+      } catch (error) {
+        console.error("Erro ao carregar dados da home:", error);
+      }
     };
     fetchData();
   }, [user]);
