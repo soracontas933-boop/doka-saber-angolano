@@ -19,7 +19,7 @@ const MobileNav = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
-      <div className="mx-3 mb-2 rounded-2xl bg-[hsl(var(--delle-nav-bg))] px-2 py-2 flex items-center justify-around shadow-lg">
+      <div className="mx-3 mb-2 rounded-2xl bg-black/90 backdrop-blur-xl border border-white/10 px-2 py-2 flex items-center justify-around shadow-[0_-4px_30px_rgba(0,0,0,0.3)]">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to ||
             (item.to === "/home" && location.pathname === "/home") ||
