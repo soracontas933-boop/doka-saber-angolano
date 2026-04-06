@@ -21,8 +21,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import DelleLogo from "@/components/DelleLogo";
-import NotificationBell from "@/components/NotificationBell";
 
 const quickActions = [
   { to: "/trabalho", icon: FileText, label: "Criar Tarefas\nEscolares" },
