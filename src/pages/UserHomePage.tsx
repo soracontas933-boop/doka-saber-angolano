@@ -21,6 +21,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import DelleLogo from "@/components/DelleLogo";
+import NotificationBell from "@/components/NotificationBell";
 
 const quickActions = [
   { to: "/trabalho", icon: FileText, label: "Criar Tarefas\nEscolares" },
@@ -86,14 +88,34 @@ const UserHomePage = () => {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--delle-surface))] md:bg-background">
-      {/* Mobile Content */}
+      {/* Mobile Header */}
       <div className="md:hidden">
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-10 h-10 rounded-full bg-[hsl(var(--delle-card))] flex items-center justify-center text-sm font-bold text-foreground"
+          >
+            {initials}
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xl font-display font-bold text-foreground"
+          >
+            Delle
+          </motion.h1>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+          </div>
+        </div>
+
         {/* Productivity Score */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="px-4 pt-4 pb-4"
+          className="px-4 pt-2 pb-4"
         >
           <p className="text-sm text-muted-foreground font-medium">Productivity Score</p>
           <div className="flex items-center justify-between">

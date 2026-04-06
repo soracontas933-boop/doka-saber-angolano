@@ -65,7 +65,7 @@ const CreditsBar = () => {
   const creditPercentage = totalCredits === Infinity || totalCredits === 0 ? 0 : usedCredits / (totalCredits as number) * 100;
 
   return (
-    <div className="hidden md:block sticky top-0 z-40 w-full border-b border-border bg-card/90 backdrop-blur-md">
+    <div className="sticky top-0 z-40 w-full border-b border-border bg-card/90 backdrop-blur-md">
       <div className="flex items-center justify-between px-3 md:px-6 py-1.5 max-w-screen-2xl mx-auto gap-2 text-primary-foreground bg-white">
         {/* Plano */}
         <button
