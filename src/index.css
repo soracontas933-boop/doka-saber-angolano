@@ -50,6 +50,17 @@
 
     --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
     --shadow-card-hover: 0 10px 25px -5px rgba(30, 64, 175, 0.1), 0 8px 10px -6px rgba(30, 64, 175, 0.05);
+
+    /* Delle Mobile Design System */
+    --delle-surface: 210 33% 97%;
+    --delle-card: 210 40% 93%;
+    --delle-icon-bg: 209 65% 80%;
+    --delle-icon-fg: 209 65% 30%;
+    --delle-nav-bg: 216 30% 16%;
+    --delle-nav-active: 0 0% 100%;
+    --delle-nav-inactive: 215 15% 63%;
+    --delle-status-success: 145 63% 42%;
+    --delle-status-pending: 38 92% 50%;
   }
 
   .dark {
