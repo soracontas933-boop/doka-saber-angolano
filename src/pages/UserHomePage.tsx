@@ -18,11 +18,11 @@ import {
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import DelleLogo from "@/components/DelleLogo";
-import NotificationBell from "@/components/NotificationBell";
+import { GraduationCap } from "lucide-react";
 
 const quickActions = [
   { to: "/trabalho", icon: FileText, label: "Trabalhos\nEscolares" },
