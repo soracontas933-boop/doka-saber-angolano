@@ -115,26 +115,49 @@ const UserHomePage = () => {
       {/* Mobile Layout */}
       <div className="md:hidden">
 
+        {/* Hero section with download CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="px-4 pt-3 pb-2"
+        >
+          <h2 className="text-lg font-bold text-foreground">
+            Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
+          </h2>
+          <p className="text-xs text-muted-foreground">O que vais criar hoje?</p>
+          {canInstall && (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
+              <Button
+                onClick={install}
+                size="sm"
+                className="mt-2 w-full gap-2 rounded-xl bg-[hsl(var(--delle-icon-bg))] text-primary hover:bg-[hsl(var(--delle-icon-bg))]/80 font-semibold text-xs h-9"
+              >
+                <Download className="h-4 w-4" /> Baixar o App
+              </Button>
+            </motion.div>
+          )}
+        </motion.div>
+
         {/* Usage Counters Row */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="px-4 pt-2 pb-3"
+          className="px-4 pt-1 pb-3"
         >
-          <p className="text-xs text-muted-foreground font-medium mb-2">Gerações restantes</p>
+          <p className="text-[10px] text-muted-foreground font-medium mb-1.5 uppercase tracking-wider">Gerações restantes</p>
           <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
             {usageItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(var(--delle-card))] shrink-0">
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(var(--delle-icon-bg))]/10 border border-border shrink-0">
                 <item.icon className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[11px] font-semibold text-foreground">{item.remaining}</span>
+                <span className="text-[11px] font-bold text-foreground">{item.remaining}</span>
                 <span className="text-[10px] text-muted-foreground">{item.label}</span>
               </div>
             ))}
           </div>
         </motion.div>
 
-        {/* Quick Action Icons - Circular */}
+        {/* Quick Action Icons - Circular dark zinc */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -151,7 +174,7 @@ const UserHomePage = () => {
                 onClick={() => navigate(action.to)}
                 className="flex flex-col items-center gap-2 flex-1"
               >
-                <div className="w-14 h-14 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center transition-transform active:scale-95">
+                <div className="w-14 h-14 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center transition-transform active:scale-95 shadow-md">
                   <action.icon className="h-6 w-6 text-[hsl(var(--delle-icon-fg))]" />
                 </div>
                 <span className="text-[10px] leading-tight text-center text-muted-foreground font-medium whitespace-pre-line">
@@ -242,14 +265,6 @@ const UserHomePage = () => {
           </div>
         </motion.div>
 
-        {/* Install PWA */}
-        {canInstall && (
-          <div className="fixed bottom-20 left-4 right-4 z-40">
-            <Button className="w-full gap-2 shadow-lg rounded-xl" size="lg" onClick={install}>
-              <Download className="h-5 w-5" /> Baixar App
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Desktop Layout — keep existing style */}
