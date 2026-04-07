@@ -81,6 +81,12 @@ const UserHomePage = () => {
     fetchData();
   }, [user]);
 
+  useEffect(() => {
+    if (plan) {
+      getAllUsageCounts().then(setUsageCounts);
+    }
+  }, [plan, getAllUsageCounts]);
+
   const creditPercent = plan && plan.creditos_totais > 0
     ? Math.min(100, Math.round((plan.creditos_usados / plan.creditos_totais) * 100))
     : 0;
@@ -89,43 +95,42 @@ const UserHomePage = () => {
     ? profile.nome.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
     : "U";
 
+  const getRemainingCount = (module: string, limit: number) => {
+    if (limit === -1) return "∞";
+    if (limit === 0) return null;
+    const used = module === "trabalho" ? (usageCounts["trabalho"] || 0) + (usageCounts["correcao"] || 0) : (usageCounts[module] || 0);
+    return Math.max(0, limit - used);
+  };
+
+  const usageItems = plan ? [
+    { icon: FileText, label: "Trabalhos", remaining: getRemainingCount("trabalho", plan.limite_trabalhos) },
+    { icon: BookOpen, label: "Resumos", remaining: getRemainingCount("resumo", plan.limite_resumos) },
+    { icon: HelpCircle, label: "Questionários", remaining: getRemainingCount("questionario", plan.limite_questionarios) },
+    { icon: ClipboardList, label: "Planos Aula", remaining: getRemainingCount("plano_aula", plan.limite_planos_aula) },
+    { icon: GraduationCap, label: "TFC", remaining: getRemainingCount("tfc", plan.limite_tfc) },
+  ].filter(i => i.remaining !== null) : [];
+
   return (
     <div className="min-h-screen bg-[hsl(var(--delle-surface))] md:bg-background">
-      {/* Mobile Header */}
+      {/* Mobile Layout */}
       <div className="md:hidden">
-        <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-10 h-10 rounded-full bg-[hsl(var(--delle-card))] flex items-center justify-center text-sm font-bold text-foreground"
-          >
-            {initials}
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-xl font-display font-bold text-foreground"
-          >
-            Delle
-          </motion.h1>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-          </div>
-        </div>
 
-        {/* Productivity Score */}
+        {/* Usage Counters Row */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="px-4 pt-2 pb-4"
+          className="px-4 pt-2 pb-3"
         >
-          <p className="text-sm text-muted-foreground font-medium">Productivity Score</p>
-          <div className="flex items-center justify-between">
-            <p className="text-4xl font-bold text-foreground tracking-tight">
-              {plan ? `${Math.max(0, 100 - creditPercent)}%` : "—"}
-            </p>
-            <TrendingUp className="h-6 w-6 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground font-medium mb-2">Gerações restantes</p>
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+            {usageItems.map((item) => (
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(var(--delle-card))] shrink-0">
+                <item.icon className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[11px] font-semibold text-foreground">{item.remaining}</span>
+                <span className="text-[10px] text-muted-foreground">{item.label}</span>
+              </div>
+            ))}
           </div>
         </motion.div>
 
