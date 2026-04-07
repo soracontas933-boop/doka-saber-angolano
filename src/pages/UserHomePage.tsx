@@ -10,7 +10,7 @@ import {
   FolderOpen,
   Users,
   Zap,
-  TrendingUp,
+  
   Download,
   MoreHorizontal,
   ChevronRight,
