@@ -1,53 +1,29 @@
 
 
-# Correcção: Resumos de PDF e Word Não Funcionam
+# Mobile Top Bar e Homepage — Melhorias
 
-## Problemas Identificados
+## O que muda
 
-Analisei o fluxo completo — `ResumoPage.tsx` → `ai-service.ts` → `ocr-extract` edge function — e encontrei 3 problemas:
+### 1. Top Bar mobile fixa (`CreditsBar.tsx`)
+A top bar mobile actual usa `sticky` e mistura muita informação. Vamos redesenhá-la para mobile com:
+- **Posição `fixed`** para ficar sempre visível ao rolar
+- **Conteúdo mobile**: foto de perfil (iniciais), créditos (ícone Zap + número), ícone de suporte (link para `/suporte`), sino de notificações
+- **Layout limpo**: perfil à esquerda, créditos ao centro, suporte + notificações à direita
+- Desktop mantém o layout actual
 
-### 1. Documentos Word (.doc/.docx) não são suportados pelo Gemini
-O `ocr-extract` envia o ficheiro base64 como `inline_data` para o Gemini. O Gemini suporta PDF via `inline_data`, mas **não suporta** `.doc` nem `.docx`. A chamada falha silenciosamente ou devolve erro.
+### 2. Secção de gerações restantes (`UserHomePage.tsx`)
+Substituir o "Productivity Score" por uma grelha compacta com os números restantes de cada tipo de geração:
+- Trabalhos, Resumos, Questionários, Planos de Aula, TFC — cada um com ícone + número restante em texto pequeno
+- Layout em linha horizontal com scroll, estilo pill/badge
 
-### 2. Groq Vision é excluído para documentos
-Na linha 97 do `ocr-extract`, a condição `!is_document` exclui o Groq como fallback quando `is_document = true`. Se o Gemini falhar (429, quota, mime type inválido), **não há fallback nenhum**.
+### 3. Adicionar botão "Planos de Aula" aos Quick Actions (`UserHomePage.tsx`)
+Actualmente há 4 ícones circulares. Adicionar um 5.º para Planos de Aula (rota `/plano-aula`, ícone `ClipboardList`). Ajustar o array `quickActions` e os labels para ficarem correctos.
 
-### 3. Só uma chave por serviço é usada
-A função `getApiKeys()` faz `keys[row.servico] = row.chave` — se existem 6 chaves Gemini, só a última é usada. Se essa chave estiver em cooldown ou exausta, a extracção falha.
-
-### 4. PDFs grandes excedem limites da edge function
-Enviar um PDF de vários MB como base64 no corpo do request pode exceder o limite de 150MB de memória ou o timeout da edge function.
-
-## Solução
-
-### A. Extrair texto de Word no cliente (sem edge function)
-- Instalar `mammoth` no frontend para `.docx`
-- Extrair texto de Word **antes** de enviar ao AI — directamente no browser
-- Elimina a dependência do Gemini para Word
-
-### B. Rotação de chaves Gemini no `ocr-extract`
-- Alterar `getApiKeys()` para devolver **todas** as chaves Gemini (array)
-- Tentar cada chave Gemini em sequência até uma funcionar
-- Se todas falharem, tentar Groq Vision (remover a exclusão `!is_document` para PDFs)
-
-### C. Manter Gemini para PDFs, com fallback real
-- PDFs funcionam via Gemini `inline_data` — manter esse caminho
-- Adicionar Groq como fallback para PDFs (pode processar imagens de páginas)
-- Adicionar logging para diagnosticar falhas futuras
+### 4. Ajustar padding do main (`AppLayout.tsx`)
+Adicionar `pt-14` no mobile ao `<main>` para compensar a top bar fixa.
 
 ## Ficheiros afectados
-
-1. **`package.json`** — adicionar dependência `mammoth`
-2. **`src/lib/ai-service.ts`** — `extractTextFromDocument()`:
-   - Se `.docx`: usar mammoth no cliente, devolver texto directamente
-   - Se `.pdf`: manter chamada ao `ocr-extract`
-3. **`supabase/functions/ocr-extract/index.ts`**:
-   - `getApiKeys()` → devolver array de chaves Gemini
-   - Rodar por todas as chaves antes de falhar
-   - Remover exclusão de Groq para documentos PDF
-
-## Resultado
-- Word (.docx) funciona sempre via extracção local (sem depender de API)
-- PDFs usam todas as chaves Gemini disponíveis com fallback Groq
-- Resumos de documentos voltam a funcionar de forma fiável
+1. **`src/components/CreditsBar.tsx`** — redesenhar versão mobile com fixed position, foto perfil, suporte, notificações, créditos
+2. **`src/pages/UserHomePage.tsx`** — substituir Productivity Score por grelha de gerações restantes; adicionar Plano de Aula aos quick actions; remover header mobile duplicado (já está na CreditsBar)
+3. **`src/components/AppLayout.tsx`** — adicionar padding-top mobile para compensar top bar fixa
 
