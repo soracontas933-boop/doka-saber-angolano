@@ -56,6 +56,8 @@ const UserHomePage = () => {
   const [plan, setPlan] = useState<{ plano: string; creditos_usados: number; creditos_totais: number; limite_trabalhos: number; limite_resumos: number; limite_questionarios: number; limite_planos_aula: number; limite_tfc: number } | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [groupCount, setGroupCount] = useState(0);
+  const { getAllUsageCounts } = useUsageTracker();
+  const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!user) return;
