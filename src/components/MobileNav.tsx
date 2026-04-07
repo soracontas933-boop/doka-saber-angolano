@@ -1,17 +1,12 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import {
-  Home,
-  FolderOpen,
-  FileText,
-  Settings,
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { NavLink, useLocation } from "react-router-dom";
+import { Home, FolderOpen, FileText, Settings } from "lucide-react";
+import { motion } from "framer-motion";
 
 const navItems = [
   { to: "/home", icon: Home, label: "Início" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho" },
-  { to: "/configuracoes", icon: Settings, label: "Configurações" },
+  { to: "/configuracoes", icon: Settings, label: "Config." },
 ];
 
 const MobileNav = () => {
@@ -19,26 +14,61 @@ const MobileNav = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
-      <div className="mx-3 mb-2 rounded-2xl bg-[hsl(var(--delle-nav-bg))] px-2 py-2 flex items-center justify-around shadow-lg">
+      {/* Water drop SVG filter */}
+      <svg className="absolute" width="0" height="0">
+        <defs>
+          <filter id="water-drop">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
+              result="drop"
+            />
+            <feComposite in="SourceGraphic" in2="drop" operator="atop" />
+          </filter>
+        </defs>
+      </svg>
+
+      <div
+        className="mx-3 mb-2 px-2 py-2 flex items-center justify-around"
+        style={{
+          background: "hsl(var(--delle-nav-bg))",
+          borderRadius: "22px",
+          filter: "url(#water-drop)",
+          boxShadow:
+            "0 -4px 20px rgba(0,0,0,0.35), 0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+          backdropFilter: "blur(12px)",
+        }}
+      >
         {navItems.map((item) => {
-          const isActive = location.pathname === item.to ||
+          const isActive =
+            location.pathname === item.to ||
             (item.to === "/home" && location.pathname === "/home") ||
-            (item.to === "/configuracoes" && location.pathname === "/configuracoes");
+            (item.to === "/configuracoes" &&
+              location.pathname === "/configuracoes");
           return (
             <NavLink
               key={item.to}
               to={item.to}
-              className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors"
+              className="relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all"
             >
+              {isActive && (
+                <motion.div
+                  layoutId="nav-active-indicator"
+                  className="absolute -top-1 w-5 h-1 rounded-full bg-primary"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
               <item.icon
-                className={`h-5 w-5 transition-colors ${
+                className={`h-5 w-5 transition-colors duration-200 ${
                   isActive
                     ? "text-[hsl(var(--delle-nav-active))]"
                     : "text-[hsl(var(--delle-nav-inactive))]"
                 }`}
               />
               <span
-                className={`text-[10px] font-medium transition-colors ${
+                className={`text-[10px] font-medium transition-colors duration-200 ${
                   isActive
                     ? "text-[hsl(var(--delle-nav-active))]"
                     : "text-[hsl(var(--delle-nav-inactive))]"
