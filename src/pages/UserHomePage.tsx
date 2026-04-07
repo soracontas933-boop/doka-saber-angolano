@@ -265,14 +265,6 @@ const UserHomePage = () => {
           </div>
         </motion.div>
 
-        {/* Install PWA */}
-        {canInstall && (
-          <div className="fixed bottom-20 left-4 right-4 z-40">
-            <Button className="w-full gap-2 shadow-lg rounded-xl" size="lg" onClick={install}>
-              <Download className="h-5 w-5" /> Baixar App
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Desktop Layout — keep existing style */}
