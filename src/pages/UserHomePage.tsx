@@ -10,7 +10,7 @@ import {
   FolderOpen,
   Users,
   Zap,
-  TrendingUp,
+  
   Download,
   MoreHorizontal,
   ChevronRight,
@@ -18,17 +18,18 @@ import {
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import DelleLogo from "@/components/DelleLogo";
-import NotificationBell from "@/components/NotificationBell";
+import { GraduationCap } from "lucide-react";
 
 const quickActions = [
-  { to: "/trabalho", icon: FileText, label: "Criar Tarefas\nEscolares" },
-  { to: "/curriculo", icon: ClipboardList, label: "Elaborar CVs\nPlanos de Aula" },
-  { to: "/resumo", icon: BookOpen, label: "Fazer Resumos\nPlanos de Aula" },
-  { to: "/questionario", icon: Search, label: "Criar Resumos" },
+  { to: "/trabalho", icon: FileText, label: "Trabalhos\nEscolares" },
+  { to: "/resumo", icon: BookOpen, label: "Resumos" },
+  { to: "/questionario", icon: HelpCircle, label: "Questionários" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Planos\nde Aula" },
+  { to: "/curriculo", icon: Search, label: "Currículo" },
 ];
 
 interface RecentProject {
@@ -52,9 +53,11 @@ const UserHomePage = () => {
   const { user } = useAuth();
   const { canInstall, install } = usePwaInstall();
   const [profile, setProfile] = useState<{ nome: string | null }>({ nome: null });
-  const [plan, setPlan] = useState<{ plano: string; creditos_usados: number; creditos_totais: number } | null>(null);
+  const [plan, setPlan] = useState<{ plano: string; creditos_usados: number; creditos_totais: number; limite_trabalhos: number; limite_resumos: number; limite_questionarios: number; limite_planos_aula: number; limite_tfc: number } | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [groupCount, setGroupCount] = useState(0);
+  const { getAllUsageCounts } = useUsageTracker();
+  const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -62,7 +65,7 @@ const UserHomePage = () => {
       try {
         const [profileRes, planRes, projectsRes, groupsRes] = await Promise.all([
           supabase.from("profiles").select("nome").eq("id", user.id).single(),
-          supabase.from("user_plans").select("plano, creditos_usados, creditos_totais").eq("user_id", user.id).single(),
+          supabase.from("user_plans").select("plano, creditos_usados, creditos_totais, limite_trabalhos, limite_resumos, limite_questionarios, limite_planos_aula, limite_tfc").eq("user_id", user.id).single(),
           supabase.from("projects").select("id, titulo, tipo, criado_em").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(5),
           supabase.from("workgroup_members").select("id").eq("user_id", user.id).eq("aceite", true),
         ]);
@@ -78,6 +81,12 @@ const UserHomePage = () => {
     fetchData();
   }, [user]);
 
+  useEffect(() => {
+    if (plan) {
+      getAllUsageCounts().then(setUsageCounts);
+    }
+  }, [plan, getAllUsageCounts]);
+
   const creditPercent = plan && plan.creditos_totais > 0
     ? Math.min(100, Math.round((plan.creditos_usados / plan.creditos_totais) * 100))
     : 0;
@@ -86,43 +95,42 @@ const UserHomePage = () => {
     ? profile.nome.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
     : "U";
 
+  const getRemainingCount = (module: string, limit: number) => {
+    if (limit === -1) return "∞";
+    if (limit === 0) return null;
+    const used = module === "trabalho" ? (usageCounts["trabalho"] || 0) + (usageCounts["correcao"] || 0) : (usageCounts[module] || 0);
+    return Math.max(0, limit - used);
+  };
+
+  const usageItems = plan ? [
+    { icon: FileText, label: "Trabalhos", remaining: getRemainingCount("trabalho", plan.limite_trabalhos) },
+    { icon: BookOpen, label: "Resumos", remaining: getRemainingCount("resumo", plan.limite_resumos) },
+    { icon: HelpCircle, label: "Questionários", remaining: getRemainingCount("questionario", plan.limite_questionarios) },
+    { icon: ClipboardList, label: "Planos Aula", remaining: getRemainingCount("plano_aula", plan.limite_planos_aula) },
+    { icon: GraduationCap, label: "TFC", remaining: getRemainingCount("tfc", plan.limite_tfc) },
+  ].filter(i => i.remaining !== null) : [];
+
   return (
     <div className="min-h-screen bg-[hsl(var(--delle-surface))] md:bg-background">
-      {/* Mobile Header */}
+      {/* Mobile Layout */}
       <div className="md:hidden">
-        <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-10 h-10 rounded-full bg-[hsl(var(--delle-card))] flex items-center justify-center text-sm font-bold text-foreground"
-          >
-            {initials}
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-xl font-display font-bold text-foreground"
-          >
-            Delle
-          </motion.h1>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-          </div>
-        </div>
 
-        {/* Productivity Score */}
+        {/* Usage Counters Row */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="px-4 pt-2 pb-4"
+          className="px-4 pt-2 pb-3"
         >
-          <p className="text-sm text-muted-foreground font-medium">Productivity Score</p>
-          <div className="flex items-center justify-between">
-            <p className="text-4xl font-bold text-foreground tracking-tight">
-              {plan ? `${Math.max(0, 100 - creditPercent)}%` : "—"}
-            </p>
-            <TrendingUp className="h-6 w-6 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground font-medium mb-2">Gerações restantes</p>
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+            {usageItems.map((item) => (
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(var(--delle-card))] shrink-0">
+                <item.icon className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[11px] font-semibold text-foreground">{item.remaining}</span>
+                <span className="text-[10px] text-muted-foreground">{item.label}</span>
+              </div>
+            ))}
           </div>
         </motion.div>
 

@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap, Sun, Moon } from "lucide-react";
+import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap, Sun, Moon, Headphones } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import NotificationBell from "@/components/NotificationBell";
 import { useTheme } from "@/hooks/use-theme";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UsageItemProps {
   icon: React.ReactNode;
@@ -37,22 +39,33 @@ const UsageItem = ({ icon, label, used, limit }: UsageItemProps) => {
           {isUnlimited ? "Uso ilimitado" : `${remaining} restante${remaining !== 1 ? "s" : ""}`}
         </p>
       </TooltipContent>
-    </Tooltip>);
-
+    </Tooltip>
+  );
 };
 
 const CreditsBar = () => {
   const { plan, loading } = useUserPlan();
   const { getAllUsageCounts } = useUsageTracker();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
+  const [initials, setInitials] = useState("U");
 
   useEffect(() => {
     if (!loading && plan) {
       getAllUsageCounts().then(setUsageCounts);
     }
   }, [loading, plan, getAllUsageCounts]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("nome").eq("id", user.id).single().then(({ data }) => {
+      if (data?.nome) {
+        setInitials(data.nome.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase());
+      }
+    });
+  }, [user]);
 
   if (loading || !plan) return null;
 
@@ -65,83 +78,119 @@ const CreditsBar = () => {
   const creditPercentage = totalCredits === Infinity || totalCredits === 0 ? 0 : usedCredits / (totalCredits as number) * 100;
 
   return (
-    <div className="sticky top-0 z-40 w-full border-b border-border bg-card/90 backdrop-blur-md">
-      <div className="flex items-center justify-between px-3 md:px-6 py-1.5 max-w-screen-2xl mx-auto gap-2 text-primary-foreground bg-white">
-        {/* Plano */}
-        <button
-          onClick={() => navigate("/planos")}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
-          
-          <Crown className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-bold text-primary">{cfg.nome}</span>
-        </button>
+    <>
+      {/* ===== MOBILE TOP BAR ===== */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
+        <div className="flex items-center justify-between px-4 py-2">
+          {/* Left: Profile avatar */}
+          <button
+            onClick={() => navigate("/configuracoes")}
+            className="w-9 h-9 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center text-xs font-bold text-foreground shrink-0"
+          >
+            {initials}
+          </button>
 
-        {/* Contadores de uso */}
-        <div className="flex items-center gap-1 md:gap-2 overflow-x-auto scrollbar-none text-primary-foreground bg-[#e9e7e7]">
-          <UsageItem
-            icon={<FileText className="h-3.5 w-3.5" />}
-            label="Trabalhos Escolares"
-            used={(usageCounts["trabalho"] || 0) + (usageCounts["correcao"] || 0)}
-            limit={cfg.limite_trabalhos} />
-          
-          <UsageItem
-            icon={<BookOpen className="h-3.5 w-3.5" />}
-            label="Resumos"
-            used={usageCounts["resumo"] || 0}
-            limit={cfg.limite_resumos} />
-          
-          <UsageItem
-            icon={<HelpCircle className="h-3.5 w-3.5" />}
-            label="Questionários"
-            used={usageCounts["questionario"] || 0}
-            limit={cfg.limite_questionarios} />
-          
-          <UsageItem
-            icon={<ClipboardList className="h-3.5 w-3.5" />}
-            label="Planos de Aula"
-            used={usageCounts["plano_aula"] || 0}
-            limit={cfg.limite_planos_aula} />
-          
-          <UsageItem
-            icon={<GraduationCap className="h-3.5 w-3.5" />}
-            label="TFC/Monografias"
-            used={usageCounts["tfc"] || 0}
-            limit={cfg.limite_tfc} />
-          
-        </div>
-
-        {/* Créditos totais */}
-        {totalCredits !== Infinity && totalCredits > 0 || totalCredits === Infinity ?
-        <div className="flex items-center gap-1.5 shrink-0">
-            <Zap className="h-3.5 w-3.5 text-primary" />
-            {totalCredits !== Infinity && totalCredits > 0 &&
-          <div className="hidden sm:block w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-              className="h-full rounded-full bg-primary transition-all duration-500"
-              style={{ width: `${Math.min(creditPercentage, 100)}%` }} />
-            
-              </div>
-          }
-            <span className="text-xs font-semibold text-foreground">
-              {typeof remainingCredits === "number" ? `${remainingCredits}` : "∞"}
+          {/* Center: Credits */}
+          <div className="flex items-center gap-1.5">
+            <Zap className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">
+              {typeof remainingCredits === "number" ? remainingCredits : "∞"}
             </span>
-          </div> :
-        null}
+            <span className="text-[10px] text-muted-foreground">créditos</span>
+          </div>
 
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-1.5 rounded-md hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
-          title={theme === "dark" ? "Modo claro" : "Modo escuro"}>
-          
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
-
-        {/* Notification Bell */}
-        <NotificationBell />
+          {/* Right: Support + Notifications */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate("/suporte")}
+              className="p-2 rounded-full hover:bg-muted/50 transition-colors"
+            >
+              <Headphones className="h-4.5 w-4.5 text-muted-foreground" />
+            </button>
+            <NotificationBell />
+          </div>
+        </div>
       </div>
-    </div>);
 
+      {/* ===== DESKTOP TOP BAR ===== */}
+      <div className="hidden md:block sticky top-0 z-40 w-full border-b border-border bg-card/90 backdrop-blur-md">
+        <div className="flex items-center justify-between px-3 md:px-6 py-1.5 max-w-screen-2xl mx-auto gap-2">
+          {/* Plano */}
+          <button
+            onClick={() => navigate("/planos")}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors shrink-0"
+          >
+            <Crown className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-bold text-primary">{cfg.nome}</span>
+          </button>
+
+          {/* Contadores de uso */}
+          <div className="flex items-center gap-1 md:gap-2 overflow-x-auto scrollbar-none">
+            <UsageItem
+              icon={<FileText className="h-3.5 w-3.5" />}
+              label="Trabalhos Escolares"
+              used={(usageCounts["trabalho"] || 0) + (usageCounts["correcao"] || 0)}
+              limit={cfg.limite_trabalhos}
+            />
+            <UsageItem
+              icon={<BookOpen className="h-3.5 w-3.5" />}
+              label="Resumos"
+              used={usageCounts["resumo"] || 0}
+              limit={cfg.limite_resumos}
+            />
+            <UsageItem
+              icon={<HelpCircle className="h-3.5 w-3.5" />}
+              label="Questionários"
+              used={usageCounts["questionario"] || 0}
+              limit={cfg.limite_questionarios}
+            />
+            <UsageItem
+              icon={<ClipboardList className="h-3.5 w-3.5" />}
+              label="Planos de Aula"
+              used={usageCounts["plano_aula"] || 0}
+              limit={cfg.limite_planos_aula}
+            />
+            <UsageItem
+              icon={<GraduationCap className="h-3.5 w-3.5" />}
+              label="TFC/Monografias"
+              used={usageCounts["tfc"] || 0}
+              limit={cfg.limite_tfc}
+            />
+          </div>
+
+          {/* Créditos totais */}
+          {totalCredits !== Infinity && totalCredits > 0 || totalCredits === Infinity ? (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Zap className="h-3.5 w-3.5 text-primary" />
+              {totalCredits !== Infinity && totalCredits > 0 && (
+                <div className="hidden sm:block w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-500"
+                    style={{ width: `${Math.min(creditPercentage, 100)}%` }}
+                  />
+                </div>
+              )}
+              <span className="text-xs font-semibold text-foreground">
+                {typeof remainingCredits === "number" ? `${remainingCredits}` : "∞"}
+              </span>
+            </div>
+          ) : null}
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded-md hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
+          {/* Notification Bell */}
+          <NotificationBell />
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default CreditsBar;
