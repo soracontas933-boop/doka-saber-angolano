@@ -11,7 +11,7 @@ const AppLayout = () => {
       <AppSidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <CreditsBar />
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-0 pt-14 md:pt-0">
           <Outlet />
         </main>
       </div>

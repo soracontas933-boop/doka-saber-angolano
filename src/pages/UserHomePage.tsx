@@ -25,10 +25,11 @@ import DelleLogo from "@/components/DelleLogo";
 import NotificationBell from "@/components/NotificationBell";
 
 const quickActions = [
-  { to: "/trabalho", icon: FileText, label: "Criar Tarefas\nEscolares" },
-  { to: "/curriculo", icon: ClipboardList, label: "Elaborar CVs\nPlanos de Aula" },
-  { to: "/resumo", icon: BookOpen, label: "Fazer Resumos\nPlanos de Aula" },
-  { to: "/questionario", icon: Search, label: "Criar Resumos" },
+  { to: "/trabalho", icon: FileText, label: "Trabalhos\nEscolares" },
+  { to: "/resumo", icon: BookOpen, label: "Resumos" },
+  { to: "/questionario", icon: HelpCircle, label: "Questionários" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Planos\nde Aula" },
+  { to: "/curriculo", icon: Search, label: "Currículo" },
 ];
 
 interface RecentProject {
