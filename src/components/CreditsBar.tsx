@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap, Sun, Moon, Headphones } from "lucide-react";
+import { Crown, FileText, BookOpen, HelpCircle, ClipboardList, GraduationCap, Zap, Sun, Moon, Headphones, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
@@ -80,23 +80,23 @@ const CreditsBar = () => {
   return (
     <>
       {/* ===== MOBILE TOP BAR ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
-        <div className="flex items-center justify-between px-4 py-2">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-border bg-zinc-950">
+        <div className="flex items-center justify-between px-4 py-2 bg-zinc-950 border-black text-black border-4">
           {/* Left: Profile avatar */}
           <button
             onClick={() => navigate("/configuracoes")}
-            className="w-9 h-9 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center text-xs font-bold text-foreground shrink-0"
+            className="w-9 h-9 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center text-xs font-bold shrink-0 text-secondary"
           >
             {initials}
           </button>
 
           {/* Center: Credits */}
-          <div className="flex items-center gap-1.5">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold text-foreground">
+          <div className="gap-1.5 flex items-center justify-end pr-0 mr-0 ml-[150px]">
+            <Activity className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold bg-zinc-950 text-secondary font-serif text-center">
               {typeof remainingCredits === "number" ? remainingCredits : "∞"}
             </span>
-            <span className="text-[10px] text-muted-foreground">créditos</span>
+            <span className="text-[10px] text-secondary">créditos</span>
           </div>
 
           {/* Right: Support + Notifications */}
@@ -105,7 +105,7 @@ const CreditsBar = () => {
               onClick={() => navigate("/suporte")}
               className="p-2 rounded-full hover:bg-muted/50 transition-colors"
             >
-              <Headphones className="h-4.5 w-4.5 text-muted-foreground" />
+              <Headphones className="h-4.5 w-4.5 text-secondary" />
             </button>
             <NotificationBell />
           </div>

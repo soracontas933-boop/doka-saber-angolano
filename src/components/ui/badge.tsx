@@ -23,7 +23,7 @@ const badgeVariants = cva(
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn("font-sans font-thin text-right bg-[#0f0f0f]", badgeVariants({ variant }), className)} {...props} />;
+  return <div className={cn("font-sans text-right inline-flex items-center rounded-full px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-[10px] border-[hsl(var(--delle-status-success))] text-[hsl(var(--delle-status-success))] bg-sidebar text-gray-100/[0.88] border-0 shadow-xl border-[#1702f7]", badgeVariants({ variant }), className)} {...props} />;
 }
 
 export { Badge, badgeVariants };
