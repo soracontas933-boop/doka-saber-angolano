@@ -166,15 +166,15 @@ const ResumoPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 max-w-3xl mx-auto">
+    <div className="p-3 sm:p-6 md:p-10 max-w-3xl mx-auto md:bg-background bg-zinc-950 min-h-screen">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
-            <BookOpen className="h-5 w-5 text-secondary-foreground" />
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-secondary to-primary flex items-center justify-center shadow-lg">
+            <BookOpen className="h-4 w-4 md:h-5 md:w-5 text-secondary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold">Resumo do Caderno</h1>
-            <p className="text-sm text-muted-foreground">Tire fotos do caderno e receba um resumo inteligente</p>
+            <h1 className="text-base md:text-xl font-display font-bold text-secondary md:text-foreground">Resumo do Caderno</h1>
+            <p className="text-[11px] md:text-sm text-muted-foreground">Tire fotos do caderno e receba um resumo inteligente</p>
           </div>
         </div>
       </motion.div>
@@ -186,24 +186,24 @@ const ResumoPage = () => {
         className="space-y-6"
       >
         {/* Configurações */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
-          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+        <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+          <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
             Configurações
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Tipo de Resumo</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-secondary md:text-foreground text-xs">Tipo de Resumo</Label>
               <Select value={tipoResumo} onValueChange={setTipoResumo}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {tiposResumo.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Disciplina</Label>
+            <div className="space-y-1.5">
+              <Label className="text-secondary md:text-foreground text-xs">Disciplina</Label>
               <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                <SelectTrigger className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10 text-xs"><SelectValue placeholder="Seleccione" /></SelectTrigger>
                 <SelectContent>
                   {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
@@ -213,8 +213,8 @@ const ResumoPage = () => {
         </div>
 
         {/* Fonte de conteúdo */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
-          <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+        <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+          <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
             Conteúdo para Resumir
           </h2>
 
@@ -233,7 +233,7 @@ const ResumoPage = () => {
           </Tabs>
 
           {fonte === "upload" ? (
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-zinc-700 md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-zinc-800/50 md:bg-accent/20">
               <Image className="h-8 w-8 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Clique ou arraste as fotos</span>
               <span className="text-xs text-muted-foreground mt-1">JPG, PNG — máx. 100 fotos</span>
@@ -243,7 +243,7 @@ const ResumoPage = () => {
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
-              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20"
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-zinc-700 md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-zinc-800/50 md:bg-accent/20"
             >
               <Camera className="h-8 w-8 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Toque para abrir a câmera</span>
@@ -251,7 +251,7 @@ const ResumoPage = () => {
               <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture onChange={handleFileChange} />
             </button>
           ) : (
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-zinc-700 md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-zinc-800/50 md:bg-accent/20">
               <File className="h-8 w-8 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Carregar PDF ou Word</span>
               <span className="text-xs text-muted-foreground mt-1">.pdf, .doc, .docx — máx. 10 ficheiros</span>
@@ -262,12 +262,12 @@ const ResumoPage = () => {
           {previews.length > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {previews.map((src, i) => (
-                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-border">
+                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-zinc-700 md:border-border">
                   <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeFile(i)}
-                    className="absolute top-1 right-1 w-5 h-5 bg-foreground/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 w-5 h-5 bg-zinc-900/90 md:bg-foreground/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="h-3 w-3 text-background" />
                   </button>
