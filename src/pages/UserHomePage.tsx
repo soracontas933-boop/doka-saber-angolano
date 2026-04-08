@@ -171,11 +171,24 @@ const UserHomePage = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + i * 0.05 }}
-                onClick={() => navigate(action.to)}
+                onClick={(e) => {
+                  const btn = e.currentTarget.querySelector('.ripple-container') as HTMLElement;
+                  if (btn) {
+                    const rect = btn.getBoundingClientRect();
+                    const ripple = document.createElement('span');
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    ripple.style.cssText = `position:absolute;width:${size}px;height:${size}px;left:${x}px;top:${y}px;border-radius:50%;background:rgba(255,255,255,0.35);transform:scale(0);animation:ripple-effect 0.5s ease-out;pointer-events:none;`;
+                    btn.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 500);
+                  }
+                  setTimeout(() => navigate(action.to), 150);
+                }}
                 className="flex flex-col items-center gap-2 flex-1"
               >
-                <div className="w-14 h-14 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center transition-transform active:scale-95 shadow-md">
-                  <action.icon className="h-6 w-6 text-[hsl(var(--delle-icon-fg))]" />
+                <div className="ripple-container relative overflow-hidden w-14 h-14 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center transition-transform active:scale-95 shadow-md">
+                  <action.icon className="h-6 w-6 text-[hsl(var(--delle-icon-fg))] relative z-10" />
                 </div>
                 <span className="text-[10px] leading-tight text-center text-muted-foreground font-medium whitespace-pre-line">
                   {action.label}
