@@ -336,44 +336,46 @@ const TrabalhoPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           onSubmit={handleGenerateStructure}
-          className="space-y-6"
+          className="space-y-4"
         >
           {/* Tema */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="tema">Tema do Trabalho <span className="text-destructive">*</span></Label>
+          <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="tema" className="text-secondary md:text-foreground text-xs">Tema do Trabalho <span className="text-destructive">*</span></Label>
               <Input
                 id="tema"
                 placeholder="Ex: A importância da água no ecossistema angolano"
                 value={tema}
                 onChange={(e) => setTema(e.target.value)}
                 required
+                className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10"
               />
             </div>
           </div>
 
           {/* Dados da Instituição */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
-            <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+            <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
               Dados da Instituição
             </h2>
-            <div className="space-y-2">
-              <Label>Nome da Escola/Instituto</Label>
+            <div className="space-y-1.5">
+              <Label className="text-secondary md:text-foreground text-xs">Nome da Escola</Label>
               <Input
-                placeholder="Ex: Instituto Médio de Economia de Luanda"
+                placeholder="Ex: Instituto Médio de Economia"
                 value={nomeEscola}
                 onChange={(e) => setNomeEscola(e.target.value)}
+                className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Logotipo da Escola</Label>
-              <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
-                <Upload className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <div className="space-y-1.5">
+              <Label className="text-secondary md:text-foreground text-xs">Logotipo</Label>
+              <label className="flex items-center gap-3 px-3 py-2.5 border border-dashed border-zinc-700 md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-zinc-800/50 md:bg-accent/20">
+                <Upload className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-foreground block truncate">
+                  <span className="text-xs font-medium text-secondary md:text-foreground block truncate">
                     {logoEscola ? logoEscola.name : "Carregar Logotipo"}
                   </span>
-                  <span className="text-xs text-muted-foreground">Máx. 2MB</span>
+                  <span className="text-[10px] text-muted-foreground">Máx. 2MB</span>
                 </div>
                 <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
               </label>
@@ -381,159 +383,158 @@ const TrabalhoPage = () => {
           </div>
 
           {/* Dados do Aluno e Turma */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
-            <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+            <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
               Dados do Aluno e Turma
             </h2>
 
-            <div className="space-y-2">
-              <Label>Modalidade</Label>
+            <div className="space-y-1.5">
+              <Label className="text-secondary md:text-foreground text-xs">Modalidade</Label>
               <Tabs value={modalidade} onValueChange={(v) => setModalidade(v as "individual" | "grupo")}>
-                <TabsList className="w-full">
-                  <TabsTrigger value="individual" className="flex-1">Individual</TabsTrigger>
-                  <TabsTrigger value="grupo" className="flex-1">Em Grupo</TabsTrigger>
+                <TabsList className="w-full bg-zinc-800 md:bg-muted">
+                  <TabsTrigger value="individual" className="flex-1 text-xs">Individual</TabsTrigger>
+                  <TabsTrigger value="grupo" className="flex-1 text-xs">Em Grupo</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
             {modalidade === "individual" ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome do Aluno</Label>
-                  <Input placeholder="Nome completo" value={nomeAluno} onChange={(e) => setNomeAluno(e.target.value)} />
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-secondary md:text-foreground text-xs">Nome do Aluno</Label>
+                  <Input placeholder="Nome completo" value={nomeAluno} onChange={(e) => setNomeAluno(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Nº</Label>
-                    <Input placeholder="Ex: 01" value={numero} onChange={(e) => setNumero(e.target.value)} />
+                <div className="grid grid-cols-3 gap-2 md:grid-cols-2 md:gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-secondary md:text-foreground text-xs">Nº</Label>
+                    <Input placeholder="01" value={numero} onChange={(e) => setNumero(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Curso</Label>
-                    <Input placeholder="Ex: Mecânico Frio e Climatização" value={curso} onChange={(e) => setCurso(e.target.value)} />
+                  <div className="space-y-1.5 col-span-2 md:col-span-1">
+                    <Label className="text-secondary md:text-foreground text-xs">Curso</Label>
+                    <Input placeholder="Ex: Mecânico" value={curso} onChange={(e) => setCurso(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
                   </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Número de Integrantes</Label>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => adjustIntegrantes(numIntegrantes - 1)}>
-                      <Minus className="h-3.5 w-3.5" />
+                  <Label className="text-secondary md:text-foreground text-xs">Integrantes</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-zinc-700 md:border-input" onClick={() => adjustIntegrantes(numIntegrantes - 1)}>
+                      <Minus className="h-3 w-3" />
                     </Button>
-                    <span className="text-sm font-medium w-16 text-center">{numIntegrantes} integrantes</span>
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => adjustIntegrantes(numIntegrantes + 1)}>
-                      <Plus className="h-3.5 w-3.5" />
+                    <span className="text-[11px] font-medium w-12 text-center text-secondary md:text-foreground">{numIntegrantes}</span>
+                    <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-zinc-700 md:border-input" onClick={() => adjustIntegrantes(numIntegrantes + 1)}>
+                      <Plus className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Nomes dos Integrantes</Label>
+                <div className="space-y-1.5">
                   {nomesIntegrantes.map((nome, i) => (
-                    <Input key={i} placeholder={`Integrante ${i + 1}`} value={nome} onChange={(e) => updateIntegrante(i, e.target.value)} />
+                    <Input key={i} placeholder={`Integrante ${i + 1}`} value={nome} onChange={(e) => updateIntegrante(i, e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label>Nome do Docente</Label>
-              <Input placeholder="Nome do professor(a)" value={nomeDocente} onChange={(e) => setNomeDocente(e.target.value)} />
+            <div className="space-y-1.5">
+              <Label className="text-secondary md:text-foreground text-xs">Nome do Docente</Label>
+              <Input placeholder="Nome do professor(a)" value={nomeDocente} onChange={(e) => setNomeDocente(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Classe <span className="text-destructive">*</span></Label>
+            <div className="grid grid-cols-3 gap-2 md:grid-cols-2 md:gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-secondary md:text-foreground text-xs">Classe <span className="text-destructive">*</span></Label>
                 <Select value={classe} onValueChange={setClasse}>
-                  <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                  <SelectTrigger className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10 text-xs"><SelectValue placeholder="Classe" /></SelectTrigger>
                   <SelectContent>
                     {classesOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Turma</Label>
-                <Input placeholder="Ex: A" value={turma} onChange={(e) => setTurma(e.target.value)} />
+              <div className="space-y-1.5">
+                <Label className="text-secondary md:text-foreground text-xs">Turma</Label>
+                <Input placeholder="A" value={turma} onChange={(e) => setTurma(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-secondary md:text-foreground text-xs">Sala</Label>
+                <Input placeholder="12" value={sala} onChange={(e) => setSala(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Sala</Label>
-                <Input placeholder="Ex: 12" value={sala} onChange={(e) => setSala(e.target.value)} />
+            <div className="grid grid-cols-2 gap-2 md:gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-secondary md:text-foreground text-xs">Localidade</Label>
+                <Input value={localidade} onChange={(e) => setLocalidade(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
               </div>
-              <div className="space-y-2">
-                <Label>Localidade</Label>
-                <Input value={localidade} onChange={(e) => setLocalidade(e.target.value)} />
+              <div className="space-y-1.5">
+                <Label className="text-secondary md:text-foreground text-xs">Ano Lectivo</Label>
+                <Input value={anoLectivo} onChange={(e) => setAnoLectivo(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Ano Lectivo</Label>
-              <Input value={anoLectivo} onChange={(e) => setAnoLectivo(e.target.value)} />
             </div>
           </div>
 
           {/* Configurações do Trabalho */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-card space-y-4">
-            <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-              Configurações do Trabalho
+          <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+            <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
+              Configurações
             </h2>
 
-            <div className="space-y-2">
-              <Label>Tipo de Trabalho</Label>
-              <Select value={tipoTrabalho} onValueChange={setTipoTrabalho}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {tiposTrabalho.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Disciplina</Label>
-              <Select value={disciplinas.includes(disciplina) ? disciplina : "__outra__"} onValueChange={(v) => {
-                if (v === "__outra__") setDisciplina("");
-                else setDisciplina(v);
-              }}>
-                <SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger>
-                <SelectContent>
-                  {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                  <SelectItem value="__outra__">Outra (escrever)</SelectItem>
-                </SelectContent>
-              </Select>
-              {!disciplinas.includes(disciplina) && (
-                <Input
-                  placeholder="Escreva a disciplina..."
-                  value={disciplina}
-                  onChange={(e) => setDisciplina(e.target.value)}
-                  className="mt-1"
-                />
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Número de Páginas</Label>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setPaginas(Math.max(3, paginas - 1))}>
-                    <Minus className="h-3.5 w-3.5" />
+            <div className="grid grid-cols-3 gap-2 md:grid-cols-1 md:gap-4">
+              <div className="space-y-1.5 col-span-2 md:col-span-1">
+                <Label className="text-secondary md:text-foreground text-xs">Tipo</Label>
+                <Select value={tipoTrabalho} onValueChange={setTipoTrabalho}>
+                  <SelectTrigger className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {tiposTrabalho.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-secondary md:text-foreground text-xs">Páginas</Label>
+                <div className="flex items-center gap-1">
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-zinc-700 md:border-input" onClick={() => setPaginas(Math.max(3, paginas - 1))}>
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <span className="text-sm font-medium flex-1 text-center">{paginas} páginas</span>
-                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setPaginas(Math.min(30, paginas + 1))}>
-                    <Plus className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium flex-1 text-center text-secondary md:text-foreground">{paginas}</span>
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-zinc-700 md:border-input" onClick={() => setPaginas(Math.min(30, paginas + 1))}>
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Elementos Visuais</Label>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setElementosVisuais(Math.max(0, elementosVisuais - 1))}>
-                    <Minus className="h-3.5 w-3.5" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 md:grid-cols-2 md:gap-4">
+              <div className="space-y-1.5 col-span-2 md:col-span-1">
+                <Label className="text-secondary md:text-foreground text-xs">Disciplina</Label>
+                <Select value={disciplinas.includes(disciplina) ? disciplina : "__outra__"} onValueChange={(v) => {
+                  if (v === "__outra__") setDisciplina("");
+                  else setDisciplina(v);
+                }}>
+                  <SelectTrigger className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10 text-xs"><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                  <SelectContent>
+                    {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    <SelectItem value="__outra__">Outra</SelectItem>
+                  </SelectContent>
+                </Select>
+                {!disciplinas.includes(disciplina) && (
+                  <Input
+                    placeholder="Escreva a disciplina..."
+                    value={disciplina}
+                    onChange={(e) => setDisciplina(e.target.value)}
+                    className="mt-1 bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10"
+                  />
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-secondary md:text-foreground text-xs">Visuais</Label>
+                <div className="flex items-center gap-1">
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-zinc-700 md:border-input" onClick={() => setElementosVisuais(Math.max(0, elementosVisuais - 1))}>
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <span className="text-sm font-medium flex-1 text-center">{elementosVisuais}</span>
-                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setElementosVisuais(Math.min(10, elementosVisuais + 1))}>
-                    <Plus className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium flex-1 text-center text-secondary md:text-foreground">{elementosVisuais}</span>
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-zinc-700 md:border-input" onClick={() => setElementosVisuais(Math.min(10, elementosVisuais + 1))}>
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
@@ -541,30 +542,29 @@ const TrabalhoPage = () => {
           </div>
 
           {/* Personalização da Capa */}
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
-            <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-              Personalização da Capa
+          <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+            <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
+              Capa
             </h2>
-            <p className="text-xs text-muted-foreground">Escolha entre capa padrão, upload ou personalizada</p>
 
             <Tabs value={tipoCapa} onValueChange={(v) => setTipoCapa(v as "padrao" | "upload" | "personalizada")}>
-              <TabsList className="w-full">
-                <TabsTrigger value="padrao" className="flex-1">Padrão</TabsTrigger>
-                <TabsTrigger value="upload" className="flex-1">Upload</TabsTrigger>
-                <TabsTrigger value="personalizada" className="flex-1">Personalizada</TabsTrigger>
+              <TabsList className="w-full bg-zinc-800 md:bg-muted">
+                <TabsTrigger value="padrao" className="flex-1 text-xs">Padrão</TabsTrigger>
+                <TabsTrigger value="upload" className="flex-1 text-xs">Upload</TabsTrigger>
+                <TabsTrigger value="personalizada" className="flex-1 text-xs">IA</TabsTrigger>
               </TabsList>
             </Tabs>
 
             {tipoCapa === "padrao" && (
-              <p className="text-sm text-muted-foreground">
-                A capa será gerada automaticamente com os dados preenchidos acima.
+              <p className="text-[11px] text-muted-foreground">
+                Capa gerada automaticamente com os dados preenchidos.
               </p>
             )}
 
             {tipoCapa === "upload" && (
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-accent/20">
-                <Image className="h-7 w-7 text-muted-foreground mb-2" />
-                <span className="text-sm text-muted-foreground font-medium">
+              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-zinc-700 md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-zinc-800/50 md:bg-accent/20">
+                <Image className="h-6 w-6 text-muted-foreground mb-1.5" />
+                <span className="text-[11px] text-muted-foreground font-medium">
                   {capaUpload ? capaUpload.name : "Carregar imagem da capa"}
                 </span>
                 <input type="file" className="hidden" accept="image/*" onChange={handleCapaUpload} />
@@ -572,18 +572,18 @@ const TrabalhoPage = () => {
             )}
 
             {tipoCapa === "personalizada" && (
-              <p className="text-sm text-muted-foreground">
-                A capa personalizada será gerada pela IA com design exclusivo baseado no tema do trabalho.
+              <p className="text-[11px] text-muted-foreground">
+                Capa personalizada gerada pela IA com design exclusivo.
               </p>
             )}
           </div>
 
           {/* Submit */}
-          <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+          <Button type="submit" className="w-full h-11 text-sm font-semibold shadow-[0_4px_16px_hsl(var(--primary)/0.3)]" disabled={loading}>
             {loading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {etapa || "A gerar..."}
+                <span className="text-xs">{etapa || "A gerar..."}</span>
               </span>
             ) : "Gerar Estrutura"}
           </Button>
