@@ -613,46 +613,47 @@ const TrabalhoPage = () => {
           className="space-y-4"
         >
           {/* Action buttons */}
-          <div className="bg-card border border-border rounded-2xl p-4 shadow-card">
+          <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 md:p-4 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="font-display font-semibold">Resultado</h2>
-              <div className="flex gap-2 flex-wrap">
+              <h2 className="font-display font-semibold text-sm text-secondary md:text-foreground">Resultado</h2>
+              <div className="flex gap-1.5 flex-wrap">
                 <Button
                   variant={editMode ? "default" : "outline"}
                   size="sm"
+                  className="h-8 text-xs"
                   onClick={() => {
                     setEditMode(!editMode);
-                    toast.info(editMode ? "Modo visualização" : "Modo edição — clique no texto para editar");
+                    toast.info(editMode ? "Modo visualização" : "Modo edição");
                   }}
                 >
-                  {editMode ? <><Eye className="h-4 w-4 mr-1" /> Visualizar</> : <><Pencil className="h-4 w-4 mr-1" /> Editar</>}
+                  {editMode ? <><Eye className="h-3.5 w-3.5 mr-1" /> Ver</> : <><Pencil className="h-3.5 w-3.5 mr-1" /> Editar</>}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resultadoCompilado); toast.success("Copiado!"); }}>
-                  <Copy className="h-4 w-4 mr-1" /> Copiar
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => { navigator.clipboard.writeText(resultadoCompilado); toast.success("Copiado!"); }}>
+                  <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
                 </Button>
-                <Button variant="outline" size="sm" onClick={async () => {
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={async () => {
                   try {
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
                     await exportToWord(resultadoCompilado, nomeArquivo, getCoverData());
                     toast.success("Ficheiro Word exportado!");
                   } catch { toast.error("Erro ao exportar Word"); }
                 }}>
-                  <FileDown className="h-4 w-4 mr-1" /> Word
+                  <FileDown className="h-3.5 w-3.5 mr-1" /> Word
                 </Button>
-                <Button size="sm" onClick={async () => {
+                <Button size="sm" className="h-8 text-xs" onClick={async () => {
                   try {
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
                     await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
                     toast.success("PDF exportado!");
                   } catch { toast.error("Erro ao exportar PDF"); }
                 }}>
-                  <Download className="h-4 w-4 mr-1" /> PDF
+                  <Download className="h-3.5 w-3.5 mr-1" /> PDF
                 </Button>
               </div>
             </div>
             {editMode && (
-              <p className="text-xs text-muted-foreground mt-2">
-                💡 Clique em qualquer texto para editar. Seleccione texto para ver a barra de formatação.
+              <p className="text-[10px] text-muted-foreground mt-2">
+                💡 Clique no texto para editar. Seleccione para formatar.
               </p>
             )}
           </div>
