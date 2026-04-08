@@ -111,7 +111,7 @@ const UserHomePage = () => {
   ].filter(i => i.remaining !== null) : [];
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--delle-surface))] md:bg-background">
+    <div className="min-h-screen bg-[hsl(var(--delle-surface))] md:bg-background bg-black text-black border-black">
       {/* Mobile Layout */}
       <div className="md:hidden">
 
@@ -119,12 +119,12 @@ const UserHomePage = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-4 pt-3 pb-2"
+          className="px-4 pt-3 pb-2 font-serif bg-black border-black border-0"
         >
-          <h2 className="text-lg font-bold text-foreground">
+          <h2 className="text-lg font-bold border-secondary text-secondary font-serif">
             Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
           </h2>
-          <p className="text-xs text-muted-foreground">O que vais criar hoje?</p>
+          <p className="text-xs text-secondary">O que vais criar hoje?</p>
           {canInstall && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
               <Button
@@ -143,15 +143,15 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="px-4 pt-1 pb-3"
+          className="px-4 pt-1 pb-3 bg-black"
         >
           <p className="text-[10px] text-muted-foreground font-medium mb-1.5 uppercase tracking-wider">Gerações restantes</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+          <div className="gap-2 overflow-x-auto scrollbar-none pb-1 text-justify flex items-start justify-end bg-black border-0">
             {usageItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(var(--delle-icon-bg))]/10 border border-border shrink-0">
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(var(--delle-icon-bg))]/10 shrink-0 bg-zinc-950 border-sidebar border-0">
                 <item.icon className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[11px] font-bold text-foreground">{item.remaining}</span>
-                <span className="text-[10px] text-muted-foreground">{item.label}</span>
+                <span className="text-[11px] font-bold text-secondary">{item.remaining}</span>
+                <span className="text-[10px] text-gray-100/[0.87]">{item.label}</span>
               </div>
             ))}
           </div>
@@ -162,7 +162,7 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="px-4 pb-4"
+          className="px-4 pb-4 border-black bg-black"
         >
           <div className="flex justify-between gap-2">
             {quickActions.map((action, i) => (
@@ -187,8 +187,8 @@ const UserHomePage = () => {
                 }}
                 className="flex flex-col items-center gap-2 flex-1"
               >
-                <div className="ripple-container relative overflow-hidden w-14 h-14 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center transition-transform active:scale-95 shadow-md">
-                  <action.icon className="h-6 w-6 text-[hsl(var(--delle-icon-fg))] relative z-10" />
+                <div className="ripple-container relative overflow-hidden w-14 h-14 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center transition-transform active:scale-95 shadow-md bg-zinc-950">
+                  <action.icon className={`h-6 w-6 text-[hsl(var(--delle-icon-fg))] relative z-10 ${action.label.includes('Resumos') ? 'border-secondary text-secondary' : action.label.includes('Escolares') ? 'text-secondary' : ''}`} />
                 </div>
                 <span className="text-[10px] leading-tight text-center text-muted-foreground font-medium whitespace-pre-line">
                   {action.label}
@@ -203,18 +203,18 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="px-4 pb-4"
+          className="px-4 pb-4 bg-zinc-950"
         >
           <button
             onClick={() => navigate("/grupos")}
-            className="w-full rounded-2xl bg-[hsl(var(--delle-card))] p-4 flex items-center justify-between transition-all active:scale-[0.98]"
+            className="w-full rounded-2xl bg-[hsl(var(--delle-card))] p-4 flex items-center justify-between transition-all active:scale-[0.98] bg-zinc-950"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
+                <Users className="h-5 w-5 text-[#1702f7]" />
               </div>
               <div className="text-left">
-                <p className="font-semibold text-foreground text-sm">Group work</p>
+                <p className="font-semibold text-secondary font-serif text-base">​Comunidade</p>
                 <p className="text-xs text-muted-foreground">
                   {groupCount > 0 ? `${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Criar ou juntar"}
                 </p>
@@ -229,11 +229,11 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="px-4 pb-6"
+          className="px-4 pb-6 bg-black"
         >
-          <div className="rounded-2xl bg-[hsl(var(--delle-card))] p-4">
+          <div className="rounded-2xl bg-[hsl(var(--delle-card))] p-4 border-zinc-950 bg-zinc-950 shadow-card">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-foreground text-sm">Recent Projects</h3>
+              <h3 className="font-semibold text-sm font-serif text-secondary">​Projetos Recentes</h3>
               <button onClick={() => navigate("/meus-projetos")}>
                 <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
               </button>
@@ -252,13 +252,13 @@ const UserHomePage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.04 }}
                     onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-background/60 hover:bg-background transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left border-black bg-sidebar text-secondary shadow-2xl border-dashed"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary font-bold text-xs">D</span>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-zinc-950">
+                      <span className="font-bold text-xs text-sidebar bg-sidebar">​</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{p.titulo}</p>
+                      <p className="text-sm font-semibold truncate text-secondary">{p.titulo}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {tipoLabel[p.tipo] || p.tipo} · {new Date(p.criado_em).toLocaleDateString("pt-AO")}
                       </p>

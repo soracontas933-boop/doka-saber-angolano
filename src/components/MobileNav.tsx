@@ -13,7 +13,7 @@ const MobileNav = () => {
   const location = useLocation();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-black">
       {/* Water drop SVG filter */}
       <svg className="absolute" width="0" height="0">
         <defs>
@@ -31,7 +31,7 @@ const MobileNav = () => {
       </svg>
 
       <div
-        className="mx-3 mb-2 px-2 py-2 flex items-center justify-around"
+        className="mx-3 mb-2 px-2 py-2 flex items-center justify-around bg-zinc-950 rounded-full border-2 shadow-xl border-primary"
         style={{
           background: "hsl(var(--delle-nav-bg))",
           borderRadius: "22px",
@@ -51,7 +51,7 @@ const MobileNav = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all"
+              className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all ${isActive ? "bg-sidebar" : ""}`}
             >
               {isActive && (
                 <motion.div
@@ -61,7 +61,7 @@ const MobileNav = () => {
                 />
               )}
               <item.icon
-                className={`h-5 w-5 transition-colors duration-200 ${
+                className={`h-5 w-5 transition-colors duration-200 border-0 border-gray-100/[0.01] shadow-xl text-secondary ${
                   isActive
                     ? "text-[hsl(var(--delle-nav-active))]"
                     : "text-[hsl(var(--delle-nav-inactive))]"
