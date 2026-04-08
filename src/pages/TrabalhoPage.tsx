@@ -292,38 +292,38 @@ const TrabalhoPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 max-w-3xl mx-auto">
+    <div className="p-3 sm:p-6 md:p-10 max-w-3xl mx-auto md:bg-background bg-zinc-950 min-h-screen">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           {fase !== "formulario" && (
-            <Button type="button" variant="ghost" size="icon" onClick={handleBack} className="mr-1">
+            <Button type="button" variant="ghost" size="icon" onClick={handleBack} className="mr-1 text-secondary md:text-foreground">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <FileText className="h-5 w-5 text-secondary-foreground" />
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+            <FileText className="h-4 w-4 md:h-5 md:w-5 text-secondary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold">Gerar Trabalho Escolar</h1>
-            <p className="text-sm text-muted-foreground">
-              {fase === "formulario" && "Preencha os dados e gere a estrutura do trabalho"}
-              {fase === "estrutura" && "Edite os subtemas e gere o conteúdo de cada um"}
-              {fase === "resultado" && "Trabalho compilado — exporte em PDF ou Word"}
+            <h1 className="text-base md:text-xl font-display font-bold text-secondary md:text-foreground">Gerar Trabalho</h1>
+            <p className="text-[11px] md:text-sm text-muted-foreground">
+              {fase === "formulario" && "Preencha os dados e gere a estrutura"}
+              {fase === "estrutura" && "Edite os subtemas e gere o conteúdo"}
+              {fase === "resultado" && "Exporte em PDF ou Word"}
             </p>
           </div>
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-2 mb-4">
           {(["formulario", "estrutura", "resultado"] as Fase[]).map((f, i) => (
             <div key={f} className="flex items-center gap-2">
               <div className={`h-2 w-2 rounded-full transition-colors ${
-                fase === f ? "bg-primary" : i < ["formulario", "estrutura", "resultado"].indexOf(fase) ? "bg-primary/50" : "bg-border"
+                fase === f ? "bg-primary shadow-[0_0_6px_hsl(var(--primary))]" : i < ["formulario", "estrutura", "resultado"].indexOf(fase) ? "bg-primary/50" : "bg-zinc-700 md:bg-border"
               }`} />
-              {i < 2 && <div className="h-px w-8 bg-border" />}
+              {i < 2 && <div className="h-px w-6 md:w-8 bg-zinc-700 md:bg-border" />}
             </div>
           ))}
-          <span className="text-xs text-muted-foreground ml-2">
+          <span className="text-[10px] md:text-xs text-muted-foreground ml-2">
             Etapa {["formulario", "estrutura", "resultado"].indexOf(fase) + 1} de 3
           </span>
         </div>
