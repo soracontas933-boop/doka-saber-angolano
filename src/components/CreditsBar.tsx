@@ -5,6 +5,7 @@ import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import NotificationBell from "@/components/NotificationBell";
+import ScannerButton from "@/components/ScannerButton";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,8 +100,9 @@ const CreditsBar = () => {
             <span className="text-[10px] text-secondary">créditos</span>
           </div>
 
-          {/* Right: Support + Notifications */}
+          {/* Right: Scanner + Support + Notifications */}
           <div className="flex items-center gap-1">
+            <ScannerButton />
             <button
               onClick={() => navigate("/suporte")}
               className="p-2 rounded-full hover:bg-muted/50 transition-colors"

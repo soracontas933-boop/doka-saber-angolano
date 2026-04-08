@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
@@ -62,6 +62,16 @@ const PlanoAulaPage = () => {
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState("");
   const cameraRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const pendingFile = (window as any)._pendingScannerFile;
+    if (pendingFile) {
+      addFiles([pendingFile]);
+      delete (window as any)._pendingScannerFile;
+      // If coming from scanner, we default to vertical mode which is more direct for photo content
+      setTipoPlano("vertical");
+    }
+  }, []);
 
   // Vertical state
   const [disciplinaV, setDisciplinaV] = useLocalStorage("doka_plano_disciplina", "");

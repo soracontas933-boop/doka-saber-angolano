@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
@@ -44,6 +44,14 @@ const ResumoPage = () => {
   const [resultado, setResultado] = useLocalStorage<string | null>("doka_resumo_resultado", null);
   const [imagemResumo, setImagemResumo] = useLocalStorage<string | null>("doka_resumo_imagem", null);
   const cameraRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const pendingFile = (window as any)._pendingScannerFile;
+    if (pendingFile) {
+      addFiles([pendingFile]);
+      delete (window as any)._pendingScannerFile;
+    }
+  }, []);
 
   const addFiles = (newFiles: File[]) => {
     const total = [...files, ...newFiles].slice(0, 100);

@@ -12,6 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
 import { useTrabalhoSettings } from "@/hooks/use-trabalho-settings";
+import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   Moon,
@@ -22,6 +24,7 @@ import {
   Loader2,
   Camera,
   Settings,
+  LogOut,
 } from "lucide-react";
 
 const FONT_OPTIONS = [
@@ -39,6 +42,8 @@ const SettingsPage = () => {
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
   const { settings: trabalhoSettings, updateSettings } = useTrabalhoSettings();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -79,6 +84,20 @@ const SettingsPage = () => {
     };
     load();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/");
+      toast({ title: "Sessão terminada", description: "Até breve!" });
+    } catch (error) {
+      toast({
+        title: "Erro ao sair",
+        description: "Não foi possível terminar a sessão.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -131,9 +150,20 @@ const SettingsPage = () => {
   return (
     <div className="space-y-8 max-w-2xl">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Settings className="h-7 w-7 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Settings className="h-7 w-7 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+        </div>
+        <Button 
+          variant="destructive" 
+          size="sm" 
+          onClick={handleLogout}
+          className="md:hidden gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </Button>
       </div>
 
       {/* Profile Section */}
