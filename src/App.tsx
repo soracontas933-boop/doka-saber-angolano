@@ -26,6 +26,7 @@ import AdminMensagensPage from "@/pages/AdminMensagensPage";
 import CurriculoPage from "@/pages/CurriculoPage";
 import FaturamentoPage from "@/pages/FaturamentoPage";
 import NotFound from "@/pages/NotFound";
+import RootRedirect from "@/components/RootRedirect";
 
 const queryClient = new QueryClient();
 
@@ -37,7 +38,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<RootRedirect />} />
+            <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
             <Route element={<ProtectedRoute />}>

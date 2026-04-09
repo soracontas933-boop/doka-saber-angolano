@@ -32,7 +32,7 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/dashboard", { replace: true });
+      navigate("/home", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
@@ -55,7 +55,7 @@ const AuthPage = () => {
           return;
         }
         toast.success("Bem-vindo de volta!");
-        navigate("/dashboard", { replace: true });
+        navigate("/home", { replace: true });
       } else {
         if (!name.trim() || !genero || !funcao) {
           toast.error("Preencha todos os campos obrigatórios.");
@@ -84,7 +84,7 @@ const AuthPage = () => {
           return;
         }
         toast.success("Conta criada com sucesso!");
-        navigate("/dashboard", { replace: true });
+        navigate("/home", { replace: true });
       }
     } catch {
       toast.error("Erro inesperado. Tente novamente.");

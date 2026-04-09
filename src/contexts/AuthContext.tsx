@@ -17,12 +17,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Register listener FIRST
+    // 1. Register listener FIRST to catch auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        
+        // Persist session state to localStorage for mobile offline support
+        if (session) {
+          try {
+            localStorage.setItem('auth_session', JSON.stringify({
+              user: session.user,
+              accessToken: session.access_token,
+              refreshToken: session.refresh_token,
+              expiresAt: session.expires_at,
+            }));
+          } catch (e) {
+            console.warn('Failed to persist session:', e);
+          }
+        } else {
+          try {
+            localStorage.removeItem('auth_session');
+          } catch (e) {
+            console.warn('Failed to clear session:', e);
+          }
+        }
       }
     );
 
@@ -38,6 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    try {
+      localStorage.removeItem('auth_session');
+    } catch (e) {
+      console.warn('Failed to clear session on logout:', e);
+    }
   };
 
   return (
