@@ -148,90 +148,100 @@ const SettingsPage = () => {
     : userEmail.slice(0, 2).toUpperCase();
 
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="p-3 sm:p-6 md:p-10 max-w-6xl mx-auto md:bg-background bg-zinc-950 min-h-screen space-y-6 md:space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Settings className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+            <Settings className="h-4 w-4 md:h-5 md:w-5 text-secondary-foreground" />
+          </div>
+          <h1 className="text-base md:text-2xl font-display font-bold text-secondary md:text-foreground">Configurações</h1>
         </div>
         <Button 
           variant="destructive" 
           size="sm" 
           onClick={handleLogout}
-          className="md:hidden gap-2"
+          className="md:hidden gap-2 h-8 text-xs"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-3.5 w-3.5" />
           Sair
         </Button>
       </div>
 
       {/* Profile Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="h-5 w-5 text-primary" />
-            Informações Pessoais
-          </CardTitle>
-          <CardDescription>Gere o teu perfil e dados pessoais</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 md:mb-6">
+          <User className="h-5 w-5 text-primary" />
+          <div>
+            <h2 className="text-sm md:text-lg font-display font-semibold text-secondary md:text-foreground">Informações Pessoais</h2>
+            <p className="text-[10px] md:text-sm text-muted-foreground">Gere o teu perfil e dados pessoais</p>
+          </div>
+        </div>
+
+        <div className="space-y-4 md:space-y-6">
           {/* Avatar */}
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 border-2 border-primary/20">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <Avatar className="h-16 w-16 md:h-20 md:w-20 border-2 border-primary/20 flex-shrink-0">
               <AvatarImage src={profile.avatar_url} alt={profile.nome || "Avatar"} />
-              <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">
+              <AvatarFallback className="bg-primary/10 text-primary text-sm md:text-lg font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 space-y-2">
-              <Label htmlFor="avatar_url">URL da Foto de Perfil</Label>
+              <Label htmlFor="avatar_url" className="text-secondary md:text-foreground text-xs md:text-sm">URL da Foto de Perfil</Label>
               <div className="flex gap-2">
                 <Input
                   id="avatar_url"
                   value={profile.avatar_url}
                   onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })}
                   placeholder="https://exemplo.com/foto.jpg"
-                  className="flex-1"
+                  className="flex-1 bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-9 md:h-10 text-xs md:text-sm"
                 />
-                <Button variant="outline" size="icon" className="shrink-0">
+                <Button variant="outline" size="icon" className="shrink-0 h-9 md:h-10 w-9 md:w-10 bg-zinc-800 md:bg-background border-zinc-700 md:border-input">
                   <Camera className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-zinc-700 md:bg-border" />
 
-          {/* Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome Completo</Label>
+          {/* Fields - 2 Columns */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+            <div className="space-y-1.5 md:space-y-2 bg-zinc-800/50 md:bg-background/50 p-3 md:p-4 rounded-lg border border-zinc-700 md:border-border">
+              <Label htmlFor="nome" className="text-secondary md:text-foreground text-xs md:text-sm font-medium">Nome Completo</Label>
               <Input
                 id="nome"
                 value={profile.nome}
                 onChange={(e) => setProfile({ ...profile, nome: e.target.value })}
                 placeholder="O teu nome"
+                className="bg-zinc-700 md:bg-background border-zinc-600 md:border-input text-secondary md:text-foreground placeholder:text-zinc-500 md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" value={userEmail} disabled className="opacity-60" />
+            <div className="space-y-1.5 md:space-y-2 bg-zinc-800/50 md:bg-background/50 p-3 md:p-4 rounded-lg border border-zinc-700 md:border-border">
+              <Label htmlFor="email" className="text-secondary md:text-foreground text-xs md:text-sm font-medium">Email</Label>
+              <Input 
+                id="email" 
+                value={userEmail} 
+                disabled 
+                className="bg-zinc-700 md:bg-muted border-zinc-600 md:border-input text-secondary md:text-foreground opacity-60 h-9 md:h-10 text-xs md:text-sm" 
+              />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
+            <div className="space-y-1.5 md:space-y-2 bg-zinc-800/50 md:bg-background/50 p-3 md:p-4 rounded-lg border border-zinc-700 md:border-border">
+              <Label htmlFor="telefone" className="text-secondary md:text-foreground text-xs md:text-sm font-medium">Telefone</Label>
               <Input
                 id="telefone"
                 value={profile.telefone}
                 onChange={(e) => setProfile({ ...profile, telefone: e.target.value })}
                 placeholder="+244 9XX XXX XXX"
+                className="bg-zinc-700 md:bg-background border-zinc-600 md:border-input text-secondary md:text-foreground placeholder:text-zinc-500 md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="idade">Idade</Label>
+            <div className="space-y-1.5 md:space-y-2 bg-zinc-800/50 md:bg-background/50 p-3 md:p-4 rounded-lg border border-zinc-700 md:border-border">
+              <Label htmlFor="idade" className="text-secondary md:text-foreground text-xs md:text-sm font-medium">Idade</Label>
               <Input
                 id="idade"
                 type="number"
@@ -240,99 +250,108 @@ const SettingsPage = () => {
                 value={profile.idade}
                 onChange={(e) => setProfile({ ...profile, idade: e.target.value })}
                 placeholder="Ex: 17"
+                className="bg-zinc-700 md:bg-background border-zinc-600 md:border-input text-secondary md:text-foreground placeholder:text-zinc-500 md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
               />
             </div>
           </div>
 
-          <Button onClick={handleSaveProfile} disabled={saving} className="gap-2">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          <Button 
+            onClick={handleSaveProfile} 
+            disabled={saving} 
+            className="w-full gap-2 h-9 md:h-10 text-xs md:text-sm bg-primary hover:bg-primary/90"
+          >
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
             {saving ? "Guardando..." : "Guardar Perfil"}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Appearance */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            {theme === "dark" ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
-            Aparência
-          </CardTitle>
-          <CardDescription>Personaliza o visual da aplicação</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-foreground">Modo Escuro</p>
-              <p className="text-sm text-muted-foreground">
-                {theme === "dark" ? "O modo escuro está activado" : "Activar o modo escuro"}
-              </p>
-            </div>
-            <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
+      {/* Appearance Section */}
+      <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 md:mb-6">
+          {theme === "dark" ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+          <div>
+            <h2 className="text-sm md:text-lg font-display font-semibold text-secondary md:text-foreground">Aparência</h2>
+            <p className="text-[10px] md:text-sm text-muted-foreground">Personaliza o visual da aplicação</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Trabalho Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Type className="h-5 w-5 text-primary" />
-            Formatação dos Trabalhos
-          </CardTitle>
-          <CardDescription>Define o tipo de letra e margens dos trabalhos escolares</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Font */}
-          <div className="space-y-2">
-            <Label>Tipo de Letra</Label>
-            <Select
-              value={trabalhoSettings.fontFamily}
-              onValueChange={(v) => updateSettings({ fontFamily: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FONT_OPTIONS.map((font) => (
-                  <SelectItem key={font} value={font}>
-                    <span style={{ fontFamily: font }}>{font}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Pré-visualização: <span style={{ fontFamily: trabalhoSettings.fontFamily }} className="font-medium">AaBbCc 123</span>
+        <div className="bg-zinc-800/50 md:bg-background/50 p-3 md:p-4 rounded-lg border border-zinc-700 md:border-border flex items-center justify-between">
+          <div>
+            <p className="font-medium text-secondary md:text-foreground text-xs md:text-sm">Modo Escuro</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
+              {theme === "dark" ? "O modo escuro está activado" : "Activar o modo escuro"}
             </p>
           </div>
+          <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
+        </div>
+      </div>
 
-          <Separator />
+      {/* Trabalho Settings Section */}
+      <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 md:mb-6">
+          <Type className="h-5 w-5 text-primary" />
+          <div>
+            <h2 className="text-sm md:text-lg font-display font-semibold text-secondary md:text-foreground">Formatação dos Trabalhos</h2>
+            <p className="text-[10px] md:text-sm text-muted-foreground">Define o tipo de letra e margens dos trabalhos escolares</p>
+          </div>
+        </div>
 
-          {/* Margins */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2">
-                <Ruler className="h-4 w-4" />
-                Margens
-              </Label>
-              <span className="text-sm font-medium text-primary">{trabalhoSettings.marginMm} mm</span>
-            </div>
-            <Slider
-              value={[trabalhoSettings.marginMm]}
-              onValueChange={([v]) => updateSettings({ marginMm: v })}
-              min={15}
-              max={40}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>15 mm</span>
-              <span>25 mm (padrão)</span>
-              <span>40 mm</span>
+        <div className="space-y-4 md:space-y-6">
+          {/* Font - 2 Columns Layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+            <div className="space-y-1.5 md:space-y-2 bg-zinc-800/50 md:bg-background/50 p-3 md:p-4 rounded-lg border border-zinc-700 md:border-border col-span-1 sm:col-span-2">
+              <Label className="text-secondary md:text-foreground text-xs md:text-sm font-medium">Tipo de Letra</Label>
+              <Select
+                value={trabalhoSettings.fontFamily}
+                onValueChange={(v) => updateSettings({ fontFamily: v })}
+              >
+                <SelectTrigger className="bg-zinc-700 md:bg-background border-zinc-600 md:border-input text-secondary md:text-foreground h-9 md:h-10 text-xs md:text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FONT_OPTIONS.map((font) => (
+                    <SelectItem key={font} value={font}>
+                      <span style={{ fontFamily: font }}>{font}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[9px] md:text-xs text-muted-foreground">
+                Pré-visualização: <span style={{ fontFamily: trabalhoSettings.fontFamily }} className="font-medium text-secondary md:text-foreground">AaBbCc 123</span>
+              </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          <Separator className="bg-zinc-700 md:bg-border" />
+
+          {/* Margins - 2 Columns Layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+            <div className="space-y-2 md:space-y-3 bg-zinc-800/50 md:bg-background/50 p-3 md:p-4 rounded-lg border border-zinc-700 md:border-border col-span-1 sm:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2 text-secondary md:text-foreground text-xs md:text-sm font-medium">
+                  <Ruler className="h-4 w-4" />
+                  Margens
+                </Label>
+                <span className="text-xs md:text-sm font-medium text-primary">{trabalhoSettings.marginMm} mm</span>
+              </div>
+              <Slider
+                value={[trabalhoSettings.marginMm]}
+                onValueChange={([v]) => updateSettings({ marginMm: v })}
+                min={15}
+                max={40}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[9px] md:text-xs text-muted-foreground">
+                <span>15 mm</span>
+                <span>25 mm (padrão)</span>
+                <span>40 mm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
