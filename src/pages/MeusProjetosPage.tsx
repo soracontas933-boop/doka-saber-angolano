@@ -94,7 +94,7 @@ const MeusProjetosPage = () => {
   };
 
   return (
-    <div className="p-3 sm:p-6 md:p-10 max-w-5xl mx-auto md:bg-background bg-zinc-950 min-h-screen">
+    <div className="p-3 sm:p-6 md:p-10 max-w-5xl mx-auto md:bg-background bg-background min-h-screen">
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -102,7 +102,7 @@ const MeusProjetosPage = () => {
       >
         <div className="flex items-center gap-3 mb-1">
           <FolderOpen className="h-6 w-6 md:h-7 md:w-7 text-primary" />
-          <h1 className="text-lg md:text-3xl font-display font-bold text-secondary md:text-foreground">Meus Projetos</h1>
+          <h1 className="text-lg md:text-3xl font-display font-bold text-foreground">Meus Projetos</h1>
         </div>
         <p className="text-[11px] md:text-sm text-muted-foreground mb-4 md:mb-6">
           Todos os conteúdos que geraste organizados por tipo.
@@ -110,7 +110,7 @@ const MeusProjetosPage = () => {
       </motion.div>
 
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="mb-4 md:mb-6 flex-wrap h-auto gap-1 bg-zinc-900 md:bg-muted">
+        <TabsList className="mb-4 md:mb-6 flex-wrap h-auto gap-1 bg-card md:bg-muted">
           <TabsTrigger value="todos" className="text-[10px] sm:text-xs md:text-sm">Todos</TabsTrigger>
           {Object.entries(tipoConfig).map(([key, cfg]) => (
             <TabsTrigger key={key} value={key} className="text-[10px] sm:text-xs md:text-sm">
@@ -153,7 +153,7 @@ const MeusProjetosPage = () => {
                     key={project.id}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card hover:md:shadow-card-hover transition-shadow"
+                    className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-5 shadow-sm md:shadow-card hover:md:shadow-card-hover transition-shadow"
                   >
                     <div className="flex items-start gap-2 sm:gap-3">
                       <div className={`inline-flex items-center justify-center w-8 sm:w-10 h-8 sm:h-10 rounded-xl bg-gradient-to-br ${cfg.gradient} flex-shrink-0`}>
@@ -175,7 +175,7 @@ const MeusProjetosPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 text-[10px] sm:text-xs bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-8 sm:h-9"
+                        className="flex-1 text-[10px] sm:text-xs bg-muted md:bg-background border-border md:border-input text-foreground h-8 sm:h-9"
                         onClick={() => navigate(tipoRoutes[project.tipo] || "/dashboard", { state: { projectId: project.id, conteudo: project.conteudo } })}
                       >
                         <Eye className="h-3 sm:h-3.5 w-3 sm:w-3.5 mr-1" />
