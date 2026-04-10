@@ -211,7 +211,7 @@ const PlanoAulaPage = () => {
   const isHorizontal = tipoPlano === "horizontal";
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto">
+    <div className="p-3 sm:p-6 md:p-10 max-w-4xl mx-auto min-h-screen">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
