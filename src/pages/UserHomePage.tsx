@@ -276,6 +276,14 @@ const UserHomePage = () => {
               </div>
             )}
           </div>
+
+          {/* Botão Aumentar Saldo */}
+          <button
+            onClick={() => navigate("/planos")}
+            className="w-full mt-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm font-serif shadow-lg active:scale-[0.98] transition-transform"
+          >
+            Aumentar Saldo
+          </button>
         </motion.div>
 
       </div>
