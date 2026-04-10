@@ -163,7 +163,7 @@ const MeusProjetosPage = () => {
                         <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
                           {cfg.label}
                         </span>
-                        <h3 className="text-xs sm:text-sm font-display font-semibold text-secondary md:text-card-foreground truncate mt-0.5">
+                        <h3 className="text-xs sm:text-sm font-display font-semibold text-foreground truncate mt-0.5">
                           {project.titulo}
                         </h3>
                         <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
