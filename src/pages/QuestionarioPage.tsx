@@ -159,14 +159,14 @@ const QuestionarioPage = () => {
   };
 
   return (
-    <div className="p-3 sm:p-6 md:p-10 max-w-3xl mx-auto md:bg-background bg-zinc-950 min-h-screen">
+    <div className="p-3 sm:p-6 md:p-10 max-w-3xl mx-auto md:bg-background bg-background min-h-screen">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
             <HelpCircle className="h-4 w-4 md:h-5 md:w-5 text-secondary-foreground" />
           </div>
           <div>
-            <h1 className="text-base md:text-xl font-display font-bold text-secondary md:text-foreground">Questionário Interativo</h1>
+            <h1 className="text-base md:text-xl font-display font-bold text-foreground">Questionário Interativo</h1>
             <p className="text-[11px] md:text-sm text-muted-foreground">Gere questionários a partir de fotos do conteúdo</p>
           </div>
         </div>
@@ -180,7 +180,7 @@ const QuestionarioPage = () => {
         className="space-y-6"
       >
         {/* Fotos */}
-        <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+        <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
           <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
             Fotos do Conteúdo
           </h2>
@@ -197,7 +197,7 @@ const QuestionarioPage = () => {
           </Tabs>
 
           {fonte === "upload" ? (
-            <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-zinc-700 md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-zinc-800/50 md:bg-accent/20">
+            <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-border md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 md:bg-accent/20">
               <Image className="h-7 w-7 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Carregar fotos da galeria</span>
               <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} />
@@ -206,7 +206,7 @@ const QuestionarioPage = () => {
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
-              className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-zinc-700 md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-zinc-800/50 md:bg-accent/20"
+              className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-border md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 md:bg-accent/20"
             >
               <Camera className="h-7 w-7 text-muted-foreground mb-2" />
               <span className="text-sm text-muted-foreground font-medium">Abrir câmera</span>
@@ -217,12 +217,12 @@ const QuestionarioPage = () => {
           {previews.length > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {previews.map((src, i) => (
-                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-zinc-700 md:border-border">
+                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-border md:border-border">
                   <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeFile(i)}
-                    className="absolute top-1 right-1 w-5 h-5 bg-zinc-900/90 md:bg-foreground/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 w-5 h-5 bg-card/90 md:bg-foreground/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="h-3 w-3 text-background" />
                   </button>
@@ -233,16 +233,16 @@ const QuestionarioPage = () => {
         </div>
 
         {/* Configurações */}
-        <div className="bg-zinc-900 md:bg-card border border-zinc-800 md:border-border rounded-2xl p-3 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)] md:shadow-card space-y-3">
+        <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
           <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
             Configurações
           </h2>
 
           <div className="space-y-1.5">
-            <Label className="text-secondary md:text-foreground text-xs">Disciplina</Label>
+            <Label className="text-foreground text-xs">Disciplina</Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Select value={disciplina} onValueChange={(v) => { setDisciplina(v); if (v !== "__manual__") setDisciplinaManual(""); }}>
-                <SelectTrigger className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10 text-xs"><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"><SelectValue placeholder="Seleccione" /></SelectTrigger>
                 <SelectContent>
                   {disciplinas.filter(d => d !== "__manual__").map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   <SelectItem value="__manual__">✏️ Outra (digitar)</SelectItem>
@@ -255,20 +255,20 @@ const QuestionarioPage = () => {
                   setDisciplinaManual(e.target.value);
                   if (e.target.value) setDisciplina("__manual__");
                 }}
-                className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10"
+                className="bg-muted md:bg-background border-border md:border-input text-foreground h-10"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-1.5">
-              <Label className="text-secondary md:text-foreground text-xs">Nº de Perguntas</Label>
-              <Input type="number" min={5} max={50} value={numPerguntas} onChange={(e) => setNumPerguntas(e.target.value)} className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10" />
+              <Label className="text-foreground text-xs">Nº de Perguntas</Label>
+              <Input type="number" min={5} max={50} value={numPerguntas} onChange={(e) => setNumPerguntas(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-secondary md:text-foreground text-xs">Tipo</Label>
+              <Label className="text-foreground text-xs">Tipo</Label>
               <Select value={tipo} onValueChange={setTipo}>
-                <SelectTrigger className="bg-zinc-800 md:bg-background border-zinc-700 md:border-input text-secondary md:text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {tiposPerguntas.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>

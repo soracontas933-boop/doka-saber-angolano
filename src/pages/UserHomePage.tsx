@@ -10,7 +10,6 @@ import {
   FolderOpen,
   Users,
   Zap,
-  
   Download,
   MoreHorizontal,
   ChevronRight,
@@ -25,11 +24,12 @@ import { Progress } from "@/components/ui/progress";
 import { GraduationCap } from "lucide-react";
 
 const quickActions = [
-  { to: "/trabalho", icon: FileText, label: "Trabalhos\nEscolares" },
+  { to: "/trabalho", icon: FileText, label: "Trabalhos" },
   { to: "/resumo", icon: BookOpen, label: "Resumos" },
   { to: "/questionario", icon: HelpCircle, label: "Questionários" },
-  { to: "/plano-aula", icon: ClipboardList, label: "Planos\nde Aula" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Planos" },
   { to: "/curriculo", icon: Search, label: "Currículo" },
+  { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
 ];
 
 interface RecentProject {
@@ -69,7 +69,6 @@ const UserHomePage = () => {
           supabase.from("projects").select("id, titulo, tipo, criado_em").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(5),
           supabase.from("workgroup_members").select("id").eq("user_id", user.id).eq("aceite", true),
         ]);
-        
         if (profileRes.data) setProfile(profileRes.data);
         if (planRes.data) setPlan(planRes.data);
         if (projectsRes.data) setRecentProjects(projectsRes.data);
@@ -111,26 +110,26 @@ const UserHomePage = () => {
   ].filter(i => i.remaining !== null) : [];
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--delle-surface))] md:bg-background bg-black text-black border-black">
+    <div className="min-h-screen bg-background md:bg-background">
       {/* Mobile Layout */}
       <div className="md:hidden">
 
-        {/* Hero section with download CTA */}
+        {/* Hero section */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-4 pt-3 pb-2 font-serif bg-black border-black border-0"
+          className="px-4 pt-3 pb-2"
         >
-          <h2 className="text-lg font-bold border-secondary text-secondary font-serif">
+          <h2 className="text-lg font-bold text-foreground">
             Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
           </h2>
-          <p className="text-xs text-secondary">O que vais criar hoje?</p>
+          <p className="text-xs text-muted-foreground">O que vais criar hoje?</p>
           {canInstall && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
               <Button
                 onClick={install}
                 size="sm"
-                className="mt-2 w-full gap-2 rounded-xl bg-[hsl(var(--delle-icon-bg))] text-primary hover:bg-[hsl(var(--delle-icon-bg))]/80 font-semibold text-xs h-9"
+                className="mt-2 w-full gap-2 rounded-xl font-semibold text-xs h-9"
               >
                 <Download className="h-4 w-4" /> Baixar o App
               </Button>
@@ -143,54 +142,41 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="px-4 pt-1 pb-3 bg-black"
+          className="px-4 pt-1 pb-3"
         >
           <p className="text-[10px] text-muted-foreground font-medium mb-1.5 uppercase tracking-wider">Gerações restantes</p>
-          <div className="gap-2 overflow-x-auto scrollbar-none pb-1 text-justify flex items-start justify-end bg-black border-0">
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
             {usageItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(var(--delle-icon-bg))]/10 shrink-0 bg-zinc-950 border-sidebar border-0">
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 shrink-0">
                 <item.icon className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[11px] font-bold text-secondary">{item.remaining}</span>
-                <span className="text-[10px] text-gray-100/[0.87]">{item.label}</span>
+                <span className="text-[11px] font-bold text-foreground">{item.remaining}</span>
+                <span className="text-[10px] text-muted-foreground">{item.label}</span>
               </div>
             ))}
           </div>
         </motion.div>
 
-        {/* Quick Action Icons - Circular dark zinc */}
+        {/* Quick Action Buttons - 3 per row, rounded squares */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="px-4 pb-4 border-black bg-black"
+          className="px-4 pb-4"
         >
-          <div className="flex justify-between gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {quickActions.map((action, i) => (
               <motion.button
                 key={action.to}
-                initial={{ opacity: 0, scale: 0.8 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 + i * 0.05 }}
-                onClick={(e) => {
-                  const btn = e.currentTarget.querySelector('.ripple-container') as HTMLElement;
-                  if (btn) {
-                    const rect = btn.getBoundingClientRect();
-                    const ripple = document.createElement('span');
-                    const size = Math.max(rect.width, rect.height);
-                    const x = e.clientX - rect.left - size / 2;
-                    const y = e.clientY - rect.top - size / 2;
-                    ripple.style.cssText = `position:absolute;width:${size}px;height:${size}px;left:${x}px;top:${y}px;border-radius:50%;background:rgba(255,255,255,0.35);transform:scale(0);animation:ripple-effect 0.5s ease-out;pointer-events:none;`;
-                    btn.appendChild(ripple);
-                    setTimeout(() => ripple.remove(), 500);
-                  }
-                  setTimeout(() => navigate(action.to), 150);
-                }}
-                className="flex flex-col items-center gap-2 flex-1"
+                transition={{ delay: 0.1 + i * 0.04 }}
+                onClick={() => navigate(action.to)}
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-background border border-border/60 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_2px_12px_rgba(0,0,0,0.08)] active:scale-[0.97] transition-all"
               >
-                <div className="ripple-container relative overflow-hidden w-14 h-14 rounded-full bg-[hsl(var(--delle-icon-bg))] flex items-center justify-center transition-transform active:scale-95 shadow-md bg-zinc-950">
-                  <action.icon className={`h-6 w-6 text-[hsl(var(--delle-icon-fg))] relative z-10 ${action.label.includes('Resumos') ? 'border-secondary text-secondary' : action.label.includes('Escolares') ? 'text-secondary' : ''}`} />
+                <div className="w-11 h-11 rounded-xl bg-primary/8 flex items-center justify-center">
+                  <action.icon className="h-5 w-5 text-primary" />
                 </div>
-                <span className="text-[10px] leading-tight text-center text-muted-foreground font-medium whitespace-pre-line">
+                <span className="text-[11px] font-medium text-foreground text-center leading-tight">
                   {action.label}
                 </span>
               </motion.button>
@@ -198,23 +184,23 @@ const UserHomePage = () => {
           </div>
         </motion.div>
 
-        {/* Group Work Card */}
+        {/* Community Card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="px-4 pb-4 bg-zinc-950"
+          className="px-4 pb-4"
         >
           <button
             onClick={() => navigate("/grupos")}
-            className="w-full rounded-2xl bg-[hsl(var(--delle-card))] p-4 flex items-center justify-between transition-all active:scale-[0.98] bg-zinc-950"
+            className="w-full rounded-2xl bg-background border border-border/60 p-4 flex items-center justify-between transition-all active:scale-[0.98] shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10">
-                <Users className="h-5 w-5 text-[#1702f7]" />
+              <div className="p-2.5 rounded-xl bg-primary/8">
+                <Users className="h-5 w-5 text-primary" />
               </div>
               <div className="text-left">
-                <p className="font-semibold text-secondary font-serif text-base">​Comunidade</p>
+                <p className="font-semibold text-foreground text-sm">Comunidade</p>
                 <p className="text-xs text-muted-foreground">
                   {groupCount > 0 ? `${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Criar ou juntar"}
                 </p>
@@ -229,11 +215,11 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="px-4 pb-6 bg-black"
+          className="px-4 pb-6"
         >
-          <div className="rounded-2xl bg-[hsl(var(--delle-card))] p-4 border-zinc-950 bg-zinc-950 shadow-card">
+          <div className="rounded-2xl bg-background border border-border/60 p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm font-serif text-secondary">​Projetos Recentes</h3>
+              <h3 className="font-semibold text-sm text-foreground">Projetos Recentes</h3>
               <button onClick={() => navigate("/meus-projetos")}>
                 <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
               </button>
@@ -252,13 +238,13 @@ const UserHomePage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.04 }}
                     onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left border-black bg-sidebar text-secondary shadow-2xl border-dashed"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors text-left"
                   >
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-zinc-950">
-                      <span className="font-bold text-xs text-sidebar bg-sidebar">​</span>
+                    <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
+                      <FileText className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate text-secondary">{p.titulo}</p>
+                      <p className="text-sm font-semibold text-foreground truncate">{p.titulo}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {tipoLabel[p.tipo] || p.tipo} · {new Date(p.criado_em).toLocaleDateString("pt-AO")}
                       </p>
@@ -277,10 +263,10 @@ const UserHomePage = () => {
             )}
           </div>
 
-          {/* Botão Aumentar Saldo */}
+          {/* Aumentar Saldo */}
           <button
             onClick={() => navigate("/planos")}
-            className="w-full mt-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm font-serif shadow-lg active:scale-[0.98] transition-transform"
+            className="w-full mt-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-[0_2px_12px_hsl(var(--primary)/0.25)] active:scale-[0.98] transition-transform"
           >
             Aumentar Saldo
           </button>
@@ -288,9 +274,8 @@ const UserHomePage = () => {
 
       </div>
 
-      {/* Desktop Layout — keep existing style */}
+      {/* Desktop Layout */}
       <div className="hidden md:block p-4 md:p-8 max-w-6xl mx-auto space-y-8">
-        {/* Greeting */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             Olá, {profile.nome || "Estudante"}! 👋
@@ -298,7 +283,6 @@ const UserHomePage = () => {
           <p className="text-muted-foreground mt-1">O que vais criar hoje?</p>
         </motion.div>
 
-        {/* Desktop Quick Actions */}
         <div className="grid grid-cols-3 gap-4">
           {[
             { to: "/trabalho", icon: FileText, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo", color: "from-blue-500 to-blue-600" },
@@ -325,7 +309,6 @@ const UserHomePage = () => {
           ))}
         </div>
 
-        {/* Desktop Plan + Recent */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
             className="rounded-xl border border-border bg-card p-6"
@@ -365,45 +348,22 @@ const UserHomePage = () => {
               <div className="space-y-2">
                 {recentProjects.map((p) => (
                   <button key={p.id} onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors text-left"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{p.titulo}</p>
-                        <p className="text-xs text-muted-foreground">{tipoLabel[p.tipo] || p.tipo}</p>
-                      </div>
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                      {new Date(p.criado_em).toLocaleDateString("pt-AO", { day: "2-digit", month: "short" })}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{p.titulo}</p>
+                      <p className="text-xs text-muted-foreground">{tipoLabel[p.tipo] || p.tipo}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{new Date(p.criado_em).toLocaleDateString("pt-AO")}</span>
                   </button>
                 ))}
               </div>
             )}
           </motion.div>
         </div>
-
-        {/* Groups Card */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          className="rounded-xl border border-primary/20 bg-primary/5 p-5 flex items-center justify-between"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-primary/10">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Trabalho em Grupo</h3>
-              <p className="text-sm text-muted-foreground">
-                {groupCount > 0 ? `Fazes parte de ${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Cria ou junta-te a um grupo"}
-              </p>
-            </div>
-          </div>
-          <Button onClick={() => navigate("/grupos")} className="gap-2">
-            <Users className="h-4 w-4" />
-            Ver Grupos
-          </Button>
-        </motion.div>
       </div>
     </div>
   );
