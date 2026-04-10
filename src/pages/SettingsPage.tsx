@@ -204,7 +204,7 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          <Separator className="bg-zinc-700 md:bg-border" />
+          <Separator className="bg-muted md:bg-border" />
 
           {/* Fields - 2 Columns */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
@@ -215,7 +215,7 @@ const SettingsPage = () => {
                 value={profile.nome}
                 onChange={(e) => setProfile({ ...profile, nome: e.target.value })}
                 placeholder="O teu nome"
-                className="bg-zinc-700 md:bg-background border-zinc-600 md:border-input text-foreground placeholder:text-zinc-500 md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
+                className="bg-muted md:bg-background border-border md:border-input text-foreground placeholder:text-muted-foreground md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
               />
             </div>
 
@@ -225,7 +225,7 @@ const SettingsPage = () => {
                 id="email" 
                 value={userEmail} 
                 disabled 
-                className="bg-zinc-700 md:bg-muted border-zinc-600 md:border-input text-foreground opacity-60 h-9 md:h-10 text-xs md:text-sm" 
+                className="bg-muted md:bg-muted border-border md:border-input text-foreground opacity-60 h-9 md:h-10 text-xs md:text-sm" 
               />
             </div>
 
@@ -236,7 +236,7 @@ const SettingsPage = () => {
                 value={profile.telefone}
                 onChange={(e) => setProfile({ ...profile, telefone: e.target.value })}
                 placeholder="+244 9XX XXX XXX"
-                className="bg-zinc-700 md:bg-background border-zinc-600 md:border-input text-foreground placeholder:text-zinc-500 md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
+                className="bg-muted md:bg-background border-border md:border-input text-foreground placeholder:text-muted-foreground md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
               />
             </div>
 
@@ -250,7 +250,7 @@ const SettingsPage = () => {
                 value={profile.idade}
                 onChange={(e) => setProfile({ ...profile, idade: e.target.value })}
                 placeholder="Ex: 17"
-                className="bg-zinc-700 md:bg-background border-zinc-600 md:border-input text-foreground placeholder:text-zinc-500 md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
+                className="bg-muted md:bg-background border-border md:border-input text-foreground placeholder:text-muted-foreground md:placeholder:text-muted-foreground h-9 md:h-10 text-xs md:text-sm"
               />
             </div>
           </div>
@@ -306,7 +306,7 @@ const SettingsPage = () => {
                 value={trabalhoSettings.fontFamily}
                 onValueChange={(v) => updateSettings({ fontFamily: v })}
               >
-                <SelectTrigger className="bg-zinc-700 md:bg-background border-zinc-600 md:border-input text-foreground h-9 md:h-10 text-xs md:text-sm">
+                <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-9 md:h-10 text-xs md:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -323,7 +323,7 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          <Separator className="bg-zinc-700 md:bg-border" />
+          <Separator className="bg-muted md:bg-border" />
 
           {/* Margins - 2 Columns Layout */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">

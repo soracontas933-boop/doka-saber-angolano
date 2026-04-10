@@ -84,7 +84,7 @@ const AppSidebar = () => {
         key={item.to}
         to={item.to}
         title={displayLabel}
-        className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 bg-zinc-950">
+        className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 bg-sidebar-accent">
         
         {isActive &&
         <motion.div
