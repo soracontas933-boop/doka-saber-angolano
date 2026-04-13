@@ -1,11 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, FolderOpen, FileText, Settings } from "lucide-react";
+import { Home, FolderOpen, TextWrap, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { to: "/home", icon: Home, label: "Início" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
-  { to: "/trabalho", icon: FileText, label: "Trabalho" },
+  { to: "/trabalho", icon: TextWrap, label: "Trabalho" },
   { to: "/configuracoes", icon: Settings, label: "Config." },
 ];
 
@@ -14,7 +14,7 @@ const MobileNav = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-background">
-      <div className="mx-3 mb-2 px-2 py-2 flex items-center justify-around rounded-2xl border border-border/50 bg-background shadow-[0_-2px_20px_rgba(0,0,0,0.06)]">
+      <div className="mx-3 mb-2 px-2 py-2 flex items-center justify-around rounded-2xl border border-border/50 shadow-xl bg-primary-foreground">
         {navItems.map((item) => {
           const isActive =
             location.pathname === item.to ||
@@ -24,7 +24,7 @@ const MobileNav = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all"
+              className="relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all shadow-lg"
             >
               {isActive && (
                 <motion.div
