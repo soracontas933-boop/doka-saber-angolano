@@ -104,6 +104,33 @@ export type Database = {
         }
         Relationships: []
       }
+      button_covers: {
+        Row: {
+          atualizado_em: string
+          button_key: string
+          criado_em: string
+          id: string
+          image_url: string
+          label: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          button_key: string
+          criado_em?: string
+          id?: string
+          image_url: string
+          label?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          button_key?: string
+          criado_em?: string
+          id?: string
+          image_url?: string
+          label?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
