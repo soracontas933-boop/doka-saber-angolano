@@ -82,22 +82,22 @@ const CreditsBar = () => {
     <>
       {/* ===== MOBILE TOP BAR ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-2.5 shadow-xl">
+        <div className="flex items-center justify-between px-4 py-2.5 shadow-xl bg-black border border-black text-black">
           {/* Left: Profile avatar */}
           <button
             onClick={() => navigate("/configuracoes")}
-            className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold shrink-0 text-primary"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-primary-foreground bg-zinc-800"
           >
             {initials}
           </button>
 
           {/* Center: Credits */}
           <div className="flex items-center gap-1.5">
-            <Activity className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold text-foreground">
+            <Activity className="h-4 w-4 text-primary-foreground" />
+            <span className="text-sm font-bold text-primary-foreground">
               {typeof remainingCredits === "number" ? remainingCredits : "∞"}
             </span>
-            <span className="text-[10px] text-muted-foreground">créditos</span>
+            <span className="text-[10px] text-primary-foreground">créditos</span>
           </div>
 
           {/* Right: Scanner + Support + Notifications */}
@@ -105,9 +105,9 @@ const CreditsBar = () => {
             <ScannerButton />
             <button
               onClick={() => navigate("/suporte")}
-              className="p-2 rounded-full hover:bg-muted transition-colors"
+              className="p-2 rounded-full transition-colors bg-black text-primary-foreground"
             >
-              <Headphones className="lucide lucide-headphones h-4.5 w-4.5 text-secondary-foreground" />
+              <Headphones className="lucide lucide-headphones h-4.5 w-4.5 bg-black text-primary-foreground" />
             </button>
             <NotificationBell />
           </div>
