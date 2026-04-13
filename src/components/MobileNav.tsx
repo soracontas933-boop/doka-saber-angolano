@@ -1,11 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, FolderOpen, TextWrap, Settings } from "lucide-react";
+import { Home, FolderOpen, WrapText, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { to: "/home", icon: Home, label: "Início" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
-  { to: "/trabalho", icon: TextWrap, label: "Trabalho" },
+  { to: "/trabalho", icon: WrapText, label: "Trabalho" },
   { to: "/configuracoes", icon: Settings, label: "Config." },
 ];
 

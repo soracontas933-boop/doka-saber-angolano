@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  FileText,
+  WrapText,
   BookOpen,
   HelpCircle,
   ClipboardList,
   Search,
   FolderOpen,
-  Users,
+  UsersRound,
   Zap,
   Download,
   MoreHorizontal,
@@ -24,7 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { GraduationCap } from "lucide-react";
 
 const quickActions = [
-  { to: "/trabalho", icon: FileText, label: "Trabalhos" },
+  { to: "/trabalho", icon: WrapText, label: "Trabalhos" },
   { to: "/resumo", icon: BookOpen, label: "Resumos" },
   { to: "/questionario", icon: HelpCircle, label: "Questionários" },
   { to: "/plano-aula", icon: ClipboardList, label: "Planos" },
