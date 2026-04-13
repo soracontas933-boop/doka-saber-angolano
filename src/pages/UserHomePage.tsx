@@ -258,7 +258,7 @@ const UserHomePage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.04 }}
                     onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors text-left border-sidebar border-solid shadow-lg"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left border-sidebar border-solid shadow-lg bg-primary-foreground"
                   >
                     <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
                       <WrapText className="h-4 w-4 text-primary" />
