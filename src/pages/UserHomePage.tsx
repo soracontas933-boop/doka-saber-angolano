@@ -120,7 +120,7 @@ const UserHomePage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="px-4 pt-3 pb-2 bg-black border-2 border-black"
         >
-          <h2 className="text-lg font-bold text-primary-foreground">
+          <h2 className="text-lg font-bold text-primary-foreground font-serif">
             Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
           </h2>
           <p className="text-xs text-muted-foreground">​</p>
@@ -209,7 +209,7 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="px-4 pb-4"
+          className="px-4 pb-4 bg-black"
         >
           <button
             onClick={() => navigate("/grupos")}
@@ -241,7 +241,7 @@ const UserHomePage = () => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-sm text-primary-foreground">Projetos Recentes</h3>
               <button onClick={() => navigate("/meus-projetos")}>
-                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                <MoreHorizontal className="h-5 w-5 text-primary-foreground" />
               </button>
             </div>
 
@@ -272,7 +272,7 @@ const UserHomePage = () => {
                     <div className="text-right flex-shrink-0">
                       <Badge
                         variant="outline"
-                        className="text-[10px] border-[hsl(var(--delle-status-success))] text-[hsl(var(--delle-status-success))] text-primary-foreground"
+                        className="text-[10px] border-[hsl(var(--delle-status-success))] text-[hsl(var(--delle-status-success))] text-primary-foreground border-0"
                       >
                         Completo
                       </Badge>
