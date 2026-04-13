@@ -56,6 +56,7 @@ const UserHomePage = () => {
   const [plan, setPlan] = useState<{ plano: string; creditos_usados: number; creditos_totais: number; limite_trabalhos: number; limite_resumos: number; limite_questionarios: number; limite_planos_aula: number; limite_tfc: number } | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [groupCount, setGroupCount] = useState(0);
+  const [buttonCovers, setButtonCovers] = useState<Record<string, string>>({});
   const { getAllUsageCounts } = useUsageTracker();
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
 
@@ -63,16 +64,22 @@ const UserHomePage = () => {
     if (!user) return;
     const fetchData = async () => {
       try {
-        const [profileRes, planRes, projectsRes, groupsRes] = await Promise.all([
+        const [profileRes, planRes, projectsRes, groupsRes, coversRes] = await Promise.all([
           supabase.from("profiles").select("nome").eq("id", user.id).single(),
           supabase.from("user_plans").select("plano, creditos_usados, creditos_totais, limite_trabalhos, limite_resumos, limite_questionarios, limite_planos_aula, limite_tfc").eq("user_id", user.id).single(),
           supabase.from("projects").select("id, titulo, tipo, criado_em").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(5),
           supabase.from("workgroup_members").select("id").eq("user_id", user.id).eq("aceite", true),
+          (supabase.from("button_covers") as any).select("button_key, image_url"),
         ]);
         if (profileRes.data) setProfile(profileRes.data);
         if (planRes.data) setPlan(planRes.data);
         if (projectsRes.data) setRecentProjects(projectsRes.data);
         if (groupsRes.data) setGroupCount(groupsRes.data.length || 0);
+        if (coversRes.data) {
+          const map: Record<string, string> = {};
+          (coversRes.data as any[]).forEach((c: any) => { map[c.button_key] = c.image_url; });
+          setButtonCovers(map);
+        }
       } catch (error) {
         console.error("Erro ao carregar dados da home:", error);
       }
@@ -174,6 +181,8 @@ const UserHomePage = () => {
                 { from: "#06b6d4", to: "#0891b2" },
               ];
               const g = gradients[i % gradients.length];
+              const coverKey = action.to.replace("/", "");
+              const coverUrl = buttonCovers[coverKey];
               return (
                 <motion.button
                   key={action.to}
@@ -183,19 +192,30 @@ const UserHomePage = () => {
                   onClick={() => navigate(action.to)}
                   className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-background border active:scale-[0.95] transition-all overflow-hidden shadow-lg border-solid border-sidebar"
                 >
+                  {/* Cover image background */}
+                  {coverUrl && (
+                    <img
+                      src={coverUrl}
+                      alt={action.label}
+                      className="absolute inset-0 w-full h-full object-cover rounded-2xl z-0"
+                    />
+                  )}
+                  {coverUrl && (
+                    <span className="absolute inset-0 bg-black/40 rounded-2xl z-[1]" />
+                  )}
                   {/* Gradient bg on hover/active */}
                   <span
-                    className="absolute inset-0 opacity-0 group-active:opacity-100 transition-opacity duration-200 rounded-2xl"
+                    className="absolute inset-0 opacity-0 group-active:opacity-100 transition-opacity duration-200 rounded-2xl z-[2]"
                     style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
                   />
                   <span
-                    className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl rounded-2xl text-primary-foreground bg-primary"
+                    className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl rounded-2xl text-primary-foreground bg-primary z-[2]"
                     style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
                   />
-                  <div className="relative z-10 w-11 h-11 rounded-xl bg-primary/8 group-active:bg-white/20 flex items-center justify-center transition-colors">
-                    <action.icon className="h-5 w-5 text-primary group-active:text-white transition-colors" />
+                  <div className={`relative z-10 w-11 h-11 rounded-xl flex items-center justify-center transition-colors ${coverUrl ? "bg-white/20" : "bg-primary/8"} group-active:bg-white/20`}>
+                    <action.icon className={`h-5 w-5 transition-colors group-active:text-white ${coverUrl ? "text-white" : "text-primary"}`} />
                   </div>
-                  <span className="relative z-10 text-[11px] font-medium text-foreground group-active:text-white text-center leading-tight transition-colors">
+                  <span className={`relative z-10 text-[11px] font-medium text-center leading-tight transition-colors group-active:text-white ${coverUrl ? "text-white font-semibold" : "text-foreground"}`}>
                     {action.label}
                   </span>
                 </motion.button>
