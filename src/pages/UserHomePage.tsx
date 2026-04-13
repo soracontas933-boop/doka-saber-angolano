@@ -56,6 +56,7 @@ const UserHomePage = () => {
   const [plan, setPlan] = useState<{ plano: string; creditos_usados: number; creditos_totais: number; limite_trabalhos: number; limite_resumos: number; limite_questionarios: number; limite_planos_aula: number; limite_tfc: number } | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [groupCount, setGroupCount] = useState(0);
+  const [buttonCovers, setButtonCovers] = useState<Record<string, string>>({});
   const { getAllUsageCounts } = useUsageTracker();
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
 
@@ -63,16 +64,22 @@ const UserHomePage = () => {
     if (!user) return;
     const fetchData = async () => {
       try {
-        const [profileRes, planRes, projectsRes, groupsRes] = await Promise.all([
+        const [profileRes, planRes, projectsRes, groupsRes, coversRes] = await Promise.all([
           supabase.from("profiles").select("nome").eq("id", user.id).single(),
           supabase.from("user_plans").select("plano, creditos_usados, creditos_totais, limite_trabalhos, limite_resumos, limite_questionarios, limite_planos_aula, limite_tfc").eq("user_id", user.id).single(),
           supabase.from("projects").select("id, titulo, tipo, criado_em").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(5),
           supabase.from("workgroup_members").select("id").eq("user_id", user.id).eq("aceite", true),
+          (supabase.from("button_covers") as any).select("button_key, image_url"),
         ]);
         if (profileRes.data) setProfile(profileRes.data);
         if (planRes.data) setPlan(planRes.data);
         if (projectsRes.data) setRecentProjects(projectsRes.data);
         if (groupsRes.data) setGroupCount(groupsRes.data.length || 0);
+        if (coversRes.data) {
+          const map: Record<string, string> = {};
+          (coversRes.data as any[]).forEach((c: any) => { map[c.button_key] = c.image_url; });
+          setButtonCovers(map);
+        }
       } catch (error) {
         console.error("Erro ao carregar dados da home:", error);
       }
