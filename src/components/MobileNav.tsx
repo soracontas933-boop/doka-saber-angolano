@@ -35,12 +35,12 @@ const MobileNav = () => {
               )}
               <item.icon
                 className={`h-5 w-5 transition-colors duration-200 ${
-                  isActive ? "text-primary-foreground" : "text-muted-foreground"
+                  isActive ? "text-primary-foreground" : "text-primary-foreground"
                 }`}
               />
               <span
                 className={`text-[10px] font-medium transition-colors duration-200 ${
-                  isActive ? "text-primary-foreground" : "text-muted-foreground"
+                  isActive ? "text-primary-foreground" : "text-primary-foreground"
                 }`}
               >
                 {item.label}
