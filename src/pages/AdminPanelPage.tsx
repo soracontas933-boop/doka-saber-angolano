@@ -21,11 +21,13 @@ import {
   Receipt,
   ImageIcon,
   Crown,
+  Smartphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
 import AdminMastersTab from "@/components/AdminMastersTab";
 import AdminHeroTab from "@/components/AdminHeroTab";
+import AdminButtonCoversTab from "@/components/AdminButtonCoversTab";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -665,6 +667,10 @@ const AdminPanelPage = () => {
             <Crown className="h-4 w-4" />
             Masters
           </TabsTrigger>
+          <TabsTrigger value="button-covers" className="gap-2">
+            <Smartphone className="h-4 w-4" />
+            Capas Botões
+          </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -891,6 +897,11 @@ const AdminPanelPage = () => {
         {/* Masters Tab */}
         <TabsContent value="masters">
           <AdminMastersTab />
+        </TabsContent>
+
+        {/* Button Covers Tab */}
+        <TabsContent value="button-covers">
+          <AdminButtonCoversTab />
         </TabsContent>
       </Tabs>
 
