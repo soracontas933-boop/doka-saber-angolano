@@ -82,7 +82,7 @@ const CreditsBar = () => {
     <>
       {/* ===== MOBILE TOP BAR ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-2.5">
+        <div className="flex items-center justify-between px-4 py-2.5 shadow-xl">
           {/* Left: Profile avatar */}
           <button
             onClick={() => navigate("/configuracoes")}
@@ -107,7 +107,7 @@ const CreditsBar = () => {
               onClick={() => navigate("/suporte")}
               className="p-2 rounded-full hover:bg-muted transition-colors"
             >
-              <Headphones className="h-4.5 w-4.5 text-muted-foreground" />
+              <Headphones className="lucide lucide-headphones h-4.5 w-4.5 text-secondary-foreground" />
             </button>
             <NotificationBell />
           </div>

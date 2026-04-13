@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  FileText,
+  WrapText,
   BookOpen,
   HelpCircle,
   ClipboardList,
   Search,
   FolderOpen,
-  Users,
+  UsersRound,
   Zap,
   Download,
   MoreHorizontal,
@@ -24,7 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { GraduationCap } from "lucide-react";
 
 const quickActions = [
-  { to: "/trabalho", icon: FileText, label: "Trabalhos" },
+  { to: "/trabalho", icon: WrapText, label: "Trabalhos" },
   { to: "/resumo", icon: BookOpen, label: "Resumos" },
   { to: "/questionario", icon: HelpCircle, label: "Questionários" },
   { to: "/plano-aula", icon: ClipboardList, label: "Planos" },
@@ -102,7 +102,7 @@ const UserHomePage = () => {
   };
 
   const usageItems = plan ? [
-    { icon: FileText, label: "Trabalhos", remaining: getRemainingCount("trabalho", plan.limite_trabalhos) },
+    { icon: WrapText, label: "Trabalhos", remaining: getRemainingCount("trabalho", plan.limite_trabalhos) },
     { icon: BookOpen, label: "Resumos", remaining: getRemainingCount("resumo", plan.limite_resumos) },
     { icon: HelpCircle, label: "Questionários", remaining: getRemainingCount("questionario", plan.limite_questionarios) },
     { icon: ClipboardList, label: "Planos Aula", remaining: getRemainingCount("plano_aula", plan.limite_planos_aula) },
@@ -123,7 +123,7 @@ const UserHomePage = () => {
           <h2 className="text-lg font-bold text-foreground">
             Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
           </h2>
-          <p className="text-xs text-muted-foreground">O que vais criar hoje?</p>
+          <p className="text-xs text-muted-foreground">​</p>
           {canInstall && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
               <Button
@@ -181,7 +181,7 @@ const UserHomePage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 + i * 0.04 }}
                   onClick={() => navigate(action.to)}
-                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-background border border-border/60 shadow-[0_1px_4px_rgba(0,0,0,0.04)] active:scale-[0.95] transition-all overflow-hidden"
+                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-background border active:scale-[0.95] transition-all overflow-hidden shadow-lg border-solid border-sidebar"
                 >
                   {/* Gradient bg on hover/active */}
                   <span
@@ -189,7 +189,7 @@ const UserHomePage = () => {
                     style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
                   />
                   <span
-                    className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl rounded-2xl"
+                    className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl rounded-2xl text-[#0b64f4]/[0.84]"
                     style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
                   />
                   <div className="relative z-10 w-11 h-11 rounded-xl bg-primary/8 group-active:bg-white/20 flex items-center justify-center transition-colors">
@@ -213,11 +213,11 @@ const UserHomePage = () => {
         >
           <button
             onClick={() => navigate("/grupos")}
-            className="group relative w-full rounded-2xl bg-background border border-border/60 p-4 flex items-center justify-between transition-all active:scale-[0.97] shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden"
+            className="group relative w-full rounded-2xl bg-background border border-border/60 p-4 transition-all active:scale-[0.97] overflow-hidden flex items-end justify-between shadow-lg"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-primary/8">
-                <Users className="h-5 w-5 text-primary" />
+                <UsersRound className="h-5 w-5 text-primary" />
               </div>
               <div className="text-left">
                 <p className="font-semibold text-foreground text-sm">Comunidade</p>
@@ -237,7 +237,7 @@ const UserHomePage = () => {
           transition={{ delay: 0.2 }}
           className="px-4 pb-6"
         >
-          <div className="rounded-2xl bg-background border border-border/60 p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+          <div className="rounded-2xl bg-background border border-border/60 p-4 shadow-lg">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-sm text-foreground">Projetos Recentes</h3>
               <button onClick={() => navigate("/meus-projetos")}>
@@ -258,10 +258,10 @@ const UserHomePage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.04 }}
                     onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors text-left border-sidebar border-solid shadow-lg"
                   >
                     <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
-                      <FileText className="h-4 w-4 text-primary" />
+                      <WrapText className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{p.titulo}</p>
@@ -307,7 +307,7 @@ const UserHomePage = () => {
 
         <div className="grid grid-cols-3 gap-4">
           {[
-            { to: "/trabalho", icon: FileText, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo", color: "from-blue-500 to-blue-600" },
+            { to: "/trabalho", icon: WrapText, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo", color: "from-blue-500 to-blue-600" },
             { to: "/resumo", icon: BookOpen, label: "Criar Resumo", desc: "Resumir conteúdos rapidamente", color: "from-emerald-500 to-emerald-600" },
             { to: "/questionario", icon: HelpCircle, label: "Gerar Questionário", desc: "Quiz automático com respostas", color: "from-amber-500 to-amber-600" },
             { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", desc: "Planificar aulas facilmente", color: "from-purple-500 to-purple-600" },
@@ -373,7 +373,7 @@ const UserHomePage = () => {
                     className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors text-left"
                   >
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-primary" />
+                      <WrapText className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{p.titulo}</p>

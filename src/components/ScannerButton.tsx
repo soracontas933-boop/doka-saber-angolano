@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Camera, Loader2, BookOpen, HelpCircle, ClipboardList, X } from "lucide-react";
+import { ScanFace, Loader2, BookOpen, HelpCircle, ClipboardList, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -68,7 +68,7 @@ const ScannerButton = () => {
         className="p-2 rounded-full hover:bg-muted/50 transition-colors"
         title="Escanear conteúdo"
       >
-        <Camera className="h-5 w-5 text-secondary" />
+        <ScanFace className="lucide lucide-camera h-5 w-5 bg-secondary text-secondary-foreground" />
       </button>
 
       <input
