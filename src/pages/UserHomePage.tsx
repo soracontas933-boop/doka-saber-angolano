@@ -102,7 +102,7 @@ const UserHomePage = () => {
   };
 
   const usageItems = plan ? [
-    { icon: TextWrap, label: "Trabalhos", remaining: getRemainingCount("trabalho", plan.limite_trabalhos) },
+    { icon: WrapText, label: "Trabalhos", remaining: getRemainingCount("trabalho", plan.limite_trabalhos) },
     { icon: BookOpen, label: "Resumos", remaining: getRemainingCount("resumo", plan.limite_resumos) },
     { icon: HelpCircle, label: "Questionários", remaining: getRemainingCount("questionario", plan.limite_questionarios) },
     { icon: ClipboardList, label: "Planos Aula", remaining: getRemainingCount("plano_aula", plan.limite_planos_aula) },
@@ -261,7 +261,7 @@ const UserHomePage = () => {
                     className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors text-left border-sidebar border-solid shadow-lg"
                   >
                     <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
-                      <TextWrap className="h-4 w-4 text-primary" />
+                      <WrapText className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{p.titulo}</p>
@@ -307,7 +307,7 @@ const UserHomePage = () => {
 
         <div className="grid grid-cols-3 gap-4">
           {[
-            { to: "/trabalho", icon: TextWrap, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo", color: "from-blue-500 to-blue-600" },
+            { to: "/trabalho", icon: WrapText, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo", color: "from-blue-500 to-blue-600" },
             { to: "/resumo", icon: BookOpen, label: "Criar Resumo", desc: "Resumir conteúdos rapidamente", color: "from-emerald-500 to-emerald-600" },
             { to: "/questionario", icon: HelpCircle, label: "Gerar Questionário", desc: "Quiz automático com respostas", color: "from-amber-500 to-amber-600" },
             { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", desc: "Planificar aulas facilmente", color: "from-purple-500 to-purple-600" },
@@ -373,7 +373,7 @@ const UserHomePage = () => {
                     className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors text-left"
                   >
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <TextWrap className="h-4 w-4 text-primary" />
+                      <WrapText className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{p.titulo}</p>
