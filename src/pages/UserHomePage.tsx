@@ -118,9 +118,9 @@ const UserHomePage = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-4 pt-3 pb-2"
+          className="px-4 pt-3 pb-2 bg-black border-2 border-black"
         >
-          <h2 className="text-lg font-bold text-foreground">
+          <h2 className="text-lg font-bold text-primary-foreground">
             Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
           </h2>
           <p className="text-xs text-muted-foreground">​</p>
@@ -142,15 +142,15 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="px-4 pt-1 pb-3"
+          className="px-4 pt-1 pb-3 bg-black"
         >
-          <p className="text-[10px] text-muted-foreground font-medium mb-1.5 uppercase tracking-wider">Gerações restantes</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+          <p className="text-[10px] font-medium mb-1.5 uppercase tracking-wider text-primary-foreground">Gerações restantes</p>
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 text-left font-serif bg-black text-primary-foreground">
             {usageItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 shrink-0">
-                <item.icon className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[11px] font-bold text-foreground">{item.remaining}</span>
-                <span className="text-[10px] text-muted-foreground">{item.label}</span>
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/10 shrink-0 bg-black">
+                <item.icon className="h-3.5 w-3.5 text-primary-foreground" />
+                <span className="text-[11px] font-bold text-[#f1f5fe]/[0.33]">{item.remaining}</span>
+                <span className="text-[10px] text-primary-foreground">{item.label}</span>
               </div>
             ))}
           </div>
@@ -161,7 +161,7 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="px-4 pb-4"
+          className="px-4 pb-4 bg-black"
         >
           <div className="grid grid-cols-3 gap-3">
             {quickActions.map((action, i) => {
@@ -189,7 +189,7 @@ const UserHomePage = () => {
                     style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
                   />
                   <span
-                    className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl rounded-2xl text-[#0b64f4]/[0.84]"
+                    className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl rounded-2xl text-primary-foreground bg-primary"
                     style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
                   />
                   <div className="relative z-10 w-11 h-11 rounded-xl bg-primary/8 group-active:bg-white/20 flex items-center justify-center transition-colors">
@@ -213,20 +213,20 @@ const UserHomePage = () => {
         >
           <button
             onClick={() => navigate("/grupos")}
-            className="group relative w-full rounded-2xl bg-background border border-border/60 p-4 transition-all active:scale-[0.97] overflow-hidden flex items-end justify-between shadow-lg"
+            className="group relative w-full rounded-2xl border-border/60 p-4 transition-all active:scale-[0.97] overflow-hidden flex items-end justify-between shadow-lg bg-zinc-900 border-0"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-primary/8">
-                <UsersRound className="h-5 w-5 text-primary" />
+                <UsersRound className="h-5 w-5 border-primary-foreground text-primary-foreground" />
               </div>
               <div className="text-left">
-                <p className="font-semibold text-foreground text-sm">Comunidade</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="font-semibold text-sm text-primary-foreground text-justify">Comunidade</p>
+                <p className="text-xs text-primary-foreground">
                   {groupCount > 0 ? `${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Criar ou juntar"}
                 </p>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            <ChevronRight className="h-5 w-5 text-primary-foreground text-right h-[30px]" />
           </button>
         </motion.div>
 
@@ -235,11 +235,11 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="px-4 pb-6"
+          className="px-4 pb-6 bg-black border-black border-4"
         >
-          <div className="rounded-2xl bg-background border border-border/60 p-4 shadow-lg">
+          <div className="border-border/60 p-4 shadow-lg bg-zinc-900 border-0 rounded-3xl">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm text-foreground">Projetos Recentes</h3>
+              <h3 className="font-semibold text-sm text-primary-foreground">Projetos Recentes</h3>
               <button onClick={() => navigate("/meus-projetos")}>
                 <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
               </button>
@@ -258,13 +258,13 @@ const UserHomePage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.04 }}
                     onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left border-sidebar border-solid shadow-lg bg-primary-foreground"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left border-sidebar border-solid shadow-lg bg-zinc-900 border-0"
                   >
                     <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
-                      <WrapText className="h-4 w-4 text-primary" />
+                      <WrapText className="h-4 w-4 text-primary-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{p.titulo}</p>
+                      <p className="text-sm font-semibold truncate text-primary-foreground">{p.titulo}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {tipoLabel[p.tipo] || p.tipo} · {new Date(p.criado_em).toLocaleDateString("pt-AO")}
                       </p>
@@ -272,7 +272,7 @@ const UserHomePage = () => {
                     <div className="text-right flex-shrink-0">
                       <Badge
                         variant="outline"
-                        className="text-[10px] border-[hsl(var(--delle-status-success))] text-[hsl(var(--delle-status-success))]"
+                        className="text-[10px] border-[hsl(var(--delle-status-success))] text-[hsl(var(--delle-status-success))] text-primary-foreground"
                       >
                         Completo
                       </Badge>
@@ -289,7 +289,7 @@ const UserHomePage = () => {
             className="group relative w-full mt-3 py-3 rounded-xl font-semibold text-sm overflow-hidden bg-primary text-primary-foreground active:scale-[0.97] transition-all"
           >
             <span className="absolute inset-0 opacity-0 group-active:opacity-100 transition-opacity duration-200" style={{ background: "linear-gradient(135deg, #a955ff, #ea51ff)" }} />
-            <span className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl" style={{ background: "linear-gradient(135deg, #a955ff, #ea51ff)" }} />
+            <span className="absolute inset-0 transition-opacity duration-300 blur-xl bg-zinc-900 border-secondary opacity-50 rounded-lg shadow-xl" style={{ background: "linear-gradient(135deg, #a955ff, #ea51ff)" }} />
             <span className="relative z-10">Aumentar Saldo</span>
           </button>
         </motion.div>

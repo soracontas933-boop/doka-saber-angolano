@@ -13,8 +13,8 @@ const MobileNav = () => {
   const location = useLocation();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-background">
-      <div className="mx-3 mb-2 px-2 py-2 flex items-center justify-around rounded-2xl border border-border/50 shadow-xl bg-primary-foreground">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-black border-black border-4">
+      <div className="mx-3 mb-2 px-2 py-2 flex items-center justify-around rounded-2xl border-border/50 shadow-xl bg-zinc-900 border-0">
         {navItems.map((item) => {
           const isActive =
             location.pathname === item.to ||
@@ -35,12 +35,12 @@ const MobileNav = () => {
               )}
               <item.icon
                 className={`h-5 w-5 transition-colors duration-200 ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  isActive ? "text-primary-foreground" : "text-muted-foreground"
                 }`}
               />
               <span
                 className={`text-[10px] font-medium transition-colors duration-200 ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  isActive ? "text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
                 {item.label}
