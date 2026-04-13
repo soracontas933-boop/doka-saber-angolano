@@ -164,23 +164,43 @@ const UserHomePage = () => {
           className="px-4 pb-4"
         >
           <div className="grid grid-cols-3 gap-3">
-            {quickActions.map((action, i) => (
-              <motion.button
-                key={action.to}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 + i * 0.04 }}
-                onClick={() => navigate(action.to)}
-                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-background border border-border/60 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_2px_12px_rgba(0,0,0,0.08)] active:scale-[0.97] transition-all"
-              >
-                <div className="w-11 h-11 rounded-xl bg-primary/8 flex items-center justify-center">
-                  <action.icon className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-[11px] font-medium text-foreground text-center leading-tight">
-                  {action.label}
-                </span>
-              </motion.button>
-            ))}
+            {quickActions.map((action, i) => {
+              const gradients = [
+                { from: "#3b82f6", to: "#1d4ed8" },
+                { from: "#10b981", to: "#059669" },
+                { from: "#f59e0b", to: "#d97706" },
+                { from: "#8b5cf6", to: "#7c3aed" },
+                { from: "#ec4899", to: "#db2777" },
+                { from: "#06b6d4", to: "#0891b2" },
+              ];
+              const g = gradients[i % gradients.length];
+              return (
+                <motion.button
+                  key={action.to}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 + i * 0.04 }}
+                  onClick={() => navigate(action.to)}
+                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-background border border-border/60 shadow-[0_1px_4px_rgba(0,0,0,0.04)] active:scale-[0.95] transition-all overflow-hidden"
+                >
+                  {/* Gradient bg on hover/active */}
+                  <span
+                    className="absolute inset-0 opacity-0 group-active:opacity-100 transition-opacity duration-200 rounded-2xl"
+                    style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
+                  />
+                  <span
+                    className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl rounded-2xl"
+                    style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
+                  />
+                  <div className="relative z-10 w-11 h-11 rounded-xl bg-primary/8 group-active:bg-white/20 flex items-center justify-center transition-colors">
+                    <action.icon className="h-5 w-5 text-primary group-active:text-white transition-colors" />
+                  </div>
+                  <span className="relative z-10 text-[11px] font-medium text-foreground group-active:text-white text-center leading-tight transition-colors">
+                    {action.label}
+                  </span>
+                </motion.button>
+              );
+            })}
           </div>
         </motion.div>
 
@@ -193,7 +213,7 @@ const UserHomePage = () => {
         >
           <button
             onClick={() => navigate("/grupos")}
-            className="w-full rounded-2xl bg-background border border-border/60 p-4 flex items-center justify-between transition-all active:scale-[0.98] shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+            className="group relative w-full rounded-2xl bg-background border border-border/60 p-4 flex items-center justify-between transition-all active:scale-[0.97] shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-primary/8">
@@ -266,9 +286,11 @@ const UserHomePage = () => {
           {/* Aumentar Saldo */}
           <button
             onClick={() => navigate("/planos")}
-            className="w-full mt-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-[0_2px_12px_hsl(var(--primary)/0.25)] active:scale-[0.98] transition-transform"
+            className="group relative w-full mt-3 py-3 rounded-xl font-semibold text-sm overflow-hidden bg-primary text-primary-foreground active:scale-[0.97] transition-all"
           >
-            Aumentar Saldo
+            <span className="absolute inset-0 opacity-0 group-active:opacity-100 transition-opacity duration-200" style={{ background: "linear-gradient(135deg, #a955ff, #ea51ff)" }} />
+            <span className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl" style={{ background: "linear-gradient(135deg, #a955ff, #ea51ff)" }} />
+            <span className="relative z-10">Aumentar Saldo</span>
           </button>
         </motion.div>
 
