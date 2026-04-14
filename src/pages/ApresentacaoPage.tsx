@@ -285,7 +285,7 @@ Cada cartão deve ter entre 2 a 4 subtemas. Conteúdo em Português.`;
       const theme = VISUAL_THEMES.find(t => t.name === selectedTheme);
       const keywordsStr = extraKeywords.join(", ");
 
-      const aiPrompt = `Cria uma apresentação detalhada baseada nesta estrutura:
+      const aiPrompt = `Cria uma apresentação profissional e moderna baseada nesta estrutura:
 
 ${cardsList}
 
@@ -307,7 +307,15 @@ Retorna APENAS JSON:
   ]
 }
 
-Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profissional e cativante.`;
+IMPORTANTE - Segue este modelo de apresentação profissional:
+- Fundo: Bege claro (#F5F5F0)
+- Estilo: Minimalista, com muito espaço em branco
+- Layout: Duas colunas (imagem à esquerda, conteúdo à direita)
+- Tipografia: Sans-serif moderna, títulos em negrito
+- Conteúdo: Profissional, informativo, com dados e tendências
+- Estrutura: Cenário → Investimento → Canais → Tendências → Solução
+
+Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profissional, cativante e seguir o modelo de apresentação premium.`;
 
       const result = await generateWithAI(DELLE_SYSTEM_PROMPT, aiPrompt, 4000, 0.8);
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -815,23 +823,32 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               key="preview"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              style={{ backgroundColor: palette.bg }}
+              style={{ backgroundColor: "#F5F5F0" }}
               className="min-h-full p-6 md:p-12 flex flex-col items-center justify-center"
             >
-              <div className="w-full max-w-5xl space-y-6">
-                {/* Main Slide */}
-                <div style={{ borderColor: palette.border, backgroundColor: palette.bg }} className="relative rounded-2xl overflow-hidden shadow-2xl border aspect-video flex">
-                  {slides[currentSlide].imageUrl && (
-                    <div className="absolute inset-0">
+              <div className="w-full max-w-6xl space-y-6">
+                {/* Main Slide - Professional Template Style */}
+                <div style={{ backgroundColor: "#F5F5F0", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)" }} className="relative overflow-hidden aspect-video flex">
+                  {/* Left side: Image/Illustration */}
+                  <div className="w-1/2 flex items-center justify-center overflow-hidden">
+                    {slides[currentSlide].imageUrl ? (
                       <img src={slides[currentSlide].imageUrl} className="w-full h-full object-cover" alt="" />
-                      <div style={{ backgroundColor: isDarkMode ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.6)" }}></div>
-                    </div>
-                  )}
-                  <div className="relative z-10 flex flex-col justify-center p-12 md:p-20 w-full">
-                    <h2 style={{ color: palette.text }} className="text-4xl md:text-5xl font-bold mb-6">
+                    ) : (
+                      <div style={{ backgroundColor: "#E8E8E0" }} className="w-full h-full flex items-center justify-center">
+                        <div style={{ color: "#999" }} className="text-center">
+                          <Sparkles className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">Imagem</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Right side: Content */}
+                  <div className="w-1/2 flex flex-col justify-center p-12 md:p-16">
+                    <h2 style={{ color: "#000000" }} className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
                       {slides[currentSlide].titulo}
                     </h2>
-                    <div style={{ color: palette.textMuted }} className="text-lg space-y-3">
+                    <div style={{ color: "#4A4A4A" }} className="text-base md:text-lg space-y-3 leading-relaxed">
                       {slides[currentSlide].conteudo.split("\\n").map((line, idx) => (
                         <p key={idx}>{line}</p>
                       ))}
@@ -840,14 +857,14 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                 </div>
 
                 {/* Navigation */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <Button 
                     variant="outline" 
                     size="icon" 
                     disabled={currentSlide === 0}
                     onClick={() => setCurrentSlide(p => p - 1)}
-                    style={{ borderColor: palette.border }}
-                    className="hover:opacity-70"
+                    style={{ borderColor: "#DDD", color: "#000" }}
+                    className="hover:bg-gray-100"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -858,7 +875,7 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                         key={i}
                         onClick={() => setCurrentSlide(i)}
                         style={{
-                          backgroundColor: i === currentSlide ? palette.lightBlue : isDarkMode ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
+                          backgroundColor: i === currentSlide ? "#4FA3FF" : "#DDD",
                           width: i === currentSlide ? "32px" : "8px"
                         }}
                         className="h-2 rounded-full transition-all"
@@ -871,15 +888,15 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                     size="icon" 
                     disabled={currentSlide === slides.length - 1}
                     onClick={() => setCurrentSlide(p => p + 1)}
-                    style={{ borderColor: palette.border }}
-                    className="hover:opacity-70"
+                    style={{ borderColor: "#DDD", color: "#000" }}
+                    className="hover:bg-gray-100"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
                 </div>
 
                 {/* Slide Counter */}
-                <div style={{ color: palette.textMuted }} className="text-center text-sm">
+                <div style={{ color: "#999" }} className="text-center text-sm font-medium">
                   Slide {currentSlide + 1} de {slides.length}
                 </div>
 
