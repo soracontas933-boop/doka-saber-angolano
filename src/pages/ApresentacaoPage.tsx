@@ -496,10 +496,10 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                                   onChange={(e) => setEditingTitle(e.target.value)}
                                   className={`font-bold text-lg flex-1 ${isDarkMode ? "bg-white/10 border-white/20" : "bg-black/10 border-black/20"}`}
                                 />
-                                <Button size="sm" onClick={saveCardEdit} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
+                                <Button size="sm" onClick={(e) => { e.stopPropagation(); saveCardEdit(); }} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
                                   <Check className="h-4 w-4" />
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => setEditingCardId(null)} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
+                                <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditingCardId(null); }} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
                                   <X className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -539,10 +539,10 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                                             onChange={(e) => setEditingSubtopicText(e.target.value)}
                                             className={`flex-1 ${isDarkMode ? "bg-white/10 border-white/20" : "bg-black/10 border-black/20"}`}
                                           />
-                                          <Button size="sm" onClick={() => saveSubtopicEdit(card.id)} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
+                                          <Button size="sm" onClick={(e) => { e.stopPropagation(); saveSubtopicEdit(card.id); }} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
                                             <Check className="h-4 w-4" />
                                           </Button>
-                                          <Button size="sm" variant="outline" onClick={() => setEditingSubtopicId(null)} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
+                                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditingSubtopicId(null); }} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
                                             <X className="h-4 w-4" />
                                           </Button>
                                         </>
