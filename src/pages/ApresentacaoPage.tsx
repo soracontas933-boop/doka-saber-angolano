@@ -380,7 +380,7 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
             <div className="p-2 rounded-lg" style={{ backgroundColor: palette.lightBlue }}>
               <Presentation className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold tracking-tight text-lg">Gamma</span>
+
           </div>
         </div>
         
@@ -650,7 +650,7 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               className="min-h-full p-6 md:p-12"
             >
               <div className="max-w-6xl mx-auto space-y-12">
-                <h2 className="text-3xl font-bold">Personaliza o teu Gamma</h2>
+                <h2 className="text-3xl font-bold">Personaliza a tua Apresentação</h2>
 
                 {/* Content Settings */}
                 <div className="space-y-6">
