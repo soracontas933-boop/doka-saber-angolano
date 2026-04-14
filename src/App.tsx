@@ -25,6 +25,7 @@ import SuportePage from "@/pages/SuportePage";
 import AdminMensagensPage from "@/pages/AdminMensagensPage";
 import CurriculoPage from "@/pages/CurriculoPage";
 import FaturamentoPage from "@/pages/FaturamentoPage";
+import ApresentacaoPage from "@/pages/ApresentacaoPage";
 import NotFound from "@/pages/NotFound";
 import RootRedirect from "@/components/RootRedirect";
 
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="/suporte" element={<SuportePage />} />
                 <Route path="/mensagens" element={<AdminMensagensPage />} />
                 <Route path="/curriculo" element={<CurriculoPage />} />
+                <Route path="/apresentacao" element={<ApresentacaoPage />} />
                 <Route path="/faturamento" element={<FaturamentoPage />} />
               </Route>
             </Route>

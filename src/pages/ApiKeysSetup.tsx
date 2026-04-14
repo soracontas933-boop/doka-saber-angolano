@@ -439,6 +439,93 @@ export default function ApiKeysSetup() {
                 );
               })}
 
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4 border-t border-border">APIs de Imagem (Trabalhos & Apresentações)</h3>
+              {IMAGE_PROVIDERS.map((provider) => {
+                const providerKeys = getProviderKeys(provider.key);
+                const filledCount = getFilledCount(provider.key);
+                const exhaustedCount = providerKeys.filter(isExhausted).length;
+
+                return (
+                  <div key={provider.key} className="space-y-4 rounded-xl border border-border bg-card p-4">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Label className="text-sm font-semibold">{provider.label}</Label>
+                          <Badge variant="secondary">
+                            {filledCount} chave{filledCount === 1 ? "" : "s"}
+                          </Badge>
+                          {exhaustedCount > 0 && (
+                            <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{provider.description}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => openBulkModal(provider)}>
+                          Colar chaves
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => addKey(provider.key)}>
+                          <Plus className="mr-1.5 h-3.5 w-3.5" />
+                          Adicionar campo
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {providerKeys.map((keyRow) => {
+                        const globalIndex = keys.findIndex((row) => row === keyRow);
+                        const rowKey = getRowKey(keyRow, globalIndex);
+                        const exhausted = isExhausted(keyRow);
+                        const isHidden = hiddenKeys.has(rowKey);
+
+                        return (
+                          <div key={rowKey} className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <Input
+                                type={isHidden ? "password" : "text"}
+                                value={keyRow.chave}
+                                onChange={(event) => updateKey(globalIndex, event.target.value)}
+                                placeholder={`Cole aqui a chave ${provider.placeholder}`}
+                                className={exhausted ? "border-destructive pr-16" : "pr-16"}
+                              />
+
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => toggleVisibility(rowKey)}
+                                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                              >
+                                {isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              </Button>
+                            </div>
+
+                            {exhausted && (
+                              <span className="text-xs text-destructive whitespace-nowrap" title={`Cooldown restante: ${getCooldownRemaining(keyRow)}`}>
+                                <AlertCircle className="h-4 w-4 inline mr-1" />
+                                {getCooldownRemaining(keyRow)}
+                              </span>
+                            )}
+                            {!exhausted && keyRow.chave?.trim() && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeKey(globalIndex)}
+                              className="h-8 w-8 shrink-0"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
               <Button onClick={handleSave} disabled={loading} className="w-full">
                 {loading ? "Salvando..." : "Salvar Todas as Chaves"}
               </Button>
