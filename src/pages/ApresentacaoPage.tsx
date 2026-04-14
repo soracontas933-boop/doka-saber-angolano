@@ -17,7 +17,8 @@ import {
   GripVertical,
   Settings,
   ChevronDown,
-  Check
+  Check,
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -27,10 +28,15 @@ import { toast } from "sonner";
 import { generateWithAI, DELLE_SYSTEM_PROMPT, generateImageAI, generateImageUrl } from "@/lib/ai-service";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 
+interface Subtopic {
+  id: string;
+  text: string;
+}
+
 interface Card {
   id: string;
   title: string;
-  subtitle: string;
+  subtopics: Subtopic[];
   imageUrl?: string;
 }
 
@@ -78,7 +84,9 @@ export default function ApresentacaoPage() {
   const [mainTopic, setMainTopic] = useState("");
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
-  const [editingSubtitle, setEditingSubtitle] = useState("");
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  const [editingSubtopicId, setEditingSubtopicId] = useState<string | null>(null);
+  const [editingSubtopicText, setEditingSubtopicText] = useState("");
   
   // Customization state
   const [selectedTheme, setSelectedTheme] = useState("Finesse");
@@ -103,18 +111,26 @@ export default function ApresentacaoPage() {
     setLoading(true);
     try {
       // Generate main topic and cards from chat
-      const aiPrompt = `Baseado neste tema: "${chatMessage}", gera um título principal criativo e ${numCards} subtemas/tópicos principais.
+      const aiPrompt = `Baseado neste tema: "${chatMessage}", gera um título principal criativo e ${numCards} cartões com múltiplos subtemas.
 
 Retorna APENAS JSON:
 {
   "mainTopic": "Título Principal Criativo",
   "cards": [
-    { "title": "Subtema 1", "subtitle": "Descrição breve" },
-    { "title": "Subtema 2", "subtitle": "Descrição breve" }
+    { 
+      "title": "Cartão 1", 
+      "subtopics": ["Subtema 1", "Subtema 2", "Subtema 3"]
+    },
+    { 
+      "title": "Cartão 2", 
+      "subtopics": ["Subtema 1", "Subtema 2"]
+    }
   ]
-}`;
+}
 
-      const result = await generateWithAI(DELLE_SYSTEM_PROMPT, aiPrompt, 1500, 0.7);
+Cada cartão deve ter entre 2 a 4 subtemas. Conteúdo em Português.`;
+
+      const result = await generateWithAI(DELLE_SYSTEM_PROMPT, aiPrompt, 2000, 0.7);
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
       const parsed = JSON.parse(jsonMatch?.[0] || result.content);
       
@@ -122,7 +138,10 @@ Retorna APENAS JSON:
       const generatedCards: Card[] = (parsed.cards || []).map((c: any, i: number) => ({
         id: `card-${i}`,
         title: c.title,
-        subtitle: c.subtitle,
+        subtopics: (c.subtopics || []).map((s: string, idx: number) => ({
+          id: `subtopic-${i}-${idx}`,
+          text: s
+        }))
       }));
       setCards(generatedCards);
       setStep("cards");
@@ -133,17 +152,16 @@ Retorna APENAS JSON:
     }
   };
 
-  // Edit card
+  // Edit card title
   const startEditCard = (card: Card) => {
     setEditingCardId(card.id);
     setEditingTitle(card.title);
-    setEditingSubtitle(card.subtitle);
   };
 
   const saveCardEdit = () => {
     setCards(cards.map(c => 
       c.id === editingCardId 
-        ? { ...c, title: editingTitle, subtitle: editingSubtitle }
+        ? { ...c, title: editingTitle }
         : c
     ));
     setEditingCardId(null);
@@ -159,9 +177,57 @@ Retorna APENAS JSON:
     const newCard: Card = {
       id: `card-${Date.now()}`,
       title: "Novo Cartão",
-      subtitle: "Adiciona um subtema",
+      subtopics: [
+        { id: `subtopic-${Date.now()}-0`, text: "Adiciona um subtema" }
+      ]
     };
     setCards([...cards, newCard]);
+  };
+
+  // Add subtopic to card
+  const addSubtopic = (cardId: string) => {
+    setCards(cards.map(c => 
+      c.id === cardId 
+        ? { 
+            ...c, 
+            subtopics: [
+              ...c.subtopics, 
+              { id: `subtopic-${Date.now()}`, text: "Novo subtema" }
+            ] 
+          }
+        : c
+    ));
+  };
+
+  // Delete subtopic
+  const deleteSubtopic = (cardId: string, subtopicId: string) => {
+    setCards(cards.map(c => 
+      c.id === cardId 
+        ? { ...c, subtopics: c.subtopics.filter(s => s.id !== subtopicId) }
+        : c
+    ));
+  };
+
+  // Edit subtopic
+  const startEditSubtopic = (subtopic: Subtopic) => {
+    setEditingSubtopicId(subtopic.id);
+    setEditingSubtopicText(subtopic.text);
+  };
+
+  const saveSubtopicEdit = (cardId: string) => {
+    setCards(cards.map(c => 
+      c.id === cardId 
+        ? { 
+            ...c, 
+            subtopics: c.subtopics.map(s => 
+              s.id === editingSubtopicId 
+                ? { ...s, text: editingSubtopicText }
+                : s
+            ) 
+          }
+        : c
+    ));
+    setEditingSubtopicId(null);
   };
 
   // Add keyword
@@ -187,11 +253,15 @@ Retorna APENAS JSON:
     setSlides([]);
 
     try {
-      const cardsList = cards.map(c => `${c.title}: ${c.subtitle}`).join("\n");
+      const cardsList = cards.map(c => 
+        `${c.title}:\n${c.subtopics.map(s => `- ${s.text}`).join("\n")}`
+      ).join("\n\n");
+      
       const theme = VISUAL_THEMES.find(t => t.name === selectedTheme);
       const keywordsStr = extraKeywords.join(", ");
 
-      const aiPrompt = `Cria uma apresentação com base nestes cartões:
+      const aiPrompt = `Cria uma apresentação detalhada baseada nesta estrutura:
+
 ${cardsList}
 
 Tema principal: ${mainTopic}
@@ -199,6 +269,7 @@ Estilo de imagem: ${imageStyle}
 Palavras-chave adicionais: ${keywordsStr}
 Quantidade de texto: ${textAmount === "low" ? "mínimo" : textAmount === "high" ? "máximo" : "moderado"}
 Língua: ${language === "pt" ? "Português de Angola" : "Português do Brasil"}
+Proporção: ${proportion}
 
 Retorna APENAS JSON:
 {
@@ -209,7 +280,9 @@ Retorna APENAS JSON:
       "image_prompt": "Descrição detalhada para gerar imagem"
     }
   ]
-}`;
+}
+
+Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profissional e cativante.`;
 
       const result = await generateWithAI(DELLE_SYSTEM_PROMPT, aiPrompt, 4000, 0.8);
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -402,7 +475,7 @@ Retorna APENAS JSON:
                 <div className="space-y-4">
                   <h2 className="text-3xl font-bold">{mainTopic}</h2>
                   <p className={`text-lg ${isDarkMode ? "text-white/60" : "text-black/60"}`}>
-                    Edita, move ou adiciona novos cartões para personalizar a tua apresentação.
+                    Edita, move ou adiciona novos cartões. Cada cartão pode ter múltiplos subtemas.
                   </p>
                 </div>
 
@@ -410,46 +483,96 @@ Retorna APENAS JSON:
                 <div className="space-y-3">
                   <Reorder.Group values={cards} onReorder={setCards} className="space-y-3">
                     {cards.map((card) => (
-                      <Reorder.Item key={card.id} value={card} className={`p-4 rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10 hover:border-cyan-600/50" : "bg-black/5 border-black/10 hover:border-blue-500/50"} transition-all`}>
-                        <div className="flex items-center gap-4">
-                          <GripVertical className={`h-5 w-5 ${isDarkMode ? "text-white/30" : "text-black/30"}`} />
-                          
-                          {editingCardId === card.id ? (
-                            <div className="flex-1 space-y-2">
-                              <Input 
-                                value={editingTitle}
-                                onChange={(e) => setEditingTitle(e.target.value)}
-                                className={`font-bold text-lg ${isDarkMode ? "bg-white/10 border-white/20" : "bg-black/10 border-black/20"}`}
-                              />
-                              <Input 
-                                value={editingSubtitle}
-                                onChange={(e) => setEditingSubtitle(e.target.value)}
-                                className={`text-sm ${isDarkMode ? "bg-white/10 border-white/20" : "bg-black/10 border-black/20"}`}
-                              />
-                              <div className="flex gap-2">
+                      <Reorder.Item key={card.id} value={card} className={`rounded-xl border overflow-hidden transition-all ${isDarkMode ? "bg-white/5 border-white/10 hover:border-cyan-600/50" : "bg-black/5 border-black/10 hover:border-blue-500/50"}`}>
+                        <div>
+                          {/* Card Header */}
+                          <div className="flex items-center gap-4 p-4 cursor-pointer" onClick={() => setExpandedCardId(expandedCardId === card.id ? null : card.id)}>
+                            <GripVertical className={`h-5 w-5 ${isDarkMode ? "text-white/30" : "text-black/30"}`} />
+                            
+                            {editingCardId === card.id ? (
+                              <div className="flex-1 flex gap-2">
+                                <Input 
+                                  value={editingTitle}
+                                  onChange={(e) => setEditingTitle(e.target.value)}
+                                  className={`font-bold text-lg flex-1 ${isDarkMode ? "bg-white/10 border-white/20" : "bg-black/10 border-black/20"}`}
+                                />
                                 <Button size="sm" onClick={saveCardEdit} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
-                                  <Check className="h-4 w-4 mr-1" /> Guardar
+                                  <Check className="h-4 w-4" />
                                 </Button>
                                 <Button size="sm" variant="outline" onClick={() => setEditingCardId(null)} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
-                                  Cancelar
+                                  <X className="h-4 w-4" />
                                 </Button>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="flex-1">
-                              <p className="font-bold text-lg">{card.title}</p>
-                              <p className={`text-sm ${isDarkMode ? "text-white/60" : "text-black/60"}`}>{card.subtitle}</p>
-                            </div>
-                          )}
-
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="ghost" onClick={() => startEditCard(card)} className={isDarkMode ? "hover:bg-white/10" : "hover:bg-black/10"}>
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => deleteCard(card.id)} className={isDarkMode ? "hover:bg-white/10 text-red-400" : "hover:bg-black/10 text-red-600"}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            ) : (
+                              <>
+                                <p className="font-bold text-lg flex-1">{card.title}</p>
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); startEditCard(card); }} className={isDarkMode ? "hover:bg-white/10" : "hover:bg-black/10"}>
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteCard(card.id); }} className={isDarkMode ? "hover:bg-white/10 text-red-400" : "hover:bg-black/10 text-red-600"}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <ChevronDown className={`h-5 w-5 transition-transform ${expandedCardId === card.id ? "rotate-180" : ""}`} />
+                              </>
+                            )}
                           </div>
+
+                          {/* Subtopics Expansion */}
+                          <AnimatePresence>
+                            {expandedCardId === card.id && (
+                              <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className={`border-t ${isDarkMode ? "border-white/10 bg-white/2" : "border-black/10 bg-black/2"} p-4 space-y-3`}
+                              >
+                                {/* Subtopics List */}
+                                <div className="space-y-2">
+                                  {card.subtopics.map((subtopic) => (
+                                    <div key={subtopic.id} className={`flex items-center gap-3 p-3 rounded-lg ${isDarkMode ? "bg-white/5 border border-white/10" : "bg-black/5 border border-black/10"}`}>
+                                      {editingSubtopicId === subtopic.id ? (
+                                        <>
+                                          <Input 
+                                            value={editingSubtopicText}
+                                            onChange={(e) => setEditingSubtopicText(e.target.value)}
+                                            className={`flex-1 ${isDarkMode ? "bg-white/10 border-white/20" : "bg-black/10 border-black/20"}`}
+                                          />
+                                          <Button size="sm" onClick={() => saveSubtopicEdit(card.id)} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
+                                            <Check className="h-4 w-4" />
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={() => setEditingSubtopicId(null)} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className={`flex-1 ${isDarkMode ? "text-white/80" : "text-black/80"}`}>• {subtopic.text}</span>
+                                          <Button size="sm" variant="ghost" onClick={() => startEditSubtopic(subtopic)} className={isDarkMode ? "hover:bg-white/10" : "hover:bg-black/10"}>
+                                            <Edit2 className="h-4 w-4" />
+                                          </Button>
+                                          <Button size="sm" variant="ghost" onClick={() => deleteSubtopic(card.id, subtopic.id)} className={isDarkMode ? "hover:bg-white/10 text-red-400" : "hover:bg-black/10 text-red-600"}>
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Add Subtopic Button */}
+                                <Button 
+                                  onClick={() => addSubtopic(card.id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className={`w-full ${isDarkMode ? "border-white/20 hover:bg-white/5" : "border-black/20 hover:bg-black/5"}`}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" /> Adicionar Subtema
+                                </Button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </Reorder.Item>
                     ))}
