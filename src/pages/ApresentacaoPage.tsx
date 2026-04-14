@@ -18,7 +18,8 @@ import {
   Settings,
   ChevronDown,
   Check,
-  X
+  X,
+  Palette
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,30 @@ const IMAGE_STYLES = [
 ];
 
 const SUGGESTED_KEYWORDS = ["sofisticado", "minimalista", "profissional", "neutro", "vibrante", "moderno"];
+
+// Professional Color Palette
+const COLOR_PALETTE = {
+  light: {
+    bg: "#FFFFFF",
+    text: "#000000",
+    lightBlue: "#4FA3FF",
+    lightBlueBg: "#E8F2FF",
+    border: "#E5E5E5",
+    hover: "#F5F5F5",
+    textMuted: "rgba(0, 0, 0, 0.6)",
+    textMutedLight: "rgba(0, 0, 0, 0.4)",
+  },
+  dark: {
+    bg: "#000000",
+    text: "#FFFFFF",
+    lightBlue: "#4FA3FF",
+    lightBlueBg: "#1A2A3A",
+    border: "#262626",
+    hover: "#1A1A1A",
+    textMuted: "rgba(255, 255, 255, 0.7)",
+    textMutedLight: "rgba(255, 255, 255, 0.4)",
+  }
+};
 
 export default function ApresentacaoPage() {
   const navigate = useNavigate();
@@ -340,18 +365,19 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
   };
 
   const isDarkMode = document.documentElement.classList.contains("dark");
+  const palette = isDarkMode ? COLOR_PALETTE.dark : COLOR_PALETTE.light;
   const theme = VISUAL_THEMES.find(t => t.name === selectedTheme);
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDarkMode ? "bg-black text-white" : "bg-white text-black"}`}>
+    <div style={{ backgroundColor: palette.bg, color: palette.text }} className="min-h-screen flex flex-col transition-colors duration-300">
       {/* Header */}
-      <header className={`p-4 flex items-center justify-between border-b ${isDarkMode ? "border-white/10 bg-black/50" : "border-black/10 bg-white/50"} backdrop-blur-md z-50`}>
+      <header style={{ borderColor: palette.border, backgroundColor: palette.bg }} className="p-4 flex items-center justify-between border-b backdrop-blur-md z-50">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className={isDarkMode ? "hover:bg-white/10" : "hover:bg-black/10"}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:opacity-70">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-lg ${isDarkMode ? "bg-cyan-600" : "bg-blue-500"}`}>
+            <div className="p-2 rounded-lg" style={{ backgroundColor: palette.lightBlue }}>
               <Presentation className="h-5 w-5 text-white" />
             </div>
             <span className="font-bold tracking-tight text-lg">Gamma</span>
@@ -360,10 +386,10 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
         
         {step === "preview" && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setStep("customize")} className={isDarkMode ? "bg-white/5 border-white/10 hover:bg-white/10" : "bg-black/5 border-black/10 hover:bg-black/10"}>
+            <Button variant="outline" size="sm" onClick={() => setStep("customize")} style={{ borderColor: palette.border }} className="hover:opacity-70">
               <RefreshCw className="h-4 w-4 mr-2" /> Voltar
             </Button>
-            <Button size="sm" onClick={exportPDF} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
+            <Button size="sm" onClick={exportPDF} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="hover:opacity-90">
               <Download className="h-4 w-4 mr-2" /> Exportar
             </Button>
           </div>
@@ -379,39 +405,43 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`min-h-full flex flex-col items-center justify-center p-6 md:p-12 ${isDarkMode ? "bg-black" : "bg-white"}`}
+              style={{ backgroundColor: palette.bg }}
+              className="min-h-full flex flex-col items-center justify-center p-6 md:p-12"
             >
               <div className="w-full max-w-2xl space-y-8">
                 <div className="text-center space-y-4">
                   <motion.div
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
-                    className={`inline-block p-4 rounded-2xl border ${isDarkMode ? "bg-cyan-600/10 border-cyan-600/20" : "bg-blue-500/10 border-blue-500/20"} mb-4`}
+                    className="inline-block p-4 rounded-2xl border mb-4"
+                    style={{ backgroundColor: palette.lightBlueBg, borderColor: palette.lightBlue }}
                   >
-                    <Sparkles className={`h-8 w-8 ${isDarkMode ? "text-cyan-400" : "text-blue-500"}`} />
+                    <Sparkles className="h-8 w-8" style={{ color: palette.lightBlue }} />
                   </motion.div>
                   <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
                     Cria uma apresentação incrível
                   </h1>
-                  <p className={`text-lg ${isDarkMode ? "text-white/60" : "text-black/60"}`}>
+                  <p style={{ color: palette.textMuted }}>
                     Descreve o tema e deixa-nos criar slides profissionais para ti.
                   </p>
                 </div>
 
                 {/* Chat Input */}
                 <div className="space-y-4">
-                  <div className={`relative group rounded-2xl border-2 transition-all ${isDarkMode ? "border-white/10 hover:border-cyan-600/50 bg-white/5" : "border-black/10 hover:border-blue-500/50 bg-black/5"}`}>
+                  <div className="relative group rounded-2xl border-2 transition-all" style={{ borderColor: palette.border, backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9" }}>
                     <textarea 
                       value={chatMessage}
                       onChange={(e) => setChatMessage(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && e.ctrlKey && handleChatSubmit()}
                       placeholder="Ex: Marketing Digital no Brasil, História de Angola, Plano de Negócios..."
-                      className={`w-full bg-transparent border-0 focus-visible:ring-0 text-lg p-4 placeholder:${isDarkMode ? "text-white/40" : "text-black/40"} resize-none h-24`}
+                      style={{ color: palette.text }}
+                      className="w-full bg-transparent border-0 focus-visible:ring-0 text-lg p-4 resize-none h-24"
                     />
                     <Button 
                       onClick={handleChatSubmit}
                       disabled={loading || !chatMessage.trim()}
-                      className={`absolute bottom-3 right-3 rounded-xl ${isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}`}
+                      className="absolute bottom-3 right-3 rounded-xl hover:opacity-90"
+                      style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }}
                     >
                       {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                     </Button>
@@ -420,22 +450,24 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                   {/* Config Options */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <label className={`text-sm font-medium ${isDarkMode ? "text-white/70" : "text-black/70"}`}>Língua</label>
+                      <label style={{ color: palette.textMuted }} className="text-sm font-medium">Língua</label>
                       <select 
                         value={language} 
                         onChange={(e) => setLanguage(e.target.value)}
-                        className={`w-full rounded-lg border p-2 text-sm ${isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}`}
+                        style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9", borderColor: palette.border, color: palette.text }}
+                        className="w-full rounded-lg border p-2 text-sm"
                       >
                         <option value="pt">Português (Angola)</option>
                         <option value="pt-br">Português (Brasil)</option>
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className={`text-sm font-medium ${isDarkMode ? "text-white/70" : "text-black/70"}`}>Proporção</label>
+                      <label style={{ color: palette.textMuted }} className="text-sm font-medium">Proporção</label>
                       <select 
                         value={proportion} 
                         onChange={(e) => setProportion(e.target.value)}
-                        className={`w-full rounded-lg border p-2 text-sm ${isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}`}
+                        style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9", borderColor: palette.border, color: palette.text }}
+                        className="w-full rounded-lg border p-2 text-sm"
                       >
                         <option value="16:9">16:9 (Widescreen)</option>
                         <option value="4:3">4:3 (Padrão)</option>
@@ -443,11 +475,12 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className={`text-sm font-medium ${isDarkMode ? "text-white/70" : "text-black/70"}`}>Nº de Cartões</label>
+                      <label style={{ color: palette.textMuted }} className="text-sm font-medium">Nº de Cartões</label>
                       <select 
                         value={numCards} 
                         onChange={(e) => setNumCards(e.target.value)}
-                        className={`w-full rounded-lg border p-2 text-sm ${isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}`}
+                        style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9", borderColor: palette.border, color: palette.text }}
+                        className="w-full rounded-lg border p-2 text-sm"
                       >
                         <option value="5">5 Cartões</option>
                         <option value="8">8 Cartões</option>
@@ -468,13 +501,14 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`min-h-full p-6 md:p-12 ${isDarkMode ? "bg-black" : "bg-white"}`}
+              style={{ backgroundColor: palette.bg }}
+              className="min-h-full p-6 md:p-12"
             >
               <div className="max-w-5xl mx-auto space-y-8">
                 {/* Main Topic */}
                 <div className="space-y-4">
                   <h2 className="text-3xl font-bold">{mainTopic}</h2>
-                  <p className={`text-lg ${isDarkMode ? "text-white/60" : "text-black/60"}`}>
+                  <p style={{ color: palette.textMuted }}>
                     Edita, move ou adiciona novos cartões. Cada cartão pode ter múltiplos subtemas.
                   </p>
                 </div>
@@ -483,23 +517,24 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                 <div className="space-y-3">
                   <Reorder.Group values={cards} onReorder={setCards} className="space-y-3">
                     {cards.map((card) => (
-                      <Reorder.Item key={card.id} value={card} className={`rounded-xl border overflow-hidden transition-all ${isDarkMode ? "bg-white/5 border-white/10 hover:border-cyan-600/50" : "bg-black/5 border-black/10 hover:border-blue-500/50"}`}>
+                      <Reorder.Item key={card.id} value={card} style={{ borderColor: palette.border, backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9" }} className="rounded-xl border overflow-hidden transition-all">
                         <div>
                           {/* Card Header */}
                           <div className="flex items-center gap-4 p-4 cursor-pointer" onClick={() => setExpandedCardId(expandedCardId === card.id ? null : card.id)}>
-                            <GripVertical className={`h-5 w-5 ${isDarkMode ? "text-white/30" : "text-black/30"}`} />
+                            <GripVertical style={{ color: isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.3)" }} className="h-5 w-5" />
                             
                             {editingCardId === card.id ? (
                               <div className="flex-1 flex gap-2">
                                 <Input 
                                   value={editingTitle}
                                   onChange={(e) => setEditingTitle(e.target.value)}
-                                  className={`font-bold text-lg flex-1 ${isDarkMode ? "bg-white/10 border-white/20" : "bg-black/10 border-black/20"}`}
+                                  style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "#F0F0F0", borderColor: palette.border, color: palette.text }}
+                                  className="font-bold text-lg flex-1 border"
                                 />
-                                <Button size="sm" onClick={(e) => { e.stopPropagation(); saveCardEdit(); }} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
+                                <Button size="sm" onClick={(e) => { e.stopPropagation(); saveCardEdit(); }} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="hover:opacity-90">
                                   <Check className="h-4 w-4" />
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditingCardId(null); }} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
+                                <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditingCardId(null); }} style={{ borderColor: palette.border }} className="hover:opacity-70">
                                   <X className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -507,10 +542,10 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                               <>
                                 <p className="font-bold text-lg flex-1">{card.title}</p>
                                 <div className="flex gap-2">
-                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); startEditCard(card); }} className={isDarkMode ? "hover:bg-white/10" : "hover:bg-black/10"}>
+                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); startEditCard(card); }} className="hover:opacity-70">
                                     <Edit2 className="h-4 w-4" />
                                   </Button>
-                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteCard(card.id); }} className={isDarkMode ? "hover:bg-white/10 text-red-400" : "hover:bg-black/10 text-red-600"}>
+                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteCard(card.id); }} className="hover:opacity-70 text-red-600">
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
@@ -526,33 +561,35 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: "auto", opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className={`border-t ${isDarkMode ? "border-white/10 bg-white/2" : "border-black/10 bg-black/2"} p-4 space-y-3`}
+                                style={{ borderColor: palette.border, backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.02)" : "#FAFAFA" }}
+                                className="border-t p-4 space-y-3"
                               >
                                 {/* Subtopics List */}
                                 <div className="space-y-2">
                                   {card.subtopics.map((subtopic) => (
-                                    <div key={subtopic.id} className={`flex items-center gap-3 p-3 rounded-lg ${isDarkMode ? "bg-white/5 border border-white/10" : "bg-black/5 border border-black/10"}`}>
+                                    <div key={subtopic.id} style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F5F5F5", borderColor: palette.border }} className="flex items-center gap-3 p-3 rounded-lg border">
                                       {editingSubtopicId === subtopic.id ? (
                                         <>
                                           <Input 
                                             value={editingSubtopicText}
                                             onChange={(e) => setEditingSubtopicText(e.target.value)}
-                                            className={`flex-1 ${isDarkMode ? "bg-white/10 border-white/20" : "bg-black/10 border-black/20"}`}
+                                            style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "#F0F0F0", borderColor: palette.border, color: palette.text }}
+                                            className="flex-1 border"
                                           />
-                                          <Button size="sm" onClick={(e) => { e.stopPropagation(); saveSubtopicEdit(card.id); }} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
+                                          <Button size="sm" onClick={(e) => { e.stopPropagation(); saveSubtopicEdit(card.id); }} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="hover:opacity-90">
                                             <Check className="h-4 w-4" />
                                           </Button>
-                                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditingSubtopicId(null); }} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
+                                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditingSubtopicId(null); }} style={{ borderColor: palette.border }} className="hover:opacity-70">
                                             <X className="h-4 w-4" />
                                           </Button>
                                         </>
                                       ) : (
                                         <>
-                                          <span className={`flex-1 ${isDarkMode ? "text-white/80" : "text-black/80"}`}>• {subtopic.text}</span>
-                                          <Button size="sm" variant="ghost" onClick={() => startEditSubtopic(subtopic)} className={isDarkMode ? "hover:bg-white/10" : "hover:bg-black/10"}>
+                                          <span style={{ color: palette.textMuted }} className="flex-1">• {subtopic.text}</span>
+                                          <Button size="sm" variant="ghost" onClick={() => startEditSubtopic(subtopic)} className="hover:opacity-70">
                                             <Edit2 className="h-4 w-4" />
                                           </Button>
-                                          <Button size="sm" variant="ghost" onClick={() => deleteSubtopic(card.id, subtopic.id)} className={isDarkMode ? "hover:bg-white/10 text-red-400" : "hover:bg-black/10 text-red-600"}>
+                                          <Button size="sm" variant="ghost" onClick={() => deleteSubtopic(card.id, subtopic.id)} className="hover:opacity-70 text-red-600">
                                             <Trash2 className="h-4 w-4" />
                                           </Button>
                                         </>
@@ -566,7 +603,8 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                                   onClick={() => addSubtopic(card.id)}
                                   variant="outline"
                                   size="sm"
-                                  className={`w-full ${isDarkMode ? "border-white/20 hover:bg-white/5" : "border-black/20 hover:bg-black/5"}`}
+                                  style={{ borderColor: palette.border }}
+                                  className="w-full hover:opacity-70"
                                 >
                                   <Plus className="h-4 w-4 mr-2" /> Adicionar Subtema
                                 </Button>
@@ -581,7 +619,8 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                   <Button 
                     onClick={addCard}
                     variant="outline"
-                    className={`w-full py-6 border-dashed ${isDarkMode ? "border-white/20 hover:bg-white/5" : "border-black/20 hover:bg-black/5"}`}
+                    style={{ borderColor: palette.border, borderStyle: "dashed" }}
+                    className="w-full py-6 hover:opacity-70"
                   >
                     <Plus className="h-5 w-5 mr-2" /> Adicionar Novo Cartão
                   </Button>
@@ -589,10 +628,10 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
 
                 {/* Navigation */}
                 <div className="flex gap-4 pt-8">
-                  <Button variant="outline" onClick={() => setStep("chat")} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
+                  <Button variant="outline" onClick={() => setStep("chat")} style={{ borderColor: palette.border }} className="hover:opacity-70">
                     <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
                   </Button>
-                  <Button onClick={() => setStep("customize")} className={isDarkMode ? "flex-1 bg-cyan-600 hover:bg-cyan-700" : "flex-1 bg-blue-500 hover:bg-blue-600"}>
+                  <Button onClick={() => setStep("customize")} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="flex-1 hover:opacity-90">
                     Avançar para Personalização <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
@@ -607,14 +646,15 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`min-h-full p-6 md:p-12 ${isDarkMode ? "bg-black" : "bg-white"}`}
+              style={{ backgroundColor: palette.bg }}
+              className="min-h-full p-6 md:p-12"
             >
               <div className="max-w-6xl mx-auto space-y-12">
                 <h2 className="text-3xl font-bold">Personaliza o teu Gamma</h2>
 
                 {/* Content Settings */}
                 <div className="space-y-6">
-                  <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? "text-white" : "text-black"}`}>
+                  <h3 style={{ color: palette.text }} className="text-xl font-bold flex items-center gap-2">
                     <Settings className="h-5 w-5" /> Conteúdo do Texto
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -622,14 +662,14 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                       <button
                         key={amount}
                         onClick={() => setTextAmount(amount)}
-                        className={`p-4 rounded-xl border-2 transition-all text-center ${
-                          textAmount === amount 
-                            ? isDarkMode ? "border-cyan-600 bg-cyan-600/10" : "border-blue-500 bg-blue-500/10"
-                            : isDarkMode ? "border-white/10 hover:border-white/20" : "border-black/10 hover:border-black/20"
-                        }`}
+                        style={{
+                          borderColor: textAmount === amount ? palette.lightBlue : palette.border,
+                          backgroundColor: textAmount === amount ? palette.lightBlueBg : "transparent"
+                        }}
+                        className="p-4 rounded-xl border-2 transition-all text-center"
                       >
                         <p className="font-bold">{amount === "low" ? "Mínimo" : amount === "high" ? "Máximo" : "Moderado"}</p>
-                        <p className={`text-sm ${isDarkMode ? "text-white/60" : "text-black/60"}`}>
+                        <p style={{ color: palette.textMuted }} className="text-sm">
                           {amount === "low" ? "Conciso e direto" : amount === "high" ? "Detalhado e rico" : "Equilibrado"}
                         </p>
                       </button>
@@ -639,10 +679,10 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
 
                 {/* Visual Themes */}
                 <div className="space-y-6">
-                  <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? "text-white" : "text-black"}`}>
+                  <h3 style={{ color: palette.text }} className="text-xl font-bold flex items-center gap-2">
                     <Palette className="h-5 w-5" /> Visuais - Tema
                   </h3>
-                  <p className={`text-sm ${isDarkMode ? "text-white/60" : "text-black/60"}`}>
+                  <p style={{ color: palette.textMuted }} className="text-sm">
                     Usa um dos nossos temas populares abaixo ou vê mais
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -650,11 +690,11 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                       <button
                         key={t.name}
                         onClick={() => setSelectedTheme(t.name)}
-                        className={`p-4 rounded-xl border-2 transition-all space-y-2 ${
-                          selectedTheme === t.name 
-                            ? isDarkMode ? "border-cyan-600 bg-cyan-600/10" : "border-blue-500 bg-blue-500/10"
-                            : isDarkMode ? "border-white/10 hover:border-white/20" : "border-black/10 hover:border-black/20"
-                        }`}
+                        style={{
+                          borderColor: selectedTheme === t.name ? palette.lightBlue : palette.border,
+                          backgroundColor: selectedTheme === t.name ? palette.lightBlueBg : "transparent"
+                        }}
+                        className="p-4 rounded-xl border-2 transition-all space-y-2"
                       >
                         <div className="space-y-1">
                           <div className="h-3 rounded w-full" style={{ backgroundColor: t.colors.title }}></div>
@@ -669,22 +709,22 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
 
                 {/* Image Settings */}
                 <div className="space-y-6">
-                  <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? "text-white" : "text-black"}`}>
+                  <h3 style={{ color: palette.text }} className="text-xl font-bold flex items-center gap-2">
                     <ImageIcon className="h-5 w-5" /> Fonte da Imagem
                   </h3>
                   
                   <div className="space-y-4">
-                    <p className={`text-sm font-bold ${isDarkMode ? "text-white/70" : "text-black/70"}`}>Estilo de Arte da Imagem</p>
+                    <p style={{ color: palette.textMuted }} className="text-sm font-bold">Estilo de Arte da Imagem</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {IMAGE_STYLES.map(style => (
                         <button
                           key={style.value}
                           onClick={() => setImageStyle(style.value)}
-                          className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
-                            imageStyle === style.value 
-                              ? isDarkMode ? "border-cyan-600 bg-cyan-600/10" : "border-blue-500 bg-blue-500/10"
-                              : isDarkMode ? "border-white/10 hover:border-white/20" : "border-black/10 hover:border-black/20"
-                          }`}
+                          style={{
+                            borderColor: imageStyle === style.value ? palette.lightBlue : palette.border,
+                            backgroundColor: imageStyle === style.value ? palette.lightBlueBg : "transparent"
+                          }}
+                          className="p-3 rounded-lg border-2 transition-all text-sm font-medium"
                         >
                           {style.name}
                         </button>
@@ -694,11 +734,8 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
 
                   {/* Keywords */}
                   <div className="space-y-4">
-                    <p className={`text-sm font-bold ${isDarkMode ? "text-white/70" : "text-black/70"}`}>
+                    <p style={{ color: palette.textMuted }} className="text-sm font-bold">
                       Adicionar Palavras-Chave Extras
-                    </p>
-                    <p className={`text-xs ${isDarkMode ? "text-white/50" : "text-black/50"}`}>
-                      Adicione palavras-chave (ex: minimalismo, colorido) para manter consistência no estilo da imagem. (Opcional)
                     </p>
                     <div className="flex gap-2">
                       <Input 
@@ -706,15 +743,16 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                         onChange={(e) => setKeywordInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && addKeyword()}
                         placeholder="Ex: sofisticado, minimalista..."
-                        className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}
+                        style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9", borderColor: palette.border, color: palette.text }}
+                        className="border"
                       />
-                      <Button onClick={addKeyword} className={isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-blue-500 hover:bg-blue-600"}>
+                      <Button onClick={addKeyword} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="hover:opacity-90">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {extraKeywords.map(keyword => (
-                        <div key={keyword} className={`px-3 py-1 rounded-full text-sm flex items-center gap-2 ${isDarkMode ? "bg-cyan-600/20 text-cyan-400" : "bg-blue-500/20 text-blue-600"}`}>
+                        <div key={keyword} style={{ backgroundColor: palette.lightBlueBg, color: palette.lightBlue }} className="px-3 py-1 rounded-full text-sm flex items-center gap-2">
                           {keyword}
                           <button onClick={() => removeKeyword(keyword)} className="hover:opacity-70">×</button>
                         </div>
@@ -723,7 +761,8 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                         <button
                           key={keyword}
                           onClick={() => { setExtraKeywords([...extraKeywords, keyword]); }}
-                          className={`px-3 py-1 rounded-full text-sm border ${isDarkMode ? "border-white/20 hover:bg-white/5" : "border-black/20 hover:bg-black/5"}`}
+                          style={{ borderColor: palette.border }}
+                          className="px-3 py-1 rounded-full text-sm border hover:opacity-70"
                         >
                           + {keyword}
                         </button>
@@ -734,10 +773,10 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
 
                 {/* Navigation */}
                 <div className="flex gap-4 pt-8">
-                  <Button variant="outline" onClick={() => setStep("cards")} className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}>
+                  <Button variant="outline" onClick={() => setStep("cards")} style={{ borderColor: palette.border }} className="hover:opacity-70">
                     <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
                   </Button>
-                  <Button onClick={generateSlides} disabled={loading} className={isDarkMode ? "flex-1 bg-cyan-600 hover:bg-cyan-700" : "flex-1 bg-blue-500 hover:bg-blue-600"}>
+                  <Button onClick={generateSlides} disabled={loading} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="flex-1 hover:opacity-90">
                     {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
                     Gerar Apresentação
                   </Button>
@@ -752,18 +791,19 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               key="generating"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className={`min-h-full flex flex-col items-center justify-center p-6 ${isDarkMode ? "bg-black" : "bg-white"}`}
+              style={{ backgroundColor: palette.bg }}
+              className="min-h-full flex flex-col items-center justify-center p-6"
             >
               <div className="text-center space-y-8">
                 <div className="relative">
-                  <div className={`h-32 w-32 rounded-full border-4 ${isDarkMode ? "border-cyan-600/20 border-t-cyan-600" : "border-blue-500/20 border-t-blue-500"} animate-spin mx-auto`}></div>
+                  <div style={{ borderColor: palette.lightBlue, borderTopColor: palette.lightBlue }} className="h-32 w-32 rounded-full border-4 border-transparent animate-spin mx-auto"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Sparkles className={`h-10 w-10 ${isDarkMode ? "text-cyan-400" : "text-blue-500"} animate-pulse`} />
+                    <Sparkles style={{ color: palette.lightBlue }} className="h-10 w-10 animate-pulse" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-3xl font-bold">A criar a tua apresentação...</h2>
-                  <p className={`${isDarkMode ? "text-white/60" : "text-black/60"} animate-pulse`}>A IA está a processar o conteúdo e as imagens.</p>
+                  <p style={{ color: palette.textMuted }} className="animate-pulse">A IA está a processar o conteúdo e as imagens.</p>
                 </div>
               </div>
             </motion.div>
@@ -775,22 +815,23 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               key="preview"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className={`min-h-full p-6 md:p-12 flex flex-col items-center justify-center ${isDarkMode ? "bg-black" : "bg-white"}`}
+              style={{ backgroundColor: palette.bg }}
+              className="min-h-full p-6 md:p-12 flex flex-col items-center justify-center"
             >
               <div className="w-full max-w-5xl space-y-6">
                 {/* Main Slide */}
-                <div className={`relative rounded-2xl overflow-hidden shadow-2xl border ${isDarkMode ? "border-white/10" : "border-black/10"} aspect-video flex`}>
+                <div style={{ borderColor: palette.border, backgroundColor: palette.bg }} className="relative rounded-2xl overflow-hidden shadow-2xl border aspect-video flex">
                   {slides[currentSlide].imageUrl && (
                     <div className="absolute inset-0">
                       <img src={slides[currentSlide].imageUrl} className="w-full h-full object-cover" alt="" />
-                      <div className={`absolute inset-0 ${isDarkMode ? "bg-black/60" : "bg-white/60"}`}></div>
+                      <div style={{ backgroundColor: isDarkMode ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.6)" }}></div>
                     </div>
                   )}
                   <div className="relative z-10 flex flex-col justify-center p-12 md:p-20 w-full">
-                    <h2 className={`text-4xl md:text-5xl font-bold mb-6 ${isDarkMode ? "text-white" : "text-black"}`}>
+                    <h2 style={{ color: palette.text }} className="text-4xl md:text-5xl font-bold mb-6">
                       {slides[currentSlide].titulo}
                     </h2>
-                    <div className={`text-lg space-y-3 ${isDarkMode ? "text-white/80" : "text-black/80"}`}>
+                    <div style={{ color: palette.textMuted }} className="text-lg space-y-3">
                       {slides[currentSlide].conteudo.split("\\n").map((line, idx) => (
                         <p key={idx}>{line}</p>
                       ))}
@@ -805,7 +846,8 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                     size="icon" 
                     disabled={currentSlide === 0}
                     onClick={() => setCurrentSlide(p => p - 1)}
-                    className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}
+                    style={{ borderColor: palette.border }}
+                    className="hover:opacity-70"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -815,7 +857,11 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                       <button
                         key={i}
                         onClick={() => setCurrentSlide(i)}
-                        className={`h-2 rounded-full transition-all ${i === currentSlide ? isDarkMode ? "bg-cyan-600 w-8" : "bg-blue-500 w-8" : isDarkMode ? "bg-white/20 w-2" : "bg-black/20 w-2"}`}
+                        style={{
+                          backgroundColor: i === currentSlide ? palette.lightBlue : isDarkMode ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
+                          width: i === currentSlide ? "32px" : "8px"
+                        }}
+                        className="h-2 rounded-full transition-all"
                       />
                     ))}
                   </div>
@@ -825,19 +871,20 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                     size="icon" 
                     disabled={currentSlide === slides.length - 1}
                     onClick={() => setCurrentSlide(p => p + 1)}
-                    className={isDarkMode ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}
+                    style={{ borderColor: palette.border }}
+                    className="hover:opacity-70"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
                 </div>
 
                 {/* Slide Counter */}
-                <div className={`text-center text-sm ${isDarkMode ? "text-white/60" : "text-black/60"}`}>
+                <div style={{ color: palette.textMuted }} className="text-center text-sm">
                   Slide {currentSlide + 1} de {slides.length}
                 </div>
 
                 {generatingImages && (
-                  <div className={`flex items-center gap-2 p-4 rounded-lg ${isDarkMode ? "bg-cyan-600/10 text-cyan-400" : "bg-blue-500/10 text-blue-600"}`}>
+                  <div style={{ backgroundColor: palette.lightBlueBg, color: palette.lightBlue }} className="flex items-center gap-2 p-4 rounded-lg">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span className="text-sm">A gerar imagens em alta definição...</span>
                   </div>
