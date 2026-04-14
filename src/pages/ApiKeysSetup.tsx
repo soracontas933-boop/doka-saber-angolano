@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-const PROVIDERS = [
+const TEXT_PROVIDERS = [
   { key: "gemini", label: "Google AI Studio (Gemini)", placeholder: "AIzaSy...", description: "OCR + texto. Gratuito com limite diário." },
   { key: "groq", label: "Groq", placeholder: "gsk_...", description: "Llama 3.3 70B + Vision OCR. Muito rápido e gratuito." },
   { key: "cerebras", label: "Cerebras", placeholder: "csk-...", description: "Llama 3.3 70B. Extremamente rápido e gratuito." },
@@ -26,6 +26,17 @@ const PROVIDERS = [
   { key: "openrouter", label: "OpenRouter", placeholder: "sk-or-v1-...", description: "Fallback robusto para geração de texto." },
   { key: "mistral", label: "Mistral AI", placeholder: "CET6...", description: "Mistral Small. Fallback adicional gratuito." },
 ] as const;
+
+const IMAGE_PROVIDERS = [
+  { key: "stability", label: "Stability AI", placeholder: "sk-...", description: "SDXL / SD3. Alta qualidade para imagens em trabalhos e apresentações." },
+  { key: "huggingface", label: "Hugging Face", placeholder: "hf_...", description: "Inference API gratuita. SDXL e modelos open-source." },
+  { key: "replicate", label: "Replicate", placeholder: "r8_...", description: "Flux, SDXL e mais. Pay-per-use com free tier." },
+  { key: "cloudflare_ai", label: "Cloudflare Workers AI", placeholder: "Bearer ...", description: "Modelos de imagem via Cloudflare. Rápido e com free tier." },
+  { key: "segmind", label: "Segmind", placeholder: "SG_...", description: "SDXL e variantes. API rápida com free tier." },
+  { key: "leonardo", label: "Leonardo.ai", placeholder: "Bearer ...", description: "Geração de imagens de alta qualidade. Free tier disponível." },
+] as const;
+
+const PROVIDERS = [...TEXT_PROVIDERS, ...IMAGE_PROVIDERS] as const;
 
 type ProviderKey = (typeof PROVIDERS)[number]["key"];
 type ProviderConfig = (typeof PROVIDERS)[number];
@@ -341,7 +352,8 @@ export default function ApiKeysSetup() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {PROVIDERS.map((provider) => {
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">APIs de Texto (IA)</h3>
+              {TEXT_PROVIDERS.map((provider) => {
                 const providerKeys = getProviderKeys(provider.key);
                 const filledCount = getFilledCount(provider.key);
                 const exhaustedCount = providerKeys.filter(isExhausted).length;
