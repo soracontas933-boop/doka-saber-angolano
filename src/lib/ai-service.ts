@@ -178,10 +178,38 @@ export async function extractTextFromDocument(file: File): Promise<string> {
   return data?.text || "";
 }
 
-// ─── Pollinations (Imagens Gratuitas) ────────────────────────────
+// ─── Pollinations (Imagens Gratuitas — fallback) ─────────────────
 export function generateImageUrl(prompt: string, width = 800, height = 600): string {
   const seed = Math.floor(Math.random() * 99999);
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true`;
+}
+
+// ─── Image Generation via image-proxy (multi-provider) ───────────
+export async function generateImageAI(prompt: string, width = 800, height = 600): Promise<{ image_url: string; service_used: string }> {
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy`;
+  const session = (await supabase.auth.getSession()).data.session;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: JSON.stringify({ prompt, width, height }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`Erro imagem (${response.status}): ${errBody}`);
+    }
+
+    return await response.json();
+  } catch {
+    // Fallback to Pollinations
+    return { image_url: generateImageUrl(prompt, width, height), service_used: "pollinations" };
+  }
 }
 
 export const imagePrompts = {

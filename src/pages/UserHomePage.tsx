@@ -6,6 +6,7 @@ import {
   BookOpen,
   HelpCircle,
   ClipboardList,
+  Presentation,
   Search,
   FolderOpen,
   UsersRound,
@@ -28,6 +29,7 @@ const quickActions = [
   { to: "/resumo", icon: BookOpen, label: "Resumos" },
   { to: "/questionario", icon: HelpCircle, label: "Questionários" },
   { to: "/plano-aula", icon: ClipboardList, label: "Planos" },
+  { to: "/apresentacao", icon: Presentation, label: "Apresentações" },
   { to: "/curriculo", icon: Search, label: "Currículo" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
 ];

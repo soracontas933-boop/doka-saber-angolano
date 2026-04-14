@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { toast } from "sonner";
 
-export type ModuloType = "trabalho" | "resumo" | "questionario" | "plano_aula" | "tfc" | "correcao";
+export type ModuloType = "trabalho" | "resumo" | "questionario" | "plano_aula" | "tfc" | "correcao" | "apresentacao";
 
 const MODULE_LIMIT_MAP: Record<ModuloType, keyof typeof PLAN_CONFIGS.gratuito> = {
   trabalho: "limite_trabalhos",
@@ -13,6 +13,7 @@ const MODULE_LIMIT_MAP: Record<ModuloType, keyof typeof PLAN_CONFIGS.gratuito> =
   plano_aula: "limite_planos_aula",
   tfc: "limite_tfc",
   correcao: "limite_trabalhos",
+  apresentacao: "limite_trabalhos",
 };
 
 export function useUsageTracker() {
