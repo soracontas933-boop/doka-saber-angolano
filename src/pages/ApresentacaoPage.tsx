@@ -19,7 +19,14 @@ import {
   ChevronDown,
   Check,
   X,
-  Palette
+  Palette,
+  Type,
+  Maximize,
+  Layout,
+  FileDown,
+  Copy,
+  Eye,
+  Save
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -28,6 +35,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generateWithAI, DELLE_SYSTEM_PROMPT, generateImageAI, generateImageUrl } from "@/lib/ai-service";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
+import { saveProject } from "@/lib/save-project";
 
 interface Subtopic {
   id: string;
@@ -54,6 +62,20 @@ const VISUAL_THEMES = [
   { name: "Tranquil", colors: { bg: "#E8F4F8", title: "#2E7D8F", body: "#5FA8D3", accent: "#B8E0D2" } },
   { name: "Cigar", colors: { bg: "#3D2817", title: "#F5DEB3", body: "#D2B48C", accent: "#8B4513" } },
   { name: "Icebreaker", colors: { bg: "#E6F2FF", title: "#0066CC", body: "#0080FF", accent: "#00BFFF" } },
+];
+
+const FONT_STYLES = [
+  { name: "Sans Moderno", value: "Inter, sans-serif" },
+  { name: "Serif Clássico", value: "Georgia, serif" },
+  { name: "Display Elegante", value: "Poppins, sans-serif" },
+  { name: "Mono Técnico", value: "monospace" },
+];
+
+const POSTER_FORMATS = [
+  { name: "Padrão (16:9)", value: "16:9", icon: <Presentation className="h-4 w-4" /> },
+  { name: "Retrato (4:5)", value: "4:5", icon: <ImageIcon className="h-4 w-4" /> },
+  { name: "Quadrado (1:1)", value: "1:1", icon: <Layout className="h-4 w-4" /> },
+  { name: "A4 Vertical", value: "A4", icon: <Maximize className="h-4 w-4" /> },
 ];
 
 const IMAGE_STYLES = [
@@ -115,6 +137,8 @@ export default function ApresentacaoPage() {
   
   // Customization state
   const [selectedTheme, setSelectedTheme] = useState("Finesse");
+  const [selectedFont, setSelectedFont] = useState("Inter, sans-serif");
+  const [selectedFormat, setSelectedFormat] = useState("16:9");
   const [imageStyle, setImageStyle] = useState("illustration");
   const [extraKeywords, setExtraKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState("");
@@ -126,6 +150,9 @@ export default function ApresentacaoPage() {
   const [loading, setLoading] = useState(false);
   const [generatingImages, setGeneratingImages] = useState(false);
 
+  const isDarkMode = document.documentElement.classList.contains("dark");
+  const palette = isDarkMode ? COLOR_PALETTE.dark : COLOR_PALETTE.light;
+
   // Handle initial chat submission
   const handleChatSubmit = async () => {
     if (!chatMessage.trim()) {
@@ -135,7 +162,6 @@ export default function ApresentacaoPage() {
 
     setLoading(true);
     try {
-      // Generate main topic and cards from chat
       const aiPrompt = `Baseado neste tema: "${chatMessage}", gera um título principal criativo e ${numCards} cartões com múltiplos subtemas.
 
 Retorna APENAS JSON:
@@ -294,7 +320,8 @@ Estilo de imagem: ${imageStyle}
 Palavras-chave adicionais: ${keywordsStr}
 Quantidade de texto: ${textAmount === "low" ? "mínimo" : textAmount === "high" ? "máximo" : "moderado"}
 Língua: ${language === "pt" ? "Português de Angola" : "Português do Brasil"}
-Proporção: ${proportion}
+Proporção: ${selectedFormat}
+Estilo visual: Tema ${selectedTheme}, Fonte ${selectedFont}
 
 Retorna APENAS JSON:
 {
@@ -308,10 +335,10 @@ Retorna APENAS JSON:
 }
 
 IMPORTANTE - Segue este modelo de apresentação profissional:
-- Fundo: Bege claro (#F5F5F0)
+- Fundo: ${theme?.colors.bg || "#F5F5F0"}
 - Estilo: Minimalista, com muito espaço em branco
 - Layout: Duas colunas (imagem à esquerda, conteúdo à direita)
-- Tipografia: Sans-serif moderna, títulos em negrito
+- Tipografia: ${selectedFont}, títulos em negrito
 - Conteúdo: Profissional, informativo, com dados e tendências
 - Estrutura: Cenário → Investimento → Canais → Tendências → Solução
 
@@ -330,173 +357,133 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
       setSlides(rawSlides);
       setCurrentSlide(0);
       setStep("preview");
-      await logUsage("apresentacao" as any, result.service_used, result.tokens_used);
-
-      // Generate images in background
-      setGeneratingImages(true);
-      const imagePrompts = (parsed.slides || []).map((s: any) => s.image_prompt || "");
       
-      for (let i = 0; i < rawSlides.length; i++) {
-        if (!imagePrompts[i]) continue;
+      // Start generating images in background
+      setGeneratingImages(true);
+      const updatedSlides = [...rawSlides];
+      for (let i = 0; i < updatedSlides.length; i++) {
         try {
-          const fullPrompt = `${imagePrompts[i]}, ${imageStyle} style, ${keywordsStr}`;
-          const imgResult = await generateImageAI(fullPrompt, 1280, 720);
-          setSlides(prev => {
-            const updated = [...prev];
-            updated[i] = { ...updated[i], imageUrl: imgResult.image_url };
-            return updated;
-          });
-        } catch {
-          const fallbackUrl = generateImageUrl(imagePrompts[i], 1280, 720);
-          setSlides(prev => {
-            const updated = [...prev];
-            updated[i] = { ...updated[i], imageUrl: fallbackUrl };
-            return updated;
-          });
+          const imgPrompt = parsed.slides[i].image_prompt || `Professional educational slide about ${updatedSlides[i].titulo}, minimalist, clean`;
+          const imgResult = await generateImageAI(imgPrompt);
+          updatedSlides[i].imageUrl = imgResult.image_url;
+          setSlides([...updatedSlides]);
+        } catch (err) {
+          console.error("Image generation failed for slide", i);
         }
       }
       setGeneratingImages(false);
-      toast.success("Apresentação gerada com sucesso!");
-    } catch (err: any) {
-      toast.error("Erro ao gerar apresentação.");
+      logUsage("apresentacao" as any);
+    } catch (err) {
+      toast.error("Erro ao gerar a apresentação. Tenta novamente.");
       setStep("customize");
     } finally {
       setLoading(false);
     }
   };
 
-  const exportPDF = async () => {
+  const handleSave = async () => {
     if (slides.length === 0) return;
-    toast.info("A exportar PDF...");
-    // PDF export logic here
-    toast.success("PDF exportado!");
+    try {
+      await saveProject("trabalho", `Apresentação - ${mainTopic}`, JSON.stringify(slides));
+      toast.success("Apresentação guardada com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao guardar a apresentação.");
+    }
   };
 
-  const isDarkMode = document.documentElement.classList.contains("dark");
-  const palette = isDarkMode ? COLOR_PALETTE.dark : COLOR_PALETTE.light;
-  const theme = VISUAL_THEMES.find(t => t.name === selectedTheme);
-
   return (
-    <div style={{ backgroundColor: palette.bg, color: palette.text }} className="min-h-screen flex flex-col transition-colors duration-300">
+    <div style={{ backgroundColor: palette.bg, color: palette.text }} className="min-h-screen flex flex-col">
       {/* Header */}
-      <header style={{ borderColor: palette.border, backgroundColor: palette.bg }} className="p-4 flex items-center justify-between border-b backdrop-blur-md z-50">
+      <header style={{ borderColor: palette.border }} className="h-16 border-b flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:opacity-70">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} style={{ color: palette.textMuted }}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg" style={{ backgroundColor: palette.lightBlue }}>
-              <Presentation className="h-5 w-5 text-white" />
-            </div>
-
+            <Presentation style={{ color: palette.lightBlue }} className="h-6 w-6" />
+            <h1 className="font-bold text-lg hidden md:block">Gerador de Apresentações</h1>
           </div>
         </div>
-        
+
         {step === "preview" && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setStep("customize")} style={{ borderColor: palette.border }} className="hover:opacity-70">
-              <RefreshCw className="h-4 w-4 mr-2" /> Voltar
+            <Button variant="outline" size="sm" onClick={handleSave} style={{ borderColor: palette.border }}>
+              <Save className="h-4 w-4 mr-2" /> Guardar
             </Button>
-            <Button size="sm" onClick={exportPDF} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="hover:opacity-90">
-              <Download className="h-4 w-4 mr-2" /> Exportar
+            <Button size="sm" style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }}>
+              <Download className="h-4 w-4 mr-2" /> Exportar PDF
             </Button>
           </div>
         )}
       </header>
 
-      <main className="flex-1 overflow-auto">
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
-          {/* STEP 1: CHAT */}
+          {/* STEP 1: INITIAL CHAT */}
           {step === "chat" && (
             <motion.div 
               key="chat"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ backgroundColor: palette.bg }}
-              className="min-h-full flex flex-col items-center justify-center p-6 md:p-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-3xl mx-auto py-12 px-6 space-y-12"
             >
-              <div className="w-full max-w-2xl space-y-8">
-                <div className="text-center space-y-4">
-                  <motion.div
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    className="inline-block p-4 rounded-2xl border mb-4"
-                    style={{ backgroundColor: palette.lightBlueBg, borderColor: palette.lightBlue }}
-                  >
-                    <Sparkles className="h-8 w-8" style={{ color: palette.lightBlue }} />
-                  </motion.div>
-                  <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
-                    Cria uma apresentação incrível
-                  </h1>
-                  <p style={{ color: palette.textMuted }}>
-                    Descreve o tema e deixa-nos criar slides profissionais para ti.
-                  </p>
+              <div className="text-center space-y-4">
+                <div style={{ backgroundColor: palette.lightBlueBg }} className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Sparkles style={{ color: palette.lightBlue }} className="h-8 w-8" />
                 </div>
+                <h2 className="text-4xl font-bold tracking-tight">O que vamos apresentar hoje?</h2>
+                <p style={{ color: palette.textMuted }} className="text-lg">
+                  Diz-me o tema e eu crio uma apresentação profissional para ti em segundos.
+                </p>
+              </div>
 
-                {/* Chat Input */}
-                <div className="space-y-4">
-                  <div className="relative group rounded-2xl border-2 transition-all" style={{ borderColor: palette.border, backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9" }}>
-                    <textarea 
-                      value={chatMessage}
-                      onChange={(e) => setChatMessage(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && e.ctrlKey && handleChatSubmit()}
-                      placeholder="Ex: Marketing Digital no Brasil, História de Angola, Plano de Negócios..."
-                      style={{ color: palette.text }}
-                      className="w-full bg-transparent border-0 focus-visible:ring-0 text-lg p-4 resize-none h-24"
-                    />
-                    <Button 
-                      onClick={handleChatSubmit}
-                      disabled={loading || !chatMessage.trim()}
-                      className="absolute bottom-3 right-3 rounded-xl hover:opacity-90"
-                      style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }}
-                    >
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-                    </Button>
-                  </div>
-
-                  {/* Config Options */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <label style={{ color: palette.textMuted }} className="text-sm font-medium">Língua</label>
+              <div className="space-y-6">
+                <div style={{ borderColor: palette.border, backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9" }} className="p-2 rounded-2xl border shadow-sm">
+                  <textarea 
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    placeholder="Ex: A importância da agricultura sustentável em Angola..."
+                    style={{ color: palette.text }}
+                    className="w-full bg-transparent border-0 focus:ring-0 p-4 min-h-[120px] text-lg resize-none"
+                  />
+                  <div className="flex items-center justify-between p-2 border-t" style={{ borderColor: palette.border }}>
+                    <div className="flex gap-2">
                       <select 
-                        value={language} 
-                        onChange={(e) => setLanguage(e.target.value)}
-                        style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9", borderColor: palette.border, color: palette.text }}
-                        className="w-full rounded-lg border p-2 text-sm"
-                      >
-                        <option value="pt">Português (Angola)</option>
-                        <option value="pt-br">Português (Brasil)</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label style={{ color: palette.textMuted }} className="text-sm font-medium">Proporção</label>
-                      <select 
-                        value={proportion} 
-                        onChange={(e) => setProportion(e.target.value)}
-                        style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9", borderColor: palette.border, color: palette.text }}
-                        className="w-full rounded-lg border p-2 text-sm"
-                      >
-                        <option value="16:9">16:9 (Widescreen)</option>
-                        <option value="4:3">4:3 (Padrão)</option>
-                        <option value="1:1">1:1 (Quadrado)</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label style={{ color: palette.textMuted }} className="text-sm font-medium">Nº de Cartões</label>
-                      <select 
-                        value={numCards} 
+                        value={numCards}
                         onChange={(e) => setNumCards(e.target.value)}
-                        style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9", borderColor: palette.border, color: palette.text }}
-                        className="w-full rounded-lg border p-2 text-sm"
+                        style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#FFFFFF", borderColor: palette.border }}
+                        className="text-sm rounded-lg border px-2 py-1"
                       >
-                        <option value="5">5 Cartões</option>
+                        <option value="6">6 Cartões</option>
                         <option value="8">8 Cartões</option>
                         <option value="10">10 Cartões</option>
                         <option value="12">12 Cartões</option>
                       </select>
                     </div>
+                    <Button 
+                      onClick={handleChatSubmit} 
+                      disabled={loading || !chatMessage.trim()}
+                      style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }}
+                      className="rounded-xl px-6 hover:opacity-90"
+                    >
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                    </Button>
                   </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {["Marketing Digital", "História de Angola", "Energias Renováveis", "Saúde Pública"].map(suggestion => (
+                    <button
+                      key={suggestion}
+                      onClick={() => setChatMessage(suggestion)}
+                      style={{ borderColor: palette.border, color: palette.textMuted }}
+                      className="px-4 py-2 rounded-full border text-sm hover:bg-muted transition-colors"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -658,136 +645,170 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               className="min-h-full p-6 md:p-12"
             >
               <div className="max-w-6xl mx-auto space-y-12">
-                <h2 className="text-3xl font-bold">Personaliza a tua Apresentação</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold">Personaliza a tua Apresentação</h2>
+                  <div className="flex items-center gap-2 text-sm font-medium" style={{ color: palette.lightBlue }}>
+                    <Sparkles className="h-4 w-4" /> Estilo Premium Ativado
+                  </div>
+                </div>
 
-                {/* Content Settings */}
-                <div className="space-y-6">
-                  <h3 style={{ color: palette.text }} className="text-xl font-bold flex items-center gap-2">
-                    <Settings className="h-5 w-5" /> Conteúdo do Texto
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {["low", "medium", "high"].map(amount => (
-                      <button
-                        key={amount}
-                        onClick={() => setTextAmount(amount)}
-                        style={{
-                          borderColor: textAmount === amount ? palette.lightBlue : palette.border,
-                          backgroundColor: textAmount === amount ? palette.lightBlueBg : "transparent"
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                  {/* Left Column: Controls */}
+                  <div className="lg:col-span-1 space-y-10">
+                    {/* Visual Themes */}
+                    <div className="space-y-4">
+                      <h3 style={{ color: palette.text }} className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                        <Palette className="h-4 w-4" /> Tema Visual
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {VISUAL_THEMES.map(t => (
+                          <button
+                            key={t.name}
+                            onClick={() => setSelectedTheme(t.name)}
+                            style={{
+                              borderColor: selectedTheme === t.name ? palette.lightBlue : palette.border,
+                              backgroundColor: selectedTheme === t.name ? palette.lightBlueBg : "transparent"
+                            }}
+                            className="p-3 rounded-xl border-2 transition-all text-left group"
+                          >
+                            <div className="flex gap-1 mb-2">
+                              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: t.colors.bg }}></div>
+                              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: t.colors.title }}></div>
+                              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: t.colors.accent }}></div>
+                            </div>
+                            <p className="text-xs font-bold group-hover:text-primary transition-colors">{t.name}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Typography */}
+                    <div className="space-y-4">
+                      <h3 style={{ color: palette.text }} className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                        <Type className="h-4 w-4" /> Estilo de Letra
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        {FONT_STYLES.map(font => (
+                          <button
+                            key={font.value}
+                            onClick={() => setSelectedFont(font.value)}
+                            style={{
+                              borderColor: selectedFont === font.value ? palette.lightBlue : palette.border,
+                              backgroundColor: selectedFont === font.value ? palette.lightBlueBg : "transparent",
+                              fontFamily: font.value
+                            }}
+                            className="p-3 rounded-lg border-2 transition-all text-left text-sm"
+                          >
+                            {font.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Poster Formats */}
+                    <div className="space-y-4">
+                      <h3 style={{ color: palette.text }} className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                        <Layout className="h-4 w-4" /> Formato dos Cartazes
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {POSTER_FORMATS.map(format => (
+                          <button
+                            key={format.value}
+                            onClick={() => setSelectedFormat(format.value)}
+                            style={{
+                              borderColor: selectedFormat === format.value ? palette.lightBlue : palette.border,
+                              backgroundColor: selectedFormat === format.value ? palette.lightBlueBg : "transparent"
+                            }}
+                            className="p-3 rounded-lg border-2 transition-all flex items-center gap-2 text-xs font-medium"
+                          >
+                            {format.icon}
+                            {format.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Image Style */}
+                    <div className="space-y-4">
+                      <h3 style={{ color: palette.text }} className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" /> Estilo de Imagem
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {IMAGE_STYLES.map(style => (
+                          <button
+                            key={style.value}
+                            onClick={() => setImageStyle(style.value)}
+                            style={{
+                              borderColor: imageStyle === style.value ? palette.lightBlue : palette.border,
+                              backgroundColor: imageStyle === style.value ? palette.lightBlueBg : "transparent"
+                            }}
+                            className="p-3 rounded-lg border-2 transition-all text-xs font-medium"
+                          >
+                            {style.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Preview & Final Actions */}
+                  <div className="lg:col-span-2 space-y-8">
+                    <div style={{ borderColor: palette.border }} className="border rounded-2xl overflow-hidden shadow-2xl bg-white aspect-video relative flex items-center justify-center p-12">
+                      {/* Live Preview of the selected theme/font */}
+                      <div 
+                        style={{ 
+                          backgroundColor: VISUAL_THEMES.find(t => t.name === selectedTheme)?.colors.bg,
+                          fontFamily: selectedFont,
+                          width: "100%",
+                          height: "100%",
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          padding: "4rem"
                         }}
-                        className="p-4 rounded-xl border-2 transition-all text-center"
                       >
-                        <p className="font-bold">{amount === "low" ? "Mínimo" : amount === "high" ? "Máximo" : "Moderado"}</p>
-                        <p style={{ color: palette.textMuted }} className="text-sm">
-                          {amount === "low" ? "Conciso e direto" : amount === "high" ? "Detalhado e rico" : "Equilibrado"}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Visual Themes */}
-                <div className="space-y-6">
-                  <h3 style={{ color: palette.text }} className="text-xl font-bold flex items-center gap-2">
-                    <Palette className="h-5 w-5" /> Visuais - Tema
-                  </h3>
-                  <p style={{ color: palette.textMuted }} className="text-sm">
-                    Usa um dos nossos temas populares abaixo ou vê mais
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    {VISUAL_THEMES.map(t => (
-                      <button
-                        key={t.name}
-                        onClick={() => setSelectedTheme(t.name)}
-                        style={{
-                          borderColor: selectedTheme === t.name ? palette.lightBlue : palette.border,
-                          backgroundColor: selectedTheme === t.name ? palette.lightBlueBg : "transparent"
-                        }}
-                        className="p-4 rounded-xl border-2 transition-all space-y-2"
-                      >
-                        <div className="space-y-1">
-                          <div className="h-3 rounded w-full" style={{ backgroundColor: t.colors.title }}></div>
-                          <div className="h-2 rounded w-3/4" style={{ backgroundColor: t.colors.body }}></div>
-                          <div className="h-2 rounded w-1/2" style={{ backgroundColor: t.colors.body }}></div>
+                        <div className="w-1/2 flex items-center justify-center pr-8">
+                          <div className="w-full h-full rounded-lg bg-gray-200 animate-pulse flex items-center justify-center">
+                            <ImageIcon className="h-12 w-12 text-gray-400" />
+                          </div>
                         </div>
-                        <p className="text-xs font-bold">{t.name}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Image Settings */}
-                <div className="space-y-6">
-                  <h3 style={{ color: palette.text }} className="text-xl font-bold flex items-center gap-2">
-                    <ImageIcon className="h-5 w-5" /> Fonte da Imagem
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <p style={{ color: palette.textMuted }} className="text-sm font-bold">Estilo de Arte da Imagem</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {IMAGE_STYLES.map(style => (
-                        <button
-                          key={style.value}
-                          onClick={() => setImageStyle(style.value)}
-                          style={{
-                            borderColor: imageStyle === style.value ? palette.lightBlue : palette.border,
-                            backgroundColor: imageStyle === style.value ? palette.lightBlueBg : "transparent"
-                          }}
-                          className="p-3 rounded-lg border-2 transition-all text-sm font-medium"
-                        >
-                          {style.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Keywords */}
-                  <div className="space-y-4">
-                    <p style={{ color: palette.textMuted }} className="text-sm font-bold">
-                      Adicionar Palavras-Chave Extras
-                    </p>
-                    <div className="flex gap-2">
-                      <Input 
-                        value={keywordInput}
-                        onChange={(e) => setKeywordInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && addKeyword()}
-                        placeholder="Ex: sofisticado, minimalista..."
-                        style={{ backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9F9F9", borderColor: palette.border, color: palette.text }}
-                        className="border"
-                      />
-                      <Button onClick={addKeyword} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="hover:opacity-90">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {extraKeywords.map(keyword => (
-                        <div key={keyword} style={{ backgroundColor: palette.lightBlueBg, color: palette.lightBlue }} className="px-3 py-1 rounded-full text-sm flex items-center gap-2">
-                          {keyword}
-                          <button onClick={() => removeKeyword(keyword)} className="hover:opacity-70">×</button>
+                        <div className="w-1/2 flex flex-col justify-center">
+                          <h4 
+                            style={{ color: VISUAL_THEMES.find(t => t.name === selectedTheme)?.colors.title }}
+                            className="text-4xl font-bold mb-6"
+                          >
+                            {mainTopic}
+                          </h4>
+                          <div 
+                            style={{ color: VISUAL_THEMES.find(t => t.name === selectedTheme)?.colors.body }}
+                            className="space-y-3"
+                          >
+                            <div className="h-4 w-full bg-current opacity-20 rounded"></div>
+                            <div className="h-4 w-3/4 bg-current opacity-20 rounded"></div>
+                            <div className="h-4 w-1/2 bg-current opacity-20 rounded"></div>
+                          </div>
                         </div>
-                      ))}
-                      {SUGGESTED_KEYWORDS.filter(k => !extraKeywords.includes(k)).map(keyword => (
-                        <button
-                          key={keyword}
-                          onClick={() => { setExtraKeywords([...extraKeywords, keyword]); }}
-                          style={{ borderColor: palette.border }}
-                          className="px-3 py-1 rounded-full text-sm border hover:opacity-70"
-                        >
-                          + {keyword}
-                        </button>
-                      ))}
+                      </div>
+                      <div className="absolute bottom-4 right-4 bg-black/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">
+                        Pré-visualização do Tema
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-4">
+                        <Button variant="outline" onClick={() => setStep("cards")} style={{ borderColor: palette.border }} className="px-8 h-12">
+                          <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
+                        </Button>
+                        <Button onClick={generateSlides} disabled={loading} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="flex-1 h-12 text-lg font-bold shadow-lg shadow-blue-500/20">
+                          {loading ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Sparkles className="h-5 w-5 mr-2" />}
+                          Criar Apresentação Agora
+                        </Button>
+                      </div>
+                      <p className="text-center text-xs" style={{ color: palette.textMuted }}>
+                        Ao clicar em criar, a IA irá processar todo o conteúdo e gerar as imagens personalizadas para cada slide.
+                      </p>
                     </div>
                   </div>
-                </div>
-
-                {/* Navigation */}
-                <div className="flex gap-4 pt-8">
-                  <Button variant="outline" onClick={() => setStep("cards")} style={{ borderColor: palette.border }} className="hover:opacity-70">
-                    <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
-                  </Button>
-                  <Button onClick={generateSlides} disabled={loading} style={{ backgroundColor: palette.lightBlue, color: isDarkMode ? "#000000" : "#FFFFFF" }} className="flex-1 hover:opacity-90">
-                    {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                    Gerar Apresentação
-                  </Button>
                 </div>
               </div>
             </motion.div>
@@ -828,16 +849,24 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
             >
               <div className="w-full max-w-6xl space-y-6">
                 {/* Main Slide - Professional Template Style */}
-                <div style={{ backgroundColor: "#F5F5F0", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)" }} className="relative overflow-hidden aspect-video flex">
+                <div 
+                  style={{ 
+                    backgroundColor: VISUAL_THEMES.find(t => t.name === selectedTheme)?.colors.bg || "#F5F5F0", 
+                    borderRadius: "16px", 
+                    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)",
+                    fontFamily: selectedFont
+                  }} 
+                  className="relative overflow-hidden aspect-video flex"
+                >
                   {/* Left side: Image/Illustration */}
                   <div className="w-1/2 flex items-center justify-center overflow-hidden">
                     {slides[currentSlide].imageUrl ? (
                       <img src={slides[currentSlide].imageUrl} className="w-full h-full object-cover" alt="" />
                     ) : (
-                      <div style={{ backgroundColor: "#E8E8E0" }} className="w-full h-full flex items-center justify-center">
+                      <div style={{ backgroundColor: "rgba(0,0,0,0.05)" }} className="w-full h-full flex items-center justify-center">
                         <div style={{ color: "#999" }} className="text-center">
-                          <Sparkles className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">Imagem</p>
+                          <Sparkles className="h-12 w-12 mx-auto mb-2 opacity-50 animate-pulse" />
+                          <p className="text-sm">A gerar imagem...</p>
                         </div>
                       </div>
                     )}
@@ -845,12 +874,21 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                   
                   {/* Right side: Content */}
                   <div className="w-1/2 flex flex-col justify-center p-12 md:p-16">
-                    <h2 style={{ color: "#000000" }} className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
+                    <h2 
+                      style={{ color: VISUAL_THEMES.find(t => t.name === selectedTheme)?.colors.title || "#000000" }} 
+                      className="text-3xl md:text-4xl font-bold mb-6 leading-tight"
+                    >
                       {slides[currentSlide].titulo}
                     </h2>
-                    <div style={{ color: "#4A4A4A" }} className="text-base md:text-lg space-y-3 leading-relaxed">
+                    <div 
+                      style={{ color: VISUAL_THEMES.find(t => t.name === selectedTheme)?.colors.body || "#4A4A4A" }} 
+                      className="text-base md:text-lg space-y-3 leading-relaxed"
+                    >
                       {slides[currentSlide].conteudo.split("\\n").map((line, idx) => (
-                        <p key={idx}>{line}</p>
+                        <p key={idx} className="flex gap-2">
+                          <span style={{ color: VISUAL_THEMES.find(t => t.name === selectedTheme)?.colors.accent }}>•</span>
+                          {line}
+                        </p>
                       ))}
                     </div>
                   </div>
@@ -864,9 +902,9 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                     disabled={currentSlide === 0}
                     onClick={() => setCurrentSlide(p => p - 1)}
                     style={{ borderColor: "#DDD", color: "#000" }}
-                    className="hover:bg-gray-100"
+                    className="hover:bg-gray-100 rounded-full h-12 w-12"
                   >
-                    <ChevronLeft className="h-5 w-5" />
+                    <ChevronLeft className="h-6 w-6" />
                   </Button>
 
                   <div className="flex gap-2 flex-wrap justify-center">
@@ -875,7 +913,7 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                         key={i}
                         onClick={() => setCurrentSlide(i)}
                         style={{
-                          backgroundColor: i === currentSlide ? "#4FA3FF" : "#DDD",
+                          backgroundColor: i === currentSlide ? palette.lightBlue : "#DDD",
                           width: i === currentSlide ? "32px" : "8px"
                         }}
                         className="h-2 rounded-full transition-all"
@@ -889,9 +927,9 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                     disabled={currentSlide === slides.length - 1}
                     onClick={() => setCurrentSlide(p => p + 1)}
                     style={{ borderColor: "#DDD", color: "#000" }}
-                    className="hover:bg-gray-100"
+                    className="hover:bg-gray-100 rounded-full h-12 w-12"
                   >
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight className="h-6 w-6" />
                   </Button>
                 </div>
 
@@ -901,9 +939,9 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
                 </div>
 
                 {generatingImages && (
-                  <div style={{ backgroundColor: palette.lightBlueBg, color: palette.lightBlue }} className="flex items-center gap-2 p-4 rounded-lg">
+                  <div style={{ backgroundColor: palette.lightBlueBg, color: palette.lightBlue }} className="flex items-center justify-center gap-2 p-3 rounded-full max-w-xs mx-auto">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">A gerar imagens em alta definição...</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">A gerar visuais HD...</span>
                   </div>
                 )}
               </div>
