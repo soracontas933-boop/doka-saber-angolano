@@ -13,6 +13,7 @@ const MODULE_LIMIT_MAP: Record<ModuloType, keyof typeof PLAN_CONFIGS.gratuito> =
   plano_aula: "limite_planos_aula",
   tfc: "limite_tfc",
   correcao: "limite_trabalhos",
+  apresentacao: "limite_trabalhos",
 };
 
 export function useUsageTracker() {
