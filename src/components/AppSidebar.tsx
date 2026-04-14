@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Home,
   Users,
+  Presentation,
   type LucideIcon, ChartSpline } from
 "lucide-react";
 import { motion } from "framer-motion";
@@ -50,6 +51,7 @@ const navItems: NavItem[] = [
 { to: "/resumo", icon: BookOpen, label: "Resumo" },
 { to: "/questionario", icon: HelpCircle, label: "Questionário" },
 { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
+{ to: "/apresentacao", icon: Presentation, label: "Apresentação" },
 { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
 { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
 { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
