@@ -6,36 +6,33 @@ const navItems = [
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
   { to: "/trabalho", icon: WrapText, label: "Trabalho" },
   { to: "/apresentacao", icon: Presentation, label: "Slides" },
-  { to: "/configuracoes", icon: Settings, label: "Config." },
+  { to: "/configuracoes", icon: Settings, label: "Ajustes" },
 ];
 
 const MobileNav = () => {
   const location = useLocation();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-background border-t border-border">
-      <div className="flex items-center justify-around px-2 py-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-background/80 backdrop-blur-xl border-t border-border/40">
+      <div className="flex items-center justify-around px-4 py-3">
         {navItems.map((item) => {
-          const isActive =
-            location.pathname === item.to ||
-            (item.to === "/home" && location.pathname === "/home") ||
-            (item.to === "/configuracoes" && location.pathname === "/configuracoes");
+          const isActive = location.pathname.startsWith(item.to);
+          
           return (
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-150"
+              className="relative flex flex-col items-center gap-1.5 px-2 py-1 transition-all duration-200 active:scale-90"
             >
-              {isActive && (
-                <div className="absolute -top-0.5 w-5 h-0.5 rounded-full bg-primary" />
-              )}
-              <item.icon
-                className={`h-5 w-5 transition-colors duration-150 ${
-                  isActive ? "text-primary" : "text-muted-foreground"
-                }`}
-              />
+              <div className={`p-1 rounded-full transition-all duration-300 ${isActive ? 'bg-primary/10' : 'bg-transparent'}`}>
+                <item.icon
+                  className={`h-5.5 w-5.5 transition-all duration-300 ${
+                    isActive ? "text-primary stroke-[2.5px]" : "text-muted-foreground stroke-[1.5px]"
+                  }`}
+                />
+              </div>
               <span
-                className={`text-[10px] font-normal transition-colors duration-150 ${
+                className={`text-[10px] font-medium transition-colors duration-300 ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
               >

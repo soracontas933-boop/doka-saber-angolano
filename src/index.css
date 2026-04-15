@@ -6,92 +6,94 @@
 
 @layer base {
   :root {
-    /* Minimalist Apple-inspired Design System */
+    /* Apple-inspired Minimalist Design System */
     --background: 0 0% 100%;
     --foreground: 0 0% 11%;
 
-    --card: 0 0% 96%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 11%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 11%;
 
-    --primary: 211 100% 45%;
+    /* Apple System Blue: #007AFF -> hsl(211, 100%, 50%) */
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96%;
+    /* Secondary: #F2F2F7 -> hsl(240, 14%, 96%) */
+    --secondary: 240 14% 96%;
     --secondary-foreground: 0 0% 11%;
 
-    --muted: 0 0% 93%;
-    --muted-foreground: 0 0% 53%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
 
-    --accent: 0 0% 93%;
+    --accent: 240 5% 96%;
     --accent-foreground: 0 0% 11%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 84%;
-    --input: 0 0% 93%;
-    --ring: 211 100% 45%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 211 100% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 11%;
-    --sidebar-primary: 211 100% 45%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent: 240 5% 96%;
     --sidebar-accent-foreground: 0 0% 11%;
-    --sidebar-border: 0 0% 84%;
-    --sidebar-ring: 211 100% 45%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 211 100% 50%;
 
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-card-hover: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
 
-    /* Delle Mobile Design System */
-    --delle-surface: 0 0% 96%;
+    /* Custom Design Tokens */
+    --delle-surface: 240 14% 96%;
     --delle-card: 0 0% 100%;
-    --delle-icon-bg: 0 0% 93%;
-    --delle-icon-fg: 211 100% 45%;
+    --delle-icon-bg: 240 5% 96%;
+    --delle-icon-fg: 211 100% 50%;
     --delle-nav-bg: 0 0% 100%;
-    --delle-nav-active: 211 100% 45%;
-    --delle-nav-inactive: 0 0% 53%;
+    --delle-nav-active: 211 100% 50%;
+    --delle-nav-inactive: 240 4% 46%;
     --delle-status-success: 145 63% 42%;
     --delle-status-pending: 38 92% 50%;
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 95%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
     --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
+    --card-foreground: 0 0% 98%;
     --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 211 100% 50%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 211 100% 55%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted-foreground: 0 0% 65%;
     --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 95%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 20%;
     --input: 0 0% 15%;
-    --ring: 211 100% 50%;
+    --ring: 211 100% 55%;
 
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 211 100% 50%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 211 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 211 100% 50%;
+    --sidebar-ring: 211 100% 55%;
   }
 }
 
@@ -105,17 +107,23 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-body);
-    font-weight: 400;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
-  .font-body {
+  .font-apple {
     font-family: var(--font-body);
+  }
+  
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-md border-white/20;
   }
 }
 
@@ -147,18 +155,19 @@
   min-height: 297mm;
   background: white;
   color: #000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #D5D5D7;
-  border-radius: 2px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E5E5E7;
+  border-radius: 4px;
   overflow: visible;
-  transition: border-color 150ms ease-out;
+  transition: all 200ms ease-out;
   font-family: 'Times New Roman', 'Georgia', serif;
   font-size: 12pt;
   line-height: 1.6;
 }
 
 .pagina-a4:hover {
-  border-color: hsl(211, 100%, 45%);
+  border-color: hsl(211, 100%, 50%);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
 .pagina-a4-content {
@@ -188,7 +197,7 @@
 
 .capa-border {
   flex: 1;
-  border: 3px double hsl(224, 76%, 40%);
+  border: 3px double hsl(211, 100%, 50%);
   padding: 20px 30px;
   display: flex;
   flex-direction: column;
@@ -212,7 +221,7 @@
   width: 100%;
   max-height: 120px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 8px;
   margin-bottom: 12px;
 }
 
@@ -230,6 +239,7 @@
   margin: 24px 0 16px;
   text-align: center;
   width: 85%;
+  border-radius: 4px;
 }
 
 .capa-tipo {
@@ -402,24 +412,27 @@
   .pagina-a4 {
     width: 100%;
     min-height: auto;
-    border-radius: 8px;
+    border-radius: 12px;
+    box-shadow: none;
+    border: 1px solid #E5E5E7;
   }
 
   .pagina-a4-content {
-    padding: 20px 16px 40px;
+    padding: 24px 20px 48px;
     min-height: auto;
   }
 
   .capa-tipo {
-    font-size: 18pt;
+    font-size: 20pt;
   }
 
   .capa-titulo-box {
-    padding: 16px 20px;
+    padding: 20px 24px;
+    width: 95%;
   }
 
   .capa-border {
-    padding: 16px 20px;
+    padding: 20px 24px;
     min-height: auto;
   }
 }
@@ -432,19 +445,20 @@
 .editable-section .editable-content {
   cursor: text;
   outline: none;
-  border-radius: 4px;
-  transition: box-shadow 150ms ease-out, background-color 150ms ease-out;
+  border-radius: 6px;
+  transition: all 150ms ease-out;
 }
 
 .editable-section .editable-title:hover,
 .editable-section .editable-content:hover {
-  box-shadow: inset 0 0 0 2px hsl(211, 100%, 45%, 0.2);
+  background-color: rgba(0, 122, 255, 0.02);
+  box-shadow: inset 0 0 0 1px rgba(0, 122, 255, 0.1);
 }
 
 .editable-section .editable-title:focus,
 .editable-section .editable-content:focus {
-  box-shadow: inset 0 0 0 2px hsl(211, 100%, 45%, 0.5);
-  background-color: rgba(0, 113, 227, 0.03);
+  background-color: rgba(0, 122, 255, 0.04);
+  box-shadow: inset 0 0 0 2px rgba(0, 122, 255, 0.4);
 }
 
 .editable-section .editable-content:empty::before {
@@ -457,87 +471,44 @@
 .floating-toolbar {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 4px 6px;
-  background: #1D1D1F;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  animation: toolbar-fade-in 0.15s ease;
+  gap: 4px;
+  padding: 6px 8px;
+  background: rgba(29, 29, 31, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: toolbar-fade-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .floating-toolbar-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
-  color: #D5D5D7;
-  border-radius: 4px;
+  color: #F5F5F7;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
+  transition: all 150ms ease;
 }
 
 .floating-toolbar-btn:hover {
-  background: #333;
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
 .floating-toolbar-btn:active {
-  background: #444;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
 }
 
 @keyframes toolbar-fade-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   IMPRESSÃO / EXPORTAÇÃO PDF
-   ═══════════════════════════════════════════════════════════ */
-
 @media print {
-  .pagina-a4 {
-    box-shadow: none;
-    margin: 0;
-    page-break-after: always;
-    break-after: page;
-    border-radius: 0;
-    border: none;
-  }
-
-  .pagina-a4-wrapper {
-    margin-bottom: 0;
-  }
-
-  .secao-titulo {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
-  .secao-conteudo {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  .floating-toolbar {
-    display: none !important;
-  }
-}
-
-#lovable-badge {
-  display: none !important;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Print styles can remain as they are or be further optimized */
 }

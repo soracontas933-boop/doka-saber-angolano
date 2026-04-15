@@ -52,11 +52,11 @@ interface HeroImage {
 
 /* ── animated title ── */
 const AnimatedTitle = () => {
-  const line1 = "Aprenda mais,";
-  const line2 = "estude melhor";
-
-  return (
-    <h1 className="text-3xl sm:text-4xl md:text-6xl font-display font-extrabold tracking-tight leading-[1.1] mb-4 sm:mb-5">
+	  const line1 = "Aprenda mais,";
+	  const line2 = "estude melhor";
+	
+	  return (
+	    <h1 className="text-4xl sm:text-5xl md:text-7xl font-apple font-bold tracking-tight leading-[1.05] mb-6 sm:mb-8 text-foreground">
       <span className="block">
         {line1.split("").map((letter, i) =>
         <motion.span
@@ -197,10 +197,10 @@ const HomePage = () => {
           transition={{ duration: 0.5 }}
           className="relative z-[20]">
           
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6 border border-primary/20">
-            <Sparkles className="h-3.5 w-3.5" />
-            Plataforma educacional angolana com IA
-          </div>
+<div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-primary text-xs font-semibold mb-8 border border-border/40 backdrop-blur-md">
+	            <Sparkles className="h-3.5 w-3.5" />
+	            Plataforma educacional angolana com IA
+	          </div>
 
           <AnimatedTitle />
 
