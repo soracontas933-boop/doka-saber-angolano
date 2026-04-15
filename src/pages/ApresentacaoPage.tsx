@@ -384,7 +384,7 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
   const handleSave = async () => {
     if (slides.length === 0) return;
     try {
-      await saveProject("trabalho", `Apresentação - ${mainTopic}`, JSON.stringify(slides));
+      await saveProject("trabalho" as any, `Apresentação - ${mainTopic}`, { slides } as Record<string, unknown>);
       toast.success("Apresentação guardada com sucesso!");
     } catch (err) {
       toast.error("Erro ao guardar a apresentação.");
