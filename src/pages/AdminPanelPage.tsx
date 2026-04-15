@@ -28,6 +28,7 @@ import AdminPaymentsTab from "@/components/AdminPaymentsTab";
 import AdminMastersTab from "@/components/AdminMastersTab";
 import AdminHeroTab from "@/components/AdminHeroTab";
 import AdminButtonCoversTab from "@/components/AdminButtonCoversTab";
+import AdminLandingTab from "@/components/AdminLandingTab";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -668,9 +669,11 @@ const AdminPanelPage = () => {
             Masters
           </TabsTrigger>
           <TabsTrigger value="button-covers" className="gap-2">
-            <Smartphone className="h-4 w-4" />
-            Capas Botões
-          </TabsTrigger>
+                <Smartphone className="h-4 w-4" /> Capas Mobile
+              </TabsTrigger>
+              <TabsTrigger value="landing" className="gap-2">
+                <Globe className="h-4 w-4" /> Landing Page
+              </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -900,9 +903,12 @@ const AdminPanelPage = () => {
         </TabsContent>
 
         {/* Button Covers Tab */}
-        <TabsContent value="button-covers">
-          <AdminButtonCoversTab />
-        </TabsContent>
+<TabsContent value="button-covers">
+            <AdminButtonCoversTab />
+          </TabsContent>
+          <TabsContent value="landing">
+            <AdminLandingTab />
+          </TabsContent>
       </Tabs>
 
       {/* User Management Dialog */}

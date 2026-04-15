@@ -1,6 +1,25 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FileText, BookOpen, HelpCircle, ClipboardList, ArrowRight, Sparkles, Zap, Shield, Download, Check, Crown, Moon, Sun, Lightbulb, GraduationCap, Users, Star, ChevronRight } from "lucide-react";
+import { 
+  FileText, 
+  BookOpen, 
+  HelpCircle, 
+  ClipboardList, 
+  ArrowRight, 
+  Sparkles, 
+  Zap, 
+  Shield, 
+  Download, 
+  Check, 
+  Crown, 
+  Moon, 
+  Sun, 
+  Lightbulb, 
+  GraduationCap, 
+  Users, 
+  Star, 
+  ChevronRight 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import DelleLogo from "@/components/DelleLogo";
@@ -10,38 +29,6 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingPaths } from "@/components/ui/background-paths";
-import sobreEstudantes from "@/assets/sobre-estudantes.jpg";
-import sobreProfessor from "@/assets/sobre-professor.jpg";
-
-/* ── static data ── */
-const features = [
-{ icon: FileText, title: "Trabalhos Escolares", desc: "Gere trabalhos completos com capa, índice, introdução e conclusão no formato angolano." },
-{ icon: BookOpen, title: "Resumos Inteligentes", desc: "Transforme fotos do caderno em resumos estruturados e flashcards de estudo." },
-{ icon: HelpCircle, title: "Questionários", desc: "Crie questionários interativos com correção automática e gabaritos." },
-{ icon: ClipboardList, title: "Planos de Aula", desc: "Planos no formato INIDE, prontos para entregar e usar na sala de aula." }];
-
-
-const stats = [
-{ icon: Sparkles, label: "Conteúdo com IA", value: "Inteligente" },
-{ icon: Zap, label: "Geração rápida", value: "Instantâneo" },
-{ icon: Shield, label: "Formato angolano", value: "Certificado" }];
-
-
-const voceSabia = [
-{ icon: Lightbulb, fact: "Estudantes que usam resumos estruturados memorizam até 40% mais conteúdo.", highlight: "40% mais" },
-{ icon: GraduationCap, fact: "Professores poupam em média 3 horas por semana usando planos de aula automáticos.", highlight: "3 horas" },
-{ icon: Users, fact: "Trabalhos em grupo com ferramentas digitais têm 60% mais chances de ter nota máxima.", highlight: "60% mais" },
-{ icon: Star, fact: "Angola tem mais de 10 milhões de estudantes — a Delle foi feita para cada um deles.", highlight: "10 milhões" }];
-
-
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-};
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
-};
 
 /* ── hero image types ── */
 interface HeroImage {
@@ -52,43 +39,41 @@ interface HeroImage {
 
 /* ── animated title ── */
 const AnimatedTitle = () => {
-	  const line1 = "Aprenda mais,";
-	  const line2 = "estude melhor";
-	
-	  return (
-	    <h1 className="text-4xl sm:text-5xl md:text-7xl font-apple font-bold tracking-tight leading-[1.05] mb-6 sm:mb-8 text-foreground">
+  const line1 = "Aprenda mais,";
+  const line2 = "estude melhor";
+
+  return (
+    <h1 className="text-4xl sm:text-5xl md:text-7xl font-apple font-bold tracking-tight leading-[1.05] mb-6 sm:mb-8 text-foreground">
       <span className="block">
         {line1.split("").map((letter, i) =>
-        <motion.span
-          key={`l1-${i}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 + i * 0.03, duration: 0.3 }}
-          className="inline-block text-foreground">
-          
+          <motion.span
+            key={`l1-${i}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + i * 0.03, duration: 0.3 }}
+            className="inline-block text-foreground">
             {letter === " " ? "\u00A0" : letter}
           </motion.span>
         )}
       </span>
       <span className="block">
         {line2.split("").map((letter, i) =>
-        <motion.span
-          key={`l2-${i}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 + (line1.length + i) * 0.03, duration: 0.3 }}
-          className="inline-block bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-          
+          <motion.span
+            key={`l2-${i}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + (line1.length + i) * 0.03, duration: 0.3 }}
+            className="inline-block bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
             {letter === " " ? "\u00A0" : letter}
           </motion.span>
         )}
       </span>
-    </h1>);
-
+    </h1>
+  );
 };
 
 /* ── Hero carousel / single ── */
-const HeroCarousel = ({ images }: {images: HeroImage[];}) => {
+const HeroCarousel = ({ images }: { images: HeroImage[]; }) => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -112,30 +97,27 @@ const HeroCarousel = ({ images }: {images: HeroImage[];}) => {
           loading="eager"
           decoding="async"
           fetchPriority="high" />
-        
       </AnimatePresence>
       <div className="absolute inset-0 bg-black/70 z-[10]" />
       {images.length > 1 &&
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
           {images.map((_, i) =>
-        <button
-          key={i}
-          onClick={() => setCurrent(i)}
-          className={`w-2.5 h-2.5 rounded-full transition-all ${i === current ? "bg-primary scale-125" : "bg-white/40"}`} />
-
-        )}
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${i === current ? "bg-primary scale-125" : "bg-white/40"}`} />
+          )}
         </div>
       }
-    </div>);
-
+    </div>
+  );
 };
 
-const HeroSingle = ({ image }: {image: HeroImage;}) =>
-<div className="absolute inset-0 overflow-hidden z-[5]">
+const HeroSingle = ({ image }: { image: HeroImage; }) =>
+  <div className="absolute inset-0 overflow-hidden z-[5]">
     <img src={image.url} alt="Hero" className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
     <div className="absolute inset-0 bg-black/70 z-[10] mb-[10px]" />
   </div>;
-
 
 /* ── page ── */
 const HomePage = () => {
@@ -144,18 +126,28 @@ const HomePage = () => {
   const { theme, toggleTheme } = useTheme();
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [carouselEnabled, setCarouselEnabled] = useState(false);
+  const [sections, setSections] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
-      const [imgRes, settingsRes] = await Promise.all([
-      supabase.from("hero_images").select("id, url, ordem").eq("ativo", true).order("ordem", { ascending: true }),
-      supabase.from("site_settings").select("valor").eq("chave", "hero_carousel").single()]
-      );
+      const [imgRes, settingsRes, sectionsRes] = await Promise.all([
+        supabase.from("hero_images").select("id, url, ordem").eq("ativo", true).order("ordem", { ascending: true }),
+        supabase.from("site_settings").select("valor").eq("chave", "hero_carousel").single(),
+        supabase.from("landing_sections").select("*").eq("ativo", true).order("ordem", { ascending: true })
+      ]);
+
       setHeroImages(imgRes.data as HeroImage[] ?? []);
       if (settingsRes.data) setCarouselEnabled((settingsRes.data as any).valor === "true");
+      setSections(sectionsRes.data || []);
     };
     load();
   }, []);
+
+  const renderIcon = (iconName: string) => {
+    const icons: any = { FileText, BookOpen, HelpCircle, ClipboardList, Lightbulb, GraduationCap, Users, Star, Zap, Shield, Sparkles, ChevronRight, ArrowRight };
+    const IconComp = icons[iconName] || HelpCircle;
+    return <IconComp className="h-6 w-6 text-primary" />;
+  };
 
   const hasHeroImages = heroImages.length > 0;
 
@@ -169,7 +161,7 @@ const HomePage = () => {
             {theme === "dark" ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
           {canInstall &&
-          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={install}>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={install}>
               <Download className="h-4 w-4" /> Baixar App
             </Button>
           }
@@ -186,9 +178,9 @@ const HomePage = () => {
         </div>
 
         {hasHeroImages && (
-        carouselEnabled && heroImages.length > 1 ?
-        <HeroCarousel images={heroImages} /> :
-        <HeroSingle image={heroImages[0]} />)
+          carouselEnabled && heroImages.length > 1 ?
+            <HeroCarousel images={heroImages} /> :
+            <HeroSingle image={heroImages[0]} />)
         }
 
         <motion.div
@@ -196,16 +188,16 @@ const HomePage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="relative z-[20]">
-          
-<div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-primary text-xs font-semibold mb-8 border border-border/40 backdrop-blur-md">
-	            <Sparkles className="h-3.5 w-3.5" />
-	            Plataforma educacional angolana com IA
-	          </div>
+
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-primary text-xs font-semibold mb-8 border border-border/40 backdrop-blur-md">
+            <Sparkles className="h-3.5 w-3.5" />
+            Plataforma educacional angolana com IA
+          </div>
 
           <AnimatedTitle />
 
-          <p className="sm:text-lg md:text-xl max-w-2xl mx-auto mb-6 sm:mb-8 leading-relaxed px-2 text-sm text-[#a7abb4]">Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aula 
-
+          <p className="sm:text-lg md:text-xl max-w-2xl mx-auto mb-6 sm:mb-8 leading-relaxed px-2 text-sm text-[#a7abb4]">
+            Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aula
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -224,9 +216,12 @@ const HomePage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
           className="relative z-[20] grid grid-cols-3 gap-4 mt-16 max-w-lg mx-auto">
-          
-          {stats.map((s) =>
-          <div key={s.label} className="text-center">
+          {[
+            { icon: Sparkles, label: "Conteúdo com IA", value: "Inteligente" },
+            { icon: Zap, label: "Geração rápida", value: "Instantâneo" },
+            { icon: Shield, label: "Formato angolano", value: "Certificado" }
+          ].map((s) =>
+            <div key={s.label} className="text-center">
               <s.icon className="h-5 w-5 text-primary mx-auto mb-1.5" />
               <p className="text-sm font-semibold text-foreground">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -235,161 +230,137 @@ const HomePage = () => {
         </motion.div>
       </section>
 
-      {/* Sobre / About */}
-      <section className="px-4 sm:px-6 md:px-12 py-14 sm:py-20 bg-card border-t border-border overflow-hidden">
-        <div className="max-w-6xl mx-auto space-y-16">
-          {/* Row 1: Text + Image */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="space-y-5">
-              <Badge variant="outline" className="text-primary border-primary/30">Sobre a Delle</Badge>
-              <h2 className="text-2xl md:text-4xl font-display font-bold text-foreground leading-tight">
-                A primeira plataforma educacional feita <span className="text-primary">em Angola, para Angola</span>
-              </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                A Delle nasceu da necessidade de modernizar o ensino angolano. Combinamos inteligência artificial com o currículo nacional para criar ferramentas que realmente fazem diferença na vida de estudantes e professores.
-              </p>
-              <Button variant="outline" className="gap-2" onClick={() => navigate("/auth")}>
-                Conhecer mais <ChevronRight className="h-4 w-4" />
-              </Button>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 40, scale: 0.9 }}
-              whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.15 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="rounded-2xl overflow-hidden shadow-xl border border-border">
-                <img src={sobreEstudantes} alt="Estudantes angolanos a aprender com tecnologia" loading="lazy" width={800} height={600} className="w-full h-auto object-cover" />
-              </div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                viewport={{ once: true }}
-                className="absolute -bottom-4 -left-4 bg-primary text-primary-foreground px-4 py-2 rounded-xl shadow-lg text-sm font-semibold"
-              >
-                🇦🇴 Feito em Angola
-              </motion.div>
-            </motion.div>
-          </div>
+      {/* Dynamic Sections */}
+      {sections.map((section, sIdx) => {
+        const style = section.conteudo.style || {};
+        const animation = style.animation || "fade-up";
 
-          {/* Row 2: Image + Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -40, scale: 0.9 }}
-              whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 0.7 }}
-              viewport={{ once: true }}
-              className="relative order-2 md:order-1"
-            >
-              <div className="rounded-2xl overflow-hidden shadow-xl border border-border">
-                <img src={sobreProfessor} alt="Professor angolano usando tecnologia na sala de aula" loading="lazy" width={800} height={600} className="w-full h-auto object-cover" />
-              </div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                viewport={{ once: true }}
-                className="absolute -bottom-4 -right-4 bg-card text-foreground px-4 py-2 rounded-xl shadow-lg text-sm font-semibold border border-border"
-              >
-                <GraduationCap className="inline h-4 w-4 mr-1 text-primary" /> Para professores
-              </motion.div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              viewport={{ once: true }}
-              className="space-y-5 order-1 md:order-2"
-            >
-              <p className="text-muted-foreground leading-relaxed">
-                Desde trabalhos escolares no formato ABNT/INIDE até planos de aula completos, cada funcionalidade foi pensada para poupar tempo e melhorar a qualidade do trabalho académico.
-              </p>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { value: "5+", label: "Ferramentas IA" },
-                  { value: "24/7", label: "Disponível" },
-                  { value: "100%", label: "Formato angolano" },
-                  { value: "0 Kz", label: "Para começar" },
-                ].map((stat, i) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                    viewport={{ once: true }}
-                    className="text-center p-4 bg-background/80 rounded-2xl border border-border"
-                  >
-                    <p className="text-2xl md:text-3xl font-display font-bold text-primary">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-                  </motion.div>
+        const getAnimationProps = (index: number) => {
+          if (animation === "fade-up") return { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, transition: { delay: index * 0.1 } };
+          if (animation === "fade-in") return { initial: { opacity: 0 }, whileInView: { opacity: 1 }, transition: { delay: index * 0.1 } };
+          if (animation === "slide-left") return { initial: { opacity: 0, x: -40 }, whileInView: { opacity: 1, x: 0 }, transition: { delay: index * 0.1 } };
+          if (animation === "slide-right") return { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, transition: { delay: index * 0.1 } };
+          if (animation === "zoom-in") return { initial: { opacity: 0, scale: 0.9 }, whileInView: { opacity: 1, scale: 1 }, transition: { delay: index * 0.1 } };
+          return { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 } };
+        };
+
+        const bgClass = style.bg === "card" ? "bg-card" : style.bg === "primary" ? "bg-primary/5" : style.bg === "muted" ? "bg-muted/30" : "bg-background";
+        const textAlignClass = style.textAlign === "center" ? "text-center" : style.textAlign === "right" ? "text-right" : "text-left";
+
+        if (section.tipo === 'sobre') {
+          return (
+            <section key={section.id} className={`px-4 sm:px-6 md:px-12 py-14 sm:py-20 border-t border-border overflow-hidden ${bgClass}`}>
+              <div className="max-w-6xl mx-auto space-y-16">
+                {section.conteudo.rows?.map((row: any, rIdx: number) => (
+                  <div key={rIdx} className={`grid grid-cols-1 md:grid-cols-2 gap-10 items-center ${row.reverse ? 'md:flex-row-reverse' : ''}`}>
+                    <motion.div
+                      {...getAnimationProps(0)}
+                      viewport={{ once: true }}
+                      className={`space-y-5 ${row.reverse ? 'md:order-2' : 'md:order-1'} ${textAlignClass}`}
+                    >
+                      {row.badge && <Badge variant="outline" className="text-primary border-primary/30">{row.badge}</Badge>}
+                      <h2 className="text-2xl md:text-4xl font-display font-bold text-foreground leading-tight">
+                        {row.title}
+                      </h2>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {row.text}
+                      </p>
+                      <Button variant="outline" className="gap-2" onClick={() => navigate("/auth")}>
+                        Conhecer mais <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </motion.div>
+                    <motion.div
+                      {...getAnimationProps(1)}
+                      viewport={{ once: true }}
+                      className={`relative ${row.reverse ? 'md:order-1' : 'md:order-2'}`}
+                    >
+                      <div className="rounded-2xl overflow-hidden shadow-xl border border-border aspect-video bg-muted/20">
+                        <img 
+                          src={row.image} 
+                          alt={row.title} 
+                          loading="lazy" 
+                          className={`w-full h-full ${style.imageFit === 'contain' ? 'object-contain' : 'object-cover'}`} 
+                        />
+                      </div>
+                    </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+            </section>
+          );
+        }
 
-      {/* Features */}
-      <section id="funcionalidades" className="px-4 sm:px-6 md:px-12 py-14 sm:py-20 bg-background">
-        <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
-            <Badge variant="outline" className="text-primary border-primary/30 mb-4">Funcionalidades</Badge>
-            <h2 className="text-2xl md:text-3xl font-display font-bold mb-3 text-foreground">Tudo o que precisa, num só lugar</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">Ferramentas inteligentes feitas para estudantes e professores angolanos.</p>
-          </motion.div>
-          <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {features.map((f) =>
-            <motion.div key={f.title} variants={item} className="group flex gap-4 p-5 rounded-2xl border border-border bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-                  <f.icon className="h-5 w-5 text-primary-foreground" />
+        if (section.tipo === 'funcionalidades') {
+          return (
+            <section key={section.id} id="funcionalidades" className={`px-4 sm:px-6 md:px-12 py-14 sm:py-20 relative overflow-hidden ${bgClass}`}>
+              <div className="max-w-6xl mx-auto relative z-10">
+                <div className={`mb-12 sm:mb-16 ${textAlignClass}`}>
+                  <h2 className="text-3xl sm:text-4xl font-display font-bold text-foreground mb-4">{section.titulo}</h2>
+                  <p className="text-muted-foreground max-w-2xl mx-auto">Ferramentas desenhadas especificamente para o sistema de ensino angolano.</p>
                 </div>
-                <div>
-                  <h3 className="font-display font-semibold text-foreground mb-1">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-        </div>
-      </section>
 
-      {/* Você Sabia? */}
-      <section className="px-4 sm:px-6 md:px-12 py-14 sm:py-20 bg-card border-t border-border">
-        <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
-            <Badge variant="outline" className="text-primary border-primary/30 mb-4">💡 Você Sabia?</Badge>
-            <h2 className="text-2xl md:text-3xl font-display font-bold mb-3 text-foreground">Factos que vão te convencer</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">Descubra porque milhares de estudantes já escolheram a Delle.</p>
-          </motion.div>
-          <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {voceSabia.map((v, i) =>
-            <motion.div
-              key={i}
-              variants={item}
-              className="relative overflow-hidden rounded-2xl border border-border bg-background p-6 hover:border-primary/30 transition-all duration-300">
-              
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <v.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-foreground leading-relaxed">
-                      {v.fact.split(v.highlight).map((part, pi, arr) =>
-                    <span key={pi}>
-                          {part}
-                          {pi < arr.length - 1 && <span className="font-bold text-primary">{v.highlight}</span>}
-                        </span>
-                    )}
-                    </p>
-                  </div>
+                <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${style.columns || 4} gap-6`}>
+                  {section.conteudo.items?.map((f: any, i: number) => (
+                    <motion.div
+                      key={i}
+                      {...getAnimationProps(i)}
+                      viewport={{ once: true }}
+                      whileHover={{ y: -5 }}
+                      className="p-6 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all group"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        {renderIcon(f.icon)}
+                      </div>
+                      <h3 className="text-lg font-bold mb-2 text-foreground">{f.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                    </motion.div>
+                  ))}
                 </div>
-              </motion.div>
-            )}
-          </motion.div>
-        </div>
-      </section>
+              </div>
+            </section>
+          );
+        }
+
+        if (section.tipo === 'voce-sabia') {
+          return (
+            <section key={section.id} className={`px-4 sm:px-6 md:px-12 py-14 sm:py-20 border-y border-border ${bgClass}`}>
+              <div className="max-w-6xl mx-auto">
+                <div className={`flex items-center gap-3 mb-10 ${style.textAlign === 'center' ? 'justify-center' : ''}`}>
+                  <div className="p-2 rounded-lg bg-primary/20">
+                    <Lightbulb className="h-6 w-6 text-primary" />
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">{section.titulo}</h2>
+                </div>
+
+                <div className={`grid grid-cols-1 md:grid-cols-${style.columns || 2} gap-6`}>
+                  {section.conteudo.items?.map((v: any, i: number) => (
+                    <motion.div
+                      key={i}
+                      {...getAnimationProps(i)}
+                      viewport={{ once: true }}
+                      className="flex gap-4 p-5 rounded-2xl bg-card border border-border/50"
+                    >
+                      <div className="mt-1">
+                        {renderIcon(v.icon)}
+                      </div>
+                      <p className={`text-sm sm:text-base text-muted-foreground leading-relaxed ${textAlignClass}`}>
+                        {v.fact.split(v.highlight).map((part: string, j: number, arr: any[]) => (
+                          <span key={j}>
+                            {part}
+                            {j < arr.length - 1 && <span className="text-primary font-bold">{v.highlight}</span>}
+                          </span>
+                        ))}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        return null;
+      })}
 
       {/* Planos */}
       <section id="planos" className="px-4 sm:px-6 md:px-12 py-14 sm:py-20 bg-background">
@@ -399,13 +370,20 @@ const HomePage = () => {
             <h2 className="text-2xl md:text-3xl font-display font-bold mb-3 text-foreground">Planos & Preços</h2>
             <p className="text-muted-foreground max-w-md mx-auto">Escolha o plano ideal para o seu nível de estudo.</p>
           </motion.div>
-          <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-            {(["gratuito", "basico", "intermedio", "profissional", "premium"] as PlanKey[]).map((key) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+            {(["gratuito", "basico", "intermedio", "profissional", "premium"] as PlanKey[]).map((key, i) => {
               const cfg = PLAN_CONFIGS[key];
               const isPopular = key === "intermedio";
               const fmt = (v: number) => v === -1 ? "∞" : v === 0 ? "—" : String(v);
               return (
-                <motion.div key={key} variants={item} className={`relative flex flex-col rounded-2xl border p-5 transition-all duration-300 ${isPopular ? "border-primary bg-primary/5 shadow-lg scale-[1.02]" : "border-border bg-card hover:shadow-lg hover:border-primary/20"}`}>
+                <motion.div 
+                  key={key} 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  viewport={{ once: true }}
+                  className={`relative flex flex-col rounded-2xl border p-5 transition-all duration-300 ${isPopular ? "border-primary bg-primary/5 shadow-lg scale-[1.02]" : "border-border bg-card hover:shadow-lg hover:border-primary/20"}`}
+                >
                   {isPopular && <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px]">Popular</Badge>}
                   {key === "premium" && <Crown className="h-4 w-4 text-primary mb-1" />}
                   <h3 className="font-display font-bold text-foreground">{cfg.nome}</h3>
@@ -424,10 +402,10 @@ const HomePage = () => {
                   <Button size="sm" variant={isPopular ? "default" : "outline"} className="mt-4 w-full" onClick={() => navigate("/auth")}>
                     {cfg.preco === 0 ? "Começar grátis" : "Escolher plano"}
                   </Button>
-                </motion.div>);
-
+                </motion.div>
+              );
             })}
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -448,21 +426,16 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="px-6 md:px-12 py-8 border-t border-border bg-card">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <DelleLogo size={28} />
-          <p className="text-xs text-muted-foreground">© 2026 Delle — Plataforma Educacional Angolana. Todos os direitos reservados.</p>
+          <DelleLogo size={24} />
+          <p className="text-xs text-muted-foreground">© 2026 Delle. Todos os direitos reservados.</p>
+          <div className="flex gap-4">
+            <Button variant="link" size="sm" className="text-xs text-muted-foreground h-auto p-0">Termos</Button>
+            <Button variant="link" size="sm" className="text-xs text-muted-foreground h-auto p-0">Privacidade</Button>
+          </div>
         </div>
       </footer>
-
-      {/* Mobile install button - fixed */}
-      {canInstall &&
-      <div className="sm:hidden fixed bottom-4 left-4 right-4 z-50">
-          <Button className="w-full gap-2 bg-primary shadow-lg" size="lg" onClick={install}>
-            <Download className="h-5 w-5" /> Baixar App
-          </Button>
-        </div>
-      }
-    </div>);
-
+    </div>
+  );
 };
 
 export default HomePage;
