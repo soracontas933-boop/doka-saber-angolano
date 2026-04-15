@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,94 +6,92 @@
 
 @layer base {
   :root {
-    /* Light Mode: White background, Light Blue accents, Black text/details */
+    /* Minimalist Apple-inspired Design System */
     --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
+    --foreground: 0 0% 11%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card: 0 0% 96%;
+    --card-foreground: 0 0% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover-foreground: 0 0% 11%;
 
-    --primary: 207 89% 48%;
+    --primary: 211 100% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 0%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 11%;
 
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 53%;
 
-    --accent: 207 89% 60%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 0 0% 93%;
+    --accent-foreground: 0 0% 11%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 96%;
-    --ring: 207 89% 48%;
+    --border: 0 0% 84%;
+    --input: 0 0% 93%;
+    --ring: 211 100% 45%;
 
-    --radius: 1.3rem;
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 207 89% 48%;
+    --sidebar-foreground: 0 0% 11%;
+    --sidebar-primary: 211 100% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 207 89% 60%;
-    --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 207 89% 48%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 11%;
+    --sidebar-border: 0 0% 84%;
+    --sidebar-ring: 211 100% 45%;
 
-    --font-display: 'Poppins', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-    --shadow-card-hover: 0 10px 25px -5px rgba(29, 161, 242, 0.1), 0 8px 10px -6px rgba(29, 161, 242, 0.05);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-card-hover: 0 1px 3px rgba(0, 0, 0, 0.08);
 
     /* Delle Mobile Design System */
-    --delle-surface: 200 27% 97%;
+    --delle-surface: 0 0% 96%;
     --delle-card: 0 0% 100%;
-    --delle-icon-bg: 212 55% 93%;
-    --delle-icon-fg: 204 88% 53%;
+    --delle-icon-bg: 0 0% 93%;
+    --delle-icon-fg: 211 100% 45%;
     --delle-nav-bg: 0 0% 100%;
-    --delle-nav-active: 204 88% 53%;
-    --delle-nav-inactive: 210 4% 46%;
+    --delle-nav-active: 211 100% 45%;
+    --delle-nav-inactive: 0 0% 53%;
     --delle-status-success: 145 63% 42%;
     --delle-status-pending: 38 92% 50%;
   }
 
   .dark {
-    /* Dark Mode: Black background, White text, Light Blue accents */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 0%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 207 89% 60%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 100%;
-    --secondary-foreground: 0 0% 0%;
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 60%;
-    --accent: 207 89% 48%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 95%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;
-    --input: 0 0% 12%;
-    --ring: 207 89% 60%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 211 100% 50%;
 
     --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 207 89% 60%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 207 89% 48%;
-    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 211 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 207 89% 60%;
+    --sidebar-ring: 211 100% 50%;
   }
 }
 
@@ -105,17 +103,17 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
+    font-weight: 400;
   }
 }
 
 @layer utilities {
-  .font-display {
-    font-family: var(--font-display);
-  }
   .font-body {
     font-family: var(--font-body);
   }
@@ -137,31 +135,30 @@
   padding: 1rem 0;
 }
 
-/* Wrapper da página */
 .pagina-a4-wrapper {
   display: flex;
   justify-content: center;
   width: 100%;
 }
 
-/* Folha A4 simulada */
 .pagina-a4 {
   position: relative;
   width: 210mm;
   min-height: 297mm;
   background: white;
   color: #000;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #D5D5D7;
   border-radius: 2px;
   overflow: visible;
-  transition: box-shadow 0.3s ease;
+  transition: border-color 150ms ease-out;
   font-family: 'Times New Roman', 'Georgia', serif;
   font-size: 12pt;
   line-height: 1.6;
 }
 
 .pagina-a4:hover {
-  box-shadow: 0 8px 32px rgba(30, 64, 175, 0.18), 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: hsl(211, 100%, 45%);
 }
 
 .pagina-a4-content {
@@ -171,13 +168,12 @@
   word-wrap: break-word;
 }
 
-/* Número de página */
 .pagina-a4-numero {
   position: absolute;
   bottom: 12mm;
   right: 20mm;
   font-size: 10pt;
-  color: #555;
+  color: #86868B;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -298,7 +294,7 @@
   margin-top: auto;
   padding-top: 20px;
   font-size: 10pt;
-  color: #333;
+  color: #86868B;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -391,10 +387,9 @@
   margin-left: 2em;
 }
 
-/* Citações académicas inline */
 .citacao-inline {
   font-size: 0.75em;
-  color: #555;
+  color: #86868B;
   font-style: italic;
   letter-spacing: 0.01em;
 }
@@ -438,23 +433,23 @@
   cursor: text;
   outline: none;
   border-radius: 4px;
-  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: box-shadow 150ms ease-out, background-color 150ms ease-out;
 }
 
 .editable-section .editable-title:hover,
 .editable-section .editable-content:hover {
-  box-shadow: inset 0 0 0 2px hsl(217, 91%, 60%, 0.2);
+  box-shadow: inset 0 0 0 2px hsl(211, 100%, 45%, 0.2);
 }
 
 .editable-section .editable-title:focus,
 .editable-section .editable-content:focus {
-  box-shadow: inset 0 0 0 2px hsl(217, 91%, 60%, 0.5);
-  background-color: rgba(59, 130, 246, 0.03);
+  box-shadow: inset 0 0 0 2px hsl(211, 100%, 45%, 0.5);
+  background-color: rgba(0, 113, 227, 0.03);
 }
 
 .editable-section .editable-content:empty::before {
   content: "Clique para adicionar conteúdo...";
-  color: #aaa;
+  color: #A1A1A6;
   font-style: italic;
 }
 
@@ -464,9 +459,9 @@
   align-items: center;
   gap: 2px;
   padding: 4px 6px;
-  background: hsl(222, 47%, 11%);
+  background: #1D1D1F;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   animation: toolbar-fade-in 0.15s ease;
 }
 
@@ -478,19 +473,19 @@
   height: 30px;
   border: none;
   background: transparent;
-  color: hsl(210, 40%, 90%);
+  color: #D5D5D7;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
 .floating-toolbar-btn:hover {
-  background: hsl(217, 33%, 25%);
-  color: hsl(0, 0%, 100%);
+  background: #333;
+  color: #fff;
 }
 
 .floating-toolbar-btn:active {
-  background: hsl(217, 50%, 35%);
+  background: #444;
 }
 
 @keyframes toolbar-fade-in {
@@ -509,6 +504,7 @@
     page-break-after: always;
     break-after: page;
     border-radius: 0;
+    border: none;
   }
 
   .pagina-a4-wrapper {

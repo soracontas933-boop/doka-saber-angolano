@@ -14,8 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Poppins', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        body: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -68,8 +67,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'card': 'var(--shadow-card)',
-        'card-hover': 'var(--shadow-card-hover)',
+        'card': '0 1px 3px rgba(0, 0, 0, 0.08)',
+        'card-hover': '0 1px 3px rgba(0, 0, 0, 0.08)',
       },
       keyframes: {
         "accordion-down": {
