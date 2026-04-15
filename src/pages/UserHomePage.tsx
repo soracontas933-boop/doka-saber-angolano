@@ -119,7 +119,7 @@ const UserHomePage = () => {
   ].filter(i => i.remaining !== null) : [];
 
   return (
-    <div className="min-h-screen bg-background md:bg-background">
+    <div className="min-h-screen bg-background">
       {/* Mobile Layout */}
       <div className="md:hidden">
 
@@ -127,18 +127,18 @@ const UserHomePage = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-4 pt-3 pb-2 bg-black border-2 border-black"
+          className="px-4 pt-3 pb-2"
         >
-          <h2 className="text-lg font-bold text-primary-foreground font-serif">
+          <h2 className="text-xl font-normal text-foreground">
             Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
           </h2>
-          <p className="text-xs text-muted-foreground">​</p>
+          <p className="text-xs text-muted-foreground mt-0.5">O que vais criar hoje?</p>
           {canInstall && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
               <Button
                 onClick={install}
                 size="sm"
-                className="mt-2 w-full gap-2 rounded-xl font-semibold text-xs h-9"
+                className="mt-2 w-full gap-2 rounded-md font-normal text-xs h-10"
               >
                 <Download className="h-4 w-4" /> Baixar o App
               </Button>
@@ -151,38 +151,29 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="px-4 pt-1 pb-3 bg-black"
+          className="px-4 pt-1 pb-3"
         >
-          <p className="text-[10px] font-medium mb-1.5 uppercase tracking-wider text-primary-foreground">Gerações restantes</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 text-left font-serif bg-black text-primary-foreground">
+          <p className="text-[10px] font-normal mb-1.5 uppercase tracking-wider text-muted-foreground">Gerações restantes</p>
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
             {usageItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/10 shrink-0 bg-black">
-                <item.icon className="h-3.5 w-3.5 text-primary-foreground" />
-                <span className="text-[11px] font-bold text-[#f1f5fe]/[0.33]">{item.remaining}</span>
-                <span className="text-[10px] text-primary-foreground">{item.label}</span>
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card">
+                <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[11px] font-normal text-foreground">{item.remaining}</span>
+                <span className="text-[10px] text-muted-foreground">{item.label}</span>
               </div>
             ))}
           </div>
         </motion.div>
 
-        {/* Quick Action Buttons - 3 per row, rounded squares */}
+        {/* Quick Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="px-4 pb-4 bg-black"
+          className="px-4 pb-4"
         >
           <div className="grid grid-cols-3 gap-3">
             {quickActions.map((action, i) => {
-              const gradients = [
-                { from: "#3b82f6", to: "#1d4ed8" },
-                { from: "#10b981", to: "#059669" },
-                { from: "#f59e0b", to: "#d97706" },
-                { from: "#8b5cf6", to: "#7c3aed" },
-                { from: "#ec4899", to: "#db2777" },
-                { from: "#06b6d4", to: "#0891b2" },
-              ];
-              const g = gradients[i % gradients.length];
               const coverKey = action.to.replace("/", "");
               const coverUrl = buttonCovers[coverKey];
               return (
@@ -192,32 +183,22 @@ const UserHomePage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 + i * 0.04 }}
                   onClick={() => navigate(action.to)}
-                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-background border active:scale-[0.95] transition-all overflow-hidden shadow-lg border-solid border-sidebar"
+                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-card border border-border active:scale-[0.97] transition-all duration-150 overflow-hidden hover:border-primary"
                 >
-                  {/* Cover image background */}
                   {coverUrl && (
                     <img
                       src={coverUrl}
                       alt={action.label}
-                      className="absolute inset-0 w-full h-full object-cover rounded-2xl z-0"
+                      className="absolute inset-0 w-full h-full object-cover rounded-lg z-0"
                     />
                   )}
                   {coverUrl && (
-                    <span className="absolute inset-0 bg-black/40 rounded-2xl z-[1]" />
+                    <span className="absolute inset-0 bg-foreground/40 rounded-lg z-[1]" />
                   )}
-                  {/* Gradient bg on hover/active */}
-                  <span
-                    className="absolute inset-0 opacity-0 group-active:opacity-100 transition-opacity duration-200 rounded-2xl z-[2]"
-                    style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
-                  />
-                  <span
-                    className="absolute inset-0 opacity-0 group-active:opacity-30 transition-opacity duration-300 blur-xl rounded-2xl text-primary-foreground bg-primary z-[2]"
-                    style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
-                  />
-                  <div className={`relative z-10 w-11 h-11 rounded-xl flex items-center justify-center transition-colors ${coverUrl ? "bg-white/20" : "bg-primary/8"} group-active:bg-white/20`}>
-                    <action.icon className={`h-5 w-5 transition-colors group-active:text-white ${coverUrl ? "text-white" : "text-primary"}`} />
+                  <div className={`relative z-10 w-11 h-11 rounded-md flex items-center justify-center transition-all duration-150 ${coverUrl ? "bg-background/20" : "bg-muted"}`}>
+                    <action.icon className={`h-5 w-5 transition-colors duration-150 ${coverUrl ? "text-background" : "text-primary"}`} />
                   </div>
-                  <span className={`relative z-10 text-[11px] font-medium text-center leading-tight transition-colors group-active:text-white ${coverUrl ? "text-white font-semibold" : "text-foreground"}`}>
+                  <span className={`relative z-10 text-[11px] font-normal text-center leading-tight transition-colors duration-150 ${coverUrl ? "text-background" : "text-foreground"}`}>
                     {action.label}
                   </span>
                 </motion.button>
@@ -231,24 +212,24 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="px-4 pb-4 bg-black"
+          className="px-4 pb-4"
         >
           <button
             onClick={() => navigate("/grupos")}
-            className="group relative w-full rounded-2xl border-border/60 p-4 transition-all active:scale-[0.97] overflow-hidden flex items-end justify-between shadow-lg bg-zinc-900 border-0"
+            className="group w-full rounded-lg border border-border bg-card p-4 transition-all duration-150 active:scale-[0.97] flex items-center justify-between hover:border-primary"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/8">
-                <UsersRound className="h-5 w-5 border-primary-foreground text-primary-foreground" />
+              <div className="p-2.5 rounded-md bg-muted">
+                <UsersRound className="h-5 w-5 text-primary" />
               </div>
               <div className="text-left">
-                <p className="font-semibold text-sm text-primary-foreground text-justify">Comunidade</p>
-                <p className="text-xs text-primary-foreground">
+                <p className="font-normal text-sm text-foreground">Comunidade</p>
+                <p className="text-xs text-muted-foreground">
                   {groupCount > 0 ? `${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Criar ou juntar"}
                 </p>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-primary-foreground text-right h-[30px]" />
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
         </motion.div>
 
@@ -257,13 +238,13 @@ const UserHomePage = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="px-4 pb-6 bg-black border-black border-4"
+          className="px-4 pb-6"
         >
-          <div className="border-border/60 p-4 shadow-lg bg-zinc-900 border-0 rounded-3xl">
+          <div className="border border-border bg-card p-4 rounded-lg">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm text-primary-foreground">Projetos Recentes</h3>
+              <h3 className="font-normal text-sm text-foreground">Projetos Recentes</h3>
               <button onClick={() => navigate("/meus-projetos")}>
-                <MoreHorizontal className="h-5 w-5 text-primary-foreground" />
+                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
               </button>
             </div>
 
@@ -280,13 +261,13 @@ const UserHomePage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.04 }}
                     onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left border-sidebar border-solid shadow-lg bg-zinc-900 border-0"
+                    className="w-full flex items-center gap-3 p-3 rounded-md transition-all duration-150 text-left border border-border bg-background hover:border-primary"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
-                      <WrapText className="h-4 w-4 text-primary-foreground" />
+                    <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
+                      <WrapText className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate text-primary-foreground">{p.titulo}</p>
+                      <p className="text-sm font-normal truncate text-foreground">{p.titulo}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {tipoLabel[p.tipo] || p.tipo} · {new Date(p.criado_em).toLocaleDateString("pt-AO")}
                       </p>
@@ -294,7 +275,7 @@ const UserHomePage = () => {
                     <div className="text-right flex-shrink-0">
                       <Badge
                         variant="outline"
-                        className="text-[10px] border-[hsl(var(--delle-status-success))] text-[hsl(var(--delle-status-success))] text-primary-foreground border-0"
+                        className="text-[10px] border-border text-muted-foreground"
                       >
                         Completo
                       </Badge>
@@ -306,14 +287,12 @@ const UserHomePage = () => {
           </div>
 
           {/* Aumentar Saldo */}
-          <button
+          <Button
             onClick={() => navigate("/planos")}
-            className="group relative w-full mt-3 py-3 rounded-xl font-semibold text-sm overflow-hidden bg-primary text-primary-foreground active:scale-[0.97] transition-all"
+            className="w-full mt-3 h-11 rounded-md font-normal text-sm"
           >
-            <span className="absolute inset-0 opacity-0 group-active:opacity-100 transition-opacity duration-200" style={{ background: "linear-gradient(135deg, #a955ff, #ea51ff)" }} />
-            <span className="absolute inset-0 transition-opacity duration-300 blur-xl bg-zinc-900 border-secondary opacity-50 rounded-lg shadow-xl" style={{ background: "linear-gradient(135deg, #a955ff, #ea51ff)" }} />
-            <span className="relative z-10">Aumentar Saldo</span>
-          </button>
+            Aumentar Saldo
+          </Button>
         </motion.div>
 
       </div>
@@ -321,20 +300,20 @@ const UserHomePage = () => {
       {/* Desktop Layout */}
       <div className="hidden md:block p-4 md:p-8 max-w-6xl mx-auto space-y-8">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+          <h1 className="text-2xl md:text-3xl font-normal text-foreground">
             Olá, {profile.nome || "Estudante"}! 👋
           </h1>
-          <p className="text-muted-foreground mt-1">O que vais criar hoje?</p>
+          <p className="text-muted-foreground mt-1 text-base">O que vais criar hoje?</p>
         </motion.div>
 
         <div className="grid grid-cols-3 gap-4">
           {[
-            { to: "/trabalho", icon: WrapText, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo", color: "from-blue-500 to-blue-600" },
-            { to: "/resumo", icon: BookOpen, label: "Criar Resumo", desc: "Resumir conteúdos rapidamente", color: "from-emerald-500 to-emerald-600" },
-            { to: "/questionario", icon: HelpCircle, label: "Gerar Questionário", desc: "Quiz automático com respostas", color: "from-amber-500 to-amber-600" },
-            { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", desc: "Planificar aulas facilmente", color: "from-purple-500 to-purple-600" },
-            { to: "/correcao", icon: Search, label: "Corrigir Trabalho", desc: "Análise e correcção com IA", color: "from-rose-500 to-rose-600" },
-            { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projectos", desc: "Ver todos os projectos salvos", color: "from-cyan-500 to-cyan-600" },
+            { to: "/trabalho", icon: WrapText, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo" },
+            { to: "/resumo", icon: BookOpen, label: "Criar Resumo", desc: "Resumir conteúdos rapidamente" },
+            { to: "/questionario", icon: HelpCircle, label: "Gerar Questionário", desc: "Quiz automático com respostas" },
+            { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", desc: "Planificar aulas facilmente" },
+            { to: "/correcao", icon: Search, label: "Corrigir Trabalho", desc: "Análise e correcção com IA" },
+            { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projectos", desc: "Ver todos os projectos salvos" },
           ].map((action, i) => (
             <motion.button
               key={action.to}
@@ -342,12 +321,12 @@ const UserHomePage = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.05 + i * 0.03 }}
               onClick={() => navigate(action.to)}
-              className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 text-left transition-all hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5"
+              className="group relative overflow-hidden rounded-lg border border-border bg-card p-5 text-left transition-all duration-150 hover:border-primary"
             >
-              <div className={`inline-flex p-2.5 rounded-lg bg-gradient-to-br ${action.color} text-white mb-3`}>
+              <div className="inline-flex p-2.5 rounded-md bg-muted text-primary mb-3">
                 <action.icon className="h-5 w-5" />
               </div>
-              <h3 className="font-semibold text-foreground">{action.label}</h3>
+              <h3 className="font-normal text-foreground">{action.label}</h3>
               <p className="text-xs text-muted-foreground mt-1">{action.desc}</p>
             </motion.button>
           ))}
@@ -355,53 +334,56 @@ const UserHomePage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-            className="rounded-xl border border-border bg-card p-6"
+            className="rounded-lg border border-border bg-card p-6"
           >
             <div className="flex items-center gap-2 mb-4">
               <Zap className="h-4 w-4 text-primary" />
-              <h3 className="font-semibold text-foreground">Meu Plano</h3>
+              <h3 className="font-normal text-foreground">Meu Plano</h3>
             </div>
             <div className="flex items-center justify-between mb-4">
               <Badge variant="secondary" className="capitalize">{plan?.plano || "gratuito"}</Badge>
-              <Button variant="outline" size="sm" onClick={() => navigate("/planos")}>Upgrade</Button>
+              <span className="text-sm text-foreground">{plan ? `${plan.creditos_usados}/${plan.creditos_totais === -1 ? "∞" : plan.creditos_totais}` : "..."}</span>
             </div>
-            {plan && plan.creditos_totais > 0 && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Créditos</span>
-                  <span className="font-medium">{plan.creditos_usados}/{plan.creditos_totais === -1 ? "∞" : plan.creditos_totais}</span>
-                </div>
-                <Progress value={plan.creditos_totais === -1 ? 5 : creditPercent} className="h-2" />
-              </div>
-            )}
+            <Progress value={creditPercent} className="h-1.5 mb-4" />
+            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/planos")}>
+              Ver Planos
+            </Button>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="lg:col-span-2 rounded-xl border border-border bg-card p-6"
+            className="rounded-lg border border-border bg-card p-6"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <FolderOpen className="h-4 w-4 text-primary" />
-                <h3 className="font-semibold text-foreground">Actividade Recente</h3>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/meus-projetos")}>Ver todos</Button>
+            <div className="flex items-center gap-2 mb-4">
+              <UsersRound className="h-4 w-4 text-primary" />
+              <h3 className="font-normal text-foreground">Comunidade</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              {groupCount > 0 ? `Participa em ${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Ainda não fazes parte de nenhum grupo"}
+            </p>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/grupos")}>
+              Ver Grupos
+            </Button>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="rounded-lg border border-border bg-card p-6"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <FolderOpen className="h-4 w-4 text-primary" />
+              <h3 className="font-normal text-foreground">Projectos Recentes</h3>
             </div>
             {recentProjects.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Ainda não criaste nenhum projecto. 🚀</p>
+              <p className="text-sm text-muted-foreground">Nenhum projecto ainda.</p>
             ) : (
               <div className="space-y-2">
-                {recentProjects.map((p) => (
-                  <button key={p.id} onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors text-left"
+                {recentProjects.slice(0, 3).map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => navigate(`/${p.tipo}`)}
+                    className="w-full text-left flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-all duration-150"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <WrapText className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{p.titulo}</p>
-                      <p className="text-xs text-muted-foreground">{tipoLabel[p.tipo] || p.tipo}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{new Date(p.criado_em).toLocaleDateString("pt-AO")}</span>
+                    <WrapText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm text-foreground truncate">{p.titulo}</span>
                   </button>
                 ))}
               </div>
