@@ -18,7 +18,9 @@ import {
   GraduationCap, 
   Users, 
   Star, 
-  ChevronRight 
+  ChevronRight,
+  Settings,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -29,15 +31,26 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingPaths } from "@/components/ui/background-paths";
+import AdminLandingPanelFloat from "@/components/AdminLandingPanelFloat";
+import { useAdmin } from "@/hooks/use-admin";
 
-/* ── hero image types ── */
 interface HeroImage {
   id: string;
   url: string;
   ordem: number;
 }
 
-/* ── animated title ── */
+interface LandingContent {
+  stats: Array<{ label: string; value: string; icon: string }>;
+  features: Array<{ icon: string; title: string; description: string; badge: string }>;
+  steps: Array<{ number: number; title: string; description: string; icon: string }>;
+  testimonials: Array<{ name: string; school: string; text: string; avatar: string }>;
+  pricing: Array<{ name: string; price: string; description: string; features: string[]; popular: boolean }>;
+  partners: Array<{ name: string; logo: string }>;
+  faq: Array<{ question: string; answer: string }>;
+  cta: { title: string; subtitle: string; buttonText: string };
+}
+
 const AnimatedTitle = () => {
   const line1 = "Aprenda mais,";
   const line2 = "estude melhor";
@@ -72,8 +85,7 @@ const AnimatedTitle = () => {
   );
 };
 
-/* ── Hero carousel / single ── */
-const HeroCarousel = ({ images }: { images: HeroImage[]; }) => {
+const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -113,101 +125,85 @@ const HeroCarousel = ({ images }: { images: HeroImage[]; }) => {
   );
 };
 
-const HeroSingle = ({ image }: { image: HeroImage; }) =>
+const HeroSingle = ({ image }: { image: HeroImage }) =>
   <div className="absolute inset-0 overflow-hidden z-[5]">
     <img src={image.url} alt="Hero" className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
-    <div className="absolute inset-0 bg-black/70 z-[10] mb-[10px]" />
+    <div className="absolute inset-0 bg-black/70 z-[10]" />
   </div>;
 
-/* ── Dynamic Block Renderer ── */
-const DynamicBlock = ({ block, sectionBg }: { block: any, sectionBg: string }) => {
-  const getAnimation = (type: string) => {
-    switch (type) {
-      case 'fade-up': return { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 } };
-      case 'fade-in': return { initial: { opacity: 0 }, whileInView: { opacity: 1 } };
-      case 'zoom-in': return { initial: { opacity: 0, scale: 0.8 }, whileInView: { opacity: 1, scale: 1 } };
-      case 'slide-left': return { initial: { opacity: 0, x: -50 }, whileInView: { opacity: 1, x: 0 } };
-      case 'slide-right': return { initial: { opacity: 0, x: 50 }, whileInView: { opacity: 1, x: 0 } };
-      default: return { initial: { opacity: 0 }, whileInView: { opacity: 1 } };
-    }
-  };
-
-  const animation = getAnimation(block.style.animation || 'fade-up');
-
-  return (
-    <motion.div
-      {...animation}
-      transition={{ delay: block.style.delay || 0, duration: block.style.duration || 0.5 }}
-      viewport={{ once: true }}
-      className="absolute"
-      style={{
-        left: `${block.style.x}%`,
-        top: `${block.style.y}%`,
-        width: `${block.style.width}%`,
-        zIndex: block.style.zIndex || 1,
-      }}
-    >
-      {block.type === 'text' && (
-        <div 
-          style={{ 
-            fontSize: `${block.style.fontSize}px`, 
-            textAlign: block.style.textAlign || 'left',
-            color: sectionBg === 'black' ? 'white' : 'inherit'
-          }}
-          className="font-display font-medium leading-relaxed"
-        >
-          {block.content}
-        </div>
-      )}
-      {block.type === 'image' && block.content && (
-        <img src={block.content} className="w-full h-auto rounded-xl shadow-lg" alt="Landing Element" />
-      )}
-      {block.type === 'video' && block.content && (
-        <div className="aspect-video w-full rounded-xl overflow-hidden shadow-2xl bg-black">
-          <iframe
-            src={block.content.includes('youtube.com') ? block.content.replace('watch?v=', 'embed/') : block.content}
-            className="w-full h-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-      )}
-      {block.type === 'button' && (
-        <div className="flex" style={{ justifyContent: block.style.textAlign === 'center' ? 'center' : block.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
-          <Button size="lg" className="rounded-full shadow-xl hover:scale-105 transition-transform">
-            {block.content}
-          </Button>
-        </div>
-      )}
-    </motion.div>
-  );
-};
-
-/* ── page ── */
 const HomePage = () => {
   const navigate = useNavigate();
   const { canInstall, install } = usePwaInstall();
   const { theme, toggleTheme } = useTheme();
+  const { isAdmin } = useAdmin();
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [carouselEnabled, setCarouselEnabled] = useState(false);
-  const [sections, setSections] = useState<any[]>([]);
+  const [content, setContent] = useState<LandingContent>({
+    stats: [
+      { label: "Alunos Activos", value: "50K+", icon: "Users" },
+      { label: "Taxa de Satisfação", value: "98%", icon: "Star" },
+      { label: "Documentos Gerados", value: "500K+", icon: "FileText" },
+      { label: "Tipos de Ferramentas", value: "6+", icon: "Zap" }
+    ],
+    features: [
+      { icon: "FileText", title: "Trabalhos Escolares", description: "Gere trabalhos completos com capa, índice e conclusão no formato angolano", badge: "Mais Popular" },
+      { icon: "BookOpen", title: "Resumos Inteligentes", description: "Transforme fotos em resumos estruturados e flashcards de estudo", badge: "IA Avançada" },
+      { icon: "HelpCircle", title: "Questionários", description: "Crie questionários interativos com correção automática", badge: "Interactivo" },
+      { icon: "ClipboardList", title: "Planos de Aula", description: "Planos no formato INIDE, prontos para usar na sala de aula", badge: "Profissional" },
+      { icon: "Lightbulb", title: "Ideias Criativas", description: "Sugestões personalizadas para enriquecer seus projectos", badge: "Inovador" },
+      { icon: "Shield", title: "Segurança Total", description: "Seus dados estão protegidos com criptografia de nível militar", badge: "Seguro" }
+    ],
+    steps: [
+      { number: 1, title: "Registe-se Gratuitamente", description: "Crie sua conta em menos de 1 minuto, sem cartão de crédito", icon: "User" },
+      { number: 2, title: "Escolha a Ferramenta", description: "Selecione entre trabalhos, resumos, questionários ou planos", icon: "Zap" },
+      { number: 3, title: "Deixe a IA Trabalhar", description: "Forneça o tema e a IA gera conteúdo de qualidade em segundos", icon: "Sparkles" },
+      { number: 4, title: "Customize e Exporte", description: "Ajuste os detalhes e exporte em PDF ou Word", icon: "Download" }
+    ],
+    testimonials: [
+      { name: "Joana Silva", school: "Escola Secundária 21 de Janeiro", text: "A Delle transformou minha forma de estudar. Agora consigo fazer resumos muito mais rápido e com melhor qualidade.", avatar: "👩‍🎓" },
+      { name: "Carlos Mendes", school: "Instituto Técnico de Luanda", text: "Como professor, economizo horas criando planos de aula. A qualidade é excelente e os alunos adoram.", avatar: "👨‍🏫" },
+      { name: "Maria Santos", school: "Universidade Agostinho Neto", text: "Finalmente uma ferramenta feita para Angola! Respeita as normas do INIDE e funciona perfeitamente.", avatar: "👩‍🎓" }
+    ],
+    pricing: [
+      { name: "Grátis", price: "0 Kz", description: "Perfeito para começar", features: ["5 documentos/mês", "Resumos básicos", "Suporte por email"], popular: false },
+      { name: "Estudante", price: "2.990 Kz", description: "Recomendado para estudantes", features: ["Documentos ilimitados", "Resumos avançados", "Questionários", "Suporte prioritário"], popular: true },
+      { name: "Profissional", price: "9.990 Kz", description: "Para professores e profissionais", features: ["Tudo do Estudante", "Planos de Aula", "Análise de desempenho", "Suporte 24/7"] , popular: false }
+    ],
+    partners: [
+      { name: "Universidade Agostinho Neto", logo: "🏫" },
+      { name: "Instituto Técnico de Luanda", logo: "🏛️" },
+      { name: "Ministério da Educação", logo: "📚" },
+      { name: "Associação de Professores", logo: "👥" }
+    ],
+    faq: [
+      { question: "Como funciona a IA da Delle?", answer: "A Delle utiliza modelos de IA avançados treinados especificamente para o contexto educacional angolano, respeitando as normas do INIDE." },
+      { question: "Meus dados estão seguros?", answer: "Sim! Utilizamos criptografia de nível militar e conformidade com LGPD. Seus dados nunca são compartilhados com terceiros." },
+      { question: "Posso cancelar minha subscrição a qualquer momento?", answer: "Claro! Sem compromissos. Cancele quando quiser, sem penalidades ou taxas ocultas." },
+      { question: "Qual é o limite de documentos?", answer: "No plano Grátis são 5 documentos por mês. Nos planos pagos, documentos ilimitados." },
+      { question: "Existe suporte em português?", answer: "Sim! Temos suporte completo em português angolano, incluindo chat, email e telefone." }
+    ],
+    cta: { title: "Pronto para transformar sua educação?", subtitle: "Junte-se a milhares de estudantes e professores que já estão usando a Delle", buttonText: "Começar Agora Grátis" }
+  });
+  const [adminOpen, setAdminOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const [imgRes, settingsRes, sectionsRes] = await Promise.all([
+      const [imgRes, settingsRes] = await Promise.all([
         supabase.from("hero_images").select("id, url, ordem").eq("ativo", true).order("ordem", { ascending: true }),
         supabase.from("site_settings").select("valor").eq("chave", "hero_carousel").single(),
-        supabase.from("landing_sections").select("*").eq("ativo", true).order("ordem", { ascending: true })
       ]);
 
       setHeroImages(imgRes.data as HeroImage[] ?? []);
       if (settingsRes.data) setCarouselEnabled((settingsRes.data as any).valor === "true");
-      setSections(sectionsRes.data || []);
     };
     load();
   }, []);
 
   const hasHeroImages = heroImages.length > 0;
+
+  const updateContent = (section: keyof LandingContent, data: any) => {
+    setContent(prev => ({ ...prev, [section]: data }));
+  };
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -228,7 +224,7 @@ const HomePage = () => {
         </div>
       </header>
 
-      {/* Hero Principal (Hardcoded ou Primeiro do CMS) */}
+      {/* Hero Section */}
       <section className="relative px-4 sm:px-6 md:px-12 pt-10 sm:pt-16 pb-14 sm:pb-20 max-w-7xl mx-auto text-center min-h-[80vh] flex flex-col justify-center">
         <div className="absolute inset-0 z-0 pointer-events-none">
           <FloatingPaths position={1} />
@@ -269,74 +265,359 @@ const HomePage = () => {
         </motion.div>
       </section>
 
-      {/* Dynamic Sections from CMS */}
-      {sections.map((section) => {
-        const style = section.conteudo.style || {};
-        const bgClass = style.bg === "card" ? "bg-card" : style.bg === "primary" ? "bg-primary/5" : style.bg === "muted" ? "bg-muted/30" : style.bg === "black" ? "bg-black" : "bg-background";
-        
-        return (
-          <section 
-            key={section.id} 
-            className={`relative w-full overflow-hidden border-t border-border/50 ${bgClass}`}
-            style={{ minHeight: style.height || 'auto' }}
+      {/* Stats Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+            {content.stats.map((stat, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">{stat.value}</div>
+                <div className="text-sm sm:text-base text-muted-foreground">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
           >
-            <div className="max-w-7xl mx-auto h-full relative" style={{ minHeight: style.height || 'auto' }}>
-              {section.conteudo.blocks?.map((block: any) => (
-                <DynamicBlock key={block.id} block={block} sectionBg={style.bg} />
-              ))}
-              
-              {/* Fallback para seções antigas sem blocos */}
-              {(!section.conteudo.blocks || section.conteudo.blocks.length === 0) && (
-                <div className="py-20 px-4 text-center">
-                  <h2 className="text-3xl font-bold mb-4">{section.titulo}</h2>
-                  <p className="text-muted-foreground">Esta secção ainda não tem blocos de conteúdo.</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Funcionalidades Poderosas</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {content.features.map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-2xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    {feature.icon === "FileText" && <FileText className="h-6 w-6 text-primary" />}
+                    {feature.icon === "BookOpen" && <BookOpen className="h-6 w-6 text-primary" />}
+                    {feature.icon === "HelpCircle" && <HelpCircle className="h-6 w-6 text-primary" />}
+                    {feature.icon === "ClipboardList" && <ClipboardList className="h-6 w-6 text-primary" />}
+                    {feature.icon === "Lightbulb" && <Lightbulb className="h-6 w-6 text-primary" />}
+                    {feature.icon === "Shield" && <Shield className="h-6 w-6 text-primary" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-semibold text-foreground">{feature.title}</h3>
+                      <Badge variant="secondary" className="text-xs">{feature.badge}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  </div>
                 </div>
-              )}
-            </div>
-          </section>
-        );
-      })}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Como Funciona</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">4 passos simples para começar</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {content.steps.map((step, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="relative"
+              >
+                <div className="p-6 rounded-2xl bg-card border border-border/50 h-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                      {step.number}
+                    </div>
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                </div>
+                {i < content.steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2">
+                    <ChevronRight className="h-6 w-6 text-border" />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">O Que Dizem Sobre Nós</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Histórias reais de estudantes e professores que transformaram seus resultados</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {content.testimonials.map((testimonial, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="text-4xl">{testimonial.avatar}</div>
+                  <div>
+                    <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
+                    <p className="text-xs text-muted-foreground">{testimonial.school}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground italic">"{testimonial.text}"</p>
+                <div className="flex gap-1 mt-4">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-primary text-primary" />)}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Planos Simples e Transparentes</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Escolha o plano perfeito para suas necessidades</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {content.pricing.map((plan, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className={`relative p-8 rounded-2xl border transition-all ${
+                  plan.popular
+                    ? "border-primary bg-primary/5 ring-2 ring-primary/20 md:scale-105"
+                    : "border-border/50 bg-card hover:border-primary/30"
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-primary">Mais Popular</Badge>
+                  </div>
+                )}
+                <h3 className="text-2xl font-bold mb-2 text-foreground">{plan.name}</h3>
+                <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-primary">{plan.price}</span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+                <Button className="w-full mb-6" variant={plan.popular ? "default" : "outline"}>
+                  Começar Agora
+                </Button>
+                <ul className="space-y-3">
+                  {plan.features.map((feature, j) => (
+                    <li key={j} className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Partners Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Parceiros de Confiança</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Instituições educacionais que confiam em nós</p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {content.partners.map((partner, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/30 transition-all flex items-center justify-center h-24"
+              >
+                <div className="text-center">
+                  <div className="text-4xl mb-2">{partner.logo}</div>
+                  <p className="text-xs text-muted-foreground text-center line-clamp-2">{partner.name}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Perguntas Frequentes</h2>
+            <p className="text-lg text-muted-foreground">Respostas para as dúvidas mais comuns</p>
+          </motion.div>
+
+          <div className="space-y-4">
+            {content.faq.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/30 transition-all group cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground pr-4">{item.question}</h3>
+                  <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                </div>
+                <p className="text-sm text-muted-foreground mt-3 hidden group-hover:block">{item.answer}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 pointer-events-none" />
+        <div className="max-w-4xl mx-auto relative z-10 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">{content.cta.title}</h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">{content.cta.subtitle}</p>
+            <Button size="lg" className="gap-2 px-8 h-12 rounded-full" onClick={() => navigate("/auth")}>
+              {content.cta.buttonText} <ArrowRight className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-12 px-4 sm:px-6 md:px-12">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-4">
-            <DelleLogo size={30} />
-            <p className="text-sm text-muted-foreground">
-              A primeira plataforma educacional feita em Angola, para Angola.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4">Ferramentas</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Trabalhos Escolares</li>
-              <li>Resumos Inteligentes</li>
-              <li>Questionários</li>
-              <li>Planos de Aula</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4">Plataforma</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Sobre nós</li>
-              <li>Preços</li>
-              <li>Suporte</li>
-              <li>Termos de Uso</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4">Acompanhe</h4>
-            <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-colors">F</div>
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-colors">I</div>
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-colors">T</div>
+      <footer className="relative w-full py-12 sm:py-16 px-4 sm:px-6 md:px-12 border-t border-border/50 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Produto</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-primary transition-colors">Funcionalidades</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Preços</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Segurança</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Empresa</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-primary transition-colors">Sobre Nós</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Contacte-nos</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-primary transition-colors">Privacidade</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Termos</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Cookies</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Redes Sociais</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-primary transition-colors">Twitter</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">LinkedIn</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Instagram</a></li>
+              </ul>
             </div>
           </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-border text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Delle Saber Angolano. Todos os direitos reservados.
+          <div className="border-t border-border/50 pt-8 text-center text-sm text-muted-foreground">
+            <p>&copy; 2026 Delle. Todos os direitos reservados. Feito com ❤️ em Angola.</p>
+          </div>
         </div>
       </footer>
+
+      {/* Admin Floating Button */}
+      {isAdmin && (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="fixed bottom-6 right-6 z-[40] p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-110 transition-all"
+          onClick={() => setAdminOpen(!adminOpen)}
+        >
+          <Settings className="h-6 w-6" />
+        </motion.button>
+      )}
+
+      {/* Admin Panel */}
+      {isAdmin && adminOpen && (
+        <AdminLandingPanelFloat
+          content={content}
+          onUpdateContent={updateContent}
+          onClose={() => setAdminOpen(false)}
+        />
+      )}
     </div>
   );
 };
