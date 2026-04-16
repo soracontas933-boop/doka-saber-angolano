@@ -32,6 +32,7 @@ interface LandingSection {
   conteudo: any;
   ordem: number;
   ativo: boolean;
+  isNew?: boolean;
 }
 
 const AdminLandingTab = () => {
@@ -61,16 +62,25 @@ const AdminLandingTab = () => {
 
   const handleSaveSection = async (section: LandingSection) => {
     setSaving(true);
+    
+    // Preparar dados para salvar
+    const sectionData: any = {
+      tipo: section.tipo,
+      titulo: section.titulo,
+      conteudo: section.conteudo,
+      ativo: section.ativo,
+      ordem: section.ordem,
+      atualizado_em: new Date().toISOString()
+    };
+
+    // Se não for novo, incluir o ID para o update/upsert
+    if (!section.isNew) {
+      sectionData.id = section.id;
+    }
+
     const { error } = await supabase
       .from("landing_sections")
-      .update({
-        titulo: section.titulo,
-        conteudo: section.conteudo,
-        ativo: section.ativo,
-        ordem: section.ordem,
-        atualizado_em: new Date().toISOString()
-      })
-      .eq("id", section.id);
+      .upsert(sectionData);
 
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
@@ -134,12 +144,36 @@ const AdminLandingTab = () => {
     setSections(updatedSections);
 
     setSaving(true);
-    const promises = updatedSections.map(s => 
-      supabase.from("landing_sections").update({ ordem: s.ordem }).eq("id", s.id)
-    );
+    const promises = updatedSections.map(s => {
+      if (s.isNew) return Promise.resolve(); // Não move seções ainda não salvas no banco
+      return supabase.from("landing_sections").update({ ordem: s.ordem }).eq("id", s.id);
+    });
     await Promise.all(promises);
     setSaving(false);
     toast({ title: "Ordem actualizada" });
+  };
+
+  const handleDeleteSection = async (section: LandingSection) => {
+    if (section.isNew) {
+      setSections(sections.filter(s => s.id !== section.id));
+      return;
+    }
+
+    if (!confirm("Tem a certeza que deseja remover esta secção?")) return;
+
+    setSaving(true);
+    const { error } = await supabase
+      .from("landing_sections")
+      .delete()
+      .eq("id", section.id);
+
+    if (error) {
+      toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Secção removida" });
+      fetchData();
+    }
+    setSaving(false);
   };
 
   if (loading) {
@@ -167,10 +201,10 @@ const AdminLandingTab = () => {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="flex items-center gap-3">
               <div className="flex flex-col gap-1">
-                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => moveSection(idx, "up")} disabled={idx === 0}>
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => moveSection(idx, "up")} disabled={idx === 0 || section.isNew}>
                   <ArrowUp className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => moveSection(idx, "down")} disabled={idx === sections.length - 1}>
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => moveSection(idx, "down")} disabled={idx === sections.length - 1 || section.isNew}>
                   <ArrowDown className="h-4 w-4" />
                 </Button>
               </div>
@@ -178,6 +212,7 @@ const AdminLandingTab = () => {
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Layout className="h-5 w-5 text-primary" />
                   {section.tipo.toUpperCase()}: {section.titulo}
+                  {section.isNew && <span className="text-xs bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded ml-2">Não salva</span>}
                 </CardTitle>
               </div>
             </div>
@@ -190,16 +225,43 @@ const AdminLandingTab = () => {
                   onCheckedChange={(val) => {
                     const newSections = sections.map(s => s.id === section.id ? { ...s, ativo: val } : s);
                     setSections(newSections);
-                    handleSaveSection({ ...section, ativo: val });
+                    if (!section.isNew) handleSaveSection({ ...section, ativo: val });
                   }}
                 />
               </div>
+              <Button size="sm" variant="destructive" onClick={() => handleDeleteSection(section)} disabled={saving} className="mr-2">
+                <Trash2 className="h-4 w-4" />
+              </Button>
               <Button size="sm" onClick={() => handleSaveSection(section)} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-1" />} Salvar
               </Button>
             </div>
           </CardHeader>
           <CardContent className="pt-4">
+            <div className="grid gap-4 mb-6">
+              <div className="grid gap-1.5">
+                <Label>Tipo de Secção</Label>
+                <Select 
+                  value={section.tipo} 
+                  onValueChange={(val) => {
+                    const newSections = sections.map(s => s.id === section.id ? { ...s, tipo: val } : s);
+                    setSections(newSections);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hero">Hero (Principal)</SelectItem>
+                    <SelectItem value="sobre">Sobre</SelectItem>
+                    <SelectItem value="funcionalidades">Funcionalidades</SelectItem>
+                    <SelectItem value="voce-sabia">Você Sabia?</SelectItem>
+                    <SelectItem value="precos">Preços</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <Tabs defaultValue="content">
               <TabsList className="mb-4">
                 <TabsTrigger value="content" className="gap-2"><Type className="h-4 w-4" /> Conteúdo</TabsTrigger>
@@ -257,7 +319,31 @@ const AdminLandingTab = () => {
                               }}
                             />
                           </div>
-                          <div className="flex items-center gap-2">
+                        </div>
+                        <div className="space-y-3">
+                          <Label className="text-xs">Imagem</Label>
+                          <div className="relative aspect-video rounded-md overflow-hidden border bg-background group">
+                            {row.image ? (
+                              <img src={row.image} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-muted-foreground">Sem imagem</div>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button size="sm" variant="secondary" onClick={() => {
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = 'image/*';
+                                input.onchange = (e) => {
+                                  const file = (e.target as HTMLInputElement).files?.[0];
+                                  if (file) handleImageUpload(section.id, ['rows', rIdx.toString(), 'image'], file);
+                                };
+                                input.click();
+                              }}>
+                                <ImagePlus className="h-4 w-4 mr-2" /> Alterar Imagem
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 pt-2">
                             <Switch 
                               id={`reverse-${section.id}-${rIdx}`}
                               checked={row.reverse}
@@ -267,131 +353,84 @@ const AdminLandingTab = () => {
                                 setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, rows: newRows } } : s));
                               }}
                             />
-                            <Label htmlFor={`reverse-${section.id}-${rIdx}`} className="text-xs">Inverter posição (Imagem à esquerda)</Label>
+                            <Label htmlFor={`reverse-${section.id}-${rIdx}`} className="text-xs">Inverter ordem (Imagem à esquerda)</Label>
                           </div>
-                        </div>
-                        <div className="space-y-3">
-                          <Label className="text-xs">Imagem (Auto-ajustável)</Label>
-                          <div className="relative aspect-video rounded-lg overflow-hidden border bg-background group">
-                            {row.image ? (
-                              <img src={row.image} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-muted-foreground">Sem imagem</div>
-                            )}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Button 
-                                size="sm" 
-                                variant="secondary" 
-                                className="gap-2"
-                                onClick={() => document.getElementById(`upload-${section.id}-${rIdx}`)?.click()}
-                                disabled={uploading === `${section.id}-rows-${rIdx}-image`}
-                              >
-                                {uploading === `${section.id}-rows-${rIdx}-image` ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                                Mudar Imagem
-                              </Button>
-                              <input 
-                                id={`upload-${section.id}-${rIdx}`}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => e.target.files?.[0] && handleImageUpload(section.id, ['rows', rIdx.toString(), 'image'], e.target.files[0])}
-                              />
-                            </div>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground">A imagem será ajustada automaticamente para preencher o espaço mantendo a proporção.</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {section.tipo === 'funcionalidades' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-4 mt-4">
-                    {section.conteudo.items?.map((item: any, iIdx: number) => (
-                      <div key={iIdx} className="p-4 border rounded-lg bg-muted/30 space-y-3">
-                        <div className="flex justify-between items-center">
-                          <Label className="text-xs font-bold">Funcionalidade #{iIdx + 1}</Label>
-                          <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => {
-                            const newItems = section.conteudo.items.filter((_: any, i: number) => i !== iIdx);
-                            setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
+                          <Button variant="ghost" size="sm" className="text-destructive w-full mt-2" onClick={() => {
+                            const newRows = section.conteudo.rows.filter((_: any, i: number) => i !== rIdx);
+                            setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, rows: newRows } } : s));
                           }}>
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 mr-2" /> Remover Linha
                           </Button>
                         </div>
-                        <div className="grid gap-1.5">
-                          <Label className="text-xs">Título</Label>
-                          <Input 
-                            value={item.title} 
-                            onChange={(e) => {
-                              const newItems = [...section.conteudo.items];
-                              newItems[iIdx].title = e.target.value;
-                              setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
-                            }}
-                          />
-                        </div>
-                        <div className="grid gap-1.5">
-                          <Label className="text-xs">Descrição</Label>
-                          <Textarea 
-                            value={item.desc} 
-                            onChange={(e) => {
-                              const newItems = [...section.conteudo.items];
-                              newItems[iIdx].desc = e.target.value;
-                              setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
-                            }}
-                          />
-                        </div>
                       </div>
                     ))}
-                    <Button variant="outline" className="h-full border-dashed" onClick={() => {
-                      const newItems = [...(section.conteudo.items || []), { icon: "Zap", title: "Nova Funcionalidade", desc: "Descrição aqui" }];
-                      setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => {
+                      const newRows = [...(section.conteudo.rows || []), { badge: "Novo", title: "Novo Título", text: "Descrição aqui...", image: "", reverse: false }];
+                      setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, rows: newRows } } : s));
                     }}>
-                      <Plus className="h-4 w-4 mr-2" /> Adicionar Funcionalidade
+                      <Plus className="h-4 w-4 mr-2" /> Adicionar Linha de Conteúdo
                     </Button>
                   </div>
                 )}
 
-                {section.tipo === 'voce-sabia' && (
+                {section.tipo === 'funcionalidades' && (
                   <div className="space-y-4 border-t pt-4 mt-4">
-                    {section.conteudo.items?.map((item: any, iIdx: number) => (
-                      <div key={iIdx} className="p-4 border rounded-lg bg-muted/30 flex gap-4 items-start">
-                        <div className="flex-1 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {section.conteudo.items?.map((item: any, iIdx: number) => (
+                        <div key={iIdx} className="p-4 border rounded-lg bg-muted/30 space-y-3 relative group">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute top-2 right-2 h-7 w-7 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              const newItems = section.conteudo.items.filter((_: any, i: number) => i !== iIdx);
+                              setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                           <div className="grid gap-1.5">
-                            <Label className="text-xs">Facto / Curiosidade</Label>
+                            <Label className="text-xs">Ícone (Lucide Name)</Label>
                             <Input 
-                              value={item.fact} 
+                              value={item.icon} 
                               onChange={(e) => {
                                 const newItems = [...section.conteudo.items];
-                                newItems[iIdx].fact = e.target.value;
+                                newItems[iIdx].icon = e.target.value;
                                 setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
                               }}
                             />
                           </div>
                           <div className="grid gap-1.5">
-                            <Label className="text-xs">Destaque (Texto em negrito/cor)</Label>
+                            <Label className="text-xs">Título</Label>
                             <Input 
-                              value={item.highlight} 
+                              value={item.title} 
                               onChange={(e) => {
                                 const newItems = [...section.conteudo.items];
-                                newItems[iIdx].highlight = e.target.value;
+                                newItems[iIdx].title = e.target.value;
+                                setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
+                              }}
+                            />
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Label className="text-xs">Descrição</Label>
+                            <Textarea 
+                              value={item.desc} 
+                              rows={2}
+                              onChange={(e) => {
+                                const newItems = [...section.conteudo.items];
+                                newItems[iIdx].desc = e.target.value;
                                 setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
                               }}
                             />
                           </div>
                         </div>
-                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => {
-                          const newItems = section.conteudo.items.filter((_: any, i: number) => i !== iIdx);
-                          setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
-                        }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button variant="outline" className="w-full border-dashed" onClick={() => {
-                      const newItems = [...(section.conteudo.items || []), { icon: "Lightbulb", fact: "Novo facto curioso aqui", highlight: "Destaque" }];
+                      ))}
+                    </div>
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => {
+                      const newItems = [...(section.conteudo.items || []), { icon: "Zap", title: "Nova Funcionalidade", desc: "Descrição curta..." }];
                       setSections(sections.map(s => s.id === section.id ? { ...s, conteudo: { ...s.conteudo, items: newItems } } : s));
                     }}>
-                      <Plus className="h-4 w-4 mr-2" /> Adicionar Curiosidade
+                      <Plus className="h-4 w-4 mr-2" /> Adicionar Item
                     </Button>
                   </div>
                 )}
@@ -498,11 +537,9 @@ const AdminLandingTab = () => {
             titulo: "Nova Secção",
             conteudo: { rows: [], style: { bg: "default", animation: "fade-up" } },
             ordem: sections.length,
-            ativo: true
+            ativo: true,
+            isNew: true
           };
-          // Note: This won't save to DB until handleSaveSection is called, 
-          // but for simplicity we'll just add it to state and let user save.
-          // In a real app, we'd insert into DB first.
           setSections([...sections, newSection as any]);
         }}>
           <Plus className="h-4 w-4" /> Adicionar Nova Secção à Landing Page
