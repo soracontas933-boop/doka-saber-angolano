@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import * as mammoth from "mammoth";
 import { getReferenciasParaDisciplina, formatarReferenciasParaPrompt } from "@/lib/referencias-reais";
+import { validateAndCorrectContent } from "@/lib/ai-validator";
 
 export interface AIResponse {
   content: string;
@@ -58,7 +59,38 @@ async function callAI(
       console.log(`[AI] ${serviceUsed} — ${tokensUsed.toLocaleString()} tokens`);
     }
 
-    return { content, service_used: serviceUsed, tokens_used: tokensUsed };
+    // ─── Camada Anti-Falhas ──────────────────────────────────────────
+    // Validação e correção automática de erros (formatação, linguagem, contexto)
+    const validation = await validateAndCorrectContent(content, userPrompt, async (prompt: string) => {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt },
+          ],
+          max_tokens: options.maxTokens ?? 8000,
+          temperature: 0.3,
+          service: options.service,
+        }),
+        signal: controller.signal,
+      });
+      if (!res.ok) return "";
+      const data = await res.json();
+      return data?.choices?.[0]?.message?.content || "";
+    });
+    const finalContent = validation.fixedContent;
+
+    if (validation.errors.length > 0) {
+      console.warn(`[AI-Validator] Erros corrigidos: ${validation.errors.join(", ")}`);
+    }
+
+    return { content: finalContent, service_used: serviceUsed, tokens_used: tokensUsed };
   } catch (e: any) {
     if (e.name === "AbortError") throw new Error("A geração demorou demais. Tente com menos conteúdo.");
     throw new Error(`Erro ao chamar IA: ${e.message}`);
