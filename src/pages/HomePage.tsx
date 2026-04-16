@@ -138,6 +138,7 @@ const HomePage = () => {
   const { isAdmin } = useAdmin();
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [carouselEnabled, setCarouselEnabled] = useState(false);
+  const [sectionImages, setSectionImages] = useState<Record<string, string>>({});
   const [content, setContent] = useState<LandingContent>({
     stats: [
       { label: "Alunos Activos", value: "50K+", icon: "Users" },
@@ -192,11 +193,23 @@ const HomePage = () => {
     const load = async () => {
       const [imgRes, settingsRes] = await Promise.all([
         supabase.from("hero_images").select("id, url, ordem").eq("ativo", true).order("ordem", { ascending: true }),
-        supabase.from("site_settings").select("valor").eq("chave", "hero_carousel").single(),
+        supabase.from("site_settings").select("chave, valor"),
       ]);
 
       setHeroImages(imgRes.data as HeroImage[] ?? []);
-      if (settingsRes.data) setCarouselEnabled((settingsRes.data as any).valor === "true");
+      
+      if (settingsRes.data) {
+        const carousel = settingsRes.data.find(s => s.chave === "hero_carousel");
+        if (carousel) setCarouselEnabled(carousel.valor === "true");
+
+        const sectionImgs: Record<string, string> = {};
+        settingsRes.data.forEach(s => {
+          if (s.chave.startsWith("section_image_")) {
+            sectionImgs[s.chave] = s.valor;
+          }
+        });
+        setSectionImages(sectionImgs);
+      }
     };
     load();
   }, []);
@@ -270,20 +283,32 @@ const HomePage = () => {
       {/* Stats Section */}
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
-            {content.stats.map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_stats ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            <div className="grid grid-cols-2 gap-6 sm:gap-8">
+              {content.stats.map((stat, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  viewport={{ once: true }}
+                  className="text-center p-6 rounded-2xl bg-card/50 border border-border/40"
+                >
+                  <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">{stat.value}</div>
+                  <div className="text-sm sm:text-base text-muted-foreground">{stat.label}</div>
+                </motion.div>
+              ))}
+            </div>
+            {sectionImages.section_image_stats && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="text-center"
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
               >
-                <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">{stat.value}</div>
-                <div className="text-sm sm:text-base text-muted-foreground">{stat.label}</div>
+                <img src={sectionImages.section_image_stats} alt="Estatísticas" className="w-full h-full object-cover" />
               </motion.div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -291,45 +316,59 @@ const HomePage = () => {
       {/* Features Section */}
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
         <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Funcionalidades Poderosas</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {content.features.map((feature, i) => (
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_features ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            {sectionImages.section_image_features && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
+              >
+                <img src={sectionImages.section_image_features} alt="Funcionalidades" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
+            <div className="order-1 md:order-2">
               <motion.div
-                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-6 rounded-2xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+                className="mb-12"
               >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    {feature.icon === "FileText" && <FileText className="h-6 w-6 text-primary" />}
-                    {feature.icon === "BookOpen" && <BookOpen className="h-6 w-6 text-primary" />}
-                    {feature.icon === "HelpCircle" && <HelpCircle className="h-6 w-6 text-primary" />}
-                    {feature.icon === "ClipboardList" && <ClipboardList className="h-6 w-6 text-primary" />}
-                    {feature.icon === "Lightbulb" && <Lightbulb className="h-6 w-6 text-primary" />}
-                    {feature.icon === "Shield" && <Shield className="h-6 w-6 text-primary" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-foreground">{feature.title}</h3>
-                      <Badge variant="secondary" className="text-xs">{feature.badge}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
-                  </div>
-                </div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Funcionalidades Poderosas</h2>
+                <p className="text-lg text-muted-foreground">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
               </motion.div>
-            ))}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {content.features.map((feature, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    viewport={{ once: true }}
+                    className="p-6 rounded-2xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                        {feature.icon === "FileText" && <FileText className="h-6 w-6 text-primary" />}
+                        {feature.icon === "BookOpen" && <BookOpen className="h-6 w-6 text-primary" />}
+                        {feature.icon === "HelpCircle" && <HelpCircle className="h-6 w-6 text-primary" />}
+                        {feature.icon === "ClipboardList" && <ClipboardList className="h-6 w-6 text-primary" />}
+                        {feature.icon === "Lightbulb" && <Lightbulb className="h-6 w-6 text-primary" />}
+                        {feature.icon === "Shield" && <Shield className="h-6 w-6 text-primary" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-foreground">{feature.title}</h3>
+                          <Badge variant="secondary" className="text-xs">{feature.badge}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -337,42 +376,51 @@ const HomePage = () => {
       {/* How It Works Section */}
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
         <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Como Funciona</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">4 passos simples para começar</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {content.steps.map((step, i) => (
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_steps ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            <div>
               <motion.div
-                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="relative"
+                className="mb-12"
               >
-                <div className="p-6 rounded-2xl bg-card border border-border/50 h-full">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                      {step.number}
-                    </div>
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
-                </div>
-                {i < content.steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2">
-                    <ChevronRight className="h-6 w-6 text-border" />
-                  </div>
-                )}
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Como Funciona</h2>
+                <p className="text-lg text-muted-foreground">4 passos simples para começar</p>
               </motion.div>
-            ))}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {content.steps.map((step, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    viewport={{ once: true }}
+                    className="relative"
+                  >
+                    <div className="p-6 rounded-2xl bg-card border border-border/50 h-full">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                          {step.number}
+                        </div>
+                      </div>
+                      <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
+                      <p className="text-sm text-muted-foreground">{step.description}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+            {sectionImages.section_image_steps && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+              >
+                <img src={sectionImages.section_image_steps} alt="Como Funciona" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
@@ -380,39 +428,53 @@ const HomePage = () => {
       {/* Testimonials Section */}
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
         <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">O Que Dizem Sobre Nós</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Histórias reais de estudantes e professores que transformaram seus resultados</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {content.testimonials.map((testimonial, i) => (
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_testimonials ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            {sectionImages.section_image_testimonials && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
+              >
+                <img src={sectionImages.section_image_testimonials} alt="Depoimentos" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
+            <div className="order-1 md:order-2">
               <motion.div
-                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all"
+                className="mb-12"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="text-4xl">{testimonial.avatar}</div>
-                  <div>
-                    <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
-                    <p className="text-xs text-muted-foreground">{testimonial.school}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground italic">"{testimonial.text}"</p>
-                <div className="flex gap-1 mt-4">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-primary text-primary" />)}
-                </div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">O Que Dizem Sobre Nós</h2>
+                <p className="text-lg text-muted-foreground">Histórias reais de estudantes e professores que transformaram seus resultados</p>
               </motion.div>
-            ))}
+
+              <div className="grid grid-cols-1 gap-6">
+                {content.testimonials.map((testimonial, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    viewport={{ once: true }}
+                    className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all"
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="text-4xl">{testimonial.avatar}</div>
+                      <div>
+                        <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
+                        <p className="text-xs text-muted-foreground">{testimonial.school}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground italic">"{testimonial.text}"</p>
+                    <div className="flex gap-1 mt-4">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-primary text-primary" />)}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -420,54 +482,53 @@ const HomePage = () => {
       {/* Pricing Section */}
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
         <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Planos Simples e Transparentes</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Escolha o plano perfeito para suas necessidades</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {content.pricing.map((plan, i) => (
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_pricing ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            <div>
               <motion.div
-                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className={`relative p-8 rounded-2xl border transition-all ${
-                  plan.popular
-                    ? "border-primary bg-primary/5 ring-2 ring-primary/20 md:scale-105"
-                    : "border-border/50 bg-card hover:border-primary/30"
-                }`}
+                className="mb-12"
               >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-primary">Mais Popular</Badge>
-                  </div>
-                )}
-                <h3 className="text-2xl font-bold mb-2 text-foreground">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-primary">{plan.price}</span>
-                  <span className="text-muted-foreground text-xs block mt-1">pagamento único</span>
-                </div>
-                <Button className="w-full mb-6" variant={plan.popular ? "default" : "outline"}>
-                  Começar Agora
-                </Button>
-                <ul className="space-y-3">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Planos Simples e Transparentes</h2>
+                <p className="text-lg text-muted-foreground">Escolha o plano perfeito para suas necessidades</p>
               </motion.div>
-            ))}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {content.pricing.slice(0, 4).map((plan, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    viewport={{ once: true }}
+                    className={`relative p-6 rounded-2xl border transition-all
+                    ${plan.popular 
+                        ? "border-primary bg-primary/5 shadow-lg" 
+                        : "border-border/50 bg-card hover:border-primary/30"
+                    }`}
+                  >
+                    <h3 className="text-xl font-bold mb-1 text-foreground">{plan.name}</h3>
+                    <div className="mb-4">
+                      <span className="text-2xl font-bold text-primary">{plan.price}</span>
+                    </div>
+                    <Button className="w-full h-9 text-xs" variant={plan.popular ? "default" : "outline"}>
+                      Começar Agora
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+            {sectionImages.section_image_pricing && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+              >
+                <img src={sectionImages.section_image_pricing} alt="Preços" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
@@ -475,66 +536,93 @@ const HomePage = () => {
       {/* Partners Section */}
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
         <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Parceiros de Confiança</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Instituições educacionais que confiam em nós</p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {content.partners.map((partner, i) => (
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_partners ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            {sectionImages.section_image_partners && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
+              >
+                <img src={sectionImages.section_image_partners} alt="Parceiros" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
+            <div className="order-1 md:order-2">
               <motion.div
-                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/30 transition-all flex items-center justify-center h-24"
+                className="mb-12"
               >
-                <div className="text-center">
-                  <div className="text-4xl mb-2">{partner.logo}</div>
-                  <p className="text-xs text-muted-foreground text-center line-clamp-2">{partner.name}</p>
-                </div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Parceiros de Confiança</h2>
+                <p className="text-lg text-muted-foreground">Instituições educacionais que confiam em nós</p>
               </motion.div>
-            ))}
+
+              <div className="grid grid-cols-2 gap-4">
+                {content.partners.map((partner, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    viewport={{ once: true }}
+                    className="p-4 rounded-2xl border border-border/50 bg-card hover:border-primary/30 transition-all flex items-center justify-center h-20"
+                  >
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">{partner.logo}</div>
+                      <p className="text-[10px] text-muted-foreground text-center line-clamp-1">{partner.name}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
-        <div className="max-w-3xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Perguntas Frequentes</h2>
-            <p className="text-lg text-muted-foreground">Respostas para as dúvidas mais comuns</p>
-          </motion.div>
-
-          <div className="space-y-4">
-            {content.faq.map((item, i) => (
+        <div className="max-w-7xl mx-auto">
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_faq ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            <div>
               <motion.div
-                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
                 viewport={{ once: true }}
-                className="p-6 rounded-2xl border border-border/50 bg-card hover:border-primary/30 transition-all group cursor-pointer"
+                className="mb-12"
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-foreground pr-4">{item.question}</h3>
-                  <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                </div>
-                <p className="text-sm text-muted-foreground mt-3 hidden group-hover:block">{item.answer}</p>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Perguntas Frequentes</h2>
+                <p className="text-lg text-muted-foreground">Respostas para as dúvidas mais comuns</p>
               </motion.div>
-            ))}
+
+              <div className="space-y-3">
+                {content.faq.slice(0, 4).map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    viewport={{ once: true }}
+                    className="p-4 rounded-xl border border-border/50 bg-card hover:border-primary/30 transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-foreground pr-4">{item.question}</h3>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+            {sectionImages.section_image_faq && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+              >
+                <img src={sectionImages.section_image_faq} alt="FAQ" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
@@ -542,18 +630,32 @@ const HomePage = () => {
       {/* CTA Final Section */}
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 pointer-events-none" />
-        <div className="max-w-4xl mx-auto relative z-10 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">{content.cta.title}</h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">{content.cta.subtitle}</p>
-            <Button size="lg" className="gap-2 px-8 h-12 rounded-full" onClick={() => navigate("/auth")}>
-              {content.cta.buttonText} <ArrowRight className="h-4 w-4" />
-            </Button>
-          </motion.div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_cta ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            {sectionImages.section_image_cta && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
+              >
+                <img src={sectionImages.section_image_cta} alt="CTA" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
+            <div className="order-1 md:order-2 text-center md:text-left">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">{content.cta.title}</h2>
+                <p className="text-lg text-muted-foreground mb-8 max-w-2xl">{content.cta.subtitle}</p>
+                <Button size="lg" className="gap-2 px-8 h-12 rounded-full" onClick={() => navigate("/auth")}>
+                  {content.cta.buttonText} <ArrowRight className="h-4 w-4" />
+                </Button>
+              </motion.div>
+            </div>
+          </div>
         </div>
       </section>
 

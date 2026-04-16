@@ -21,12 +21,25 @@ const AdminHeroTab = () => {
   const [loginImageUrl, setLoginImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadingLogin, setUploadingLogin] = useState(false);
+  const [uploadingSection, setUploadingSection] = useState<string | null>(null);
+  const [sectionImages, setSectionImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     const [imgRes, settingsRes] = await Promise.all([
       supabase.from("hero_images").select("*").order("ordem", { ascending: true }),
-      supabase.from("site_settings").select("*").in("chave", ["hero_carousel", "auth_login_image"]),
+      supabase.from("site_settings").select("*").in("chave", [
+        "hero_carousel", 
+        "auth_login_image",
+        "section_image_stats",
+        "section_image_features",
+        "section_image_steps",
+        "section_image_testimonials",
+        "section_image_pricing",
+        "section_image_partners",
+        "section_image_faq",
+        "section_image_cta"
+      ]),
     ]);
     
     setImages((imgRes.data as HeroImage[]) ?? []);
@@ -37,6 +50,14 @@ const AdminHeroTab = () => {
       
       if (carousel) setCarouselEnabled(carousel.valor === "true");
       if (loginImg) setLoginImageUrl(loginImg.valor);
+
+      const sectionImgs: Record<string, string> = {};
+      settingsRes.data.forEach(s => {
+        if (s.chave.startsWith("section_image_")) {
+          sectionImgs[s.chave] = s.valor;
+        }
+      });
+      setSectionImages(sectionImgs);
     }
     
     setLoading(false);
@@ -101,22 +122,15 @@ const AdminHeroTab = () => {
       const publicUrl = urlData.publicUrl;
 
       // Update or insert site_setting
-      const { data: existing } = await supabase
+      const { error } = await supabase
         .from("site_settings")
-        .select("id")
-        .eq("chave", "auth_login_image")
-        .single();
+        .upsert({ 
+          chave: "auth_login_image", 
+          valor: publicUrl,
+          atualizado_em: new Date().toISOString() 
+        }, { onConflict: "chave" });
 
-      if (existing) {
-        await supabase
-          .from("site_settings")
-          .update({ valor: publicUrl, atualizado_em: new Date().toISOString() })
-          .eq("chave", "auth_login_image");
-      } else {
-        await supabase
-          .from("site_settings")
-          .insert({ chave: "auth_login_image", valor: publicUrl });
-      }
+      if (error) throw error;
 
       toast({ title: "Imagem de login actualizada" });
       fetchData();
@@ -125,6 +139,58 @@ const AdminHeroTab = () => {
     } finally {
       setUploadingLogin(false);
       e.target.value = "";
+    }
+  };
+
+  const handleSectionImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, sectionKey: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingSection(sectionKey);
+    try {
+      const ext = file.name.split(".").pop();
+      const fileName = `section_${sectionKey}_${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("hero-images")
+        .upload(fileName, file, { cacheControl: "31536000", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("hero-images").getPublicUrl(fileName);
+      const publicUrl = urlData.publicUrl;
+
+      const { error } = await supabase
+        .from("site_settings")
+        .upsert({ 
+          chave: sectionKey, 
+          valor: publicUrl,
+          atualizado_em: new Date().toISOString() 
+        }, { onConflict: "chave" });
+
+      if (error) throw error;
+
+      toast({ title: "Imagem da secção actualizada" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Erro ao carregar imagem", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingSection(null);
+      e.target.value = "";
+    }
+  };
+
+  const handleDeleteSectionImage = async (sectionKey: string) => {
+    try {
+      await supabase
+        .from("site_settings")
+        .update({ valor: "", atualizado_em: new Date().toISOString() })
+        .eq("chave", sectionKey);
+        
+      toast({ title: "Imagem da secção removida" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Erro ao remover imagem", description: error.message, variant: "destructive" });
     }
   };
 
@@ -357,6 +423,70 @@ const AdminHeroTab = () => {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Section Images Configuration */}
+      <Card className="border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ImageIcon className="h-5 w-5 text-primary" />
+            Imagens das Secções da Home
+          </CardTitle>
+          <CardDescription>
+            Adicione imagens para cada secção da página inicial. Elas serão exibidas alternadamente (esquerda/direita).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              { key: "section_image_stats", label: "Secção de Estatísticas" },
+              { key: "section_image_features", label: "Secção de Funcionalidades" },
+              { key: "section_image_steps", label: "Secção Como Funciona" },
+              { key: "section_image_testimonials", label: "Secção de Depoimentos" },
+              { key: "section_image_pricing", label: "Secção de Preços" },
+              { key: "section_image_partners", label: "Secção de Parceiros" },
+              { key: "section_image_faq", label: "Secção de FAQ" },
+              { key: "section_image_cta", label: "Secção CTA Final" },
+            ].map((section) => (
+              <div key={section.key} className="space-y-2 p-4 border rounded-lg bg-muted/30">
+                <Label className="text-sm font-semibold">{section.label}</Label>
+                {sectionImages[section.key] ? (
+                  <div className="relative aspect-video rounded-md overflow-hidden border bg-background">
+                    <img src={sectionImages[section.key]} alt={section.label} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => document.getElementById(`upload-${section.key}`)?.click()}>
+                        Alterar
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDeleteSectionImage(section.key)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    className="aspect-video rounded-md border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors bg-background"
+                    onClick={() => document.getElementById(`upload-${section.key}`)?.click()}
+                  >
+                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground text-center px-2">Clique para carregar imagem</p>
+                  </div>
+                )}
+                <input
+                  id={`upload-${section.key}`}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleSectionImageUpload(e, section.key)}
+                />
+                {uploadingSection === section.key && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> A carregar...
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>
