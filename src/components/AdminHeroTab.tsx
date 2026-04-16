@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { ImagePlus, Trash2, Loader2, GripVertical, LogIn, Image as ImageIcon } from "lucide-react";
+import { ImageCropper } from "./ImageCropper";
 
 interface HeroImage {
   id: string;
@@ -24,6 +25,7 @@ const AdminHeroTab = () => {
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
   const [sectionImages, setSectionImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [cropImage, setCropImage] = useState<{ file: File; sectionKey: string } | null>(null);
 
   const fetchData = useCallback(async () => {
     const [imgRes, settingsRes] = await Promise.all([
@@ -146,15 +148,23 @@ const AdminHeroTab = () => {
   const handleSectionImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, sectionKey: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setCropImage({ file, sectionKey });
+    e.target.value = "";
+  };
 
+  const onCropComplete = async (croppedFile: File) => {
+    if (!cropImage) return;
+    const { sectionKey } = cropImage;
+    setCropImage(null);
     setUploadingSection(sectionKey);
+    
     try {
-      const ext = file.name.split(".").pop();
+      const ext = "jpg";
       const fileName = `section_${sectionKey}_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("hero-images")
-        .upload(fileName, file, { cacheControl: "31536000", upsert: true });
+        .upload(fileName, croppedFile, { cacheControl: "31536000", upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -177,7 +187,6 @@ const AdminHeroTab = () => {
       toast({ title: "Erro ao carregar imagem", description: error.message, variant: "destructive" });
     } finally {
       setUploadingSection(null);
-      e.target.value = "";
     }
   };
 
@@ -491,6 +500,13 @@ const AdminHeroTab = () => {
           </div>
         </CardContent>
       </Card>
+      {cropImage && (
+        <ImageCropper 
+          imageFile={cropImage.file} 
+          onCropComplete={onCropComplete} 
+          onCancel={() => setCropImage(null)} 
+        />
+      )}
     </div>
   );
 };
