@@ -165,9 +165,11 @@ const HomePage = () => {
       { name: "Maria Santos", school: "Universidade Agostinho Neto", text: "Finalmente uma ferramenta feita para Angola! Respeita as normas do INIDE e funciona perfeitamente.", avatar: "👩‍🎓" }
     ],
     pricing: [
-      { name: "Grátis", price: "0 Kz", description: "Perfeito para começar", features: ["5 documentos/mês", "Resumos básicos", "Suporte por email"], popular: false },
-      { name: "Estudante", price: "2.990 Kz", description: "Recomendado para estudantes", features: ["Documentos ilimitados", "Resumos avançados", "Questionários", "Suporte prioritário"], popular: true },
-      { name: "Profissional", price: "9.990 Kz", description: "Para professores e profissionais", features: ["Tudo do Estudante", "Planos de Aula", "Análise de desempenho", "Suporte 24/7"] , popular: false }
+      { name: "Gratuito", price: "0 Kz", description: "Perfeito para começar", features: ["2 Trabalhos Escolares", "3 Resumos de Fotos", "3 Questionários", "Suporte por email"], popular: false },
+      { name: "Básico", price: "546 Kz", description: "Ideal para necessidades pontuais", features: ["3 Trabalhos Escolares", "4 Resumos de Fotos", "Questionários Ilimitados", "Suporte por email"], popular: false },
+      { name: "Intermédio", price: "1.250 Kz", description: "Para estudantes dedicados", features: ["5 Trabalhos Escolares", "7 Resumos de Fotos", "7 Questionários", "5 Planos de Aula", "2 TFC/Monografias", "300 Créditos totais"], popular: false },
+      { name: "Profissional", price: "3.850 Kz", description: "Recomendado para o sucesso académico", features: ["10 Trabalhos Escolares", "16 Resumos de Fotos", "16 Questionários", "10 Planos de Aula", "8 TFC/Monografias", "500 Créditos totais"], popular: true },
+      { name: "Premium", price: "7.500 Kz", description: "Acesso total e ilimitado", features: ["Tudo Ilimitado", "Trabalhos Escolares", "Resumos de Fotos", "Questionários", "Planos de Aula", "TFC/Monografias", "Suporte prioritário"], popular: false }
     ],
     partners: [
       { name: "Universidade Agostinho Neto", logo: "🏫" },
@@ -428,7 +430,7 @@ const HomePage = () => {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Escolha o plano perfeito para suas necessidades</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {content.pricing.map((plan, i) => (
               <motion.div
                 key={i}
@@ -451,7 +453,7 @@ const HomePage = () => {
                 <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-primary">{plan.price}</span>
-                  <span className="text-muted-foreground">/mês</span>
+                  <span className="text-muted-foreground text-xs block mt-1">pagamento único</span>
                 </div>
                 <Button className="w-full mb-6" variant={plan.popular ? "default" : "outline"}>
                   Começar Agora
