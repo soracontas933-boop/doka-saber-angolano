@@ -1,0 +1,352 @@
+/* Estilos para o EditorCanvas */
+
+.editor-canvas {
+  position: relative;
+  width: 100%;
+  min-height: 500px;
+  border: 2px dashed rgba(59, 130, 246, 0.2);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.editor-canvas:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  background-color: rgba(59, 130, 246, 0.02);
+}
+
+.editor-block {
+  position: absolute;
+  transition: all 0.2s ease;
+  cursor: move;
+  user-select: none;
+}
+
+.editor-block.selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.editor-block:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.editor-block-controls {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  display: flex;
+  gap: 0.25rem;
+  background-color: rgba(59, 130, 246, 0.9);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1000;
+}
+
+.editor-block:hover .editor-block-controls,
+.editor-block.selected .editor-block-controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.editor-block-control-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.editor-block-control-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.editor-block-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background-color: #3b82f6;
+  border-radius: 4px 0 0 0;
+  cursor: se-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.editor-block.selected .editor-block-resize-handle,
+.editor-block:hover .editor-block-resize-handle {
+  opacity: 1;
+}
+
+/* Animações de entrada para blocos */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes flip {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+/* Aplicação de animações */
+.animation-fade-up {
+  animation: fadeUp 0.6s ease-out;
+}
+
+.animation-fade-down {
+  animation: fadeDown 0.6s ease-out;
+}
+
+.animation-fade-left {
+  animation: fadeLeft 0.6s ease-out;
+}
+
+.animation-fade-right {
+  animation: fadeRight 0.6s ease-out;
+}
+
+.animation-zoom-in {
+  animation: zoomIn 0.6s ease-out;
+}
+
+.animation-zoom-out {
+  animation: zoomOut 0.6s ease-out;
+}
+
+.animation-bounce {
+  animation: bounce 0.6s ease-in-out;
+}
+
+.animation-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animation-rotate {
+  animation: rotate 2s linear infinite;
+}
+
+.animation-flip {
+  animation: flip 0.6s ease-out;
+}
+
+/* Estilos de formas */
+.shape-rectangle {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.shape-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.shape-rounded-rect {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+.shape-diamond {
+  width: 100%;
+  height: 100%;
+  transform: rotate(45deg);
+}
+
+/* Estilos de divisores */
+.divider-line {
+  width: 100%;
+  height: 2px;
+  background-color: currentColor;
+}
+
+.divider-dots {
+  width: 100%;
+  height: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.divider-dots::before,
+.divider-dots::after {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.divider-dashes {
+  width: 100%;
+  height: 2px;
+  background-image: repeating-linear-gradient(
+    to right,
+    currentColor 0,
+    currentColor 10px,
+    transparent 10px,
+    transparent 20px
+  );
+}
+
+/* Estilos de caixas */
+.box-simple {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border: 1px solid currentColor;
+}
+
+.box-shadow {
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.box-border {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border: 2px solid currentColor;
+  border-radius: 8px;
+}
+
+.box-gradient {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  border-radius: 8px;
+}
+
+.box-glass {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .editor-canvas {
+    min-height: 300px;
+  }
+
+  .editor-block-controls {
+    top: -32px;
+  }
+
+  .editor-block-control-btn {
+    width: 20px;
+    height: 20px;
+  }
+}

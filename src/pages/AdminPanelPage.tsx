@@ -28,7 +28,7 @@ import AdminPaymentsTab from "@/components/AdminPaymentsTab";
 import AdminMastersTab from "@/components/AdminMastersTab";
 import AdminHeroTab from "@/components/AdminHeroTab";
 import AdminButtonCoversTab from "@/components/AdminButtonCoversTab";
-import AdminLandingTab from "@/components/AdminLandingTab";
+import AdminLandingTabNew from "@/components/AdminLandingTabNew";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -907,7 +907,7 @@ const AdminPanelPage = () => {
             <AdminButtonCoversTab />
           </TabsContent>
           <TabsContent value="landing">
-            <AdminLandingTab />
+            <AdminLandingTabNew />
           </TabsContent>
       </Tabs>
 
