@@ -217,39 +217,6 @@ export type Database = {
         }
         Relationships: []
       }
-      landing_sections: {
-        Row: {
-          ativo: boolean
-          conteudo: Json
-          criado_em: string
-          id: string
-          ordem: number
-          tipo: string
-          titulo: string | null
-          atualizado_em: string
-        }
-        Insert: {
-          ativo?: boolean
-          conteudo?: Json
-          criado_em?: string
-          id?: string
-          ordem?: number
-          tipo: string
-          titulo?: string | null
-          atualizado_em?: string
-        }
-        Update: {
-          ativo?: boolean
-          conteudo?: Json
-          criado_em?: string
-          id?: string
-          ordem?: number
-          tipo?: string
-          titulo?: string | null
-          atualizado_em?: string
-        }
-        Relationships: []
-      }
       notifications: {
         Row: {
           criado_em: string
