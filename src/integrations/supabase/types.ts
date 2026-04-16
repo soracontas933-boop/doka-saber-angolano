@@ -217,6 +217,39 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_sections: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string | null
+          conteudo: Json
+          criado_em: string | null
+          id: string
+          ordem: number
+          tipo: string
+          titulo: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string | null
+          conteudo?: Json
+          criado_em?: string | null
+          id?: string
+          ordem?: number
+          tipo: string
+          titulo?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string | null
+          conteudo?: Json
+          criado_em?: string | null
+          id?: string
+          ordem?: number
+          tipo?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           criado_em: string
