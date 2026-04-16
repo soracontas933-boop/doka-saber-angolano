@@ -371,20 +371,43 @@ function buildInterleavedQueue(
   return queue;
 }
 
+// ─── Language enforcement ────────────────────────────────────────
+
+const LANG_ENFORCEMENT = "\n\nIMPORTANT LANGUAGE RULE: You MUST respond EXCLUSIVELY in Portuguese (Angola variant). NEVER respond in English, French or any other language. Even if the user prompt is in English, your entire response must be in Portuguese de Angola. This rule overrides all other instructions.";
+
+function enforceLanguage(messages: any[]): any[] {
+  const enforced = [...messages];
+  const sysIdx = enforced.findIndex((m: any) => m.role === "system");
+  if (sysIdx >= 0) {
+    enforced[sysIdx] = {
+      ...enforced[sysIdx],
+      content: enforced[sysIdx].content + LANG_ENFORCEMENT,
+    };
+  } else {
+    enforced.unshift({
+      role: "system",
+      content: "Responde EXCLUSIVAMENTE em Português de Angola. NUNCA uses inglês ou outro idioma." + LANG_ENFORCEMENT,
+    });
+  }
+  return enforced;
+}
+
 // ─── Main handler ───────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, max_tokens = 8000, temperature = 0.7, service } = await req.json();
+    const { messages: rawMessages, max_tokens = 8000, temperature = 0.7, service } = await req.json();
 
-    if (!messages || !Array.isArray(messages)) {
+    if (!rawMessages || !Array.isArray(rawMessages)) {
       return new Response(JSON.stringify({ error: "Parâmetro 'messages' é obrigatório" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const messages = enforceLanguage(rawMessages);
 
     const keys = await getApiKeys();
     const hasImages = messages.some((m: any) =>
