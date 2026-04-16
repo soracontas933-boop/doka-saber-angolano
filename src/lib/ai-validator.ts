@@ -90,7 +90,7 @@ export function validateAngolanContext(content: string, prompt: string): string[
 export async function validateAndCorrectContent(
   content: string, 
   prompt: string,
-  re-generateFn?: (p: string) => Promise<string>
+  reGenerateFn?: (p: string) => Promise<string>
 ): Promise<ValidationResult> {
   let currentContent = content;
   const errors: string[] = [];
@@ -107,7 +107,7 @@ export async function validateAndCorrectContent(
   errors.push(...contextErrors);
 
   // Se houver erros graves e tivermos uma função de re-geração, tentamos uma vez
-  if (errors.length > 0 && re-generateFn) {
+  if (errors.length > 0 && reGenerateFn) {
     console.warn("Erros detetados no conteúdo. Tentando re-geração/correção via IA...", errors);
     try {
       // Podemos pedir à IA para especificamente corrigir os erros detetados
@@ -116,7 +116,7 @@ export async function validateAndCorrectContent(
       
       ${currentContent}`;
       
-      const fixed = await re-generateFn(correctionPrompt);
+      const fixed = await reGenerateFn(correctionPrompt);
       if (fixed && fixed.length > 100) {
         return {
           isValid: true,
