@@ -48,6 +48,7 @@ interface LandingContent {
   pricing: Array<{ name: string; price: string; description: string; features: string[]; popular: boolean }>;
   partners: Array<{ name: string; logo: string }>;
   faq: Array<{ question: string; answer: string }>;
+  journey: { title: string; text: string; story: string; cta: string };
   cta: { title: string; subtitle: string; buttonText: string };
 }
 
@@ -185,6 +186,12 @@ const HomePage = () => {
       { question: "Qual é o limite de documentos?", answer: "No plano Grátis são 5 documentos por mês. Nos planos pagos, documentos ilimitados." },
       { question: "Existe suporte em português?", answer: "Sim! Temos suporte completo em português angolano, incluindo chat, email e telefone." }
     ],
+    journey: {
+      title: "Sua Jornada, Sem Barreiras",
+      text: "Imagine poder transformar suas ideias, suas anotações, seus momentos de estudo em trabalhos brilhantes, com apenas alguns cliques. Com o Deli, o seu potencial não tem limites. Do resumo do caderno ao currículo perfeito, você vai se destacar.",
+      story: "Como a Ana, que estava travada num trabalho de sociologia, tirou um A+ em menos de uma semana, ou como o professor Marcos, que agora economiza horas preparando suas aulas.",
+      cta: "Dê o próximo passo na sua jornada hoje. Cadastre-se no Deli e libere o seu melhor."
+    },
     cta: { title: "Pronto para transformar sua educação?", subtitle: "Junte-se a milhares de estudantes e professores que já estão usando a Delle", buttonText: "Começar Agora Grátis" }
   });
   const [adminOpen, setAdminOpen] = useState(false);
@@ -278,6 +285,44 @@ const HomePage = () => {
             </Button>
           </div>
         </motion.div>
+      </section>
+
+      {/* Journey Section */}
+      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-primary/5 border-t border-border/50">
+        <div className="max-w-7xl mx-auto">
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_journey ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center md:text-left"
+            >
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-foreground">{content.journey?.title || "Sua Jornada, Sem Barreiras"}</h2>
+              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                {content.journey?.text}
+              </p>
+              <div className="p-6 rounded-2xl bg-background border border-primary/20 mb-8 italic text-primary">
+                "{content.journey?.story}"
+              </div>
+              <p className="text-xl font-semibold mb-8 text-foreground">
+                {content.journey?.cta}
+              </p>
+              <Button size="lg" className="gap-2 px-8 h-12 rounded-full" onClick={() => navigate("/auth")}>
+                Começar Agora <ArrowRight className="h-4 w-4" />
+              </Button>
+            </motion.div>
+            {sectionImages.section_image_journey && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-square rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+              >
+                <img src={sectionImages.section_image_journey} alt="Jornada" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* Stats Section */}
@@ -377,6 +422,16 @@ const HomePage = () => {
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
         <div className="max-w-7xl mx-auto">
           <div className={`grid grid-cols-1 ${sectionImages.section_image_steps ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+            {sectionImages.section_image_steps && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+              >
+                <img src={sectionImages.section_image_steps} alt="Como Funciona" className="w-full h-full object-cover" />
+              </motion.div>
+            )}
             <div>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -461,7 +516,13 @@ const HomePage = () => {
                     className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all"
                   >
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="text-4xl">{testimonial.avatar}</div>
+                      {testimonial.avatar.startsWith('http') ? (
+                        <img src={testimonial.avatar} alt={testimonial.name} className="w-12 h-12 rounded-full object-cover border border-primary/20" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
+                          {testimonial.avatar}
+                        </div>
+                      )}
                       <div>
                         <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
                         <p className="text-xs text-muted-foreground">{testimonial.school}</p>
@@ -584,7 +645,7 @@ const HomePage = () => {
       <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
         <div className="max-w-7xl mx-auto">
           <div className={`grid grid-cols-1 ${sectionImages.section_image_faq ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            <div>
+            <div className="order-2 md:order-1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -618,7 +679,7 @@ const HomePage = () => {
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-1 md:order-2"
               >
                 <img src={sectionImages.section_image_faq} alt="FAQ" className="w-full h-full object-cover" />
               </motion.div>

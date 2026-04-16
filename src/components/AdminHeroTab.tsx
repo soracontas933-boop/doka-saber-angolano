@@ -38,7 +38,8 @@ const AdminHeroTab = () => {
         "section_image_pricing",
         "section_image_partners",
         "section_image_faq",
-        "section_image_cta"
+        "section_image_cta",
+        "section_image_journey"
       ]),
     ]);
     
@@ -446,9 +447,10 @@ const AdminHeroTab = () => {
               { key: "section_image_testimonials", label: "Secção de Depoimentos" },
               { key: "section_image_pricing", label: "Secção de Preços" },
               { key: "section_image_partners", label: "Secção de Parceiros" },
-              { key: "section_image_faq", label: "Secção de FAQ" },
-              { key: "section_image_cta", label: "Secção CTA Final" },
-            ].map((section) => (
+	              { key: "section_image_faq", label: "Secção de FAQ" },
+	              { key: "section_image_cta", label: "Secção CTA Final" },
+	              { key: "section_image_journey", label: "Secção Sua Jornada" },
+	            ].map((section) => (
               <div key={section.key} className="space-y-2 p-4 border rounded-lg bg-muted/30">
                 <Label className="text-sm font-semibold">{section.label}</Label>
                 {sectionImages[section.key] ? (

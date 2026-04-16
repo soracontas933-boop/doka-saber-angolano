@@ -16,6 +16,7 @@ interface LandingContent {
   pricing: Array<{ name: string; price: string; description: string; features: string[]; popular: boolean }>;
   partners: Array<{ name: string; logo: string }>;
   faq: Array<{ question: string; answer: string }>;
+  journey: { title: string; text: string; story: string; cta: string };
   cta: { title: string; subtitle: string; buttonText: string };
 }
 
@@ -178,12 +179,14 @@ const AdminLandingPanelFloat = ({ content, onUpdateContent, onClose }: AdminLand
         {/* Content */}
         <div className="p-4 space-y-6">
           <Tabs defaultValue="stats" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4">
-              <TabsTrigger value="stats" className="text-xs">Stats</TabsTrigger>
-              <TabsTrigger value="features" className="text-xs">Features</TabsTrigger>
-              <TabsTrigger value="pricing" className="text-xs">Preços</TabsTrigger>
-              <TabsTrigger value="cta" className="text-xs">CTA</TabsTrigger>
-            </TabsList>
+	            <TabsList className="grid w-full grid-cols-6 mb-4">
+	              <TabsTrigger value="stats" className="text-xs">Stats</TabsTrigger>
+	              <TabsTrigger value="features" className="text-xs">Features</TabsTrigger>
+	              <TabsTrigger value="pricing" className="text-xs">Preços</TabsTrigger>
+	              <TabsTrigger value="journey" className="text-xs">Jornada</TabsTrigger>
+	              <TabsTrigger value="testimonials" className="text-xs">Depoim.</TabsTrigger>
+	              <TabsTrigger value="cta" className="text-xs">CTA</TabsTrigger>
+	            </TabsList>
 
             {/* Stats Tab */}
             <TabsContent value="stats" className="space-y-4">
@@ -295,8 +298,124 @@ const AdminLandingPanelFloat = ({ content, onUpdateContent, onClose }: AdminLand
               </div>
             </TabsContent>
 
-            {/* CTA Tab */}
-            <TabsContent value="cta" className="space-y-4">
+	            {/* Journey Tab */}
+	            <TabsContent value="journey" className="space-y-4">
+	              <div className="space-y-3">
+	                <Label className="text-xs">Título</Label>
+	                <Input
+	                  value={content.journey?.title}
+	                  onChange={(e) => onUpdateContent("journey", { ...content.journey, title: e.target.value })}
+	                  className="text-sm"
+	                />
+	                <Label className="text-xs">Texto Principal</Label>
+	                <Input
+	                  value={content.journey?.text}
+	                  onChange={(e) => onUpdateContent("journey", { ...content.journey, text: e.target.value })}
+	                  className="text-sm"
+	                />
+	                <Label className="text-xs">Micro-história</Label>
+	                <Input
+	                  value={content.journey?.story}
+	                  onChange={(e) => onUpdateContent("journey", { ...content.journey, story: e.target.value })}
+	                  className="text-sm"
+	                />
+	                <Label className="text-xs">CTA</Label>
+	                <Input
+	                  value={content.journey?.cta}
+	                  onChange={(e) => onUpdateContent("journey", { ...content.journey, cta: e.target.value })}
+	                  className="text-sm"
+	                />
+	              </div>
+	            </TabsContent>
+
+	            {/* Testimonials Tab */}
+	            <TabsContent value="testimonials" className="space-y-4">
+	              <div className="space-y-4">
+	                {content.testimonials.map((t, i) => (
+	                  <div key={i} className="p-3 border border-border/50 rounded-lg space-y-2">
+	                    <Input
+	                      placeholder="Nome"
+	                      value={t.name}
+	                      onChange={(e) => {
+	                        const newT = [...content.testimonials];
+	                        newT[i].name = e.target.value;
+	                        onUpdateContent("testimonials", newT);
+	                      }}
+	                      className="text-sm"
+	                    />
+	                    <Input
+	                      placeholder="Escola/Instituição"
+	                      value={t.school}
+	                      onChange={(e) => {
+	                        const newT = [...content.testimonials];
+	                        newT[i].school = e.target.value;
+	                        onUpdateContent("testimonials", newT);
+	                      }}
+	                      className="text-sm"
+	                    />
+	                    <Input
+	                      placeholder="Depoimento"
+	                      value={t.text}
+	                      onChange={(e) => {
+	                        const newT = [...content.testimonials];
+	                        newT[i].text = e.target.value;
+	                        onUpdateContent("testimonials", newT);
+	                      }}
+	                      className="text-sm"
+	                    />
+	                    <div className="flex items-center gap-2">
+	                      <Input
+	                        placeholder="URL da Foto"
+	                        value={t.avatar}
+	                        onChange={(e) => {
+	                          const newT = [...content.testimonials];
+	                          newT[i].avatar = e.target.value;
+	                          onUpdateContent("testimonials", newT);
+	                        }}
+	                        className="text-sm flex-1"
+	                      />
+	                      <Button 
+	                        size="icon" 
+	                        variant="outline" 
+	                        className="h-9 w-9"
+	                        onClick={() => {
+	                          const input = document.createElement('input');
+	                          input.type = 'file';
+	                          input.accept = 'image/*';
+	                          input.onchange = async (e) => {
+	                            const file = (e.target as HTMLInputElement).files?.[0];
+	                            if (!file) return;
+	                            
+	                            const ext = file.name.split('.').pop();
+	                            const fileName = `testimonial_${Date.now()}.${ext}`;
+	                            const { data, error } = await supabase.storage
+	                              .from('hero-images')
+	                              .upload(fileName, file);
+	                            
+	                            if (error) {
+	                              toast({ title: "Erro ao carregar", description: error.message, variant: "destructive" });
+	                              return;
+	                            }
+	                            
+	                            const { data: urlData } = supabase.storage.from('hero-images').getPublicUrl(fileName);
+	                            const newT = [...content.testimonials];
+	                            newT[i].avatar = urlData.publicUrl;
+	                            onUpdateContent("testimonials", newT);
+	                            toast({ title: "Foto carregada!" });
+	                          };
+	                          input.click();
+	                        }}
+	                      >
+	                        <ImageIcon className="h-4 w-4" />
+	                      </Button>
+	                    </div>
+	                  </div>
+	                ))}
+	              </div>
+	            </TabsContent>
+
+	            {/* CTA Tab */}
+	            <TabsContent value="cta" className="space-y-4">
               <div className="space-y-3">
                 <div className="p-3 border border-border/50 rounded-lg space-y-2">
                   <Label className="text-sm">Título CTA</Label>
