@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { ImagePlus, Trash2, Loader2, GripVertical } from "lucide-react";
+import { ImagePlus, Trash2, Loader2, GripVertical, LogIn } from "lucide-react";
 
 interface HeroImage {
   id: string;
@@ -18,18 +18,27 @@ interface HeroImage {
 const AdminHeroTab = () => {
   const [images, setImages] = useState<HeroImage[]>([]);
   const [carouselEnabled, setCarouselEnabled] = useState(false);
+  const [loginImageUrl, setLoginImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingLogin, setUploadingLogin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     const [imgRes, settingsRes] = await Promise.all([
       supabase.from("hero_images").select("*").order("ordem", { ascending: true }),
-      supabase.from("site_settings").select("*").eq("chave", "hero_carousel").single(),
+      supabase.from("site_settings").select("*").in("chave", ["hero_carousel", "auth_login_image"]),
     ]);
+    
     setImages((imgRes.data as HeroImage[]) ?? []);
+    
     if (settingsRes.data) {
-      setCarouselEnabled((settingsRes.data as any).valor === "true");
+      const carousel = settingsRes.data.find(s => s.chave === "hero_carousel");
+      const loginImg = settingsRes.data.find(s => s.chave === "auth_login_image");
+      
+      if (carousel) setCarouselEnabled(carousel.valor === "true");
+      if (loginImg) setLoginImageUrl(loginImg.valor);
     }
+    
     setLoading(false);
   }, []);
 
@@ -73,8 +82,70 @@ const AdminHeroTab = () => {
     }
   };
 
+  const handleLoginImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogin(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const fileName = `login_${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("hero-images")
+        .upload(fileName, file, { cacheControl: "31536000", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("hero-images").getPublicUrl(fileName);
+      const publicUrl = urlData.publicUrl;
+
+      // Update or insert site_setting
+      const { data: existing } = await supabase
+        .from("site_settings")
+        .select("id")
+        .eq("chave", "auth_login_image")
+        .single();
+
+      if (existing) {
+        await supabase
+          .from("site_settings")
+          .update({ valor: publicUrl, atualizado_em: new Date().toISOString() })
+          .eq("chave", "auth_login_image");
+      } else {
+        await supabase
+          .from("site_settings")
+          .insert({ chave: "auth_login_image", valor: publicUrl });
+      }
+
+      toast({ title: "Imagem de login actualizada" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Erro ao carregar imagem", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingLogin(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleDeleteLoginImage = async () => {
+    if (!loginImageUrl) return;
+    
+    try {
+      // Opcional: remover do storage se desejar
+      await supabase
+        .from("site_settings")
+        .update({ valor: "", atualizado_em: new Date().toISOString() })
+        .eq("chave", "auth_login_image");
+        
+      toast({ title: "Imagem de login removida" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Erro ao remover imagem", description: error.message, variant: "destructive" });
+    }
+  };
+
   const handleDelete = async (img: HeroImage) => {
-    // Extract filename from URL
     const parts = img.url.split("/hero-images/");
     const fileName = parts[parts.length - 1];
 
@@ -128,6 +199,54 @@ const AdminHeroTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Login Image Configuration */}
+      <Card className="border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <LogIn className="h-5 w-5 text-primary" />
+            Imagem da Tela de Login
+          </CardTitle>
+          <CardDescription>
+            Esta imagem aparece no lado esquerdo da tela de login e cadastro.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {loginImageUrl ? (
+            <div className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden border">
+              <img src={loginImageUrl} alt="Login preview" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <Button size="sm" variant="secondary" onClick={() => document.getElementById("login-upload")?.click()}>
+                  Alterar
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleDeleteLoginImage}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div 
+              className="w-full max-w-md aspect-video rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => document.getElementById("login-upload")?.click()}
+            >
+              <ImagePlus className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Clique para carregar imagem de login</p>
+            </div>
+          )}
+          <input
+            id="login-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleLoginImageUpload}
+          />
+          {uploadingLogin && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> A carregar...
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Carousel toggle */}
       <Card>
         <CardHeader>
@@ -217,7 +336,6 @@ const AdminHeroTab = () => {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                  {/* Order controls */}
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {idx > 0 && (
                       <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => moveImage(idx, "up")}>
