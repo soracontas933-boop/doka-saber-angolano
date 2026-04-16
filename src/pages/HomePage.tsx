@@ -288,37 +288,86 @@ const HomePage = () => {
       </section>
 
       {/* Journey Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-primary/5 border-t border-border/50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_journey ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
+      <section className="relative w-full py-20 sm:py-32 px-4 sm:px-6 md:px-12 overflow-hidden border-t border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className={`grid grid-cols-1 ${sectionImages.section_image_journey ? 'lg:grid-cols-2' : ''} gap-16 items-center`}>
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
               viewport={{ once: true }}
-              className="text-center md:text-left"
+              className="relative"
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-foreground">{content.journey?.title || "Sua Jornada, Sem Barreiras"}</h2>
-              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                {content.journey?.text}
-              </p>
-              <div className="p-6 rounded-2xl bg-background border border-primary/20 mb-8 italic text-primary">
-                "{content.journey?.story}"
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-6 border border-primary/20">
+                <Sparkles className="h-3 w-3" />
+                Sua Evolução
               </div>
-              <p className="text-xl font-semibold mb-8 text-foreground">
-                {content.journey?.cta}
-              </p>
-              <Button size="lg" className="gap-2 px-8 h-12 rounded-full" onClick={() => navigate("/auth")}>
-                Começar Agora <ArrowRight className="h-4 w-4" />
-              </Button>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-8 text-foreground tracking-tight leading-[1.1]">
+                {content.journey?.title || "Sua Jornada, Sem Barreiras"}
+              </h2>
+              <div className="space-y-6 text-lg text-muted-foreground leading-relaxed mb-10">
+                <p className="relative pl-6 border-l-2 border-primary/30">
+                  {content.journey?.text}
+                </p>
+                <div className="relative p-8 rounded-3xl bg-card border border-border/50 shadow-xl overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Users className="h-12 w-12 text-primary" />
+                  </div>
+                  <p className="relative z-10 italic text-foreground/90 text-xl leading-relaxed">
+                    "{content.journey?.story}"
+                  </p>
+                  <div className="mt-4 flex items-center gap-2 text-primary font-medium">
+                    <div className="h-px w-8 bg-primary/30" />
+                    <span className="text-sm uppercase tracking-wider">História de Sucesso</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <Button size="lg" className="gap-2 px-10 h-14 rounded-full text-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" onClick={() => navigate("/auth")}>
+                  {content.journey?.cta || "Começar Agora"} <ArrowRight className="h-5 w-5" />
+                </Button>
+                <div className="flex -space-x-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden">
+                      <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                  <div className="w-10 h-10 rounded-full border-2 border-background bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
+                    +50k
+                  </div>
+                </div>
+              </div>
             </motion.div>
+
             {sectionImages.section_image_journey && (
               <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
                 viewport={{ once: true }}
-                className="relative aspect-square rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+                className="relative group"
               >
-                <img src={sectionImages.section_image_journey} alt="Jornada" className="w-full h-full object-cover" />
+                <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 to-blue-400/20 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-80 transition-opacity" />
+                <div className="relative aspect-[4/5] lg:aspect-square rounded-[2rem] overflow-hidden border border-border/50 shadow-2xl">
+                  <img 
+                    src={sectionImages.section_image_journey} 
+                    alt="Jornada" 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                  <div className="absolute bottom-8 left-8 right-8 p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                      <span className="text-xs font-bold uppercase tracking-widest">Live em Angola</span>
+                    </div>
+                    <p className="text-sm font-medium">Transformando a educação de Cabinda ao Cunene.</p>
+                  </div>
+                </div>
+                
+                {/* Decorative elements */}
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary/10 rounded-full blur-3xl" />
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl" />
               </motion.div>
             )}
           </div>
