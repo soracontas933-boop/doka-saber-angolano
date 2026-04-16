@@ -353,7 +353,7 @@ const HomePage = () => {
                   <img 
                     src={sectionImages.section_image_journey} 
                     alt="Jornada" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
                   <div className="absolute bottom-8 left-8 right-8 p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white">
@@ -400,7 +400,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
               >
-                <img src={sectionImages.section_image_stats} alt="Estatísticas" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_stats} alt="Estatísticas" className="w-full h-full object-contain" />
               </motion.div>
             )}
           </div>
@@ -418,7 +418,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
               >
-                <img src={sectionImages.section_image_features} alt="Funcionalidades" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_features} alt="Funcionalidades" className="w-full h-full object-contain" />
               </motion.div>
             )}
             <div className="order-1 md:order-2">
@@ -478,7 +478,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
               >
-                <img src={sectionImages.section_image_steps} alt="Como Funciona" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_steps} alt="Como Funciona" className="w-full h-full object-contain" />
               </motion.div>
             )}
             <div>
@@ -522,7 +522,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
               >
-                <img src={sectionImages.section_image_steps} alt="Como Funciona" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_steps} alt="Como Funciona" className="w-full h-full object-contain" />
               </motion.div>
             )}
           </div>
@@ -540,7 +540,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
               >
-                <img src={sectionImages.section_image_testimonials} alt="Depoimentos" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_testimonials} alt="Depoimentos" className="w-full h-full object-contain" />
               </motion.div>
             )}
             <div className="order-1 md:order-2">
@@ -636,7 +636,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
               >
-                <img src={sectionImages.section_image_pricing} alt="Preços" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_pricing} alt="Preços" className="w-full h-full object-contain" />
               </motion.div>
             )}
           </div>
@@ -654,7 +654,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
               >
-                <img src={sectionImages.section_image_partners} alt="Parceiros" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_partners} alt="Parceiros" className="w-full h-full object-contain" />
               </motion.div>
             )}
             <div className="order-1 md:order-2">
@@ -730,7 +730,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-1 md:order-2"
               >
-                <img src={sectionImages.section_image_faq} alt="FAQ" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_faq} alt="FAQ" className="w-full h-full object-contain" />
               </motion.div>
             )}
           </div>
@@ -749,7 +749,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
               >
-                <img src={sectionImages.section_image_cta} alt="CTA" className="w-full h-full object-cover" />
+                <img src={sectionImages.section_image_cta} alt="CTA" className="w-full h-full object-contain" />
               </motion.div>
             )}
             <div className="order-1 md:order-2 text-center md:text-left">
