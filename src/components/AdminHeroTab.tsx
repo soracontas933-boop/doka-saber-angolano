@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { ImagePlus, Trash2, Loader2, GripVertical, LogIn } from "lucide-react";
+import { ImagePlus, Trash2, Loader2, GripVertical, LogIn, Image as ImageIcon } from "lucide-react";
 
 interface HeroImage {
   id: string;
