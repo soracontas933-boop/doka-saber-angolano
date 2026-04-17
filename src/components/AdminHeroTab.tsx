@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ImagePlus, Trash2, Loader2, GripVertical, LogIn, Image as ImageIcon } from "lucide-react";
+import { ImagePlus, Trash2, Loader2, GripVertical, LogIn, Image as ImageIcon, Video, Save } from "lucide-react";
 import { ImageCropper } from "./ImageCropper";
 
 interface HeroImage {
@@ -20,9 +21,11 @@ const AdminHeroTab = () => {
   const [images, setImages] = useState<HeroImage[]>([]);
   const [carouselEnabled, setCarouselEnabled] = useState(false);
   const [loginImageUrl, setLoginImageUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [uploadingLogin, setUploadingLogin] = useState(false);
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
+  const [savingVideo, setSavingVideo] = useState(false);
   const [sectionImages, setSectionImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [cropImage, setCropImage] = useState<{ file: File; sectionKey: string } | null>(null);
@@ -33,6 +36,7 @@ const AdminHeroTab = () => {
       supabase.from("site_settings").select("*").in("chave", [
         "hero_carousel", 
         "auth_login_image",
+        "section_video_journey",
         "section_image_stats",
         "section_image_features",
         "section_image_steps",
@@ -50,9 +54,11 @@ const AdminHeroTab = () => {
     if (settingsRes.data) {
       const carousel = settingsRes.data.find(s => s.chave === "hero_carousel");
       const loginImg = settingsRes.data.find(s => s.chave === "auth_login_image");
+      const video = settingsRes.data.find(s => s.chave === "section_video_journey");
       
       if (carousel) setCarouselEnabled(carousel.valor === "true");
       if (loginImg) setLoginImageUrl(loginImg.valor);
+      if (video) setVideoUrl(video.valor);
 
       const sectionImgs: Record<string, string> = {};
       settingsRes.data.forEach(s => {
@@ -145,6 +151,27 @@ const AdminHeroTab = () => {
     }
   };
 
+  const handleSaveVideo = async () => {
+    setSavingVideo(true);
+    try {
+      const { error } = await supabase
+        .from("site_settings")
+        .upsert({ 
+          chave: "section_video_journey", 
+          valor: videoUrl,
+          atualizado_em: new Date().toISOString() 
+        }, { onConflict: "chave" });
+
+      if (error) throw error;
+      toast({ title: "URL do vídeo guardada com sucesso" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Erro ao guardar vídeo", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingVideo(false);
+    }
+  };
+
   const handleSectionImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, sectionKey: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -208,7 +235,6 @@ const AdminHeroTab = () => {
     if (!loginImageUrl) return;
     
     try {
-      // Opcional: remover do storage se desejar
       await supabase
         .from("site_settings")
         .update({ valor: "", atualizado_em: new Date().toISOString() })
@@ -295,206 +321,179 @@ const AdminHeroTab = () => {
                   Alterar
                 </Button>
                 <Button size="sm" variant="destructive" onClick={handleDeleteLoginImage}>
-                  <Trash2 className="h-4 w-4" />
+                  Remover
                 </Button>
               </div>
             </div>
           ) : (
-            <div 
-              className="w-full max-w-md aspect-video rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => document.getElementById("login-upload")?.click()}
-            >
-              <ImagePlus className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Clique para carregar imagem de login</p>
-            </div>
+            <Button variant="outline" className="w-full max-w-md h-32 border-dashed" onClick={() => document.getElementById("login-upload")?.click()} disabled={uploadingLogin}>
+              {uploadingLogin ? <Loader2 className="h-6 w-6 animate-spin" /> : <ImagePlus className="h-8 w-8 text-muted-foreground" />}
+            </Button>
           )}
-          <input
-            id="login-upload"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleLoginImageUpload}
-          />
-          {uploadingLogin && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> A carregar...
-            </div>
-          )}
+          <input id="login-upload" type="file" accept="image/*" className="hidden" onChange={handleLoginImageUpload} />
         </CardContent>
       </Card>
 
-      {/* Carousel toggle */}
-      <Card>
+      {/* Hero Configuration */}
+      <Card className="border-primary/20">
         <CardHeader>
-          <CardTitle className="text-base">Configuração do Hero</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Switch
-              id="carousel-toggle"
-              checked={carouselEnabled}
-              onCheckedChange={handleCarouselToggle}
-            />
-            <Label htmlFor="carousel-toggle" className="text-sm">
-              Activar carrossel de imagens (se desactivado, mostra apenas a primeira imagem)
-            </Label>
-          </div>
-
-          <div>
-            <Label className="text-sm text-muted-foreground mb-2 block">
-              Carregar imagens do Hero (recomendado: 1920×800px, formato WebP ou JPG)
-            </Label>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                className="gap-2"
-                disabled={uploading}
-                onClick={() => document.getElementById("hero-upload")?.click()}
-              >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ImagePlus className="h-4 w-4" />
-                )}
-                {uploading ? "A carregar..." : "Adicionar imagem"}
-              </Button>
-              <input
-                id="hero-upload"
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleUpload}
-              />
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-primary" />
+                Imagens do Hero (Home)
+              </CardTitle>
+              <CardDescription>
+                Gerencie as imagens de fundo da seção principal.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="carousel-mode" className="text-xs font-medium">Carrossel</Label>
+              <Switch id="carousel-mode" checked={carouselEnabled} onCheckedChange={handleCarouselToggle} />
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Image list */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Imagens do Hero ({images.filter((i) => i.ativo).length} activas)
-          </CardTitle>
         </CardHeader>
-        <CardContent>
-          {images.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma imagem carregada. A landing page mostrará o hero sem imagem de fundo.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {images.map((img, idx) => (
-                <div
-                  key={img.id}
-                  className={`relative group rounded-xl overflow-hidden border-2 transition-all ${
-                    img.ativo ? "border-primary" : "border-muted opacity-60"
-                  }`}
-                >
-                  <img
-                    src={img.url}
-                    alt={`Hero ${idx + 1}`}
-                    className="w-full h-40 object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => handleToggleActive(img)}
-                    >
-                      {img.ativo ? "Desactivar" : "Activar"}
+        <CardContent className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Button onClick={() => document.getElementById("hero-upload")?.click()} disabled={uploading} className="gap-2">
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+              Adicionar Imagens
+            </Button>
+            <input id="hero-upload" type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {images.map((img, index) => (
+              <div key={img.id} className={`group relative aspect-video rounded-lg overflow-hidden border-2 transition-all ${img.ativo ? "border-primary/50" : "border-transparent opacity-60"}`}>
+                <img src={img.url} alt={`Hero ${index}`} className="w-full h-full object-cover" />
+                
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => moveImage(index, "up")} disabled={index === 0}>
+                      <GripVertical className="h-4 w-4 rotate-90" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(img)}
-                    >
+                    <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => moveImage(index, "down")} disabled={index === images.length - 1}>
+                      <GripVertical className="h-4 w-4 -rotate-90" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={img.ativo} onCheckedChange={() => handleToggleActive(img)} />
+                    <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDelete(img)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {idx > 0 && (
-                      <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => moveImage(idx, "up")}>
-                        ↑
-                      </Button>
-                    )}
-                    {idx < images.length - 1 && (
-                      <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => moveImage(idx, "down")}>
-                        ↓
-                      </Button>
-                    )}
-                  </div>
-                  <div className="absolute bottom-2 left-2">
-                    <span className="bg-background/80 text-foreground text-xs px-2 py-0.5 rounded">
-                      #{idx + 1} {img.ativo ? "✓" : "—"}
-                    </span>
-                  </div>
                 </div>
-              ))}
+                
+                {img.ativo && (
+                  <div className="absolute top-2 left-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    ACTIVO
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Video Configuration for 3rd Section */}
+      <Card className="border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Video className="h-5 w-5 text-primary" />
+            Vídeo da 3ª Secção (Jornada)
+          </CardTitle>
+          <CardDescription>
+            Adicione um vídeo do YouTube ou Vimeo para aparecer na terceira secção da página inicial.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input 
+              placeholder="https://www.youtube.com/watch?v=..." 
+              value={videoUrl} 
+              onChange={(e) => setVideoUrl(e.target.value)}
+              className="flex-1"
+            />
+            <Button onClick={handleSaveVideo} disabled={savingVideo} className="gap-2">
+              {savingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Guardar
+            </Button>
+          </div>
+          {videoUrl && (
+            <div className="mt-4 aspect-video rounded-lg overflow-hidden border bg-black">
+              <iframe
+                src={videoUrl.includes('watch?v=') ? videoUrl.replace('watch?v=', 'embed/') : videoUrl}
+                className="w-full h-full"
+                allowFullScreen
+              />
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Section Images Configuration */}
+      {/* Home Section Images */}
       <Card className="border-primary/20">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <ImageIcon className="h-5 w-5 text-primary" />
-            Imagens das Secções da Home
+            Imagens das Secções
           </CardTitle>
           <CardDescription>
-            Adicione imagens para cada secção da página inicial. Elas serão exibidas alternadamente (esquerda/direita).
+            Personalize as imagens que aparecem em cada secção da landing page.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {[
-              { key: "section_image_stats", label: "Secção de Estatísticas" },
-              { key: "section_image_features", label: "Secção de Funcionalidades" },
+              { key: "section_image_journey", label: "Secção Jornada (3ª Secção)" },
+              { key: "section_image_stats", label: "Secção Estatísticas" },
+              { key: "section_image_features", label: "Secção Funcionalidades" },
               { key: "section_image_steps", label: "Secção Como Funciona" },
-              { key: "section_image_testimonials", label: "Secção de Depoimentos" },
-              { key: "section_image_pricing", label: "Secção de Preços" },
-              { key: "section_image_partners", label: "Secção de Parceiros" },
-	              { key: "section_image_faq", label: "Secção de FAQ" },
-	              { key: "section_image_cta", label: "Secção CTA Final" },
-	              { key: "section_image_journey", label: "Secção Sua Jornada" },
-	            ].map((section) => (
-              <div key={section.key} className="space-y-2 p-4 border rounded-lg bg-muted/30">
-                <Label className="text-sm font-semibold">{section.label}</Label>
-                {sectionImages[section.key] ? (
-                  <div className="relative aspect-video rounded-md overflow-hidden border bg-background">
-                    <img src={sectionImages[section.key]} alt={section.label} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button size="sm" variant="secondary" onClick={() => document.getElementById(`upload-${section.key}`)?.click()}>
-                        Alterar
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDeleteSectionImage(section.key)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div 
-                    className="aspect-video rounded-md border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors bg-background"
-                    onClick={() => document.getElementById(`upload-${section.key}`)?.click()}
-                  >
-                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground text-center px-2">Clique para carregar imagem</p>
-                  </div>
-                )}
-                <input
-                  id={`upload-${section.key}`}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleSectionImageUpload(e, section.key)}
-                />
-                {uploadingSection === section.key && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> A carregar...
-                  </div>
-                )}
+              { key: "section_image_testimonials", label: "Secção Depoimentos" },
+              { key: "section_image_pricing", label: "Secção Preços" },
+              { key: "section_image_partners", label: "Secção Parceiros" },
+              { key: "section_image_faq", label: "Secção FAQ" },
+              { key: "section_image_cta", label: "Secção CTA Final" },
+            ].map((section) => (
+              <div key={section.key} className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{section.label}</Label>
+                <div className="relative aspect-video rounded-lg overflow-hidden border bg-muted/30 group">
+                  {sectionImages[section.key] ? (
+                    <>
+                      <img src={sectionImages[section.key]} alt={section.label} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => document.getElementById(`upload-${section.key}`)?.click()}>
+                          Alterar
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteSectionImage(section.key)}>
+                          Remover
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <button 
+                      className="w-full h-full flex flex-col items-center justify-center gap-2 hover:bg-muted/50 transition-colors"
+                      onClick={() => document.getElementById(`upload-${section.key}`)?.click()}
+                      disabled={uploadingSection === section.key}
+                    >
+                      {uploadingSection === section.key ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      ) : (
+                        <>
+                          <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Carregar Imagem</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  <input 
+                    id={`upload-${section.key}`} 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => handleSectionImageUpload(e, section.key)} 
+                  />
+                </div>
               </div>
             ))}
           </div>

@@ -20,7 +20,8 @@ import {
   Star, 
   ChevronRight,
   Settings,
-  ChevronDown
+  ChevronDown,
+  Play
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -57,7 +58,7 @@ const AnimatedTitle = () => {
   const line2 = "estude melhor";
 
   return (
-    <h1 className="text-4xl sm:text-5xl md:text-7xl font-apple font-bold tracking-tight leading-[1.05] mb-6 sm:mb-8 text-foreground">
+    <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold tracking-tight leading-[1.05] mb-8 text-foreground">
       <span className="block">
         {line1.split("").map((letter, i) =>
           <motion.span
@@ -77,7 +78,7 @@ const AnimatedTitle = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 + (line1.length + i) * 0.03, duration: 0.3 }}
-            className="inline-block bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+            className="inline-block bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] bg-clip-text text-transparent">
             {letter === " " ? "\u00A0" : letter}
           </motion.span>
         )}
@@ -111,14 +112,14 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
           decoding="async"
           fetchPriority="high" />
       </AnimatePresence>
-      <div className="absolute inset-0 bg-black/70 z-[10]" />
+      <div className="absolute inset-0 bg-black/40 dark:bg-black/70 z-[10]" />
       {images.length > 1 &&
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
           {images.map((_, i) =>
             <button
               key={i}
               onClick={() => setCurrent(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${i === current ? "bg-primary scale-125" : "bg-white/40"}`} />
+              className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-white scale-125" : "bg-white/40"}`} />
           )}
         </div>
       }
@@ -129,8 +130,31 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
 const HeroSingle = ({ image }: { image: HeroImage }) =>
   <div className="absolute inset-0 overflow-hidden z-[5]">
     <img src={image.url} alt="Hero" className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
-    <div className="absolute inset-0 bg-black/70 z-[10]" />
+    <div className="absolute inset-0 bg-black/40 dark:bg-black/70 z-[10]" />
   </div>;
+
+const VideoEmbed = ({ url }: { url: string }) => {
+  const getEmbedUrl = (url: string) => {
+    if (url.includes('youtube.com/watch?v=')) {
+      return url.replace('watch?v=', 'embed/');
+    }
+    if (url.includes('youtu.be/')) {
+      return url.replace('youtu.be/', 'youtube.com/embed/');
+    }
+    return url;
+  };
+
+  return (
+    <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-border/50 shadow-2xl bg-black group">
+      <iframe
+        src={getEmbedUrl(url)}
+        className="w-full h-full"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+};
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -140,6 +164,7 @@ const HomePage = () => {
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [carouselEnabled, setCarouselEnabled] = useState(false);
   const [sectionImages, setSectionImages] = useState<Record<string, string>>({});
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [content, setContent] = useState<LandingContent>({
     stats: [
       { label: "Alunos Activos", value: "50K+", icon: "Users" },
@@ -199,15 +224,20 @@ const HomePage = () => {
   useEffect(() => {
     const load = async () => {
       const [imgRes, settingsRes] = await Promise.all([
-        supabase.from("hero_images").select("id, url, ordem").eq("ativo", true).order("ordem", { ascending: true }),
-        supabase.from("site_settings").select("chave, valor"),
+        supabase.from("hero_images").select("*").eq("ativo", true).order("ordem", { ascending: true }),
+        supabase.from("site_settings").select("*")
       ]);
 
       setHeroImages(imgRes.data as HeroImage[] ?? []);
       
       if (settingsRes.data) {
-        const carousel = settingsRes.data.find(s => s.chave === "hero_carousel");
-        if (carousel) setCarouselEnabled(carousel.valor === "true");
+        const settings: Record<string, string> = {};
+        settingsRes.data.forEach(s => {
+          settings[s.chave] = s.valor;
+        });
+        setSiteSettings(settings);
+        
+        if (settings.hero_carousel) setCarouselEnabled(settings.hero_carousel === "true");
 
         const sectionImgs: Record<string, string> = {};
         settingsRes.data.forEach(s => {
@@ -228,27 +258,27 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden font-apple">
       {/* Nav */}
-      <header className="relative z-[30] flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 sm:py-5 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0">
-        <DelleLogo size={30} />
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-8 w-8 sm:h-10 sm:w-10">
-            {theme === "dark" ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
+      <header className="relative z-[30] flex items-center justify-between px-6 md:px-12 py-4 border-b border-border/40 bg-background/70 backdrop-blur-xl sticky top-0">
+        <DelleLogo size={28} />
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-9 w-9 rounded-full">
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           {canInstall &&
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={install}>
-              <Download className="h-4 w-4" /> Baixar App
+            <Button variant="outline" size="sm" className="rounded-full hidden sm:inline-flex border-border/60" onClick={install}>
+              <Download className="h-4 w-4 mr-2" /> Baixar App
             </Button>
           }
-          <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate("/auth")}>Entrar</Button>
-          <Button size="sm" className="text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate("/auth")}>Começar grátis</Button>
+          <Button variant="ghost" size="sm" className="rounded-full px-5" onClick={() => navigate("/auth")}>Entrar</Button>
+          <Button size="sm" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-6 shadow-sm" onClick={() => navigate("/auth")}>Começar grátis</Button>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative px-4 sm:px-6 md:px-12 pt-10 sm:pt-16 pb-14 sm:pb-20 max-w-7xl mx-auto text-center min-h-[80vh] flex flex-col justify-center">
-        <div className="absolute inset-0 z-0 pointer-events-none">
+      <section className="relative px-6 md:px-12 pt-20 pb-32 max-w-7xl mx-auto text-center min-h-[90vh] flex flex-col justify-center items-center">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-50">
           <FloatingPaths position={1} />
           <FloatingPaths position={-1} />
         </div>
@@ -260,554 +290,278 @@ const HomePage = () => {
         }
 
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative z-[20]">
-
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-primary text-xs font-semibold mb-8 border border-border/40 backdrop-blur-md">
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-[20] max-w-4xl"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-semibold mb-10 border border-[#3B82F6]/20 backdrop-blur-md">
             <Sparkles className="h-3.5 w-3.5" />
             Plataforma educacional angolana com IA
           </div>
 
           <AnimatedTitle />
 
-          <p className="sm:text-lg md:text-xl max-w-2xl mx-auto mb-6 sm:mb-8 leading-relaxed px-2 text-sm text-[#a7abb4]">
+          <p className="text-lg md:text-2xl max-w-2xl mx-auto mb-12 leading-relaxed text-muted-foreground/80 font-medium">
             Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aula adaptados às normas de Angola.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Button size="lg" className="gap-2 px-8 h-12 bg-primary hover:bg-primary/90 rounded-full" onClick={() => navigate("/auth")}>
-              Começar agora <ArrowRight className="h-4 w-4" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+            <Button size="lg" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-10 h-14 text-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-105" onClick={() => navigate("/auth")}>
+              Começar agora <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
-            <Button variant="outline" size="lg" className="px-8 h-12 rounded-full" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
+            <Button variant="outline" size="lg" className="rounded-full px-10 h-14 text-lg border-border/60 hover:bg-secondary transition-all hover:scale-105" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
               Ver funcionalidades
             </Button>
+          </div>
+
+          {/* Hero Stats - Small text at bottom */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12 border-t border-border/20 w-full">
+            {content.stats.map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </motion.div>
       </section>
 
-      {/* Journey Section */}
-      <section className="relative w-full py-20 sm:py-32 px-4 sm:px-6 md:px-12 overflow-hidden border-t border-border/50">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_journey ? 'lg:grid-cols-2' : ''} gap-16 items-center`}>
+      {/* Journey Section (3rd Section with Video Support) */}
+      <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden bg-white dark:bg-[#0B0B0B]">
+        <div className="max-w-[1200px] mx-auto relative z-10">
+          <div className={`grid grid-cols-1 ${ (sectionImages.section_image_journey || siteSettings.section_video_journey) ? 'lg:grid-cols-2' : ''} gap-20 items-center`}>
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               viewport={{ once: true }}
-              className="relative"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-6 border border-primary/20">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold mb-8 border border-[#3B82F6]/20">
                 <Sparkles className="h-3 w-3" />
                 Sua Evolução
               </div>
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-8 text-foreground tracking-tight leading-[1.1]">
+              <h2 className="text-5xl md:text-7xl font-bold mb-10 text-foreground tracking-tight leading-[1.1]">
                 {content.journey?.title || "Sua Jornada, Sem Barreiras"}
               </h2>
-              <div className="space-y-6 text-lg text-muted-foreground leading-relaxed mb-10">
-                <p className="relative pl-6 border-l-2 border-primary/30">
+              <div className="space-y-8 text-xl text-muted-foreground leading-relaxed mb-12">
+                <p className="relative pl-8 border-l-2 border-[#3B82F6]/30">
                   {content.journey?.text}
                 </p>
-                <div className="relative p-8 rounded-3xl bg-card border border-border/50 shadow-xl overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Users className="h-12 w-12 text-primary" />
+                <div className="relative p-10 rounded-[2rem] bg-[#F5F5F7] dark:bg-[#1D1D1F] border border-border/40 shadow-sm overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <Users className="h-16 w-16 text-[#3B82F6]" />
                   </div>
-                  <p className="relative z-10 italic text-foreground/90 text-xl leading-relaxed">
+                  <p className="relative z-10 italic text-foreground/90 text-2xl leading-relaxed font-medium">
                     "{content.journey?.story}"
                   </p>
-                  <div className="mt-4 flex items-center gap-2 text-primary font-medium">
-                    <div className="h-px w-8 bg-primary/30" />
-                    <span className="text-sm uppercase tracking-wider">História de Sucesso</span>
+                  <div className="mt-6 flex items-center gap-3 text-[#3B82F6] font-bold">
+                    <div className="h-px w-10 bg-[#3B82F6]/30" />
+                    <span className="text-xs uppercase tracking-widest">História de Sucesso</span>
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <Button size="lg" className="gap-2 px-10 h-14 rounded-full text-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" onClick={() => navigate("/auth")}>
-                  {content.journey?.cta || "Começar Agora"} <ArrowRight className="h-5 w-5" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
+                <Button size="lg" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-12 h-16 text-xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105" onClick={() => navigate("/auth")}>
+                  {content.journey?.cta || "Começar Agora"} <ArrowRight className="h-6 w-6 ml-2" />
                 </Button>
-                <div className="flex -space-x-3">
+                <div className="flex -space-x-4">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden">
+                    <div key={i} className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
                       <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" className="w-full h-full object-cover" />
                     </div>
                   ))}
-                  <div className="w-10 h-10 rounded-full border-2 border-background bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
+                  <div className="w-12 h-12 rounded-full border-4 border-background bg-[#3B82F6] text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
                     +50k
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {sectionImages.section_image_journey && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                viewport={{ once: true }}
-                className="relative group"
-              >
-                <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 to-blue-400/20 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-80 transition-opacity" />
-                <div className="relative aspect-[4/5] lg:aspect-square rounded-[2rem] overflow-hidden border border-border/50 shadow-2xl">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              {siteSettings.section_video_journey ? (
+                <VideoEmbed url={siteSettings.section_video_journey} />
+              ) : sectionImages.section_image_journey ? (
+                <div className="relative aspect-[4/5] lg:aspect-square rounded-[2.5rem] overflow-hidden border border-border/40 shadow-2xl group">
                   <img 
                     src={sectionImages.section_image_journey} 
                     alt="Jornada" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    className="w-full h-full object-contain bg-[#F5F5F7] dark:bg-[#1D1D1F] transition-transform duration-1000 group-hover:scale-105" 
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-                  <div className="absolute bottom-8 left-8 right-8 p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                      <span className="text-xs font-bold uppercase tracking-widest">Live em Angola</span>
-                    </div>
-                    <p className="text-sm font-medium">Transformando a educação de Cabinda ao Cunene.</p>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-40" />
                 </div>
-                
-                {/* Decorative elements */}
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl" />
-              </motion.div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_stats ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            <div className="grid grid-cols-2 gap-6 sm:gap-8">
-              {content.stats.map((stat, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  viewport={{ once: true }}
-                  className="text-center p-6 rounded-2xl bg-card/50 border border-border/40"
-                >
-                  <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">{stat.value}</div>
-                  <div className="text-sm sm:text-base text-muted-foreground">{stat.label}</div>
-                </motion.div>
-              ))}
-            </div>
-            {sectionImages.section_image_stats && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
-              >
-                <img src={sectionImages.section_image_stats} alt="Estatísticas" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
+              ) : null}
+              
+              {/* Decorative elements */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#3B82F6]/10 rounded-full blur-3xl -z-10" />
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#60A5FA]/10 rounded-full blur-3xl -z-10" />
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_features ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            {sectionImages.section_image_features && (
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
-              >
-                <img src={sectionImages.section_image_features} alt="Funcionalidades" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
-            <div className="order-1 md:order-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="mb-12"
-              >
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Funcionalidades Poderosas</h2>
-                <p className="text-lg text-muted-foreground">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
-              </motion.div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {content.features.map((feature, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    viewport={{ once: true }}
-                    className="p-6 rounded-2xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all group"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                        {feature.icon === "FileText" && <FileText className="h-6 w-6 text-primary" />}
-                        {feature.icon === "BookOpen" && <BookOpen className="h-6 w-6 text-primary" />}
-                        {feature.icon === "HelpCircle" && <HelpCircle className="h-6 w-6 text-primary" />}
-                        {feature.icon === "ClipboardList" && <ClipboardList className="h-6 w-6 text-primary" />}
-                        {feature.icon === "Lightbulb" && <Lightbulb className="h-6 w-6 text-primary" />}
-                        {feature.icon === "Shield" && <Shield className="h-6 w-6 text-primary" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-foreground">{feature.title}</h3>
-                          <Badge variant="secondary" className="text-xs">{feature.badge}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{feature.description}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+      <section className="relative w-full py-32 px-6 md:px-12 bg-[#F5F5F7] dark:bg-[#0B0B0B]/50">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="text-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground tracking-tight">Funcionalidades Poderosas</h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
+            </motion.div>
           </div>
-        </div>
-      </section>
 
-      {/* How It Works Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_steps ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            {sectionImages.section_image_steps && (
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
-              >
-                <img src={sectionImages.section_image_steps} alt="Como Funciona" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {content.features.map((feature, i) => (
               <motion.div
+                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="mb-12"
+                className="p-10 rounded-[2rem] bg-white dark:bg-[#1D1D1F] border border-border/40 hover:border-[#3B82F6]/30 hover:shadow-xl transition-all duration-500 group"
               >
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Como Funciona</h2>
-                <p className="text-lg text-muted-foreground">4 passos simples para começar</p>
+                <div className="p-4 rounded-2xl bg-[#3B82F6]/10 w-fit mb-8 group-hover:bg-[#3B82F6]/20 transition-colors">
+                  {feature.icon === "FileText" && <FileText className="h-8 w-8 text-[#3B82F6]" />}
+                  {feature.icon === "BookOpen" && <BookOpen className="h-8 w-8 text-[#3B82F6]" />}
+                  {feature.icon === "HelpCircle" && <HelpCircle className="h-8 w-8 text-[#3B82F6]" />}
+                  {feature.icon === "ClipboardList" && <ClipboardList className="h-8 w-8 text-[#3B82F6]" />}
+                  {feature.icon === "Lightbulb" && <Lightbulb className="h-8 w-8 text-[#3B82F6]" />}
+                  {feature.icon === "Shield" && <Shield className="h-8 w-8 text-[#3B82F6]" />}
+                </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <h3 className="text-2xl font-bold text-foreground">{feature.title}</h3>
+                  <Badge variant="secondary" className="bg-[#3B82F6]/10 text-[#3B82F6] border-none text-[10px] uppercase tracking-widest font-bold">{feature.badge}</Badge>
+                </div>
+                <p className="text-lg text-muted-foreground leading-relaxed">{feature.description}</p>
               </motion.div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {content.steps.map((step, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    viewport={{ once: true }}
-                    className="relative"
-                  >
-                    <div className="p-6 rounded-2xl bg-card border border-border/50 h-full">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                          {step.number}
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
-                      <p className="text-sm text-muted-foreground">{step.description}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-            {sectionImages.section_image_steps && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
-              >
-                <img src={sectionImages.section_image_steps} alt="Como Funciona" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_testimonials ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            {sectionImages.section_image_testimonials && (
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
-              >
-                <img src={sectionImages.section_image_testimonials} alt="Depoimentos" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
-            <div className="order-1 md:order-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="mb-12"
-              >
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">O Que Dizem Sobre Nós</h2>
-                <p className="text-lg text-muted-foreground">Histórias reais de estudantes e professores que transformaram seus resultados</p>
-              </motion.div>
-
-              <div className="grid grid-cols-1 gap-6">
-                {content.testimonials.map((testimonial, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    viewport={{ once: true }}
-                    className="p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all"
-                  >
-                    <div className="flex items-center gap-4 mb-4">
-                      {testimonial.avatar.startsWith('http') ? (
-                        <img src={testimonial.avatar} alt={testimonial.name} className="w-12 h-12 rounded-full object-cover border border-primary/20" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
-                          {testimonial.avatar}
-                        </div>
-                      )}
-                      <div>
-                        <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
-                        <p className="text-xs text-muted-foreground">{testimonial.school}</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground italic">"{testimonial.text}"</p>
-                    <div className="flex gap-1 mt-4">
-                      {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-primary text-primary" />)}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_pricing ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            <div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="mb-12"
-              >
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Planos Simples e Transparentes</h2>
-                <p className="text-lg text-muted-foreground">Escolha o plano perfeito para suas necessidades</p>
-              </motion.div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {content.pricing.slice(0, 4).map((plan, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    viewport={{ once: true }}
-                    className={`relative p-6 rounded-2xl border transition-all
-                    ${plan.popular 
-                        ? "border-primary bg-primary/5 shadow-lg" 
-                        : "border-border/50 bg-card hover:border-primary/30"
-                    }`}
-                  >
-                    <h3 className="text-xl font-bold mb-1 text-foreground">{plan.name}</h3>
-                    <div className="mb-4">
-                      <span className="text-2xl font-bold text-primary">{plan.price}</span>
-                    </div>
-                    <Button className="w-full h-9 text-xs" variant={plan.popular ? "default" : "outline"}>
-                      Começar Agora
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-            {sectionImages.section_image_pricing && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
-              >
-                <img src={sectionImages.section_image_pricing} alt="Preços" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
+      <section className="relative w-full py-32 px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="text-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground tracking-tight">Planos Simples</h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Escolha o plano ideal para o seu sucesso académico</p>
+            </motion.div>
           </div>
-        </div>
-      </section>
 
-      {/* Partners Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_partners ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            {sectionImages.section_image_partners && (
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
-              >
-                <img src={sectionImages.section_image_partners} alt="Parceiros" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
-            <div className="order-1 md:order-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {content.pricing.filter(p => p.name !== "Gratuito" && p.name !== "Básico").map((plan, i) => (
               <motion.div
+                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="mb-12"
+                className={`relative p-10 rounded-[2.5rem] border transition-all duration-500 flex flex-col
+                ${plan.popular 
+                    ? "border-[#3B82F6] bg-[#3B82F6]/5 shadow-2xl scale-105 z-10" 
+                    : "border-border/40 bg-[#F5F5F7] dark:bg-[#1D1D1F] hover:border-[#3B82F6]/30"
+                }`}
               >
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Parceiros de Confiança</h2>
-                <p className="text-lg text-muted-foreground">Instituições educacionais que confiam em nós</p>
+                {plan.popular && (
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#3B82F6] text-white text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-full shadow-lg">
+                    Mais Popular
+                  </div>
+                )}
+                <h3 className="text-3xl font-bold mb-2 text-foreground">{plan.name}</h3>
+                <p className="text-muted-foreground mb-8 font-medium">{plan.description}</p>
+                <div className="mb-10">
+                  <span className="text-5xl font-bold text-foreground">{plan.price}</span>
+                  <span className="text-muted-foreground ml-2">/mês</span>
+                </div>
+                <ul className="space-y-5 mb-12 flex-1">
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-3 text-foreground/80 font-medium">
+                      <div className="mt-1 p-0.5 rounded-full bg-[#3B82F6]/20">
+                        <Check className="h-4 w-4 text-[#3B82F6]" />
+                      </div>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button className={`w-full h-14 rounded-full text-lg font-bold transition-all hover:scale-105 ${plan.popular ? 'bg-[#3B82F6] hover:bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-black border-border/60 hover:bg-secondary'}`} variant={plan.popular ? "default" : "outline"}>
+                  Começar Agora
+                </Button>
               </motion.div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {content.partners.map((partner, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    viewport={{ once: true }}
-                    className="p-4 rounded-2xl border border-border/50 bg-card hover:border-primary/30 transition-all flex items-center justify-center h-20"
-                  >
-                    <div className="text-center">
-                      <div className="text-2xl mb-1">{partner.logo}</div>
-                      <p className="text-[10px] text-muted-foreground text-center line-clamp-1">{partner.name}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 bg-muted/30 border-t border-border/50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_faq ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            <div className="order-2 md:order-1">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="mb-12"
-              >
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">Perguntas Frequentes</h2>
-                <p className="text-lg text-muted-foreground">Respostas para as dúvidas mais comuns</p>
-              </motion.div>
-
-              <div className="space-y-3">
-                {content.faq.slice(0, 4).map((item, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    viewport={{ once: true }}
-                    className="p-4 rounded-xl border border-border/50 bg-card hover:border-primary/30 transition-all group cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-foreground pr-4">{item.question}</h3>
-                      <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-            {sectionImages.section_image_faq && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-1 md:order-2"
-              >
-                <img src={sectionImages.section_image_faq} alt="FAQ" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Final Section */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 md:px-12 border-t border-border/50 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 pointer-events-none" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className={`grid grid-cols-1 ${sectionImages.section_image_cta ? 'md:grid-cols-2' : ''} gap-12 items-center`}>
-            {sectionImages.section_image_cta && (
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-border/50 shadow-2xl order-2 md:order-1"
-              >
-                <img src={sectionImages.section_image_cta} alt="CTA" className="w-full h-full object-cover" />
-              </motion.div>
-            )}
-            <div className="order-1 md:order-2 text-center md:text-left">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-              >
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">{content.cta.title}</h2>
-                <p className="text-lg text-muted-foreground mb-8 max-w-2xl">{content.cta.subtitle}</p>
-                <Button size="lg" className="gap-2 px-8 h-12 rounded-full" onClick={() => navigate("/auth")}>
-                  {content.cta.buttonText} <ArrowRight className="h-4 w-4" />
-                </Button>
-              </motion.div>
-            </div>
-          </div>
+      <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden">
+        <div className="max-w-[1000px] mx-auto relative z-10 bg-[#3B82F6] rounded-[3rem] p-16 md:p-24 text-center text-white shadow-2xl shadow-blue-500/30 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight">{content.cta.title}</h2>
+            <p className="text-xl md:text-2xl mb-12 text-white/80 max-w-2xl mx-auto font-medium">{content.cta.subtitle}</p>
+            <Button size="lg" className="bg-white text-[#3B82F6] hover:bg-white/90 rounded-full px-12 h-16 text-xl font-bold shadow-xl transition-all hover:scale-105" onClick={() => navigate("/auth")}>
+              {content.cta.buttonText} <ArrowRight className="h-6 w-6 ml-2" />
+            </Button>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="relative w-full py-12 sm:py-16 px-4 sm:px-6 md:px-12 border-t border-border/50 bg-muted/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+      <footer className="relative w-full py-24 px-6 md:px-12 border-t border-border/40 bg-[#F5F5F7] dark:bg-[#0B0B0B]">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-12 mb-20">
+            <div className="md:col-span-2">
+              <DelleLogo size={32} />
+              <p className="mt-6 text-lg text-muted-foreground max-w-xs leading-relaxed">
+                A primeira plataforma educacional de Angola potenciada por Inteligência Artificial.
+              </p>
+            </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Produto</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Funcionalidades</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Preços</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Segurança</a></li>
+              <h4 className="font-bold text-foreground mb-6 uppercase tracking-widest text-xs">Produto</h4>
+              <ul className="space-y-4 text-muted-foreground font-medium">
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Funcionalidades</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Preços</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Segurança</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Empresa</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Sobre Nós</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Contacte-nos</a></li>
+              <h4 className="font-bold text-foreground mb-6 uppercase tracking-widest text-xs">Empresa</h4>
+              <ul className="space-y-4 text-muted-foreground font-medium">
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Sobre Nós</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Contacto</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Privacidade</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Termos</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Cookies</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Redes Sociais</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Twitter</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">LinkedIn</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Instagram</a></li>
+              <h4 className="font-bold text-foreground mb-6 uppercase tracking-widest text-xs">Legal</h4>
+              <ul className="space-y-4 text-muted-foreground font-medium">
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Privacidade</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Termos</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-border/50 pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2026 Delle. Todos os direitos reservados. Feito com ❤️ em Angola.</p>
+          <div className="border-t border-border/20 pt-12 flex flex-col md:flex-row justify-between items-center gap-6 text-muted-foreground font-medium">
+            <p>&copy; 2026 Delle. Todos os direitos reservados.</p>
+            <p>Feito com ❤️ em Angola.</p>
           </div>
         </div>
       </footer>
@@ -817,10 +571,10 @@ const HomePage = () => {
         <motion.button
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="fixed bottom-6 right-6 z-[40] p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-110 transition-all"
+          className="fixed bottom-8 right-8 z-[40] p-4 rounded-full bg-[#3B82F6] text-white shadow-2xl hover:shadow-blue-500/40 hover:scale-110 transition-all"
           onClick={() => setAdminOpen(!adminOpen)}
         >
-          <Settings className="h-6 w-6" />
+          <Settings className="h-7 w-7" />
         </motion.button>
       )}
 
