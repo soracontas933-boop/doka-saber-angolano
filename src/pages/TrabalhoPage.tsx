@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
+import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { FileText, Download, Copy, Upload, Plus, Minus, Image, Loader2, FileDown, ArrowLeft, Pencil, Eye, Save } from "lucide-react";
