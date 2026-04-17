@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
+import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
 import { FileText, Download, Copy, Upload, Plus, Minus, Image, Loader2, FileDown, ArrowLeft, Pencil, Eye, Save } from "lucide-react";
@@ -585,7 +586,12 @@ const TrabalhoPage = () => {
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-xs">{etapa || "A gerar..."}</span>
               </span>
-            ) : "Gerar Estrutura"}
+            ) : (
+              <span className="flex items-center gap-2">
+                Gerar Estrutura
+                <CreditCostBadge modulo="trabalho" />
+              </span>
+            )}
           </Button>
         </motion.form>
       )}

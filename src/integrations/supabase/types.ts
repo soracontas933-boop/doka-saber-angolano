@@ -193,6 +193,36 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_packs: {
+        Row: {
+          ativo: boolean
+          creditos: number
+          criado_em: string
+          id: string
+          nome: string
+          ordem: number
+          preco: number
+        }
+        Insert: {
+          ativo?: boolean
+          creditos: number
+          criado_em?: string
+          id?: string
+          nome: string
+          ordem?: number
+          preco: number
+        }
+        Update: {
+          ativo?: boolean
+          creditos?: number
+          criado_em?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          preco?: number
+        }
+        Relationships: []
+      }
       hero_images: {
         Row: {
           ativo: boolean
@@ -665,6 +695,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_credits: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: undefined
+      }
+      consume_credits: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
+      }
       find_user_by_email: {
         Args: { _email: string }
         Returns: {

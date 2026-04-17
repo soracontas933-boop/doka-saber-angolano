@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
+import CreditCostBadge from "@/components/CreditCostBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, AlertTriangle, CheckCircle2, Download, Eye, Loader2, ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -417,6 +418,7 @@ const CorrecaoPage = () => {
               <Button className="flex-1" size="lg" onClick={handleCorrect}>
                 <CheckCircle2 className="h-5 w-5 mr-2" />
                 Corrigir Automaticamente
+                <CreditCostBadge modulo="correcao" className="ml-2" />
               </Button>
             </div>
           </motion.div>

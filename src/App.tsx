@@ -28,6 +28,8 @@ import FaturamentoPage from "@/pages/FaturamentoPage";
 import ApresentacaoPage from "@/pages/ApresentacaoPage";
 import NotFound from "@/pages/NotFound";
 import RootRedirect from "@/components/RootRedirect";
+import CreditosPage from "@/pages/CreditosPage";
+import NoCreditsModal from "@/components/NoCreditsModal";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <NoCreditsModal />
           <Routes>
             <Route path="/" element={<RootRedirect />} />
             <Route path="/landing" element={<HomePage />} />
@@ -57,6 +60,7 @@ const App = () => (
                 <Route path="/admin" element={<AdminPanelPage />} />
                 <Route path="/configuracoes" element={<SettingsPage />} />
                 <Route path="/planos" element={<PlanosPage />} />
+                <Route path="/creditos" element={<CreditosPage />} />
                 <Route path="/suporte" element={<SuportePage />} />
                 <Route path="/mensagens" element={<AdminMensagensPage />} />
                 <Route path="/curriculo" element={<CurriculoPage />} />
