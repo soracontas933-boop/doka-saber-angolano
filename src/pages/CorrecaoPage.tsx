@@ -417,6 +417,7 @@ const CorrecaoPage = () => {
               <Button className="flex-1" size="lg" onClick={handleCorrect}>
                 <CheckCircle2 className="h-5 w-5 mr-2" />
                 Corrigir Automaticamente
+                <CreditCostBadge modulo="correcao" className="ml-2" />
               </Button>
             </div>
           </motion.div>

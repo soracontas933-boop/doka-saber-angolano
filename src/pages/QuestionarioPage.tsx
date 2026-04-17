@@ -308,7 +308,9 @@ const QuestionarioPage = () => {
               <Loader2 className="h-4 w-4 animate-spin" />
               {etapa || "A processar..."}
             </span>
-          ) : "Gerar Questionário"}
+          ) : (
+            <span className="flex items-center gap-2">Gerar Questionário <CreditCostBadge modulo="questionario" /></span>
+          )}
         </Button>
       </motion.form>
 

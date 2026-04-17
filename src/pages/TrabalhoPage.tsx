@@ -585,7 +585,12 @@ const TrabalhoPage = () => {
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-xs">{etapa || "A gerar..."}</span>
               </span>
-            ) : "Gerar Estrutura"}
+            ) : (
+              <span className="flex items-center gap-2">
+                Gerar Estrutura
+                <CreditCostBadge modulo="trabalho" />
+              </span>
+            )}
           </Button>
         </motion.form>
       )}
