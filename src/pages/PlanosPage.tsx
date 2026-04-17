@@ -1,30 +1,16 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Crown, Check, X, Star, Loader2 } from "lucide-react";
+import { Crown, Check, Star, Loader2, Zap, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
+import { CREDIT_COSTS, MODULE_LABELS } from "@/lib/credit-costs";
 import { supabase } from "@/integrations/supabase/client";
 import PagamentoManualDialog from "@/components/PagamentoManualDialog";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const planOrder: PlanKey[] = ["gratuito", "basico", "intermedio", "profissional", "premium"];
-
-const features = [
-  { key: "limite_trabalhos", label: "Trabalhos Escolares" },
-  { key: "limite_resumos", label: "Resumos de Fotos" },
-  { key: "limite_questionarios", label: "Questionários" },
-  { key: "limite_planos_aula", label: "Planos de Aula" },
-  { key: "limite_tfc", label: "TFC/Monografias" },
-  { key: "suporte_prioritario", label: "Suporte prioritário" },
-] as const;
-
-const formatLimit = (val: number | boolean) => {
-  if (typeof val === "boolean") return val;
-  if (val === -1) return "Ilimitado";
-  if (val === 0) return false;
-  return val;
-};
 
 const popularPlan: PlanKey = "profissional";
 
