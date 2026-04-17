@@ -144,25 +144,14 @@ const VideoEmbed = ({ url }: { url: string }) => {
     return url;
   };
 
-  const isLocalVideo = url.includes('supabase.co') || url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.ogg');
-
   return (
     <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-border/50 shadow-2xl bg-black group">
-      {isLocalVideo ? (
-        <video 
-          src={url} 
-          controls 
-          className="w-full h-full object-cover"
-          playsInline
-        />
-      ) : (
-        <iframe
-          src={getEmbedUrl(url)}
-          className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      )}
+      <iframe
+        src={getEmbedUrl(url)}
+        className="w-full h-full"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
     </div>
   );
 };

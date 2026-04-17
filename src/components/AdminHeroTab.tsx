@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ImagePlus, Trash2, Loader2, GripVertical, LogIn, Image as ImageIcon, Video, Save, Upload } from "lucide-react";
+import { ImagePlus, Trash2, Loader2, GripVertical, LogIn, Image as ImageIcon, Video, Save } from "lucide-react";
 import { ImageCropper } from "./ImageCropper";
 
 interface HeroImage {
@@ -25,7 +25,6 @@ const AdminHeroTab = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadingLogin, setUploadingLogin] = useState(false);
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [savingVideo, setSavingVideo] = useState(false);
   const [sectionImages, setSectionImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -148,52 +147,6 @@ const AdminHeroTab = () => {
       toast({ title: "Erro ao carregar imagem", description: error.message, variant: "destructive" });
     } finally {
       setUploadingLogin(false);
-      e.target.value = "";
-    }
-  };
-
-  const handleVideoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Limite de 50MB para vídeos (ajustável conforme necessidade)
-    if (file.size > 50 * 1024 * 1024) {
-      toast({ title: "Vídeo muito grande", description: "O tamanho máximo permitido é 50MB.", variant: "destructive" });
-      return;
-    }
-
-    setUploadingVideo(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const fileName = `video_journey_${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("hero-images")
-        .upload(fileName, file, { cacheControl: "31536000", upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from("hero-images").getPublicUrl(fileName);
-      const publicUrl = urlData.publicUrl;
-
-      setVideoUrl(publicUrl);
-      
-      const { error } = await supabase
-        .from("site_settings")
-        .upsert({ 
-          chave: "section_video_journey", 
-          valor: publicUrl,
-          atualizado_em: new Date().toISOString() 
-        }, { onConflict: "chave" });
-
-      if (error) throw error;
-
-      toast({ title: "Vídeo carregado com sucesso" });
-      fetchData();
-    } catch (error: any) {
-      toast({ title: "Erro ao carregar vídeo", description: error.message, variant: "destructive" });
-    } finally {
-      setUploadingVideo(false);
       e.target.value = "";
     }
   };
@@ -450,75 +403,29 @@ const AdminHeroTab = () => {
             Vídeo da 3ª Secção (Jornada)
           </CardTitle>
           <CardDescription>
-            Adicione um vídeo do YouTube/Vimeo ou carregue um ficheiro do seu dispositivo.
+            Adicione um vídeo do YouTube ou Vimeo para aparecer na terceira secção da página inicial.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex flex-col gap-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">URL Externa (YouTube/Vimeo)</Label>
-              <div className="flex gap-2">
-                <Input 
-                  placeholder="https://www.youtube.com/watch?v=..." 
-                  value={videoUrl} 
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={handleSaveVideo} disabled={savingVideo} className="gap-2">
-                  {savingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Guardar URL
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ou Carregar do Dispositivo</Label>
-              <Button 
-                variant="outline" 
-                onClick={() => document.getElementById("video-upload")?.click()} 
-                disabled={uploadingVideo}
-                className="w-full h-20 border-dashed gap-2"
-              >
-                {uploadingVideo ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                ) : (
-                  <>
-                    <Upload className="h-6 w-6 text-muted-foreground" />
-                    <span>Carregar Vídeo (MP4, WebM, etc.)</span>
-                  </>
-                )}
-              </Button>
-              <input 
-                id="video-upload" 
-                type="file" 
-                accept="video/*" 
-                className="hidden" 
-                onChange={handleVideoFileUpload} 
-              />
-              <p className="text-[10px] text-muted-foreground text-center italic">Tamanho máximo recomendado: 50MB</p>
-            </div>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input 
+              placeholder="https://www.youtube.com/watch?v=..." 
+              value={videoUrl} 
+              onChange={(e) => setVideoUrl(e.target.value)}
+              className="flex-1"
+            />
+            <Button onClick={handleSaveVideo} disabled={savingVideo} className="gap-2">
+              {savingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Guardar
+            </Button>
           </div>
-
           {videoUrl && (
-            <div className="mt-4 aspect-video rounded-lg overflow-hidden border bg-black relative group">
-              {videoUrl.includes('supabase.co') || videoUrl.endsWith('.mp4') || videoUrl.endsWith('.webm') ? (
-                <video 
-                  src={videoUrl} 
-                  controls 
-                  className="w-full h-full"
-                />
-              ) : (
-                <iframe
-                  src={videoUrl.includes('watch?v=') ? videoUrl.replace('watch?v=', 'embed/') : videoUrl}
-                  className="w-full h-full"
-                  allowFullScreen
-                />
-              )}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => { setVideoUrl(""); handleSaveVideo(); }}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+            <div className="mt-4 aspect-video rounded-lg overflow-hidden border bg-black">
+              <iframe
+                src={videoUrl.includes('watch?v=') ? videoUrl.replace('watch?v=', 'embed/') : videoUrl}
+                className="w-full h-full"
+                allowFullScreen
+              />
             </div>
           )}
         </CardContent>
