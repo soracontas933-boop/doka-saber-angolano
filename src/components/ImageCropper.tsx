@@ -15,7 +15,7 @@ interface ImageCropperProps {
 export const ImageCropper = ({ imageFile, onCropComplete, onCancel }: ImageCropperProps) => {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [aspect, setAspect] = useState<number | undefined>(undefined);
+  const [aspect, setAspect] = useState<number | undefined>(16 / 9);
   const [imgSrc, setImgSrc] = useState('');
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -116,21 +116,17 @@ export const ImageCropper = ({ imageFile, onCropComplete, onCancel }: ImageCropp
           <div className="flex items-center gap-4">
             <Label>Proporção:</Label>
             <RadioGroup 
-              defaultValue="free" 
-              onValueChange={(v) => v === 'free' ? setAspect(undefined) : handleAspectChange(v)}
-              className="flex flex-wrap gap-4"
+              defaultValue="16:9" 
+              onValueChange={handleAspectChange}
+              className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="free" id="r0" />
-                <Label htmlFor="r0">Livre (Original)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="16:9" id="r1" />
-                <Label htmlFor="r1">16:9</Label>
+                <Label htmlFor="r1">16:9 (Horizontal)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="9:16" id="r2" />
-                <Label htmlFor="r2">9:16</Label>
+                <Label htmlFor="r2">9:16 (Vertical)</Label>
               </div>
             </RadioGroup>
           </div>

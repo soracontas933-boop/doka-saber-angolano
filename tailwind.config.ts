@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
-        apple: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+        apple: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -70,7 +70,6 @@ export default {
       boxShadow: {
         'apple-card': '0 2px 8px rgba(0, 0, 0, 0.04)',
         'apple-card-hover': '0 4px 12px rgba(0, 0, 0, 0.08)',
-        'apple-premium': '0 20px 40px rgba(0, 0, 0, 0.05)',
         'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
       },
       keyframes: {
