@@ -241,17 +241,8 @@ const TrabalhoPage = () => {
 
   // Phase 3: Compile
   const handleCompile = () => {
-    // Build full markdown from all subtemas, ensuring correct order
-    const order = ["introducao", "capitulo", "conclusao", "bibliografia"];
-    const sortedSubtemas = [...subtemas].sort((a, b) => {
-      const idxA = order.indexOf(a.tipo);
-      const idxB = order.indexOf(b.tipo);
-      if (idxA !== idxB) return idxA - idxB;
-      // If both are chapters, keep their original relative order
-      return subtemas.indexOf(a) - subtemas.indexOf(b);
-    });
-
-    const sections = sortedSubtemas.map((s) => {
+    // Build full markdown from all subtemas
+    const sections = subtemas.map((s) => {
       const tituloPrefix = s.tipo === "capitulo"
         ? `## ${s.titulo}`
         : s.tipo === "introducao"

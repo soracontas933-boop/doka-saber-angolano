@@ -399,7 +399,7 @@ Retorna em JSON:
     paginas: number;
     tipo: string;
   }) =>
-    `Para o tema "${dados.titulo}", disciplina ${dados.disciplina}, ${dados.classe}, tipo ${dados.tipo}, com aproximadamente ${dados.paginas} páginas, sugere uma estrutura de subtemas/capítulos para o desenvolvimento do trabalho. Retorna APENAS um JSON válido no formato: { "subtemas": [ { "titulo": "string", "tipo": "introducao|capitulo|conclusao|bibliografia", "descricao": "breve descrição do conteúdo esperado" } ] }. A estrutura DEVE seguir rigorosamente esta ordem: 1. Introdução, 2. Capítulos de desenvolvimento (pelo menos ${Math.max(2, Math.floor(dados.paginas / 2))}), 3. Conclusão, 4. Bibliografia. Não incluas Capa nem Índice. Garante que a Conclusão NUNCA venha antes do desenvolvimento. O conteúdo deve ser rico e contextualizado à realidade angolana.`,
+    `Para o tema "${dados.titulo}", disciplina ${dados.disciplina}, ${dados.classe}, tipo ${dados.tipo}, com aproximadamente ${dados.paginas} páginas, sugere uma estrutura de subtemas/capítulos para o desenvolvimento do trabalho. Retorna APENAS um JSON válido no formato: { "subtemas": [ { "titulo": "string", "tipo": "introducao|capitulo|conclusao|bibliografia", "descricao": "breve descrição do conteúdo esperado" } ] }. A estrutura deve incluir: Introdução, ${Math.max(2, Math.floor(dados.paginas / 2))} capítulos de desenvolvimento relevantes ao tema no contexto angolano, Conclusão e Bibliografia. Não incluas Capa nem Índice.`,
 
   subtema: (dados: {
     temaGeral: string;

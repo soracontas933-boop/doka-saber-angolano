@@ -5,49 +5,6 @@
  * como formatação Markdown inválida, alucinações de linguagem ou conteúdo distorcido.
  */
 
-/**
- * Remove reflexões da IA, pensamentos internos e frases de introdução desnecessárias.
- * Garante que o usuário final veja apenas o conteúdo do trabalho.
- */
-export function sanitizeAIArtifacts(content: string): string {
-  let sanitized = content;
-
-  // 1. Remover blocos de pensamento/reflexão da IA (ex: <thought>...</thought>, <reflexao>...</reflexao>)
-  sanitized = sanitized.replace(/<(thought|reflexao|thinking|reasoning)>[\s\S]*?<\/\1>/gi, "");
-  
-  // 2. Remover frases de introdução comuns da IA que precedem o conteúdo real
-  const aiIntros = [
-    /Aqui está o conteúdo.*?[:.]/gi,
-    /Com certeza, aqui está.*?[:.]/gi,
-    /Segue o trabalho escolar.*?[:.]/gi,
-    /Claro, vou gerar.*?[:.]/gi,
-    /Aqui está a versão corrigida.*?[:.]/gi,
-    /Reescrevi o conteúdo.*?[:.]/gi,
-    /Aqui está o trabalho.*?[:.]/gi,
-    /Com base no seu pedido.*?[:.]/gi,
-    /Aqui está uma proposta.*?[:.]/gi,
-    /Aqui está o texto.*?[:.]/gi,
-    /Aqui está o capítulo.*?[:.]/gi,
-    /Aqui está a introdução.*?[:.]/gi,
-    /Aqui está a conclusão.*?[:.]/gi,
-    /Aqui está a bibliografia.*?[:.]/gi,
-  ];
-
-  for (const intro of aiIntros) {
-    sanitized = sanitized.replace(intro, "");
-  }
-
-  // 3. Remover caracteres estranhos e repetitivos (---, $$$, %%%, ___) que não sejam markdown válido
-  // Mantemos o "---" se estiver sozinho em uma linha (separador markdown)
-  sanitized = sanitized.replace(/(\$|%|_){3,}/g, "");
-  
-  // 4. Remover blocos de código markdown que a IA às vezes envolve o conteúdo todo
-  sanitized = sanitized.replace(/^```markdown\s*/gi, "");
-  sanitized = sanitized.replace(/```$/g, "");
-
-  return sanitized.trim();
-}
-
 export interface ValidationResult {
   isValid: boolean;
   fixedContent: string;
@@ -137,9 +94,6 @@ export async function validateAndCorrectContent(
 ): Promise<ValidationResult> {
   let currentContent = content;
   const errors: string[] = [];
-
-  // Passo 0: Limpeza de artefatos e reflexões da IA
-  currentContent = sanitizeAIArtifacts(currentContent);
 
   // Passo 1: Correções rápidas de formatação (Regex)
   currentContent = fixMarkdownErrors(currentContent);

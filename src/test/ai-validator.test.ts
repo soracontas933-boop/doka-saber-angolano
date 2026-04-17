@@ -46,25 +46,7 @@ function testValidateAngolanContext() {
   console.log(errors2.length > 0 ? "✅ Teste 2 Passou (Contexto ausente detetado)" : "❌ Teste 2 Falhou");
 }
 
-function testSanitizeAIArtifacts() {
-  console.log("\nTestando sanitizeAIArtifacts...");
-  const { sanitizeAIArtifacts } = require("../lib/ai-validator");
-
-  const input1 = "<thought>Vou gerar um trabalho...</thought>Aqui está o conteúdo: ## Introdução";
-  const output1 = sanitizeAIArtifacts(input1);
-  console.log(!output1.includes("<thought>") && output1.startsWith("## Introdução") ? "✅ Teste 1 Passou (Thought/Intro removidos)" : "❌ Teste 1 Falhou");
-
-  const input2 = "$$$$$____%%%%% Texto limpo";
-  const output2 = sanitizeAIArtifacts(input2);
-  console.log(output2 === "Texto limpo" ? "✅ Teste 2 Passou (Caracteres estranhos removidos)" : "❌ Teste 2 Falhou");
-
-  const input3 = "```markdown\n# Título\n```";
-  const output3 = sanitizeAIArtifacts(input3);
-  console.log(output3 === "# Título" ? "✅ Teste 3 Passou (Markdown wrapper removido)" : "❌ Teste 3 Falhou");
-}
-
 // Executar testes
 testFixMarkdownErrors();
 testDetectStrangeLanguage();
 testValidateAngolanContext();
-testSanitizeAIArtifacts();
