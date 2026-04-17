@@ -19,7 +19,9 @@ import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 interface PagamentoManualDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  planKey: PlanKey;
+  planKey: PlanKey | string;
+  /** Opcional — se preenchido, o diálogo é tratado como compra de pacote de créditos. */
+  packInfo?: { nome: string; creditos: number; preco: number };
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -31,7 +33,7 @@ const ACCEPTED_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-const PagamentoManualDialog = ({ open, onOpenChange, planKey }: PagamentoManualDialogProps) => {
+const PagamentoManualDialog = ({ open, onOpenChange, planKey, packInfo }: PagamentoManualDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -39,7 +41,9 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey }: PagamentoManualD
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [paymentInfo, setPaymentInfo] = useState({ iban: "", iban_banco: "", iban_titular: "", multicaixa_numero: "" });
 
-  const cfg = PLAN_CONFIGS[planKey];
+  const cfg = packInfo
+    ? { nome: `${packInfo.nome} (${packInfo.creditos} créditos)`, label_preco: `${packInfo.preco.toLocaleString()} Kz`, preco: packInfo.preco }
+    : PLAN_CONFIGS[planKey as PlanKey];
 
   useEffect(() => {
     if (open) {
@@ -118,7 +122,7 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey }: PagamentoManualD
       const { error: insertError } = await (supabase.from("payment_requests") as any)
         .insert({
           user_id: user.id,
-          plano: planKey,
+          plano: packInfo ? `pacote_${packInfo.creditos}` : planKey,
           valor: cfg.preco,
           email_confirmacao: email,
           ficheiro_url: filePath,
