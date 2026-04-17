@@ -14,24 +14,23 @@ import {
   Download,
   MoreHorizontal,
   ChevronRight,
+  GraduationCap,
+  Plus
 } from "lucide-react";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { GraduationCap } from "lucide-react";
 
 const quickActions = [
-  { to: "/trabalho", icon: WrapText, label: "Trabalhos" },
-  { to: "/resumo", icon: BookOpen, label: "Resumos" },
-  { to: "/questionario", icon: HelpCircle, label: "Questionários" },
-  { to: "/plano-aula", icon: ClipboardList, label: "Planos" },
-  { to: "/apresentacao", icon: Presentation, label: "Apresentações" },
-  { to: "/curriculo", icon: Search, label: "Currículo" },
-  { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
+  { to: "/trabalho", icon: WrapText, label: "Trabalhos", color: "bg-blue-500" },
+  { to: "/resumo", icon: BookOpen, label: "Resumos", color: "bg-orange-500" },
+  { to: "/questionario", icon: HelpCircle, label: "Questionários", color: "bg-purple-500" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Planos", color: "bg-green-500" },
+  { to: "/apresentacao", icon: Presentation, label: "Apresentações", color: "bg-pink-500" },
+  { to: "/curriculo", icon: Search, label: "Currículo", color: "bg-indigo-500" },
+  { to: "/meus-projetos", icon: FolderOpen, label: "Projetos", color: "bg-gray-500" },
 ];
 
 interface RecentProject {
@@ -95,14 +94,6 @@ const UserHomePage = () => {
     }
   }, [plan, getAllUsageCounts]);
 
-  const creditPercent = plan && plan.creditos_totais > 0
-    ? Math.min(100, Math.round((plan.creditos_usados / plan.creditos_totais) * 100))
-    : 0;
-
-  const initials = profile.nome
-    ? profile.nome.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
-    : "U";
-
   const getRemainingCount = (module: string, limit: number) => {
     if (limit === -1) return "∞";
     if (limit === 0) return null;
@@ -119,277 +110,254 @@ const UserHomePage = () => {
   ].filter(i => i.remaining !== null) : [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F5F5F7] text-foreground font-apple">
       {/* Mobile Layout */}
-      <div className="md:hidden">
+      <div className="md:hidden pb-24">
+        
+        {/* Apple Style Header */}
+        <header className="px-6 pt-12 pb-6 bg-white/70 backdrop-blur-xl sticky top-0 z-40 border-b border-border/20">
+          <div className="flex justify-between items-end">
+            <div>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Hoje</p>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Olá, {profile.nome?.split(" ")[0] || "Estudante"}
+              </h1>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+              {profile.nome?.[0] || "U"}
+            </div>
+          </div>
+        </header>
 
-        {/* Hero section */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="px-4 pt-3 pb-2"
-        >
-          <h2 className="text-xl font-normal text-foreground">
-            Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">O que vais criar hoje?</p>
-          {canInstall && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-              <Button
-                onClick={install}
-                size="sm"
-                className="mt-2 w-full gap-2 rounded-md font-normal text-xs h-10"
-              >
-                <Download className="h-4 w-4" /> Baixar o App
+        {/* PWA Install Prompt */}
+        {canInstall && (
+          <div className="px-6 pt-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-4 rounded-2xl bg-primary text-primary-foreground shadow-lg flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-xl">
+                  <Download className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-sm">Delle no teu ecrã</p>
+                  <p className="text-xs opacity-80">Instala para acesso rápido</p>
+                </div>
+              </div>
+              <Button onClick={install} variant="secondary" size="sm" className="rounded-full px-4 h-8 text-xs font-bold">
+                Instalar
               </Button>
             </motion.div>
-          )}
-        </motion.div>
-
-        {/* Usage Counters Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="px-4 pt-1 pb-3"
-        >
-          <p className="text-[10px] font-normal mb-1.5 uppercase tracking-wider text-muted-foreground">Gerações restantes</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
-            {usageItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card">
-                <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[11px] font-normal text-foreground">{item.remaining}</span>
-                <span className="text-[10px] text-muted-foreground">{item.label}</span>
-              </div>
-            ))}
           </div>
-        </motion.div>
+        )}
 
-        {/* Quick Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="px-4 pb-4"
-        >
-          <div className="grid grid-cols-3 gap-3">
+        {/* Quick Actions Grid - iOS Style */}
+        <section className="px-6 pt-8">
+          <h2 className="text-lg font-bold mb-4 px-1">Atalhos Rápidos</h2>
+          <div className="grid grid-cols-4 gap-4">
             {quickActions.map((action, i) => {
               const coverKey = action.to.replace("/", "");
               const coverUrl = buttonCovers[coverKey];
               return (
                 <motion.button
                   key={action.to}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 + i * 0.04 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
                   onClick={() => navigate(action.to)}
-                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-card border border-border active:scale-[0.97] transition-all duration-150 overflow-hidden hover:border-primary"
+                  className="flex flex-col items-center gap-2 active:scale-90 transition-transform"
                 >
-                  {coverUrl && (
-                    <img
-                      src={coverUrl}
-                      alt={action.label}
-                      className="absolute inset-0 w-full h-full object-cover rounded-lg z-0"
-                    />
-                  )}
-                  {coverUrl && (
-                    <span className="absolute inset-0 bg-foreground/40 rounded-lg z-[1]" />
-                  )}
-                  <div className={`relative z-10 w-11 h-11 rounded-md flex items-center justify-center transition-all duration-150 ${coverUrl ? "bg-background/20" : "bg-muted"}`}>
-                    <action.icon className={`h-5 w-5 transition-colors duration-150 ${coverUrl ? "text-background" : "text-primary"}`} />
+                  <div className={`w-14 h-14 rounded-[1.25rem] shadow-sm flex items-center justify-center relative overflow-hidden ${coverUrl ? 'bg-black' : action.color}`}>
+                    {coverUrl ? (
+                      <img src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                    ) : (
+                      <action.icon className="h-7 w-7 text-white" />
+                    )}
                   </div>
-                  <span className={`relative z-10 text-[11px] font-normal text-center leading-tight transition-colors duration-150 ${coverUrl ? "text-background" : "text-foreground"}`}>
+                  <span className="text-[10px] font-medium text-center leading-tight line-clamp-1 opacity-80">
                     {action.label}
                   </span>
                 </motion.button>
               );
             })}
+            <button className="flex flex-col items-center gap-2 active:scale-90 transition-transform">
+              <div className="w-14 h-14 rounded-[1.25rem] bg-white border-2 border-dashed border-border flex items-center justify-center">
+                <Plus className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <span className="text-[10px] font-medium text-center opacity-80">Mais</span>
+            </button>
           </div>
-        </motion.div>
+        </section>
 
-        {/* Community Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="px-4 pb-4"
-        >
-          <button
-            onClick={() => navigate("/grupos")}
-            className="group w-full rounded-lg border border-border bg-card p-4 transition-all duration-150 active:scale-[0.97] flex items-center justify-between hover:border-primary"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-md bg-muted">
-                <UsersRound className="h-5 w-5 text-primary" />
-              </div>
-              <div className="text-left">
-                <p className="font-normal text-sm text-foreground">Comunidade</p>
-                <p className="text-xs text-muted-foreground">
-                  {groupCount > 0 ? `${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Criar ou juntar"}
-                </p>
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </button>
-        </motion.div>
-
-        {/* Recent Projects */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="px-4 pb-6"
-        >
-          <div className="border border-border bg-card p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-normal text-sm text-foreground">Projetos Recentes</h3>
-              <button onClick={() => navigate("/meus-projetos")}>
-                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </div>
-
-            {recentProjects.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6">
-                Nenhum projecto ainda. Começa agora! 🚀
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {recentProjects.map((p, i) => (
-                  <motion.button
-                    key={p.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + i * 0.04 }}
-                    onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-md transition-all duration-150 text-left border border-border bg-background hover:border-primary"
-                  >
-                    <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
-                      <WrapText className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-normal truncate text-foreground">{p.titulo}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {tipoLabel[p.tipo] || p.tipo} · {new Date(p.criado_em).toLocaleDateString("pt-AO")}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] border-border text-muted-foreground"
-                      >
-                        Completo
-                      </Badge>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Aumentar Saldo */}
-          <Button
-            onClick={() => navigate("/planos")}
-            className="w-full mt-3 h-11 rounded-md font-normal text-sm"
-          >
-            Aumentar Saldo
-          </Button>
-        </motion.div>
-
-      </div>
-
-      {/* Desktop Layout */}
-      <div className="hidden md:block p-4 md:p-8 max-w-6xl mx-auto space-y-8">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-2xl md:text-3xl font-normal text-foreground">
-            Olá, {profile.nome || "Estudante"}! 👋
-          </h1>
-          <p className="text-muted-foreground mt-1 text-base">O que vais criar hoje?</p>
-        </motion.div>
-
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { to: "/trabalho", icon: WrapText, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo" },
-            { to: "/resumo", icon: BookOpen, label: "Criar Resumo", desc: "Resumir conteúdos rapidamente" },
-            { to: "/questionario", icon: HelpCircle, label: "Gerar Questionário", desc: "Quiz automático com respostas" },
-            { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", desc: "Planificar aulas facilmente" },
-            { to: "/correcao", icon: Search, label: "Corrigir Trabalho", desc: "Análise e correcção com IA" },
-            { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projectos", desc: "Ver todos os projectos salvos" },
-          ].map((action, i) => (
-            <motion.button
-              key={action.to}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.05 + i * 0.03 }}
-              onClick={() => navigate(action.to)}
-              className="group relative overflow-hidden rounded-lg border border-border bg-card p-5 text-left transition-all duration-150 hover:border-primary"
-            >
-              <div className="inline-flex p-2.5 rounded-md bg-muted text-primary mb-3">
-                <action.icon className="h-5 w-5" />
-              </div>
-              <h3 className="font-normal text-foreground">{action.label}</h3>
-              <p className="text-xs text-muted-foreground mt-1">{action.desc}</p>
-            </motion.button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-            className="rounded-lg border border-border bg-card p-6"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="h-4 w-4 text-primary" />
-              <h3 className="font-normal text-foreground">Meu Plano</h3>
-            </div>
+        {/* Remaining Credits - iOS Card */}
+        <section className="px-6 pt-10">
+          <div className="p-5 rounded-[2rem] bg-white shadow-sm border border-border/40">
             <div className="flex items-center justify-between mb-4">
-              <Badge variant="secondary" className="capitalize">{plan?.plano || "gratuito"}</Badge>
-              <span className="text-sm text-foreground">{plan ? `${plan.creditos_usados}/${plan.creditos_totais === -1 ? "∞" : plan.creditos_totais}` : "..."}</span>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Créditos Restantes</h2>
+              <Zap className="h-4 w-4 text-orange-500 fill-orange-500" />
             </div>
-            <Progress value={creditPercent} className="h-1.5 mb-4" />
-            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/planos")}>
-              Ver Planos
-            </Button>
-          </motion.div>
+            <div className="space-y-4">
+              {usageItems.map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-secondary">
+                      <item.icon className="h-4 w-4 text-foreground/70" />
+                    </div>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
+                  <span className="text-sm font-bold bg-secondary px-3 py-1 rounded-full">{item.remaining}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="rounded-lg border border-border bg-card p-6"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <UsersRound className="h-4 w-4 text-primary" />
-              <h3 className="font-normal text-foreground">Comunidade</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              {groupCount > 0 ? `Participa em ${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Ainda não fazes parte de nenhum grupo"}
-            </p>
-            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/grupos")}>
-              Ver Grupos
-            </Button>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-            className="rounded-lg border border-border bg-card p-6"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <FolderOpen className="h-4 w-4 text-primary" />
-              <h3 className="font-normal text-foreground">Projectos Recentes</h3>
-            </div>
+        {/* Recent Projects - iOS List */}
+        <section className="px-6 pt-10">
+          <div className="flex items-center justify-between mb-4 px-1">
+            <h2 className="text-lg font-bold">Projectos Recentes</h2>
+            <button onClick={() => navigate("/meus-projetos")} className="text-primary text-sm font-medium">Ver todos</button>
+          </div>
+          <div className="bg-white rounded-[2rem] shadow-sm border border-border/40 overflow-hidden">
             {recentProjects.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum projecto ainda.</p>
+              <div className="py-12 text-center">
+                <FolderOpen className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Nenhum projecto ainda.</p>
+              </div>
             ) : (
-              <div className="space-y-2">
-                {recentProjects.slice(0, 3).map((p) => (
+              <div className="divide-y divide-border/40">
+                {recentProjects.map((p, i) => (
                   <button
                     key={p.id}
-                    onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full text-left flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-all duration-150"
+                    onClick={() => navigate(`/trabalho?id=${p.id}`)}
+                    className="w-full flex items-center justify-between p-4 active:bg-secondary transition-colors text-left"
                   >
-                    <WrapText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-sm text-foreground truncate">{p.titulo}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold line-clamp-1">{p.titulo}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
+                          {tipoLabel[p.tipo] || p.tipo}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
                   </button>
                 ))}
               </div>
             )}
-          </motion.div>
-        </div>
+          </div>
+        </section>
+
+        {/* Community Card */}
+        <section className="px-6 pt-8">
+          <button
+            onClick={() => navigate("/grupos")}
+            className="w-full p-6 rounded-[2.5rem] bg-foreground text-background shadow-xl flex items-center justify-between overflow-hidden relative"
+          >
+            <div className="absolute right-0 top-0 opacity-10">
+              <UsersRound className="h-32 w-32 -mr-8 -mt-8" />
+            </div>
+            <div className="relative z-10 text-left">
+              <h3 className="text-xl font-bold mb-1">Comunidade</h3>
+              <p className="text-sm opacity-70">
+                {groupCount > 0 ? `${groupCount} grupo${groupCount > 1 ? "s" : ""} activos` : "Cria ou junta-te a um grupo"}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center relative z-10">
+              <ChevronRight className="h-6 w-6" />
+            </div>
+          </button>
+        </section>
+      </div>
+
+      {/* Desktop Layout - Minimalist Apple Dashboard */}
+      <div className="hidden md:flex min-h-screen">
+        <aside className="w-64 border-r border-border/40 bg-white p-8 flex flex-col">
+          <div className="mb-12">
+            <h1 className="text-2xl font-bold tracking-tight">Delle</h1>
+          </div>
+          <nav className="space-y-2 flex-grow">
+            {quickActions.map(action => (
+              <button
+                key={action.to}
+                onClick={() => navigate(action.to)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+              >
+                <action.icon className="h-5 w-5" />
+                {action.label}
+              </button>
+            ))}
+          </nav>
+          <div className="pt-8 border-t border-border/40">
+            <div className="flex items-center gap-3 px-4 py-2">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                {profile.nome?.[0]}
+              </div>
+              <div className="text-xs">
+                <p className="font-bold">{profile.nome}</p>
+                <p className="text-muted-foreground">{plan?.plano}</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main className="flex-1 p-12 max-w-6xl mx-auto w-full">
+          <header className="mb-12 flex justify-between items-center">
+            <h2 className="text-4xl font-bold tracking-tight">Painel de Controlo</h2>
+            <Button className="apple-button-primary" onClick={() => navigate("/trabalho")}>
+              Novo Projecto
+            </Button>
+          </header>
+
+          <div className="grid grid-cols-3 gap-8 mb-12">
+            <div className="col-span-2 p-8 rounded-[2.5rem] bg-white shadow-sm border border-border/40">
+              <h3 className="text-lg font-bold mb-6">Projectos Recentes</h3>
+              <div className="space-y-4">
+                {recentProjects.map(p => (
+                  <div key={p.id} className="flex items-center justify-between p-4 rounded-2xl bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer" onClick={() => navigate(`/trabalho?id=${p.id}`)}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold">{p.titulo}</p>
+                        <p className="text-xs text-muted-foreground uppercase tracking-widest">{tipoLabel[p.tipo] || p.tipo}</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              <div className="p-8 rounded-[2.5rem] bg-primary text-primary-foreground shadow-xl">
+                <h3 className="text-lg font-bold mb-4">Uso do Plano</h3>
+                <div className="space-y-4">
+                  {usageItems.map(item => (
+                    <div key={item.label} className="flex justify-between items-center text-sm">
+                      <span>{item.label}</span>
+                      <span className="font-bold">{item.remaining}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-8 rounded-[2.5rem] bg-white border border-border/40 shadow-sm">
+                <h3 className="text-lg font-bold mb-2">Comunidade</h3>
+                <p className="text-sm text-muted-foreground mb-6">Colabora com outros estudantes em tempo real.</p>
+                <Button variant="outline" className="w-full rounded-2xl" onClick={() => navigate("/grupos")}>
+                  Explorar Grupos
+                </Button>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
