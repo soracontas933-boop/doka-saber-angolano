@@ -18,66 +18,68 @@ export interface UserPlan {
   criado_em?: string;
 }
 
+// Modelo unificado: APENAS créditos. Limites por módulo são ignorados pela UI.
 export const PLAN_CONFIGS = {
   gratuito: {
     nome: "Gratuito",
     preco: 0,
     label_preco: "Grátis",
-    limite_trabalhos: 2,
-    limite_resumos: 3,
-    limite_questionarios: 3,
-    limite_planos_aula: 0,
-    limite_tfc: 0,
-    creditos_totais: 0,
+    creditos_totais: 50,
     suporte_prioritario: false,
-  },
-  basico: {
-    nome: "Básico",
-    preco: 546,
-    label_preco: "546 Kz",
-    limite_trabalhos: 3,
-    limite_resumos: 4,
-    limite_questionarios: -1,
-    limite_planos_aula: 0,
-    limite_tfc: 0,
-    creditos_totais: 0,
-    suporte_prioritario: false,
-  },
-  intermedio: {
-    nome: "Intermédio",
-    preco: 1250,
-    label_preco: "1.250 Kz",
-    limite_trabalhos: 5,
-    limite_resumos: 7,
-    limite_questionarios: 7,
-    limite_planos_aula: 5,
-    limite_tfc: 2,
-    creditos_totais: 300,
-    suporte_prioritario: false,
-  },
-  profissional: {
-    nome: "Profissional",
-    preco: 3850,
-    label_preco: "3.850 Kz",
-    limite_trabalhos: 10,
-    limite_resumos: 16,
-    limite_questionarios: 16,
-    limite_planos_aula: 10,
-    limite_tfc: 8,
-    creditos_totais: 500,
-    suporte_prioritario: false,
-  },
-  premium: {
-    nome: "Premium",
-    preco: 7500,
-    label_preco: "7.500 Kz",
+    // legacy fields para compat
     limite_trabalhos: -1,
     limite_resumos: -1,
     limite_questionarios: -1,
     limite_planos_aula: -1,
     limite_tfc: -1,
+  },
+  basico: {
+    nome: "Básico",
+    preco: 546,
+    label_preco: "546 Kz",
+    creditos_totais: 120,
+    suporte_prioritario: false,
+    limite_trabalhos: -1,
+    limite_resumos: -1,
+    limite_questionarios: -1,
+    limite_planos_aula: -1,
+    limite_tfc: -1,
+  },
+  intermedio: {
+    nome: "Intermédio",
+    preco: 1250,
+    label_preco: "1.250 Kz",
+    creditos_totais: 300,
+    suporte_prioritario: false,
+    limite_trabalhos: -1,
+    limite_resumos: -1,
+    limite_questionarios: -1,
+    limite_planos_aula: -1,
+    limite_tfc: -1,
+  },
+  profissional: {
+    nome: "Profissional",
+    preco: 3850,
+    label_preco: "3.850 Kz",
+    creditos_totais: 500,
+    suporte_prioritario: false,
+    limite_trabalhos: -1,
+    limite_resumos: -1,
+    limite_questionarios: -1,
+    limite_planos_aula: -1,
+    limite_tfc: -1,
+  },
+  premium: {
+    nome: "Premium",
+    preco: 7500,
+    label_preco: "7.500 Kz",
     creditos_totais: -1,
     suporte_prioritario: true,
+    limite_trabalhos: -1,
+    limite_resumos: -1,
+    limite_questionarios: -1,
+    limite_planos_aula: -1,
+    limite_tfc: -1,
   },
 } as const;
 
@@ -97,7 +99,7 @@ export function useUserPlan() {
       .single();
 
     if (error && error.code === "PGRST116") {
-      console.warn("Plano não encontrado para o utilizador. Aguarde ou contacte o suporte.");
+      console.warn("Plano não encontrado para o utilizador.");
       setPlan(null);
     } else if (data) {
       setPlan(data);

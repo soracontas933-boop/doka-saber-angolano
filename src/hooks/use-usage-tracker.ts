@@ -1,119 +1,87 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
+import { useUserPlan } from "@/hooks/use-user-plan";
+import { CREDIT_COSTS, MODULE_LABELS, type ModuloType } from "@/lib/credit-costs";
 import { toast } from "sonner";
 
-export type ModuloType = "trabalho" | "resumo" | "questionario" | "plano_aula" | "tfc" | "correcao" | "apresentacao";
-
-const MODULE_LIMIT_MAP: Record<ModuloType, keyof typeof PLAN_CONFIGS.gratuito> = {
-  trabalho: "limite_trabalhos",
-  resumo: "limite_resumos",
-  questionario: "limite_questionarios",
-  plano_aula: "limite_planos_aula",
-  tfc: "limite_tfc",
-  correcao: "limite_trabalhos",
-  apresentacao: "limite_trabalhos",
-};
+export type { ModuloType };
+export { CREDIT_COSTS, MODULE_LABELS };
 
 export function useUsageTracker() {
   const { user } = useAuth();
   const { plan, refetch } = useUserPlan();
 
-  const getPeriodoInicio = useCallback((): string | null => {
-    if (!plan) return null;
-    return (plan as any).periodo_inicio || plan.criado_em || null;
+  const getRemaining = useCallback((): number => {
+    if (!plan) return 0;
+    if (plan.creditos_totais === -1) return Infinity as any;
+    return Math.max(0, plan.creditos_totais - plan.creditos_usados);
   }, [plan]);
-
-  const getUsageCount = useCallback(async (modulo: ModuloType): Promise<number> => {
-    if (!user) return 0;
-
-    const periodoInicio = getPeriodoInicio();
-
-    let query = supabase
-      .from("usage_logs")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("modulo", modulo);
-
-    if (periodoInicio) {
-      query = query.gte("criado_em", periodoInicio);
-    }
-
-    const { count, error } = await query;
-    if (error) {
-      console.error("Error counting usage:", error);
-      return 0;
-    }
-    return count || 0;
-  }, [user, getPeriodoInicio]);
 
   const getAllUsageCounts = useCallback(async (): Promise<Record<string, number>> => {
     if (!user) return {};
-
-    const periodoInicio = getPeriodoInicio();
-
-    let query = supabase
+    const { data } = await supabase
       .from("usage_logs")
       .select("modulo")
       .eq("user_id", user.id);
-
-    if (periodoInicio) {
-      query = query.gte("criado_em", periodoInicio);
-    }
-
-    const { data, error } = await query;
-    if (error || !data) return {};
-
+    if (!data) return {};
     const counts: Record<string, number> = {};
-    for (const row of data) {
-      counts[row.modulo] = (counts[row.modulo] || 0) + 1;
-    }
+    for (const row of data) counts[row.modulo] = (counts[row.modulo] || 0) + 1;
     return counts;
-  }, [user, getPeriodoInicio]);
+  }, [user]);
 
+  /**
+   * Verifica se o utilizador tem créditos suficientes para a ação.
+   * Retorna true se pode prosseguir; mostra toast e retorna false se não.
+   */
   const checkLimit = useCallback(async (modulo: ModuloType): Promise<boolean> => {
-    if (!plan) return false;
-
-    const planKey = (plan.plano || "gratuito") as PlanKey;
-    const cfg = PLAN_CONFIGS[planKey] || PLAN_CONFIGS.gratuito;
-    const limitKey = MODULE_LIMIT_MAP[modulo];
-    const limit = cfg[limitKey] as number;
-
-    if (limit === -1) return true;
-    if (limit === 0) {
-      toast.error(`O módulo não está disponível no plano ${cfg.nome}. Faça upgrade!`);
+    if (!plan) {
+      toast.error("Plano não carregado. Tenta novamente.");
       return false;
     }
+    const cost = CREDIT_COSTS[modulo] ?? 1;
+    const remaining = getRemaining();
+    if (remaining === Infinity as any) return true;
 
-    const used = await getUsageCount(modulo);
-    if (used >= limit) {
-      toast.error(`Limite atingido! Já usou ${used}/${limit} no plano ${cfg.nome}. Faça upgrade para continuar.`);
+    if ((remaining as number) < cost) {
+      toast.error(
+        `Sem créditos suficientes! Esta ação custa ${cost} créditos e só tens ${remaining}. Faz upgrade ou compra extras.`,
+        { duration: 6000 }
+      );
+      // Disparar evento global para abrir popup de "sem créditos"
+      window.dispatchEvent(new CustomEvent("delle:no-credits", { detail: { needed: cost, available: remaining } }));
       return false;
     }
-
     return true;
-  }, [plan, getUsageCount]);
+  }, [plan, getRemaining]);
 
+  /**
+   * Regista o uso e desconta os créditos da BD via RPC consume_credits.
+   */
   const logUsage = useCallback(async (modulo: ModuloType, servicoIa?: string, tokensUsados?: number) => {
     if (!user) return;
+    const cost = CREDIT_COSTS[modulo] ?? 1;
 
-    const { error } = await supabase
-      .from("usage_logs")
-      .insert({
-        user_id: user.id,
-        modulo,
-        servico_ia: servicoIa || null,
-        tokens_usados: tokensUsados || 0,
-      });
+    // Desconta créditos atomicamente
+    const { data: ok } = await supabase.rpc("consume_credits" as any, {
+      p_user_id: user.id,
+      p_amount: cost,
+    });
 
-    if (error) {
-      console.error("Error logging usage:", error);
+    if (ok === false) {
+      toast.error("Não foi possível descontar créditos (saldo insuficiente).");
     }
 
-    await supabase.rpc("increment_creditos_usados", { p_user_id: user.id });
+    // Regista log
+    await supabase.from("usage_logs").insert({
+      user_id: user.id,
+      modulo,
+      servico_ia: servicoIa || null,
+      tokens_usados: tokensUsados || 0,
+    });
+
     refetch();
   }, [user, refetch]);
 
-  return { checkLimit, logUsage, getUsageCount, getAllUsageCounts };
+  return { checkLimit, logUsage, getAllUsageCounts, getRemaining };
 }
