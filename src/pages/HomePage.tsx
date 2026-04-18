@@ -213,8 +213,8 @@ const HomePage = () => {
     ],
     journey: {
       title: "Sua Jornada, Sem Barreiras",
-      text: "Imagine poder transformar suas ideias, suas anotações, seus momentos de estudo em trabalhos brilhantes, com apenas alguns cliques. Com o Deli, o seu potencial não tem limites. Do resumo do caderno ao currículo perfeito, você vai se destacar.",
-      story: "Como a Ana, que estava travada num trabalho de sociologia, tirou um A+ em menos de uma semana, ou como o professor Marcos, que agora economiza horas preparando suas aulas.",
+      text: "Imagine poder transformar suas ideias, suas anotações, seus momentos de estudo em trabalhos brilhantes, com apenas alguns cliques. Com o Delle, o seu potencial não tem limites. Do resumo do caderno ao currículo perfeito, você vai se destacar.",
+      story: "Como a Rosa, que estava travada num trabalho de sociologia, tirou um 19,5 em menos de uma semana, ou como o professor Marcos, que agora economiza horas preparando suas aulas.",
       cta: "Dê o próximo passo na sua jornada hoje. Cadastre-se no Deli e libere o seu melhor."
     },
     cta: { title: "Pronto para transformar sua educação?", subtitle: "Junte-se a milhares de estudantes e professores que já estão usando a Delle", buttonText: "Começar Agora Grátis" }
@@ -260,7 +260,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden font-apple">
       {/* Nav */}
-      <header className="relative z-[30] flex items-center justify-between px-6 md:px-12 py-4 border-b border-border/40 bg-background/70 backdrop-blur-xl sticky top-0">
+      <header className="relative z-[30] flex items-center justify-between px-6 md:px-12 py-4 border-b border-border/40 backdrop-blur-xl sticky top-0 bg-neutral-950">
         <DelleLogo size={28} />
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-9 w-9 rounded-full">
@@ -302,7 +302,7 @@ const HomePage = () => {
 
           <AnimatedTitle />
 
-          <p className="text-lg md:text-2xl max-w-2xl mx-auto mb-12 leading-relaxed text-muted-foreground/80 font-medium">
+          <p className="text-lg max-w-2xl mx-auto mb-12 leading-relaxed font-medium md:text-lg text-muted-foreground">
             Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aula adaptados às normas de Angola.
           </p>
 
@@ -319,7 +319,7 @@ const HomePage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12 border-t border-border/20 w-full">
             {content.stats.map((stat, i) => (
               <div key={i} className="text-center">
-                <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
+                <div className="font-bold text-foreground mb-1 text-base">{stat.value}</div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</div>
               </div>
             ))}
@@ -330,7 +330,7 @@ const HomePage = () => {
       {/* Journey Section (3rd Section with Video Support) */}
       <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden bg-white dark:bg-[#0B0B0B]">
         <div className="max-w-[1200px] mx-auto relative z-10">
-          <div className={`grid grid-cols-1 ${ (sectionImages.section_image_journey || siteSettings.section_video_journey) ? 'lg:grid-cols-2' : ''} gap-20 items-center`}>
+          <div className={`grid grid-cols-1 ${ (sectionImages.section_image_journey || siteSettings.section_video_journey) ? 'lg:grid-cols-2' : ''} gap-20 items-center px-0 pr-0 pb-0`}>
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -341,7 +341,7 @@ const HomePage = () => {
                 <Sparkles className="h-3 w-3" />
                 Sua Evolução
               </div>
-              <h2 className="text-5xl md:text-7xl font-bold mb-10 text-foreground tracking-tight leading-[1.1]">
+              <h2 className="text-5xl font-bold mb-10 text-foreground tracking-tight leading-[1.1] md:text-7xl text-left font-sans">
                 {content.journey?.title || "Sua Jornada, Sem Barreiras"}
               </h2>
               <div className="space-y-8 text-xl text-muted-foreground leading-relaxed mb-12">
@@ -352,7 +352,7 @@ const HomePage = () => {
                   <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                     <Users className="h-16 w-16 text-[#3B82F6]" />
                   </div>
-                  <p className="relative z-10 italic text-foreground/90 text-2xl leading-relaxed font-medium">
+                  <p className="relative z-10 italic text-foreground/90 leading-relaxed font-medium text-sm">
                     "{content.journey?.story}"
                   </p>
                   <div className="mt-6 flex items-center gap-3 text-[#3B82F6] font-bold">
@@ -361,8 +361,8 @@ const HomePage = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
-                <Button size="lg" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-12 h-16 text-xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105" onClick={() => navigate("/auth")}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 bg-primary-foreground">
+                <Button size="lg" className="rounded-full px-12 h-16 text-xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105 bg-secondary-foreground border border-black text-secondary" onClick={() => navigate("/auth")}>
                   {content.journey?.cta || "Começar Agora"} <ArrowRight className="h-6 w-6 ml-2" />
                 </Button>
                 <div className="flex -space-x-4">
@@ -428,7 +428,7 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-10 rounded-[2rem] bg-white dark:bg-[#1D1D1F] border border-border/40 hover:border-[#3B82F6]/30 hover:shadow-xl transition-all duration-500 group"
+                className="p-10 rounded-[2rem] border hover:shadow-xl transition-all duration-500 group border-black bg-white"
               >
                 <div className="p-4 rounded-2xl bg-[#3B82F6]/10 w-fit mb-8 group-hover:bg-[#3B82F6]/20 transition-colors">
                   {feature.icon === "FileText" && <FileText className="h-8 w-8 text-[#3B82F6]" />}
@@ -450,7 +450,7 @@ const HomePage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="relative w-full py-32 px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
+      <section className="relative w-full py-32 px-6 md:px-12 border-secondary-foreground bg-white">
         <div className="max-w-[1200px] mx-auto">
           <div className="text-center mb-20">
             <motion.div
@@ -473,7 +473,7 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 className={`relative p-10 rounded-[2.5rem] border transition-all duration-500 flex flex-col
                 ${plan.popular 
-                    ? "border-[#3B82F6] bg-[#3B82F6]/5 shadow-2xl scale-105 z-10" 
+                    ? "border-black border-solid bg-white shadow-2xl scale-105 z-10" 
                     : "border-border/40 bg-[#F5F5F7] dark:bg-[#1D1D1F] hover:border-[#3B82F6]/30"
                 }`}
               >
@@ -509,7 +509,7 @@ const HomePage = () => {
 
       {/* CTA Final Section */}
       <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden">
-        <div className="max-w-[1000px] mx-auto relative z-10 bg-[#3B82F6] rounded-[3rem] p-16 md:p-24 text-center text-white shadow-2xl shadow-blue-500/30 overflow-hidden">
+        <div className="max-w-[1000px] mx-auto relative z-10 rounded-[3rem] p-16 md:p-24 text-center text-white shadow-2xl shadow-blue-500/30 overflow-hidden bg-black">
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -531,23 +531,23 @@ const HomePage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-12 mb-20">
             <div className="md:col-span-2">
               <DelleLogo size={32} />
-              <p className="mt-6 text-lg text-muted-foreground max-w-xs leading-relaxed">
-                A primeira plataforma educacional de Angola potenciada por Inteligência Artificial.
+              <p className="mt-6 text-muted-foreground max-w-xs leading-relaxed text-base">
+                A o modelo de ia mais poderoso na geração de documentos.
               </p>
             </div>
             <div>
               <h4 className="font-bold text-foreground mb-6 uppercase tracking-widest text-xs">Produto</h4>
-              <ul className="space-y-4 text-muted-foreground font-medium">
-                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Funcionalidades</a></li>
-                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Preços</a></li>
-                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Segurança</a></li>
+              <ul className="space-y-4 text-muted-foreground font-medium text-base">
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors text-base">Funcionalidades</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors text-base">Preços</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors text-base">Segurança</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-foreground mb-6 uppercase tracking-widest text-xs">Empresa</h4>
               <ul className="space-y-4 text-muted-foreground font-medium">
                 <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Sobre Nós</a></li>
-                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors text-base">Wizo</a></li>
                 <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Contacto</a></li>
               </ul>
             </div>
@@ -561,7 +561,7 @@ const HomePage = () => {
           </div>
           <div className="border-t border-border/20 pt-12 flex flex-col md:flex-row justify-between items-center gap-6 text-muted-foreground font-medium">
             <p>&copy; 2026 Delle. Todos os direitos reservados.</p>
-            <p>Feito com ❤️ em Angola.</p>
+            <p>​Wizo</p>
           </div>
         </div>
       </footer>
