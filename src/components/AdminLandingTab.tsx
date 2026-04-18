@@ -347,7 +347,7 @@ const AdminLandingTab = () => {
                     value={activeSection.conteudo.style.bg} 
                     onValueChange={(val) => setSections(prev => prev.map(s => s.id === activeSection.id ? { ...s, conteudo: { ...s.conteudo, style: { ...s.conteudo.style, bg: val } } } : s))}
                   >
-                    <SelectTrigger size="sm">
+                    <SelectTrigger className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -549,7 +549,7 @@ const AdminLandingTab = () => {
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Animação</Label>
                     <div className="grid gap-3">
                       <Select value={selectedBlock.style.animation} onValueChange={(val) => updateBlockStyle(activeSection.id, selectedBlock.id, { animation: val })}>
-                        <SelectTrigger size="sm"><SelectValue placeholder="Tipo de animação" /></SelectTrigger>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Tipo de animação" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Nenhuma</SelectItem>
                           <SelectItem value="fade-up">Surgir (Cima)</SelectItem>

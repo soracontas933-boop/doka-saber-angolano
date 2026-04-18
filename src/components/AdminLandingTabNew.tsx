@@ -48,19 +48,20 @@ const AdminLandingTabNew = () => {
     if (error) {
       toast({ title: "Erro ao carregar secções", description: error.message, variant: "destructive" });
     } else {
-      const normalizedData = (data || []).map(s => {
-        if (!s.conteudo.blocks) {
+      const normalizedData = (data || []).map((s: any) => {
+        const conteudo = (typeof s.conteudo === "object" && s.conteudo !== null) ? s.conteudo : {};
+        if (!conteudo.blocks) {
           return {
             ...s,
             conteudo: {
               blocks: [],
-              style: s.conteudo.style || { bg: "default", height: "500px" }
-            }
+              style: conteudo.style || { bg: "default", height: "500px" },
+            },
           };
         }
-        return s;
+        return { ...s, conteudo };
       });
-      setSections(normalizedData);
+      setSections(normalizedData as any);
     }
     setLoading(false);
   }, []);
@@ -372,7 +373,7 @@ const AdminLandingTabNew = () => {
                     <div className="space-y-1">
                       <Label className="text-xs">Cor de Fundo</Label>
                       <Select value={activeSection.conteudo.style.bg || 'default'} onValueChange={(val) => setSections(prev => prev.map(s => s.id === activeSection.id ? { ...s, conteudo: { ...s.conteudo, style: { ...s.conteudo.style, bg: val } } } : s))}>
-                        <SelectTrigger size="sm" className="text-xs">
+                        <SelectTrigger className="h-8 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
