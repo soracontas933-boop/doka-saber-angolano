@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import logoImage from "@/assets/doka-logo.png";
+import logoImage from "@/assets/delle-logo.png";
 
 const DelleLogo = ({ size = 32, showText = true, className = "" }: { size?: number; showText?: boolean; className?: string }) => {
   return (
@@ -13,7 +13,7 @@ const DelleLogo = ({ size = 32, showText = true, className = "" }: { size?: numb
         <img
           src={logoImage}
           alt="Delle Logo"
-          className="w-full h-full object-cover pl-0 pt-0 py-[10px] pb-0 pr-0 ml-0 mr-[10px] bg-black/[0.01]" />
+          className="w-full h-full object-cover py-[10px] pb-0 pr-0 mr-[10px] bg-black/[0.01] pl-[10px] pt-[7px] ml-0" />
         
       </motion.div>
       {showText &&

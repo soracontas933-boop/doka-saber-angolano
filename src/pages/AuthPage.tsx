@@ -153,10 +153,10 @@ const AuthPage = () => {
             transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
             <DelleLogo size={40} className="mb-8 invert brightness-0" />
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight leading-[1.1]">
+            <h2 className="text-4xl font-bold mb-6 tracking-tight leading-[1.1] md:text-xl pl-0 pr-0">
               A sua jornada educacional inteligente começa aqui.
             </h2>
-            <p className="text-xl text-white/80 max-w-md font-medium">
+            <p className="text-white/80 max-w-md font-medium text-sm">
               Aceda às melhores ferramentas de IA adaptadas ao ensino em Angola.
             </p>
           </motion.div>
@@ -167,9 +167,7 @@ const AuthPage = () => {
       <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col relative bg-white dark:bg-[#0B0B0B]">
         <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20">
           <Button 
-            variant="ghost" 
-            size="sm" 
-            className="gap-2 rounded-full hover:bg-secondary" 
+            className="transition-colors h-9 px-3 gap-2 rounded-full text-white bg-black" 
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -192,7 +190,7 @@ const AuthPage = () => {
               <h1 className="text-4xl font-bold tracking-tight text-foreground">
                 {isLogin ? "Bem-vindo de volta" : "Criar nova conta"}
               </h1>
-              <p className="text-lg text-muted-foreground font-medium">
+              <p className="text-muted-foreground font-medium text-sm">
                 {isLogin ? 
                   "Introduza as suas credenciais para aceder à sua conta" : 
                   "Registe-se para começar a usar a plataforma"}
@@ -321,9 +319,9 @@ const AuthPage = () => {
                 className="text-base text-muted-foreground hover:text-[#3B82F6] transition-colors font-medium"
               >
                 {isLogin ? (
-                  <>Não tem conta? <span className="text-[#3B82F6] font-bold">Registe-se</span></>
+                  <>Não tem conta? <span className="font-bold text-primary">Registe-se</span></>
                 ) : (
-                  <>Já tem conta? <span className="text-[#3B82F6] font-bold">Entre aqui</span></>
+                  <>Já tem conta? <span className="font-bold text-primary">Entre aqui</span></>
                 )}
               </button>
             </div>
