@@ -167,8 +167,6 @@ const AuthPage = () => {
       <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col relative bg-white dark:bg-[#0B0B0B]">
         <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20">
           <Button 
-            variant="ghost" 
-            size="sm" 
             className="transition-colors h-9 px-3 gap-2 rounded-full text-white bg-black" 
             onClick={() => navigate("/")}
           >
