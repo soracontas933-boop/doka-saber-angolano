@@ -115,7 +115,7 @@ const CreditsBar = () => {
 
       {/* ===== DESKTOP TOP BAR ===== */}
       <div className="hidden md:block sticky top-0 z-40 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl">
-        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 max-w-screen-2xl mx-auto gap-3 bg-white shadow-glass">
+        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 max-w-screen-2xl mx-auto gap-3 shadow-glass bg-neutral-950">
           <button
             onClick={() => navigate("/planos")}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/15 border border-primary/20 transition-all active:scale-95"
