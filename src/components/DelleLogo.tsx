@@ -13,7 +13,7 @@ const DelleLogo = ({ size = 32, showText = true, className = "" }: { size?: numb
         <img
           src={logoImage}
           alt="Delle Logo"
-          className="w-full h-full object-cover py-[10px] pb-0 pr-0 mr-[10px] bg-black/[0.01] pl-[10px] pt-[7px] ml-0" />
+          className="w-full h-full object-cover pb-0 pr-0 mr-[10px] bg-black/[0.01] pl-[10px] pt-[7px] ml-0 text-4xl py-[70px]" />
         
       </motion.div>
       {showText &&
