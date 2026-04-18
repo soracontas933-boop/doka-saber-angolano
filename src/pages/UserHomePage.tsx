@@ -321,7 +321,7 @@ const UserHomePage = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.05 + i * 0.03 }}
               onClick={() => navigate(action.to)}
-              className="group relative overflow-hidden rounded-lg border bg-card p-5 text-left transition-all duration-150 shadow-glass border-neutral-950"
+              className="group relative overflow-hidden rounded-lg border bg-card p-5 text-left transition-all duration-150 shadow-glass border-black/15 hover:border-primary"
             >
               <div className="inline-flex p-2.5 rounded-md bg-muted text-primary mb-3">
                 <action.icon className="h-5 w-5" />
