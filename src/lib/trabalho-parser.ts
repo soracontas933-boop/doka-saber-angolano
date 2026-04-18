@@ -1,3 +1,5 @@
+import { sanitizeContent } from "@/lib/ai-validator";
+
 export interface TrabalhoSection {
   tipo: "indice" | "introducao" | "capitulo" | "conclusao" | "bibliografia";
   titulo: string;
@@ -9,8 +11,10 @@ export interface TrabalhoSection {
  * Parses AI-generated markdown into structured sections for paginated display.
  */
 export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
+  // Sanitize before parsing — remove meta-text, repeated symbols, parasite headings
+  const cleaned = sanitizeContent(markdown);
   const sections: TrabalhoSection[] = [];
-  const lines = markdown.split("\n");
+  const lines = cleaned.split("\n");
 
   let currentSection: TrabalhoSection | null = null;
   let currentLines: string[] = [];
