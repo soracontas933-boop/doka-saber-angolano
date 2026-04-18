@@ -731,6 +731,16 @@ const TrabalhoPage = () => {
           />
         </motion.div>
       )}
+
+      {/* Anti-falhas: Pre-compile check modal */}
+      <PreCompileCheckModal
+        open={checkModalOpen}
+        issues={validationIssues}
+        onRegenerate={handleRegenerateFromModal}
+        onIgnore={() => { setCheckModalOpen(false); performCompile(); }}
+        onCancel={() => setCheckModalOpen(false)}
+        regenerating={regeneratingTitle}
+      />
     </div>
   );
 };
