@@ -9,8 +9,12 @@ export interface TrabalhoSection {
  * Parses AI-generated markdown into structured sections for paginated display.
  */
 export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
+  // Sanitize before parsing — remove meta-text, repeated symbols, parasite headings
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { sanitizeContent } = require("@/lib/ai-validator") as typeof import("@/lib/ai-validator");
+  const cleaned = sanitizeContent(markdown);
   const sections: TrabalhoSection[] = [];
-  const lines = markdown.split("\n");
+  const lines = cleaned.split("\n");
 
   let currentSection: TrabalhoSection | null = null;
   let currentLines: string[] = [];
