@@ -304,7 +304,7 @@ const AuthPage = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full h-14 rounded-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02]" disabled={loading}>
+              <Button type="submit" className="w-full h-14 rounded-full bg-black text-white text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02]" disabled={loading}>
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
                 ) : null}
