@@ -400,7 +400,7 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <Presentation style={{ color: palette.lightBlue }} className="h-6 w-6" />
+            <Presentation style={{ color: palette.lightBlue }} className="h-6 w-6 text-black" />
             <h1 className="font-bold text-lg hidden md:block">Gerador de Apresentações</h1>
           </div>
         </div>
@@ -430,7 +430,7 @@ Cria um slide para cada cartão e seus subtemas. O conteúdo deve ser profission
               className="max-w-3xl mx-auto py-12 px-6 space-y-12"
             >
               <div className="text-center space-y-4">
-                <div style={{ backgroundColor: palette.lightBlueBg }} className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <div style={{ backgroundColor: palette.lightBlueBg }} className="w-16 h-16 mx-auto mb-6 rounded-full items-center justify-center flex flex-row text-black">
                   <Sparkles style={{ color: palette.lightBlue }} className="h-8 w-8" />
                 </div>
                 <h2 className="text-4xl font-bold tracking-tight">O que vamos apresentar hoje?</h2>
