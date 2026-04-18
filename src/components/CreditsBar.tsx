@@ -106,7 +106,7 @@ const CreditsBar = () => {
           <div className="flex items-center gap-1 shrink-0">
             <ScannerButton />
             <button onClick={() => navigate("/suporte")} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90">
-              <Headphones className="h-4 w-4" />
+              <Headphones className="h-4 w-4 text-black" />
             </button>
             <NotificationBell />
           </div>

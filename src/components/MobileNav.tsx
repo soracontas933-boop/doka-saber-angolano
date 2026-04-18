@@ -22,7 +22,7 @@ const MobileNav = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex flex-col items-center gap-1.5 px-2 py-1 transition-all duration-200 active:scale-90"
+              className="relative flex flex-col items-center gap-1.5 px-2 py-1 transition-all duration-200 active:scale-90 shadow-2xl"
             >
               <div className={`p-1 rounded-full transition-all duration-300 ${isActive ? 'bg-primary/10' : 'bg-transparent'}`}>
                 <item.icon

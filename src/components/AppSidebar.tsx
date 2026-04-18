@@ -127,11 +127,11 @@ const AppSidebar = () => {
         )}
       </div>
 
-      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-none">
+      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-none shadow-glass border-foreground">
         {navItems.map(renderNavItem)}
       </nav>
 
-      <div className="p-3 border-t border-border/40 space-y-1">
+      <div className="p-3 border-t border-border/40 space-y-1 shadow-glass">
         <NavLink
           to="/configuracoes"
           title="Configurações"

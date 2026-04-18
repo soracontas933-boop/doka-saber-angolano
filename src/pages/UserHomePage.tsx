@@ -129,7 +129,7 @@ const UserHomePage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="px-4 pt-3 pb-2"
         >
-          <h2 className="text-xl font-normal text-foreground">
+          <h2 className="font-normal text-foreground text-2xl font-serif">
             Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">O que vais criar hoje?</p>
@@ -156,7 +156,7 @@ const UserHomePage = () => {
           <p className="text-[10px] font-normal mb-1.5 uppercase tracking-wider text-muted-foreground">Gerações restantes</p>
           <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
             {usageItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card">
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card shadow-2xl">
                 <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-[11px] font-normal text-foreground">{item.remaining}</span>
                 <span className="text-[10px] text-muted-foreground">{item.label}</span>
@@ -183,7 +183,7 @@ const UserHomePage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 + i * 0.04 }}
                   onClick={() => navigate(action.to)}
-                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-card border border-border active:scale-[0.97] transition-all duration-150 overflow-hidden hover:border-primary"
+                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-card border border-border active:scale-[0.97] transition-all duration-150 overflow-hidden hover:border-primary shadow-2xl"
                 >
                   {coverUrl && (
                     <img
@@ -216,7 +216,7 @@ const UserHomePage = () => {
         >
           <button
             onClick={() => navigate("/grupos")}
-            className="group w-full rounded-lg border border-border bg-card p-4 transition-all duration-150 active:scale-[0.97] flex items-center justify-between hover:border-primary"
+            className="group w-full rounded-lg border border-border bg-card p-4 transition-all duration-150 active:scale-[0.97] flex items-center justify-between hover:border-primary shadow-2xl"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-md bg-muted">
@@ -240,7 +240,7 @@ const UserHomePage = () => {
           transition={{ delay: 0.2 }}
           className="px-4 pb-6"
         >
-          <div className="border border-border bg-card p-4 rounded-lg">
+          <div className="border border-border bg-card p-4 rounded-lg shadow-xl">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-normal text-sm text-foreground">Projetos Recentes</h3>
               <button onClick={() => navigate("/meus-projetos")}>
@@ -261,7 +261,7 @@ const UserHomePage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.04 }}
                     onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-md transition-all duration-150 text-left border border-border bg-background hover:border-primary"
+                    className="w-full flex items-center gap-3 p-3 rounded-md transition-all duration-150 text-left border border-border bg-background hover:border-primary shadow-2xl"
                   >
                     <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
                       <WrapText className="h-4 w-4 text-primary" />
@@ -275,7 +275,7 @@ const UserHomePage = () => {
                     <div className="text-right flex-shrink-0">
                       <Badge
                         variant="outline"
-                        className="text-[10px] border-border text-muted-foreground"
+                        className="text-[10px] border-border text-muted-foreground shadow-xl border-0"
                       >
                         Completo
                       </Badge>
@@ -300,7 +300,7 @@ const UserHomePage = () => {
       {/* Desktop Layout */}
       <div className="hidden md:block p-4 md:p-8 max-w-6xl mx-auto space-y-8">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-2xl md:text-3xl font-normal text-foreground">
+          <h1 className="text-2xl md:text-3xl font-normal text-foreground font-serif">
             Olá, {profile.nome || "Estudante"}! 👋
           </h1>
           <p className="text-muted-foreground mt-1 text-base">O que vais criar hoje?</p>
