@@ -1,3 +1,5 @@
+import { sanitizeContent } from "@/lib/ai-validator";
+
 export interface TrabalhoSection {
   tipo: "indice" | "introducao" | "capitulo" | "conclusao" | "bibliografia";
   titulo: string;
@@ -10,8 +12,6 @@ export interface TrabalhoSection {
  */
 export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
   // Sanitize before parsing — remove meta-text, repeated symbols, parasite headings
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { sanitizeContent } = require("@/lib/ai-validator") as typeof import("@/lib/ai-validator");
   const cleaned = sanitizeContent(markdown);
   const sections: TrabalhoSection[] = [];
   const lines = cleaned.split("\n");

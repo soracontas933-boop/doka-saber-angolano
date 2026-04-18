@@ -91,20 +91,20 @@ const AdminLandingTab = () => {
       toast({ title: "Erro ao carregar secções", description: error.message, variant: "destructive" });
     } else {
       // Garantir que a estrutura de blocos existe para seções antigas
-      const normalizedData = (data || []).map(s => {
-        if (!s.conteudo.blocks) {
-          // Migração básica para seções antigas se necessário
+      const normalizedData = (data || []).map((s: any) => {
+        const conteudo = (typeof s.conteudo === "object" && s.conteudo !== null) ? s.conteudo : {};
+        if (!conteudo.blocks) {
           return {
             ...s,
             conteudo: {
               blocks: [],
-              style: s.conteudo.style || { bg: "default", height: "auto" }
-            }
+              style: conteudo.style || { bg: "default", height: "auto" },
+            },
           };
         }
-        return s;
+        return { ...s, conteudo };
       });
-      setSections(normalizedData);
+      setSections(normalizedData as any);
     }
     setLoading(false);
   }, []);
