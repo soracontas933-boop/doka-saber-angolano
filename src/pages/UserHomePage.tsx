@@ -154,9 +154,9 @@ const UserHomePage = () => {
           className="px-4 pt-1 pb-3"
         >
           <p className="text-[10px] font-normal mb-1.5 uppercase tracking-wider text-muted-foreground">Gerações restantes</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+          <div className="gap-2 overflow-x-auto scrollbar-none pb-1 flex flex-col">
             {usageItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card shadow-2xl">
+              <div key={item.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card shadow-glass">
                 <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-[11px] font-normal text-foreground">{item.remaining}</span>
                 <span className="text-[10px] text-muted-foreground">{item.label}</span>
@@ -229,7 +229,7 @@ const UserHomePage = () => {
                 </p>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            <ChevronRight className="h-5 w-5 text-black" />
           </button>
         </motion.div>
 
@@ -240,11 +240,11 @@ const UserHomePage = () => {
           transition={{ delay: 0.2 }}
           className="px-4 pb-6"
         >
-          <div className="border border-border bg-card p-4 rounded-lg shadow-xl">
+          <div className="border border-border bg-card p-4 rounded-lg shadow-2xl">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-normal text-sm text-foreground">Projetos Recentes</h3>
               <button onClick={() => navigate("/meus-projetos")}>
-                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                <MoreHorizontal className="h-5 w-5 bg-black/0 text-black" />
               </button>
             </div>
 
@@ -289,7 +289,7 @@ const UserHomePage = () => {
           {/* Aumentar Saldo */}
           <Button
             onClick={() => navigate("/planos")}
-            className="w-full mt-3 h-11 rounded-md font-normal text-sm"
+            className="w-full mt-3 h-11 rounded-md font-normal text-sm bg-black hover:bg-black/90"
           >
             Aumentar Saldo
           </Button>

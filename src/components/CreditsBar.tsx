@@ -66,7 +66,7 @@ const CreditsBar = () => {
     <>
       {/* ===== MOBILE TOP BAR ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
-        <div className="flex items-center justify-between px-4 py-3 gap-2">
+        <div className="flex items-center justify-between px-4 py-3 gap-2 mb-0 my-0">
           <button
             onClick={() => navigate("/configuracoes")}
             className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 active:scale-95"
