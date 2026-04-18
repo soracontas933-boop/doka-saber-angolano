@@ -450,7 +450,7 @@ const HomePage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="relative w-full py-32 px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
+      <section className="relative w-full py-32 px-6 md:px-12 border-secondary-foreground bg-white">
         <div className="max-w-[1200px] mx-auto">
           <div className="text-center mb-20">
             <motion.div
