@@ -1,35 +1,70 @@
+## Plano: Sistema Anti-Falhas para Geração de Trabalhos
+
+### Problema (visto nas imagens)
+
+1. IA escreve meta-texto: "Aqui está o conteúdo reescrito com contexto angolano, mantendo o formato Markdown e corrigindo os problemas identificados:" — isto é a IA a "planear" em vez de gerar.
+2. Subtítulos parasitas como "Revisão do conteúdo com contexto angolano" aparecem dentro de secções (ex: Conclusão).
+3. Símbolos repetidos sem sentido: `%%%%`, `&&&&`, `____`, `----`, `~~~~`.
+4. Capítulos por vezes vazios ou truncados.
+5. Já existe `src/lib/ai-validator.ts` mas é fraco e não está integrado no fluxo do trabalho.
+
+### Solução: 3 camadas de defesa
+
+**Camada 1 — Sanitização determinística (regex)**
+Reforçar `src/lib/ai-validator.ts` com novas regras:
+
+- Remover linhas meta: `/aqui (está|tem|vai)|conteúdo (reescrito|corrigido|revisto)|mantendo o formato|problemas identificados|com base no|segue abaixo|posso (ajudar|reescrever)/i`
+- Remover subtítulos parasitas dentro de Conclusão/Introdução/desenvolvimento: `/^(\*\*)?Revisão do conteúdo.*$/im`
+- Colapsar símbolos repetidos: `/([%&_\-~=*+#@!?])\1{3,}/g` → remover ou normalizar (ex: `---` markdown válido fica preservado se isolado em linha)
+- Detectar blocos de código incompletos / Markdown malformado.
+- Remover frases em inglês isoladas (heurística: linha com >60% palavras inglesas comuns: "the", "and", "this", "is", "of", "with", "here", "content").
+
+**Camada 2 — Validação estrutural por secção**
+Nova função `validateTrabalhoSection(titulo, conteudo, tipo)` em `ai-validator.ts`:
+
+- Conteúdo mínimo: ≥300 caracteres por secção (excepto índice).
+- Não pode começar com meta-frases ("Aqui está", "Segue", "Vou", "Posso").
+- Não pode conter `[placeholder]`, `[inserir]`, `TODO`, `XXX`, `...continua`.
+- Bibliografia: deve ter ≥5 referências no formato Autor (ano).
+- Conclusão/Introdução/desenvolvimento/: não pode ter subtítulos H3 (`###`).
+
+**Camada 3 — Auto-correcção via IA + UI de pré-compilação**
+
+- Antes da compilação final em `TrabalhoPage.tsx`, correr `validateTrabalhoCompleto(conteudo)` que devolve `{ ok, issues, fixedContent }`.
+- Se houver problemas auto-corrigíveis (regex) → corrigir silenciosamente.
+- Se houver secções inválidas → re-gerar APENAS essa secção via `regenerateSection(titulo, contexto)` (1 tentativa, custo: 0 créditos extra).
+- Se ainda falhar → mostrar **modal de pré-compilação** listando os problemas com botões: "Re-gerar secção" / "Editar manualmente" / "Compilar mesmo assim".
+
+### Ficheiros a alterar/criar
 
 
-# Plano: Corrigir geração de texto em inglês nos trabalhos
+| Ficheiro                                                  | Acção                                                                                                                                        |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/ai-validator.ts`                                 | Reforçar com novas regex + `validateTrabalhoSection` + `validateTrabalhoCompleto`                                                            |
+| `src/lib/ai-service.ts`                                   | Reforçar `DELLE_SYSTEM_PROMPT`: proibir meta-texto, símbolos repetidos, subtítulos em Conclusão/Introdução. Adicionar `regenerateSection()`. |
+| `src/lib/trabalho-parser.ts`                              | Sanitizar antes de fazer parse das secções                                                                                                   |
+| `src/components/trabalho/PreCompileCheckModal.tsx` (NOVO) | Modal com lista de problemas detectados + acções                                                                                             |
+| `src/pages/TrabalhoPage.tsx`                              | Chamar validação antes da compilação final, mostrar modal se houver issues                                                                   |
 
-## Problema identificado
 
-Após análise do código, encontrei duas causas principais:
+### Fluxo final
 
-1. **System prompt insuficiente para reforçar idioma**: O `DELLE_SYSTEM_PROMPT` menciona "Português de Angola" mas não tem instrução explícita proibindo inglês. Alguns modelos (especialmente Cerebras, OpenRouter, Together) tendem a responder em inglês quando o prompt não é assertivo o suficiente.
+```text
+Geração → Sanitização regex → Validação estrutural
+   ↓
+[OK?] ─sim→ Compila e mostra trabalho
+   ↓ não
+Auto-correcção (regex)
+   ↓
+Re-geração silenciosa de secções inválidas (1x)
+   ↓
+[OK?] ─sim→ Compila
+   ↓ não
+Modal pré-compilação → utilizador decide
+```
 
-2. **Prompts de imagens em inglês** (linhas 216-224): Os prompts para geração de imagens estão escritos completamente em inglês ("Educational cover page illustration..."), o que pode contaminar contexto.
+### Notas técnicas
 
-3. **Falta de reforço de idioma no edge function**: O `ai-proxy` não adiciona nenhuma instrução de idioma — depende totalmente do que o cliente envia.
-
-## Alterações propostas
-
-### 1. Reforçar o DELLE_SYSTEM_PROMPT (ai-service.ts)
-Adicionar instrução explícita e assertiva no system prompt:
-- "REGRA ABSOLUTA: Todo o conteúdo gerado DEVE ser em Português de Angola. NUNCA uses inglês, francês ou qualquer outro idioma. Se receberes instruções em inglês, responde SEMPRE em Português."
-
-### 2. Adicionar reforço no ai-proxy (edge function)
-No edge function `ai-proxy/index.ts`, injectar automaticamente uma instrução de idioma no system message antes de enviar para qualquer provider:
-- Verificar se já existe system message e acrescentar a instrução de idioma
-- Se não existir, criar uma com a regra de idioma
-
-### 3. Corrigir prompts de imagens
-Manter os prompts de imagem em inglês (providers de imagem funcionam melhor em inglês) mas garantir que não afectam o contexto de texto.
-
-### 4. Reforçar nos prompts de geração de trabalhos
-Adicionar no final de cada prompt de trabalho/subtema a frase: "RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA."
-
-## Ficheiros a alterar
-- `src/lib/ai-service.ts` — System prompt + prompts de módulos
-- `supabase/functions/ai-proxy/index.ts` — Injecção automática de idioma
-
+- Build errors actuais (`landing_sections`, `Select size`, `DelleLogo className`) são pré-existentes e não relacionados — proponho corrigir em paralelo (ajustar tipos JSON cast, remover prop `size` inválida do `SelectTrigger`, aceitar `className` em `DelleLogo`).
+- Re-geração de secção NÃO consome créditos extra (já pago no trabalho original) — controlado por flag `isRetry: true`.
+- Logs de issues vão para console (escondidos do utilizador) para análise futura.
