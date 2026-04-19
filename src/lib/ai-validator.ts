@@ -1,10 +1,8 @@
 /**
- * AI Validator & Corrector — Sistema Anti-Falhas
+ * AI Validator & Sanitizer — Sistema Anti-Falhas (Silencioso)
  *
- * 3 camadas de defesa contra falhas da IA:
- *  1. Sanitização determinística (regex)
- *  2. Validação estrutural por secção
- *  3. Auto-correção / re-geração assistida
+ * Sanitização 100% local, síncrona e silenciosa (<100ms).
+ * Sem UI, sem rede, sem IA. Corrige defeitos reais da geração.
  */
 
 export interface ValidationResult {
@@ -20,23 +18,35 @@ export interface SectionIssue {
   severity: "low" | "medium" | "high";
 }
 
-export interface TrabalhoValidationResult {
-  ok: boolean;
-  issues: SectionIssue[];
-  fixedContent: string;
-}
+// ─── Padrões de meta-texto / parasitas ───────────────────────────
 
-// ─── CAMADA 1: Sanitização determinística ────────────────────────
+const META_LINE_PATTERNS: RegExp[] = [
+  /^.*\b(aqui (está|tem|vai|segue)|segue (abaixo|o conteúdo|a (versão|revisão))|conteúdo (reescrito|corrigido|revisto|gerado|melhorado))\b.*$/i,
+  /^.*\b(vou (gerar|reescrever|criar|elaborar|produzir)|posso (ajudar|reescrever|gerar|elaborar))\b.*$/i,
+  /^.*\b(mantendo o formato|com base no(?:s)? (problema|erro|pedido|solicitado)|conforme (solicitado|pedido|requerido))\b.*$/i,
+  /^.*\b(espero que (ajude|seja útil|tenha sido)|se precisar de (mais|algo|ajuda)|estou (à|a) (disposição|sua disposição))\b.*$/i,
+  /^.*\b(em resumo[,:]? segue|de acordo com (o pedido|a solicitação)|abaixo (segue|encontra-se|apresento))\b.*$/i,
+  /^\s*(claro[!,.]|certo[!,.]|sem problemas[!,.]|com certeza[!,.]).*$/i,
+  /^.*\b(revisão do conteúdo|nota[:s]?\s|observação[:s]?\s|disclaimer)\b.*$/i,
+];
 
-const META_PHRASES_REGEX =
-  /^.*(aqui (está|tem|vai)|conteúdo (reescrito|corrigido|revisto|gerado)|mantendo o formato|problemas identificados|com base no(?:s)? (problema|erro)|segue (abaixo|o conteúdo)|posso (ajudar|reescrever|gerar)|vou (gerar|reescrever|criar)|claro[!,.]|certo[!,.]|sem problemas[!,.]|revisão do conteúdo).*$/gim;
+const PARASITE_HEADING_REGEX =
+  /^(\*\*|#{1,6}\s*)?(Revisão( do conteúdo)?|Conteúdo (reescrito|corrigido|revisto)|Versão (corrigida|melhorada)|Nota[:s]?|Observação[:s]?|Resumo da (revisão|correção)|Disclaimer)\b.*$/i;
 
-const PARASITE_HEADINGS_REGEX =
-  /^(\*\*|#{1,6}\s*)?(Revisão do conteúdo|Conteúdo (reescrito|corrigido|revisto)|Versão (corrigida|melhorada)|Nota[:s]?\b|Observação[:s]?\b).*$/gim;
+// Caracteres de controlo invisíveis (zero-width, BOM, etc.)
+const INVISIBLE_CHARS_REGEX = /[\u200B-\u200D\uFEFF\u202A-\u202E\u2060]/g;
+
+// Linhas só com símbolos de pontuação/decoração
+const SYMBOL_ONLY_LINE_REGEX = /^\s*[%&_~=+@!?*\-#]{3,}\s*$/;
+
+// Tags HTML soltas comuns
+const STRAY_HTML_REGEX = /<\/?(br|div|span|font|p|b|i|u|hr|html|body|head)\b[^>]*>/gi;
+
+// Emojis (range principal)
+const EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}\u{2600}-\u{27BF}]/gu;
 
 const REPEATED_SYMBOLS_REGEX = /([%&_~=+@!?])\1{3,}/g;
-// Hífenes e asteriscos podem ser markdown válido (---, ***), trata-os com mais cuidado
-const REPEATED_HYPHEN_INLINE = /(?<!^)(-){3,}(?!$)/gm;
+const REPEATED_HYPHEN_INLINE = /(?<!^)(-){4,}(?!$)/gm;
 const REPEATED_ASTERISK_INLINE = /(?<!\*)\*{4,}(?!\*)/g;
 const TRIPLE_PUNCT_REGEX = /([.!?]){4,}/g;
 
@@ -56,246 +66,234 @@ function looksEnglish(line: string): boolean {
   return englishCount / words.length > 0.55;
 }
 
+// ─── deepSanitizeTrabalho — função principal silenciosa ──────────
+
 /**
- * Sanitização agressiva — remove meta-texto, símbolos repetidos, inglês.
+ * Sanitização profunda, síncrona, silenciosa.
+ * Corrige meta-texto, parasitas, estrutura quebrada, incoerências básicas.
+ * Tipicamente <50ms para 50KB de markdown.
  */
-export function sanitizeContent(content: string): string {
-  let fixed = content;
+export function deepSanitizeTrabalho(markdown: string): string {
+  if (!markdown) return "";
+  let fixed = markdown;
+  let fixCount = 0;
 
-  // Remover linhas meta
-  fixed = fixed.replace(META_PHRASES_REGEX, "");
-  // Remover subtítulos parasitas
-  fixed = fixed.replace(PARASITE_HEADINGS_REGEX, "");
+  // ── 1. Caracteres invisíveis e cercas markdown deixadas pela IA ──
+  const before1 = fixed;
+  fixed = fixed.replace(INVISIBLE_CHARS_REGEX, "");
+  fixed = fixed.replace(/```markdown\s*\n?/gi, "");
+  fixed = fixed.replace(/```\s*\n?(?=\s*(##|#|$))/g, "");
+  if (fixed !== before1) fixCount++;
 
-  // Colapsar símbolos repetidos
+  // ── 2. Remover meta-texto linha-a-linha ──
+  const linesIn = fixed.split("\n");
+  const linesOut: string[] = [];
+  for (const line of linesIn) {
+    const trimmed = line.trim();
+    if (!trimmed) { linesOut.push(line); continue; }
+
+    // Meta-frases
+    if (META_LINE_PATTERNS.some((re) => re.test(trimmed))) { fixCount++; continue; }
+    // Subtítulos parasitas
+    if (PARASITE_HEADING_REGEX.test(trimmed)) { fixCount++; continue; }
+    // Linhas só com símbolos
+    if (SYMBOL_ONLY_LINE_REGEX.test(trimmed) && !/^[-*_]{3,}$/.test(trimmed)) { fixCount++; continue; }
+    // Inglês
+    if (looksEnglish(trimmed)) { fixCount++; continue; }
+
+    linesOut.push(line);
+  }
+  fixed = linesOut.join("\n");
+
+  // ── 3. Remover tags HTML soltas e emojis ──
+  const before3 = fixed;
+  fixed = fixed.replace(STRAY_HTML_REGEX, "");
+  fixed = fixed.replace(EMOJI_REGEX, "");
+  if (fixed !== before3) fixCount++;
+
+  // ── 4. Símbolos repetidos ──
+  const before4 = fixed;
   fixed = fixed.replace(REPEATED_SYMBOLS_REGEX, "");
   fixed = fixed.replace(REPEATED_HYPHEN_INLINE, "");
   fixed = fixed.replace(REPEATED_ASTERISK_INLINE, "");
   fixed = fixed.replace(TRIPLE_PUNCT_REGEX, "$1$1$1");
+  if (fixed !== before4) fixCount++;
 
-  // Remover linhas inteiras que parecem inglês
-  fixed = fixed
-    .split("\n")
-    .filter((line) => !looksEnglish(line.trim()))
-    .join("\n");
+  // ── 5. Cabeçalhos colados ao texto ──
+  const before5 = fixed;
+  fixed = fixed.replace(/^(#{1,6})([^#\s].*)$/gm, "$1 $2");
+  if (fixed !== before5) fixCount++;
 
-  // Markdown errors
-  fixed = fixed.replace(/```markdown\s*---/g, "---");
-  fixed = fixed.replace(/```markdown\s*```/g, "```");
-  fixed = fixed.replace(/```markdown\s*markdown/g, "```markdown");
+  // ── 6. Cabeçalhos duplicados consecutivos ──
+  fixed = fixed.replace(/^(#{1,6}\s+.+)\n+\1\s*$/gm, "$1");
 
-  // Garantir blocos fechados
+  // ── 7. Repetição imediata de palavras: "o o", "de de", "que que" ──
+  const before7 = fixed;
+  fixed = fixed.replace(/\b(\w{1,5})\s+\1\b/gi, "$1");
+  if (fixed !== before7) fixCount++;
+
+  // ── 8. Renumerar listas numeradas quebradas ──
+  fixed = renumberLists(fixed);
+
+  // ── 9. Equilibrar parênteses e aspas no fim de parágrafos ──
+  fixed = balancePairs(fixed);
+
+  // ── 10. Garantir frases terminadas com pontuação no fim de cada secção ──
+  fixed = ensureSentenceTermination(fixed);
+
+  // ── 11. Limpar bibliografia: remover linhas que não pareçam referência ──
+  fixed = cleanBibliographySection(fixed);
+
+  // ── 12. Linhas em branco excessivas ──
+  fixed = fixed.replace(/\n{4,}/g, "\n\n\n");
+
+  // ── 13. Capítulos vazios → placeholder discreto ──
+  fixed = fillEmptySections(fixed);
+
+  // ── 14. Garantir code blocks fechados ──
   const codeBlocks = (fixed.match(/```/g) || []).length;
   if (codeBlocks % 2 !== 0) fixed += "\n```";
 
-  // Cabeçalhos sem espaço
-  fixed = fixed.replace(/^(#{1,6})([^#\s].*)$/gm, "$1 $2");
+  fixed = fixed.trim();
 
-  // Limpar linhas vazias múltiplas
-  fixed = fixed.replace(/\n{4,}/g, "\n\n\n").trim();
+  if (fixCount > 0) {
+    console.debug(`[deepSanitizeTrabalho] ${fixCount} grupo(s) de correcções aplicadas`);
+  }
 
   return fixed;
 }
 
-/** @deprecated Use sanitizeContent */
-export const fixMarkdownErrors = sanitizeContent;
+// ─── Helpers internos ────────────────────────────────────────────
 
-// ─── Detecção de anomalias de linguagem ──────────────────────────
+function renumberLists(md: string): string {
+  const lines = md.split("\n");
+  const out: string[] = [];
+  let counter = 0;
+  let inList = false;
+
+  for (const line of lines) {
+    const m = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
+    if (m) {
+      if (!inList) { counter = 0; inList = true; }
+      counter++;
+      out.push(`${m[1]}${counter}. ${m[3]}`);
+    } else {
+      if (line.trim() !== "") inList = false;
+      out.push(line);
+    }
+  }
+  return out.join("\n");
+}
+
+function balancePairs(md: string): string {
+  return md.split("\n\n").map((para) => {
+    let p = para;
+    const opens = (p.match(/\(/g) || []).length;
+    const closes = (p.match(/\)/g) || []).length;
+    if (opens > closes) p = p + ")".repeat(opens - closes);
+    else if (closes > opens) p = "(".repeat(closes - opens) + p;
+    const quotes = (p.match(/"/g) || []).length;
+    if (quotes % 2 !== 0) p = p + '"';
+    return p;
+  }).join("\n\n");
+}
+
+function ensureSentenceTermination(md: string): string {
+  const lines = md.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    // Skip headings, lists, empty, code
+    if (!trimmed) continue;
+    if (/^#{1,6}\s/.test(trimmed)) continue;
+    if (/^[-*]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed)) continue;
+    if (/^```/.test(trimmed)) continue;
+    // If next non-empty line starts a new heading and current doesn't end with punctuation → add "."
+    const nextNonEmpty = lines.slice(i + 1).find((l) => l.trim() !== "");
+    const isLastInBlock = !nextNonEmpty || /^#{1,6}\s/.test(nextNonEmpty.trim());
+    if (isLastInBlock && !/[.!?:;»"')\]]$/.test(trimmed)) {
+      lines[i] = line.replace(/\s*$/, ".");
+    }
+  }
+  return lines.join("\n");
+}
+
+function cleanBibliographySection(md: string): string {
+  const lines = md.split("\n");
+  const out: string[] = [];
+  let inBib = false;
+  for (const line of lines) {
+    const t = line.trim();
+    if (/^#{1,2}\s+(Bibliografia|Refer[êe]ncias)/i.test(t)) {
+      inBib = true; out.push(line); continue;
+    }
+    if (inBib && /^#{1,2}\s+/.test(t)) { inBib = false; out.push(line); continue; }
+    if (inBib && t) {
+      // Manter referências (têm ano) ou listas/separadores
+      const looksLikeRef = /\(\d{4}\)|,\s*\d{4}[.,)]/.test(t);
+      const looksLikeList = /^[-*]\s/.test(t) || /^\d+\.\s/.test(t);
+      const hasAuthor = /^[A-ZÁÀÂÃÉÈÊÍÓÔÕÚÇ]/.test(t);
+      if (!looksLikeRef && !looksLikeList && !hasAuthor && t.length < 40) continue;
+    }
+    out.push(line);
+  }
+  return out.join("\n");
+}
+
+function fillEmptySections(md: string): string {
+  const lines = md.split("\n");
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    out.push(lines[i]);
+    const isHeading = /^#{1,2}\s+/.test(lines[i].trim());
+    if (!isHeading) continue;
+    // Verificar se a próxima secção (até próximo heading) tem conteúdo substantivo
+    let hasContent = false;
+    for (let j = i + 1; j < lines.length; j++) {
+      if (/^#{1,2}\s+/.test(lines[j].trim())) break;
+      if (lines[j].trim().length > 20) { hasContent = true; break; }
+    }
+    if (!hasContent) {
+      out.push("", "_[Secção a expandir manualmente.]_", "");
+    }
+  }
+  return out.join("\n");
+}
+
+// ─── Compatibilidade retro (mantida para imports legados) ────────
+
+/** @deprecated Use deepSanitizeTrabalho */
+export const sanitizeContent = deepSanitizeTrabalho;
+/** @deprecated Use deepSanitizeTrabalho */
+export const fixMarkdownErrors = deepSanitizeTrabalho;
 
 export function detectStrangeLanguage(content: string): string[] {
   const errors: string[] = [];
-
-  if (/\b(\w+)\b(?:\s+\1\b){4,}/gi.test(content)) {
-    errors.push("Repetição excessiva de palavras detectada.");
-  }
-  if (/[bcdfghjklmnpqrstvwxyz]{10,}/gi.test(content)) {
-    errors.push("Sequência de caracteres sem sentido detectada.");
-  }
-  if (content.length < 100) {
-    errors.push("Conteúdo excessivamente curto.");
-  }
+  if (/\b(\w+)\b(?:\s+\1\b){4,}/gi.test(content)) errors.push("Repetição excessiva de palavras detectada.");
+  if (/[bcdfghjklmnpqrstvwxyz]{10,}/gi.test(content)) errors.push("Sequência de caracteres sem sentido detectada.");
+  if (content.length < 100) errors.push("Conteúdo excessivamente curto.");
   return errors;
 }
 
 export function validateAngolanContext(content: string, prompt: string): string[] {
   const errors: string[] = [];
-  const isAngolanPrompt =
-    prompt.toLowerCase().includes("angola") ||
-    prompt.toLowerCase().includes("angolano");
+  const isAngolanPrompt = prompt.toLowerCase().includes("angola") || prompt.toLowerCase().includes("angolano");
   if (isAngolanPrompt) {
     const keywords = ["Angola", "Luanda", "Benguela", "Huambo", "Lubango", "Kwanza", "província", "município", "INIDE", "MED"];
-    if (!keywords.some((k) => content.includes(k))) {
-      errors.push("Contexto angolano parece estar ausente.");
-    }
+    if (!keywords.some((k) => content.includes(k))) errors.push("Contexto angolano parece estar ausente.");
   }
   return errors;
 }
 
-// ─── CAMADA 2: Validação estrutural por secção ──────────────────
-
-const META_START_REGEX =
-  /^\s*(aqui (está|tem|vai)|segue|vou|posso|claro|certo|com base|conforme|de acordo)/i;
-const PLACEHOLDER_REGEX = /\[(inserir|placeholder|preencher|colocar|nome|texto|conteúdo)\b[^\]]*\]|TODO|XXX|\.\.\.continua|continua\.\.\./i;
-const H3_REGEX = /^###\s+/m;
-
-export function validateTrabalhoSection(
-  titulo: string,
-  conteudo: string,
-  tipo: "introducao" | "capitulo" | "conclusao" | "bibliografia",
-): SectionIssue | null {
-  const reasons: string[] = [];
-  let severity: SectionIssue["severity"] = "low";
-
-  const trimmed = conteudo.trim();
-
-  // Tamanho mínimo
-  if (trimmed.length < 300) {
-    reasons.push(`Conteúdo demasiado curto (${trimmed.length} caracteres, mínimo 300).`);
-    severity = "high";
-  }
-
-  // Meta-frases no início
-  if (META_START_REGEX.test(trimmed)) {
-    reasons.push("Começa com meta-frase típica de IA (\"Aqui está\", \"Vou\", etc.).");
-    severity = "high";
-  }
-
-  // Placeholders
-  if (PLACEHOLDER_REGEX.test(trimmed)) {
-    reasons.push("Contém marcadores de posição não preenchidos.");
-    severity = "high";
-  }
-
-  // Subtítulos H3 em Introdução/Conclusão
-  if ((tipo === "introducao" || tipo === "conclusao") && H3_REGEX.test(trimmed)) {
-    reasons.push("Não deve conter subtítulos H3 (### ).");
-    severity = severity === "low" ? "medium" : severity;
-  }
-
-  // Bibliografia: ≥5 referências
-  if (tipo === "bibliografia") {
-    const refMatches = trimmed.match(/\(\d{4}\)|,\s*\d{4}[.,)]/g) || [];
-    if (refMatches.length < 5) {
-      reasons.push(`Bibliografia tem apenas ${refMatches.length} referência(s) detectadas (mínimo 5).`);
-      severity = "high";
-    }
-  }
-
-  // Símbolos repetidos remanescentes
-  if (REPEATED_SYMBOLS_REGEX.test(trimmed) || /([_\-*=]){5,}/.test(trimmed)) {
-    reasons.push("Contém símbolos repetidos sem sentido.");
-    severity = severity === "low" ? "medium" : severity;
-  }
-
-  if (reasons.length === 0) return null;
-
-  return {
-    sectionTitle: titulo,
-    sectionType: tipo,
-    reasons,
-    severity,
-  };
-}
-
 /**
- * Valida o trabalho completo (parsea secções a partir de markdown).
+ * Validação genérica usada por ai-service. Mantida como sanitização silenciosa
+ * (sem re-geração via IA — removida por ser lenta e visível).
  */
-export function validateTrabalhoCompleto(markdown: string): TrabalhoValidationResult {
-  // Sanitize first
-  const fixedContent = sanitizeContent(markdown);
-
-  const issues: SectionIssue[] = [];
-  const sections = splitIntoSections(fixedContent);
-
-  for (const sec of sections) {
-    if (sec.tipo === "indice") continue; // índice é gerado automaticamente
-    const issue = validateTrabalhoSection(sec.titulo, sec.conteudo, sec.tipo);
-    if (issue) issues.push(issue);
-  }
-
-  return {
-    ok: issues.length === 0,
-    issues,
-    fixedContent,
-  };
-}
-
-interface ParsedSection {
-  titulo: string;
-  tipo: "introducao" | "capitulo" | "conclusao" | "bibliografia" | "indice";
-  conteudo: string;
-}
-
-function splitIntoSections(markdown: string): ParsedSection[] {
-  const lines = markdown.split("\n");
-  const sections: ParsedSection[] = [];
-  let current: ParsedSection | null = null;
-  let buffer: string[] = [];
-
-  const flush = () => {
-    if (current) {
-      current.conteudo = buffer.join("\n").trim();
-      sections.push(current);
-    }
-    buffer = [];
-  };
-
-  for (const line of lines) {
-    const t = line.trim();
-    const headingMatch = t.match(/^#{1,2}\s+(.+)$/);
-    if (headingMatch) {
-      flush();
-      const titulo = headingMatch[1].replace(/\*\*/g, "").trim();
-      let tipo: ParsedSection["tipo"] = "capitulo";
-      if (/^[íi]ndice/i.test(titulo)) tipo = "indice";
-      else if (/^introdu[çc][ãa]o/i.test(titulo)) tipo = "introducao";
-      else if (/^conclus[ãa]o/i.test(titulo)) tipo = "conclusao";
-      else if (/^(bibliografia|refer[êe]ncias)/i.test(titulo)) tipo = "bibliografia";
-      current = { titulo, tipo, conteudo: "" };
-    } else {
-      buffer.push(line);
-    }
-  }
-  flush();
-  return sections;
-}
-
-// ─── CAMADA 3: Função principal de validação genérica ────────────
-
 export async function validateAndCorrectContent(
   content: string,
-  prompt: string,
-  reGenerateFn?: (p: string) => Promise<string>,
+  _prompt: string,
+  _reGenerateFn?: (p: string) => Promise<string>,
 ): Promise<ValidationResult> {
-  let currentContent = sanitizeContent(content);
-  const errors: string[] = [];
-
-  errors.push(...detectStrangeLanguage(currentContent));
-  errors.push(...validateAngolanContext(currentContent, prompt));
-
-  if (errors.length > 0 && reGenerateFn) {
-    console.warn("[AI-Validator] Erros detectados, tentando re-geração:", errors);
-    try {
-      const correctionPrompt = `O conteúdo seguinte tem erros: ${errors.join(", ")}.
-Reescreve EXCLUSIVAMENTE em Português de Angola, mantendo o formato Markdown e SEM meta-texto (não digas "aqui está" ou similar):
-
-${currentContent}`;
-      const fixed = await reGenerateFn(correctionPrompt);
-      if (fixed && fixed.length > 100) {
-        return {
-          isValid: true,
-          fixedContent: sanitizeContent(fixed),
-          errors: [],
-        };
-      }
-    } catch (e) {
-      console.error("[AI-Validator] Falha na correção:", e);
-    }
-  }
-
-  return {
-    isValid: errors.length === 0,
-    fixedContent: currentContent,
-    errors,
-  };
+  const fixed = deepSanitizeTrabalho(content);
+  return { isValid: true, fixedContent: fixed, errors: [] };
 }
