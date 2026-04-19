@@ -682,7 +682,8 @@ const TrabalhoPage = () => {
           />
         </motion.div>
       )}
-
-
+    </div>
+  );
+};
 
 export default TrabalhoPage;
