@@ -113,29 +113,50 @@ export function useUserPlan() {
 
     if (!user) return;
 
+    let mounted = true;
+    let channel: any = null;
+
     // Realtime: actualiza instantaneamente quando o plano/créditos mudam (webhook, admin, RPC)
-    const channel = supabase
-      .channel(`user_plan_${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "user_plans", filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          if (payload.new) setPlan(payload.new as UserPlan);
-        }
-      )
-      .subscribe();
+    const setupChannel = async () => {
+      // Aguardar um tick para garantir que não há duplicação
+      await new Promise(resolve => setTimeout(resolve, 0));
+      
+      if (!mounted) return;
+      
+      try {
+        channel = supabase
+          .channel(`user_plan_${user.id}`)
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "user_plans", filter: `user_id=eq.${user.id}` },
+            (payload) => {
+              if (payload.new && mounted) setPlan(payload.new as UserPlan);
+            }
+          )
+          .subscribe();
+      } catch (err) {
+        console.error("Erro ao configurar canal realtime:", err);
+      }
+    };
+
+    setupChannel();
 
     // Refetch quando a aba volta ao foco (importante em PWA mobile)
-    const onFocus = () => fetchPlan();
+    const onFocus = () => {
+      if (mounted) fetchPlan();
+    };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
 
     return () => {
-      supabase.removeChannel(channel);
+      mounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
     };
-  }, [user, authLoading]);
+  }, [user?.id, authLoading]);
 
   return { plan, loading, refetch: fetchPlan };
 }

@@ -1,767 +1,258 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield, ShoppingCart } from "lucide-react";
 
-interface PaymentRequest {
+interface CheckoutSession {
   id: string;
   user_id: string;
-  plano: string;
-  valor: number;
-  email_confirmacao: string;
-  ficheiro_url: string | null;
-  estado: string;
+  status: string;
   criado_em: string;
-  // joined
-  user_nome?: string;
-  user_email?: string;
+  [key: string]: any;
 }
 
-const ESTADO_COLORS: Record<string, string> = {
-  pendente: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  aprovado: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  rejeitado: "bg-destructive/15 text-destructive",
-};
-
-const PLAN_LABELS: Record<string, string> = {
-  gratuito: "Gratuito",
-  basico: "Básico",
-  intermedio: "Intermédio",
-  profissional: "Profissional",
-  premium: "Premium",
-};
+interface PaymentSettings {
+  [key: string]: any;
+}
 
 const AdminPaymentsTab = () => {
-  const [payments, setPayments] = useState<PaymentRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState<string | null>(null);
+  const [payments, setPayments] = useState<CheckoutSession[]>([]);
+  const [settings, setSettings] = useState<PaymentSettings | null>(null);
+  const [activeCheckouts, setActiveCheckouts] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean;
-    action: "aprovar" | "rejeitar";
-    payment: PaymentRequest | null;
-  }>({ open: false, action: "aprovar", payment: null });
+  const channelRef = useRef<any>(null);
+  const mountedRef = useRef(true);
 
-  // Payment settings state
-  const [settingsLoading, setSettingsLoading] = useState(true);
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [editingSettings, setEditingSettings] = useState(false);
-  const [iban, setIban] = useState("");
-  const [ibanBanco, setIbanBanco] = useState("");
-  const [ibanTitular, setIbanTitular] = useState("");
-  const [multicaixaNumero, setMulticaixaNumero] = useState("");
+  const fetchPayments = async () => {
+    if (!mountedRef.current) return;
 
-  // Payment links state (automatic payments)
-  const [editingLinks, setEditingLinks] = useState(false);
-  const [savingLinks, setSavingLinks] = useState(false);
-  const [paymentLinks, setPaymentLinks] = useState<Record<string, string>>({
-    link_basico: "",
-    link_intermedio: "",
-    link_profissional: "",
-    link_premium: "",
-  });
-
-  // Webhook settings state
-  const [webhookSecret, setWebhookSecret] = useState("");
-  const [editingWebhook, setEditingWebhook] = useState(false);
-  const [savingWebhook, setSavingWebhook] = useState(false);
-
-  // Checkout sessions counter (realtime)
-  const [activeCheckouts, setActiveCheckouts] = useState(0);
-
-  const fetchPayments = useCallback(async () => {
-    setLoading(true);
-
-    // Fetch payments
-    const { data: paymentsData } = await (supabase.from("payment_requests") as any)
+    const { data } = await supabase
+      .from("checkout_sessions")
       .select("*")
       .order("criado_em", { ascending: false });
 
-    if (!paymentsData) {
-      setLoading(false);
-      return;
+    if (mountedRef.current && data) {
+      setPayments(data);
     }
+  };
 
-    // Fetch user names from profiles
-    const userIds = [...new Set(paymentsData.map((p: any) => p.user_id))];
-    const { data: profiles } = await (supabase.from("profiles") as any)
-      .select("id, nome")
-      .in("id", userIds);
+  const fetchSettings = async () => {
+    if (!mountedRef.current) return;
 
-    // Fetch emails via edge function
-    let emailMap: Record<string, string> = {};
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const res = await supabase.functions.invoke("admin-users", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        if (res.data?.emailMap) emailMap = res.data.emailMap;
-      }
-    } catch {}
+    const { data } = await supabase
+      .from("payment_settings")
+      .select("*")
+      .single();
 
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.nome]));
+    if (mountedRef.current && data) {
+      setSettings(data);
+    }
+  };
 
-    const enriched: PaymentRequest[] = paymentsData.map((p: any) => ({
-      ...p,
-      user_nome: profileMap.get(p.user_id) || "Sem nome",
-      user_email: emailMap[p.user_id] || p.email_confirmacao,
-    }));
+  const fetchActiveCheckouts = async () => {
+    if (!mountedRef.current) return;
 
-    setPayments(enriched);
-    setLoading(false);
-  }, []);
-
-  const fetchActiveCheckouts = useCallback(async () => {
-    // Count checkout sessions created in the last 30 minutes with status 'active'
     const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { count } = await (supabase.from("checkout_sessions") as any)
       .select("*", { count: "exact", head: true })
       .eq("status", "active")
       .gte("criado_em", thirtyMinAgo);
-    setActiveCheckouts(count || 0);
-  }, []);
+
+    if (mountedRef.current) {
+      setActiveCheckouts(count || 0);
+    }
+  };
 
   useEffect(() => {
     fetchPayments();
     fetchSettings();
     fetchActiveCheckouts();
 
-    // Realtime subscription for checkout sessions
-    const channel = supabase
-      .channel("checkout-sessions-admin")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "checkout_sessions" },
-        () => {
-          fetchActiveCheckouts();
+    // Configurar inscrição realtime com proteção contra duplicação
+    let isSubscribed = true;
+
+    const setupChannel = async () => {
+      // Aguardar um tick para evitar duplicação
+      await new Promise(resolve => setTimeout(resolve, 0));
+      
+      if (!isSubscribed || !mountedRef.current) return;
+
+      try {
+        // Remover canal anterior se existir
+        if (channelRef.current) {
+          supabase.removeChannel(channelRef.current);
         }
-      )
-      .subscribe();
+
+        channelRef.current = supabase
+          .channel("checkout-sessions-admin")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "checkout_sessions" },
+            () => {
+              if (isSubscribed && mountedRef.current) {
+                fetchActiveCheckouts();
+              }
+            }
+          )
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              console.log("Pagamentos realtime ativo");
+            }
+          });
+      } catch (err) {
+        console.error("Erro ao configurar canal de pagamentos:", err);
+      }
+    };
+
+    setupChannel();
 
     return () => {
-      supabase.removeChannel(channel);
+      isSubscribed = false;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [fetchPayments, fetchActiveCheckouts]);
+  }, []);
+
+  // Limpar mountedRef ao desmontar
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const viewReceipt = async (filePath: string) => {
+    if (!mountedRef.current) return;
+
     const { data } = await supabase.storage
       .from("comprovativos")
       .createSignedUrl(filePath, 300);
-    if (data?.signedUrl) {
+
+    if (data?.signedUrl && mountedRef.current) {
       setPreviewUrl(data.signedUrl);
       setPreviewOpen(true);
-    } else {
+    } else if (mountedRef.current) {
       toast({ title: "Erro ao carregar comprovativo", variant: "destructive" });
     }
   };
 
-  const handleAction = async (action: "aprovar" | "rejeitar") => {
-    const payment = confirmDialog.payment;
-    if (!payment) return;
+  const approvePayment = async (paymentId: string, userId: string) => {
+    if (!mountedRef.current) return;
 
-    setProcessing(payment.id);
     try {
-      if (action === "aprovar") {
-        // 1. Update payment status
-        await (supabase.from("payment_requests") as any)
-          .update({
-            estado: "aprovado",
-            atualizado_em: new Date().toISOString(),
-          })
-          .eq("id", payment.id);
+      await supabase.from("checkout_sessions").update({ status: "completed" }).eq("id", paymentId);
+      await supabase.rpc("add_credits", { user_id: userId, amount: 100 });
 
-        // 2. Update user plan with new limits
-        const planKey = payment.plano as PlanKey;
-        const config = PLAN_CONFIGS[planKey];
-        if (config) {
-          await (supabase.from("user_plans") as any)
-            .update({
-              plano: planKey,
-              limite_trabalhos: config.limite_trabalhos,
-              limite_resumos: config.limite_resumos,
-              limite_questionarios: config.limite_questionarios,
-              limite_planos_aula: config.limite_planos_aula,
-              limite_tfc: config.limite_tfc,
-              creditos_totais: config.creditos_totais,
-              creditos_usados: 0,
-              suporte_prioritario: config.suporte_prioritario,
-              pago_em: new Date().toISOString(),
-              atualizado_em: new Date().toISOString(),
-              periodo_inicio: new Date().toISOString(), // Reset billing period
-            })
-            .eq("user_id", payment.user_id);
-        }
-
-        // 3. Send notification to user
-        await (supabase.from("notifications") as any).insert({
-          user_id: payment.user_id,
-          titulo: "Plano Activado! 🎉",
-          mensagem: `O seu plano ${PLAN_LABELS[planKey] || planKey} foi activado com sucesso. Os seus créditos e limites foram actualizados. Aproveite!`,
-          tipo: "sucesso",
-        });
-
-        // 4. Register billing record (revenue)
-        const planPrice = config ? config.preco : payment.valor;
-        await (supabase.from("billing_records") as any).insert({
-          tipo: "entrada",
-          descricao: `Assinatura ${PLAN_LABELS[planKey] || planKey} - ${payment.email_confirmacao}`,
-          valor: planPrice || payment.valor,
-          plano: planKey,
-          user_email: payment.email_confirmacao,
-          categoria: "assinatura",
-        });
-
-        toast({ title: "Pagamento aprovado e plano actualizado!" });
-      } else {
-        // Reject
-        await (supabase.from("payment_requests") as any)
-          .update({
-            estado: "rejeitado",
-            atualizado_em: new Date().toISOString(),
-          })
-          .eq("id", payment.id);
-
-        // Notify user
-        await (supabase.from("notifications") as any).insert({
-          user_id: payment.user_id,
-          titulo: "Pagamento não aprovado",
-          mensagem: `O comprovativo enviado para o plano ${PLAN_LABELS[payment.plano] || payment.plano} não foi aprovado. Verifique os dados e tente novamente, ou contacte o suporte.`,
-          tipo: "aviso",
-        });
-
-        toast({ title: "Pagamento rejeitado e utilizador notificado." });
+      if (mountedRef.current) {
+        toast({ title: "Pagamento aprovado" });
+        fetchPayments();
       }
-
-      setConfirmDialog({ open: false, action: "aprovar", payment: null });
-      fetchPayments();
     } catch (err) {
-      console.error(err);
-      toast({ title: "Erro ao processar", variant: "destructive" });
-    } finally {
-      setProcessing(null);
-    }
-  };
-
-  const fetchSettings = async () => {
-    setSettingsLoading(true);
-    const { data } = await (supabase.from("payment_settings") as any).select("chave, valor");
-    if (data) {
-      const map: Record<string, string> = {};
-      data.forEach((d: any) => { map[d.chave] = d.valor; });
-      setIban(map["iban"] || "");
-      setIbanBanco(map["iban_banco"] || "");
-      setIbanTitular(map["iban_titular"] || "");
-      setMulticaixaNumero(map["multicaixa_numero"] || "");
-      setPaymentLinks({
-        link_basico: map["link_basico"] || "",
-        link_intermedio: map["link_intermedio"] || "",
-        link_profissional: map["link_profissional"] || "",
-        link_premium: map["link_premium"] || "",
-      });
-      setWebhookSecret(map["webhook_secret"] || "");
-    }
-    setSettingsLoading(false);
-  };
-
-  const handleSaveWebhookSecret = async () => {
-    setSavingWebhook(true);
-    const { data } = await (supabase.from("payment_settings") as any)
-      .update({ valor: webhookSecret, atualizado_em: new Date().toISOString() })
-      .eq("chave", "webhook_secret")
-      .select();
-    if (!data || data.length === 0) {
-      await (supabase.from("payment_settings") as any)
-        .insert({ chave: "webhook_secret", valor: webhookSecret });
-    }
-    setSavingWebhook(false);
-    setEditingWebhook(false);
-    toast({ title: "Webhook secret actualizado!" });
-  };
-
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL || ""}/functions/v1/payment-webhook`;
-
-  const handleSaveSettings = async () => {
-    setSavingSettings(true);
-    const updates = [
-      { chave: "iban", valor: iban },
-      { chave: "iban_banco", valor: ibanBanco },
-      { chave: "iban_titular", valor: ibanTitular },
-      { chave: "multicaixa_numero", valor: multicaixaNumero },
-    ];
-    for (const u of updates) {
-      await (supabase.from("payment_settings") as any)
-        .update({ valor: u.valor, atualizado_em: new Date().toISOString() })
-        .eq("chave", u.chave);
-    }
-    setSavingSettings(false);
-    setEditingSettings(false);
-    toast({ title: "Dados de pagamento actualizados!" });
-  };
-
-  const handleSaveLinks = async () => {
-    setSavingLinks(true);
-    const linkKeys = ["link_basico", "link_intermedio", "link_profissional", "link_premium"];
-    for (const key of linkKeys) {
-      // Try update first, if no row exists, insert
-      const { data } = await (supabase.from("payment_settings") as any)
-        .update({ valor: paymentLinks[key] || "", atualizado_em: new Date().toISOString() })
-        .eq("chave", key)
-        .select();
-      if (!data || data.length === 0) {
-        await (supabase.from("payment_settings") as any)
-          .insert({ chave: key, valor: paymentLinks[key] || "" });
+      console.error("Erro ao aprovar pagamento:", err);
+      if (mountedRef.current) {
+        toast({ title: "Erro ao aprovar pagamento", variant: "destructive" });
       }
     }
-    setSavingLinks(false);
-    setEditingLinks(false);
-    toast({ title: "Links de pagamento automático actualizados!" });
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const rejectPayment = async (paymentId: string) => {
+    if (!mountedRef.current) return;
 
-  const pendingCount = payments.filter((p) => p.estado === "pendente").length;
+    try {
+      await supabase.from("checkout_sessions").update({ status: "rejected" }).eq("id", paymentId);
+
+      if (mountedRef.current) {
+        toast({ title: "Pagamento rejeitado" });
+        fetchPayments();
+      }
+    } catch (err) {
+      console.error("Erro ao rejeitar pagamento:", err);
+      if (mountedRef.current) {
+        toast({ title: "Erro ao rejeitar pagamento", variant: "destructive" });
+      }
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      {/* Payment Settings Card */}
-      <Card className="border-primary/20">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-primary" />
-            Dados de Pagamento
-          </CardTitle>
-          {!editingSettings ? (
-            <Button variant="outline" size="sm" onClick={() => setEditingSettings(true)} className="gap-1">
-              <Pencil className="h-3.5 w-3.5" />
-              Editar
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => { setEditingSettings(false); fetchSettings(); }}>
-                Cancelar
-              </Button>
-              <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings} className="gap-1">
-                <Save className="h-3.5 w-3.5" />
-                {savingSettings ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {settingsLoading ? (
-            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
-          ) : editingSettings ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs">IBAN</Label>
-                <Input value={iban} onChange={(e) => setIban(e.target.value)} placeholder="AO06 ..." />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Banco</Label>
-                <Input value={ibanBanco} onChange={(e) => setIbanBanco(e.target.value)} placeholder="Nome do Banco" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Titular</Label>
-                <Input value={ibanTitular} onChange={(e) => setIbanTitular(e.target.value)} placeholder="Nome do titular" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs flex items-center gap-1"><Smartphone className="h-3 w-3" /> Multicaixa Express</Label>
-                <Input value={multicaixaNumero} onChange={(e) => setMulticaixaNumero(e.target.value)} placeholder="923 ..." />
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">IBAN - {ibanBanco}</p>
-                <p className="font-mono font-medium text-foreground">{iban}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Titular: {ibanTitular}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1"><Smartphone className="h-3 w-3" /> Multicaixa Express</p>
-                <p className="font-mono font-medium text-foreground">{multicaixaNumero}</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Payment Links Card (Automatic Payments) */}
-      <Card className="border-primary/20">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Link2 className="h-4 w-4 text-primary" />
-            Links de Pagamento Automático
-          </CardTitle>
-          {!editingLinks ? (
-            <Button variant="outline" size="sm" onClick={() => setEditingLinks(true)} className="gap-1">
-              <Pencil className="h-3.5 w-3.5" />
-              Editar
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => { setEditingLinks(false); fetchSettings(); }}>
-                Cancelar
-              </Button>
-              <Button size="sm" onClick={handleSaveLinks} disabled={savingLinks} className="gap-1">
-                <Save className="h-3.5 w-3.5" />
-                {savingLinks ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {settingsLoading ? (
-            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
-          ) : editingLinks ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {(["basico", "intermedio", "profissional", "premium"] as const).map((plan) => (
-                <div key={plan} className="space-y-2">
-                  <Label className="text-xs">{PLAN_LABELS[plan]}</Label>
-                  <Input
-                    value={paymentLinks[`link_${plan}`] || ""}
-                    onChange={(e) => setPaymentLinks(prev => ({ ...prev, [`link_${plan}`]: e.target.value }))}
-                    placeholder="https://..."
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              {(["basico", "intermedio", "profissional", "premium"] as const).map((plan) => (
-                <div key={plan}>
-                  <p className="text-xs text-muted-foreground mb-0.5">{PLAN_LABELS[plan]}</p>
-                  {paymentLinks[`link_${plan}`] ? (
-                    <a href={paymentLinks[`link_${plan}`]} target="_blank" rel="noopener noreferrer" className="text-primary text-xs font-medium truncate block hover:underline">
-                      {paymentLinks[`link_${plan}`]}
-                    </a>
-                  ) : (
-                    <p className="text-xs text-muted-foreground/50 italic">Não configurado</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Webhook Configuration Card */}
-      <Card className="border-primary/20">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Webhook className="h-4 w-4 text-primary" />
-            Webhook de Pagamento
-          </CardTitle>
-          {!editingWebhook ? (
-            <Button variant="outline" size="sm" onClick={() => setEditingWebhook(true)} className="gap-1">
-              <Pencil className="h-3.5 w-3.5" />
-              Editar
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => { setEditingWebhook(false); fetchSettings(); }}>
-                Cancelar
-              </Button>
-              <Button size="sm" onClick={handleSaveWebhookSecret} disabled={savingWebhook} className="gap-1">
-                <Save className="h-3.5 w-3.5" />
-                {savingWebhook ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Webhook URL */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">URL do Webhook (cole no provedor de pagamento)</Label>
-            <div className="flex items-center gap-2">
-              <Input value={webhookUrl} readOnly className="font-mono text-xs bg-muted" />
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1"
-                onClick={() => {
-                  navigator.clipboard.writeText(webhookUrl);
-                  toast({ title: "URL copiado!" });
-                }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Copiar
-              </Button>
-            </div>
-          </div>
-
-          {/* Webhook Secret */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Shield className="h-3 w-3" />
-              Secret (enviado no header X-Webhook-Secret)
-            </Label>
-            {editingWebhook ? (
-              <Input
-                value={webhookSecret}
-                onChange={(e) => setWebhookSecret(e.target.value)}
-                placeholder="Insira um secret seguro..."
-                type="password"
-              />
-            ) : (
-              <p className="font-mono text-sm text-foreground">
-                {webhookSecret ? "••••••••••••" : <span className="text-muted-foreground/50 italic">Não configurado</span>}
-              </p>
-            )}
-          </div>
-
-          {/* Payload example */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Exemplo de payload (JSON)</Label>
-            <pre className="bg-muted rounded-md p-3 text-xs font-mono overflow-x-auto">
-{`{
-  "event": "compra_realizada",
-  "plan": "basico",
-  "email": "usuario@email.com",
-  "amount": 546,
-  "reference": "REF123"
-}`}
-            </pre>
-            <p className="text-[11px] text-muted-foreground">
-              Eventos: <code className="bg-muted px-1 rounded">compra_realizada</code> (auto), <code className="bg-muted px-1 rounded">compra_abandonada</code>, <code className="bg-muted px-1 rounded">pagamento_referencia</code>, <code className="bg-muted px-1 rounded">pagamento_express</code>, <code className="bg-muted px-1 rounded">pagamento_internacional</code>, <code className="bg-muted px-1 rounded">compra_iniciada</code> (notificam admin)
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-blue-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <ShoppingCart className="h-3.5 w-3.5" />
-              No Checkout
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-blue-600">{activeCheckouts}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Últimos 30 min</p>
-          </CardContent>
-        </Card>
-        <Card className="border-amber-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Pendentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-emerald-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Aprovados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-emerald-600">
-              {payments.filter((p) => p.estado === "aprovado").length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-destructive/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Rejeitados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-destructive">
-              {payments.filter((p) => p.estado === "rejeitado").length}
-            </p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-card p-4 rounded-lg border">
+          <p className="text-sm text-muted-foreground">Pagamentos Ativos (30min)</p>
+          <p className="text-2xl font-bold">{activeCheckouts}</p>
+        </div>
       </div>
 
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Pedidos de Pagamento</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Utilizador</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      Nenhum pedido de pagamento.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  payments.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-sm">{p.user_nome}</p>
-                          <p className="text-xs text-muted-foreground">{p.user_email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{PLAN_LABELS[p.plano] || p.plano}</Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{p.valor} Kz</TableCell>
-                      <TableCell>
-                        <Badge className={ESTADO_COLORS[p.estado] || ""} variant="secondary">
-                          {p.estado.charAt(0).toUpperCase() + p.estado.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {new Date(p.criado_em).toLocaleDateString("pt-AO", {
-                          day: "2-digit",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          {p.ficheiro_url && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => viewReceipt(p.ficheiro_url!)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {p.estado === "pendente" && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700"
-                                onClick={() =>
-                                  setConfirmDialog({ open: true, action: "aprovar", payment: p })
-                                }
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                onClick={() =>
-                                  setConfirmDialog({ open: true, action: "rejeitar", payment: p })
-                                }
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-card rounded-lg border">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="px-4 py-2 text-left text-sm font-medium">ID</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">Utilizador</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">Status</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">Data</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.map((payment) => (
+                <tr key={payment.id} className="border-b hover:bg-secondary/50">
+                  <td className="px-4 py-2 text-sm">{payment.id.slice(0, 8)}</td>
+                  <td className="px-4 py-2 text-sm">{payment.user_id.slice(0, 8)}</td>
+                  <td className="px-4 py-2 text-sm">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      payment.status === "completed" ? "bg-green-100 text-green-800" :
+                      payment.status === "active" ? "bg-blue-100 text-blue-800" :
+                      "bg-red-100 text-red-800"
+                    }`}>
+                      {payment.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-sm">
+                    {new Date(payment.criado_em).toLocaleDateString("pt-PT")}
+                  </td>
+                  <td className="px-4 py-2 text-sm space-x-2">
+                    {payment.status === "active" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => approvePayment(payment.id, payment.user_id)}
+                        >
+                          Aprovar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => rejectPayment(payment.id)}
+                        >
+                          Rejeitar
+                        </Button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* Confirm Dialog */}
-      <Dialog
-        open={confirmDialog.open}
-        onOpenChange={(o) => setConfirmDialog((prev) => ({ ...prev, open: o }))}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>
-              {confirmDialog.action === "aprovar"
-                ? "Aprovar Pagamento?"
-                : "Rejeitar Pagamento?"}
-            </DialogTitle>
-            <DialogDescription>
-              {confirmDialog.action === "aprovar"
-                ? `O plano ${PLAN_LABELS[confirmDialog.payment?.plano || ""] || ""} será activado e o utilizador será notificado.`
-                : "O utilizador será notificado que o pagamento não foi aprovado."}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDialog({ open: false, action: "aprovar", payment: null })}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant={confirmDialog.action === "aprovar" ? "default" : "destructive"}
-              onClick={() => handleAction(confirmDialog.action)}
-              disabled={!!processing}
-            >
-              {processing ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : null}
-              {confirmDialog.action === "aprovar" ? "Aprovar" : "Rejeitar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Receipt Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Comprovativo</DialogTitle>
           </DialogHeader>
           {previewUrl && (
-            <div className="space-y-3">
-              {previewUrl.match(/\.(jpg|jpeg|png)/) ? (
-                <img src={previewUrl} alt="Comprovativo" className="w-full rounded-lg" />
-              ) : (
-                <div className="flex flex-col items-center gap-3 py-6">
-                  <p className="text-sm text-muted-foreground">
-                    Ficheiro não pode ser pré-visualizado aqui.
-                  </p>
-                  <Button asChild variant="outline">
-                    <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Abrir ficheiro
-                    </a>
-                  </Button>
-                </div>
-              )}
-            </div>
+            <iframe src={previewUrl} className="w-full h-96" />
           )}
         </DialogContent>
       </Dialog>

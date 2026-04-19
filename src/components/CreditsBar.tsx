@@ -64,6 +64,9 @@ const CreditsBar = () => {
 
   return (
     <>
+      {/* NotificationBell renderizado uma única vez para ambas as barras */}
+      <NotificationBell />
+      
       {/* ===== MOBILE TOP BAR ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="flex items-center justify-between px-4 py-3 gap-2 mb-0 my-0">
@@ -108,7 +111,6 @@ const CreditsBar = () => {
             <button onClick={() => navigate("/suporte")} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90">
               <Headphones className="h-4 w-4 text-black" />
             </button>
-            <NotificationBell />
           </div>
         </div>
       </div>
@@ -166,7 +168,6 @@ const CreditsBar = () => {
             <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90" title={theme === "dark" ? "Modo claro" : "Modo escuro"}>
               {theme === "dark" ? <Sun className="h-4 w-4 text-black" /> : <Moon className="h-4 w-4 text-black" />}
             </button>
-            <NotificationBell />
           </div>
         </div>
       </div>
