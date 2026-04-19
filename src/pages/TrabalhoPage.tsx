@@ -15,8 +15,7 @@ import { validarBibliografia } from "@/lib/referencias-reais";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
 import SubtemasEditor, { type Subtema } from "@/components/trabalho/SubtemasEditor";
-import PreCompileCheckModal from "@/components/trabalho/PreCompileCheckModal";
-import { validateTrabalhoSection, sanitizeContent, type SectionIssue } from "@/lib/ai-validator";
+import { deepSanitizeTrabalho } from "@/lib/ai-validator";
 import { saveProject } from "@/lib/save-project";
 
 const disciplinas = [
@@ -74,10 +73,6 @@ const TrabalhoPage = () => {
   const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
 
-  // Anti-falhas: validation modal state
-  const [checkModalOpen, setCheckModalOpen] = useState(false);
-  const [validationIssues, setValidationIssues] = useState<SectionIssue[]>([]);
-  const [regeneratingTitle, setRegeneratingTitle] = useState<string | null>(null);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -246,36 +241,31 @@ const TrabalhoPage = () => {
     }
   };
 
-  // Phase 3: Compile (with anti-failure validation)
-  const runValidation = (): SectionIssue[] => {
-    const issues: SectionIssue[] = [];
-    for (const s of subtemas) {
-      if (s.status !== "gerado") continue;
-      // Sanitize content first
-      s.conteudo = sanitizeContent(s.conteudo);
-      const issue = validateTrabalhoSection(s.titulo, s.conteudo, s.tipo);
-      if (issue) issues.push(issue);
-    }
-    return issues;
-  };
-
+  // Phase 3: Compile (silent deep sanitization, <100ms, no UI)
   const performCompile = () => {
-    // Build full markdown from all subtemas (already sanitized)
-    const sections = subtemas.map((s) => {
-      const tituloPrefix = s.tipo === "capitulo"
-        ? `## ${s.titulo}`
-        : s.tipo === "introducao"
-        ? "## Introdução"
-        : s.tipo === "conclusao"
-        ? "## Conclusão"
-        : "## Bibliografia";
-      return { titulo: tituloPrefix.replace("## ", ""), markdown: `${tituloPrefix}\n\n${s.conteudo}` };
-    });
+    // Sanitize each section silently before assembling
+    const sections = subtemas
+      .filter((s) => s.status === "gerado")
+      .map((s) => {
+        const conteudoLimpo = deepSanitizeTrabalho(s.conteudo);
+        s.conteudo = conteudoLimpo;
+        const tituloPrefix = s.tipo === "capitulo"
+          ? `## ${s.titulo}`
+          : s.tipo === "introducao"
+          ? "## Introdução"
+          : s.tipo === "conclusao"
+          ? "## Conclusão"
+          : "## Bibliografia";
+        return { titulo: tituloPrefix.replace("## ", ""), markdown: `${tituloPrefix}\n\n${conteudoLimpo}` };
+      });
 
     const indiceLinhas = sections.map((s, i) => `- ${s.titulo} .......... ${i + 3}`);
     const indiceMarkdown = `## Índice\n\n${indiceLinhas.join("\n")}`;
 
-    const fullContent = [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n");
+    // Final pass over the whole document
+    const fullContent = deepSanitizeTrabalho(
+      [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n")
+    );
     setResultadoCompilado(fullContent);
 
     if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
@@ -299,46 +289,7 @@ const TrabalhoPage = () => {
   };
 
   const handleCompile = async () => {
-    const issues = runValidation();
-    if (issues.length === 0) {
-      performCompile();
-      return;
-    }
-
-    // Tentar auto-corrigir secções inválidas via re-geração silenciosa (1x)
-    toast.info(`A corrigir ${issues.length} problema(s) automaticamente...`);
-    for (const issue of issues) {
-      const sub = subtemas.find((s) => s.titulo === issue.sectionTitle);
-      if (sub) {
-        await handleGenerateOne(sub.id);
-      }
-    }
-
-    // Re-validar
-    const remaining = runValidation();
-    if (remaining.length === 0) {
-      performCompile();
-    } else {
-      setValidationIssues(remaining);
-      setCheckModalOpen(true);
-    }
-  };
-
-  const handleRegenerateFromModal = async (sectionTitle: string) => {
-    const sub = subtemas.find((s) => s.titulo === sectionTitle);
-    if (!sub) return;
-    setRegeneratingTitle(sectionTitle);
-    try {
-      await handleGenerateOne(sub.id);
-      const remaining = runValidation();
-      setValidationIssues(remaining);
-      if (remaining.length === 0) {
-        setCheckModalOpen(false);
-        performCompile();
-      }
-    } finally {
-      setRegeneratingTitle(null);
-    }
+    performCompile();
   };
 
   const handleBack = () => {
@@ -731,16 +682,6 @@ const TrabalhoPage = () => {
           />
         </motion.div>
       )}
-
-      {/* Anti-falhas: Pre-compile check modal */}
-      <PreCompileCheckModal
-        open={checkModalOpen}
-        issues={validationIssues}
-        onRegenerate={handleRegenerateFromModal}
-        onIgnore={() => { setCheckModalOpen(false); performCompile(); }}
-        onCancel={() => setCheckModalOpen(false)}
-        regenerating={regeneratingTitle}
-      />
     </div>
   );
 };
