@@ -15,8 +15,7 @@ import { validarBibliografia } from "@/lib/referencias-reais";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
 import SubtemasEditor, { type Subtema } from "@/components/trabalho/SubtemasEditor";
-import PreCompileCheckModal from "@/components/trabalho/PreCompileCheckModal";
-import { validateTrabalhoSection, sanitizeContent, type SectionIssue } from "@/lib/ai-validator";
+import { deepSanitizeTrabalho } from "@/lib/ai-validator";
 import { saveProject } from "@/lib/save-project";
 
 const disciplinas = [
