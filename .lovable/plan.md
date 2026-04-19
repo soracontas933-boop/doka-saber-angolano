@@ -1,70 +1,75 @@
-## Plano: Sistema Anti-Falhas para Geração de Trabalhos
 
-### Problema (visto nas imagens)
+## Problema
 
-1. IA escreve meta-texto: "Aqui está o conteúdo reescrito com contexto angolano, mantendo o formato Markdown e corrigindo os problemas identificados:" — isto é a IA a "planear" em vez de gerar.
-2. Subtítulos parasitas como "Revisão do conteúdo com contexto angolano" aparecem dentro de secções (ex: Conclusão).
-3. Símbolos repetidos sem sentido: `%%%%`, `&&&&`, `____`, `----`, `~~~~`.
-4. Capítulos por vezes vazios ou truncados.
-5. Já existe `src/lib/ai-validator.ts` mas é fraco e não está integrado no fluxo do trabalho.
+O sistema anti-falhas atual:
+- Mostra modal ao utilizador (não deve)
+- Demora muito (re-gerações via IA)
+- Não corrige defeitos reais: incoerência, estrutura partida, elementos parasitas
 
-### Solução: 3 camadas de defesa
+## Solução: Sanitizador silencioso e instantâneo (<1s, 100% local)
 
-**Camada 1 — Sanitização determinística (regex)**
-Reforçar `src/lib/ai-validator.ts` com novas regras:
+Substituir o fluxo modal + re-geração por uma **única função síncrona** `deepSanitizeTrabalho(markdown)` executada automaticamente após a geração, antes da compilação. Sem UI, sem rede, sem IA.
 
-- Remover linhas meta: `/aqui (está|tem|vai)|conteúdo (reescrito|corrigido|revisto)|mantendo o formato|problemas identificados|com base no|segue abaixo|posso (ajudar|reescrever)/i`
-- Remover subtítulos parasitas dentro de Conclusão/Introdução/desenvolvimento: `/^(\*\*)?Revisão do conteúdo.*$/im`
-- Colapsar símbolos repetidos: `/([%&_\-~=*+#@!?])\1{3,}/g` → remover ou normalizar (ex: `---` markdown válido fica preservado se isolado em linha)
-- Detectar blocos de código incompletos / Markdown malformado.
-- Remover frases em inglês isoladas (heurística: linha com >60% palavras inglesas comuns: "the", "and", "this", "is", "of", "with", "here", "content").
+### O que o novo sanitizador corrige
 
-**Camada 2 — Validação estrutural por secção**
-Nova função `validateTrabalhoSection(titulo, conteudo, tipo)` em `ai-validator.ts`:
+1. **Meta-texto da IA** (já parcialmente feito, reforçar):
+   - "Aqui está...", "Vou gerar...", "Posso reescrever...", "Conforme solicitado...", "Espero que ajude...", "Em resumo, segue..."
+   - Linhas de instrução: "Mantendo o formato Markdown", "Com base nos problemas identificados"
+   - Despedidas: "Se precisar de mais...", "Estou à disposição..."
 
-- Conteúdo mínimo: ≥300 caracteres por secção (excepto índice).
-- Não pode começar com meta-frases ("Aqui está", "Segue", "Vou", "Posso").
-- Não pode conter `[placeholder]`, `[inserir]`, `TODO`, `XXX`, `...continua`.
-- Bibliografia: deve ter ≥5 referências no formato Autor (ano).
-- Conclusão/Introdução/desenvolvimento/: não pode ter subtítulos H3 (`###`).
+2. **Elementos parasitas / estranhos**:
+   - Subtítulos fantasma dentro de Introdução/Conclusão (`### Revisão`, `### Nota`, `### Observação`, `### Resumo`)
+   - Blocos ` ```markdown ` deixados pela IA — extrair conteúdo, remover cercas
+   - Emojis aleatórios em corpo académico (manter só em listas se intencional → remover todos)
+   - Tags HTML soltas (`<br>`, `<div>`, `<span>` fora de contexto)
+   - Frases em inglês isoladas (heurística já existe, melhorar)
+   - Linhas só com símbolos (`%%%%`, `&&&&`, `____`, `~~~~`, `====`, `++++`)
+   - Caracteres de controlo invisíveis (zero-width, BOM)
 
-**Camada 3 — Auto-correcção via IA + UI de pré-compilação**
+3. **Quebra de estrutura**:
+   - Cabeçalhos colados ao texto (`##Introdução` → `## Introdução`)
+   - Cabeçalhos duplicados consecutivos (`## Introdução\n## Introdução`) → manter um
+   - Numeração quebrada em listas (`1.`, `1.`, `2.` → `1.`, `2.`, `3.`)
+   - Parágrafos colados sem espaçamento
+   - Linhas em branco excessivas (>2 seguidas)
+   - Capítulos vazios → injectar marcador de fallback `[secção a expandir manualmente]` em vez de deixar vazio
 
-- Antes da compilação final em `TrabalhoPage.tsx`, correr `validateTrabalhoCompleto(conteudo)` que devolve `{ ok, issues, fixedContent }`.
-- Se houver problemas auto-corrigíveis (regex) → corrigir silenciosamente.
-- Se houver secções inválidas → re-gerar APENAS essa secção via `regenerateSection(titulo, contexto)` (1 tentativa, custo: 0 créditos extra).
-- Se ainda falhar → mostrar **modal de pré-compilação** listando os problemas com botões: "Re-gerar secção" / "Editar manualmente" / "Compilar mesmo assim".
+4. **Incoerência básica detectável por regex**:
+   - Frases truncadas no fim de secção (terminar sem `.`, `!`, `?`, `:`) → adicionar `.`
+   - Palavras coladas (camelCase indevido em prosa) — heurística conservadora
+   - Repetição imediata de palavras (`o o`, `de de`, `que que`) → colapsar
+   - Aspas/parênteses não fechados → equilibrar no fim do parágrafo
 
-### Ficheiros a alterar/criar
+5. **Bibliografia**:
+   - Remover linhas que não pareçam referência (sem ano `(YYYY)` e sem autor maiúsculo)
+   - Ordenar alfabeticamente por sobrenome (já parcialmente feito noutros sítios)
 
+### Ficheiros a alterar
 
-| Ficheiro                                                  | Acção                                                                                                                                        |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lib/ai-validator.ts`                                 | Reforçar com novas regex + `validateTrabalhoSection` + `validateTrabalhoCompleto`                                                            |
-| `src/lib/ai-service.ts`                                   | Reforçar `DELLE_SYSTEM_PROMPT`: proibir meta-texto, símbolos repetidos, subtítulos em Conclusão/Introdução. Adicionar `regenerateSection()`. |
-| `src/lib/trabalho-parser.ts`                              | Sanitizar antes de fazer parse das secções                                                                                                   |
-| `src/components/trabalho/PreCompileCheckModal.tsx` (NOVO) | Modal com lista de problemas detectados + acções                                                                                             |
-| `src/pages/TrabalhoPage.tsx`                              | Chamar validação antes da compilação final, mostrar modal se houver issues                                                                   |
+| Ficheiro | Acção |
+|---|---|
+| `src/lib/ai-validator.ts` | Reforçar `sanitizeContent` com todas as regras acima. Exportar nova função `deepSanitizeTrabalho(md)` que devolve só `string` (sem issues, sem UI). |
+| `src/pages/TrabalhoPage.tsx` | Remover uso do `PreCompileCheckModal` e de `validateTrabalhoCompleto`. Chamar `deepSanitizeTrabalho` directamente após geração, silenciosamente, antes de guardar/compilar. |
+| `src/components/trabalho/PreCompileCheckModal.tsx` | **Eliminar** (já não é usado). |
+| `src/lib/trabalho-parser.ts` | Garantir que recebe markdown já sanitizado (defensivo: chamar sanitizador de novo no início). |
 
+### Garantias de performance
+
+- 100% regex / string ops — tipicamente <50ms para 50KB de markdown
+- Sem chamadas de rede, sem IA, sem await
+- Sem alteração de UI / sem modal / sem toast
 
 ### Fluxo final
 
 ```text
-Geração → Sanitização regex → Validação estrutural
+IA gera markdown
    ↓
-[OK?] ─sim→ Compila e mostra trabalho
-   ↓ não
-Auto-correcção (regex)
+deepSanitizeTrabalho(md)   ← <100ms, silencioso
    ↓
-Re-geração silenciosa de secções inválidas (1x)
-   ↓
-[OK?] ─sim→ Compila
-   ↓ não
-Modal pré-compilação → utilizador decide
+parse + compila + mostra trabalho
 ```
 
-### Notas técnicas
+### Notas
 
-- Build errors actuais (`landing_sections`, `Select size`, `DelleLogo className`) são pré-existentes e não relacionados — proponho corrigir em paralelo (ajustar tipos JSON cast, remover prop `size` inválida do `SelectTrigger`, aceitar `className` em `DelleLogo`).
-- Re-geração de secção NÃO consome créditos extra (já pago no trabalho original) — controlado por flag `isRetry: true`.
-- Logs de issues vão para console (escondidos do utilizador) para análise futura.
+- Logs de quantas correcções foram aplicadas vão só para `console.debug` (escondido do utilizador).
+- Se uma secção ficar vazia após sanitização, injectar placeholder discreto em vez de re-gerar (re-geração foi removida por ser lenta).
