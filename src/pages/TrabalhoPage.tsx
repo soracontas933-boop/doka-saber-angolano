@@ -73,10 +73,6 @@ const TrabalhoPage = () => {
   const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
 
-  // Anti-falhas: validation modal state
-  const [checkModalOpen, setCheckModalOpen] = useState(false);
-  const [validationIssues, setValidationIssues] = useState<SectionIssue[]>([]);
-  const [regeneratingTitle, setRegeneratingTitle] = useState<string | null>(null);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
