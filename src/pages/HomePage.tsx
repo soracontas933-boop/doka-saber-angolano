@@ -133,19 +133,17 @@ const HeroSingle = ({ image }: { image: HeroImage }) =>
     <div className="absolute inset-0 bg-black/40 dark:bg-black/70 z-[10]" />
   </div>;
 
-const VideoEmbed = ({ url }: { url: string }) => {
-  const getEmbedUrl = (url: string) => {
-    if (url.includes('youtube.com/watch?v=')) {
-      return url.replace('watch?v=', 'embed/');
-    }
-    if (url.includes('youtu.be/')) {
-      return url.replace('youtu.be/', 'youtube.com/embed/');
-    }
-    return url;
+import { forwardRef } from "react";
+
+const VideoEmbed = forwardRef<HTMLDivElement, { url: string }>(({ url }, ref) => {
+  const getEmbedUrl = (u: string) => {
+    if (u.includes('youtube.com/watch?v=')) return u.replace('watch?v=', 'embed/');
+    if (u.includes('youtu.be/')) return u.replace('youtu.be/', 'youtube.com/embed/');
+    return u;
   };
 
   return (
-    <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-border/50 shadow-2xl bg-black group">
+    <div ref={ref} className="relative aspect-video rounded-[2rem] overflow-hidden border border-border/50 shadow-2xl bg-black group">
       <iframe
         src={getEmbedUrl(url)}
         className="w-full h-full"
@@ -154,7 +152,8 @@ const VideoEmbed = ({ url }: { url: string }) => {
       />
     </div>
   );
-};
+});
+VideoEmbed.displayName = "VideoEmbed";
 
 const HomePage = () => {
   const navigate = useNavigate();

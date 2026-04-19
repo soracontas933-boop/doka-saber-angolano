@@ -110,6 +110,31 @@ export function useUserPlan() {
   useEffect(() => {
     if (authLoading) return;
     fetchPlan();
+
+    if (!user) return;
+
+    // Realtime: actualiza instantaneamente quando o plano/créditos mudam (webhook, admin, RPC)
+    const channel = supabase
+      .channel(`user_plan_${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_plans", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new) setPlan(payload.new as UserPlan);
+        }
+      )
+      .subscribe();
+
+    // Refetch quando a aba volta ao foco (importante em PWA mobile)
+    const onFocus = () => fetchPlan();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
   }, [user, authLoading]);
 
   return { plan, loading, refetch: fetchPlan };
