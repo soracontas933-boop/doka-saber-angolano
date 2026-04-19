@@ -45,7 +45,20 @@ const CreditsBar = () => {
     }
   }, [isLow, warned, remaining, navigate]);
 
-  if (loading || !plan) return null;
+  if (loading || !plan) {
+    return (
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
+        <div className="flex items-center justify-between px-4 py-3 gap-2 h-14">
+          <div className="w-10 h-10 rounded-full bg-muted animate-pulse shrink-0" />
+          <div className="flex-1 h-10 bg-muted animate-pulse rounded-xl" />
+          <div className="flex items-center gap-1 shrink-0">
+            <div className="w-8 h-8 bg-muted animate-pulse rounded-lg" />
+            <div className="w-8 h-8 bg-muted animate-pulse rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const planKey = (plan.plano || "gratuito") as PlanKey;
   const cfg = PLAN_CONFIGS[planKey] || PLAN_CONFIGS.gratuito;

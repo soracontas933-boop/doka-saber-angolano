@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Send, Loader2, Headphones, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { realtimeManager } from "@/integrations/supabase/realtime-manager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
@@ -88,13 +89,12 @@ const SuportePage = () => {
 
   // Realtime for conversations
   useEffect(() => {
-    const ch = supabase
-      .channel("user-support-convos")
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_messages" }, () => {
-        fetchConversations();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    realtimeManager.subscribe(
+      "user-support-convos",
+      { event: "*", schema: "public", table: "support_messages" },
+      () => { fetchConversations(); }
+    );
+    // Note: We don't unsubscribe here to keep the global listener alive for the user
   }, [fetchConversations]);
 
   // Fetch chat messages
@@ -171,19 +171,15 @@ const SuportePage = () => {
   // Safety refresh: if conversation row changes (ex: admin respondeu), refetch chat from DB
   useEffect(() => {
     if (!selectedConvo) return;
-    const ch = supabase
-      .channel(`user-support-refresh-${selectedConvo.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "support_messages", filter: `id=eq.${selectedConvo.id}` },
-        () => {
-          fetchChatMessages(selectedConvo.id);
-        },
-      )
-      .subscribe();
+    const channelName = `user-support-refresh-${selectedConvo.id}`;
+    realtimeManager.subscribe(
+      channelName,
+      { event: "UPDATE", schema: "public", table: "support_messages", filter: `id=eq.${selectedConvo.id}` },
+      () => { fetchChatMessages(selectedConvo.id); }
+    );
 
     return () => {
-      supabase.removeChannel(ch);
+      realtimeManager.unsubscribe(channelName);
     };
   }, [selectedConvo?.id, fetchChatMessages]);
 
@@ -215,9 +211,10 @@ const SuportePage = () => {
   // Realtime for messages
   useEffect(() => {
     if (!selectedConvo) return;
-    const ch = supabase
-      .channel(`user-chat-${selectedConvo.id}`)
-      .on("postgres_changes", {
+    const channelName = `user-chat-${selectedConvo.id}`;
+    realtimeManager.subscribe(
+      channelName,
+      {
         event: "INSERT", schema: "public", table: "chat_messages",
         filter: `conversation_id=eq.${selectedConvo.id}`
       }, (payload: any) => {
@@ -227,10 +224,10 @@ const SuportePage = () => {
           return [...prev, payload.new as ChatMsg];
         });
         scrollToBottom();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [selectedConvo]);
+      }
+    );
+    return () => { realtimeManager.unsubscribe(channelName); };
+  }, [selectedConvo?.id]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

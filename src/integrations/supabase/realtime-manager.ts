@@ -12,6 +12,7 @@ class RealtimeManager {
   private static instance: RealtimeManager;
   private channels: Map<string, RealtimeChannel> = new Map();
   private subscriptionStates: Map<string, 'unsubscribed' | 'subscribing' | 'subscribed'> = new Map();
+  private listeners: Map<string, Array<{ options: any, callback: (payload: any) => void }>> = new Map();
 
   private constructor() {}
 
@@ -37,45 +38,58 @@ class RealtimeManager {
     callback: (payload: any) => void
   ): RealtimeChannel {
     let channel = this.channels.get(channelName);
+    const listenerKey = `${channelName}-${options.event}-${options.table}-${options.filter || 'no-filter'}`;
 
     if (!channel) {
       channel = supabase.channel(channelName);
       this.channels.set(channelName, channel);
       this.subscriptionStates.set(channelName, 'unsubscribed');
+      this.listeners.set(channelName, []);
     }
 
     const state = this.subscriptionStates.get(channelName);
+    const currentListeners = this.listeners.get(channelName) || [];
+    
+    // Check if this specific listener already exists to avoid duplicates
+    const alreadyRegistered = currentListeners.some(l => 
+      JSON.stringify(l.options) === JSON.stringify(options)
+    );
 
-    // Só podemos adicionar ouvintes ANTES do subscribe()
+    if (!alreadyRegistered) {
+      if (state === 'unsubscribed') {
+        channel.on(
+          'postgres_changes' as any,
+          { 
+            event: options.event, 
+            schema: options.schema, 
+            table: options.table, 
+            filter: options.filter 
+          },
+          callback
+        );
+        currentListeners.push({ options, callback });
+        this.listeners.set(channelName, currentListeners);
+      } else {
+        console.warn(`Canal ${channelName} já está em estado ${state}. O Supabase não permite adicionar ouvintes após o subscribe. Recomenda-se criar o canal com todos os ouvintes necessários ou usar canais diferentes.`);
+      }
+    }
+
     if (state === 'unsubscribed') {
-      channel.on(
-        'postgres_changes' as any,
-        { 
-          event: options.event, 
-          schema: options.schema, 
-          table: options.table, 
-          filter: options.filter 
-        },
-        callback
-      );
-      
       this.subscriptionStates.set(channelName, 'subscribing');
       
-      // Executa o subscribe no próximo tick para garantir que todos os .on() iniciais foram registrados
+      // Executa o subscribe no próximo tick para garantir que todos os .on() síncronos foram registrados
       setTimeout(() => {
-        if (this.subscriptionStates.get(channelName) === 'subscribing') {
+        const currentState = this.subscriptionStates.get(channelName);
+        if (currentState === 'subscribing') {
           channel?.subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               this.subscriptionStates.set(channelName, 'subscribed');
+            } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              this.subscriptionStates.set(channelName, 'unsubscribed');
             }
           });
         }
-      }, 0);
-    } else {
-      // Se já estiver inscrito ou se inscrevendo, não podemos usar .on()
-      // O Supabase não permite adicionar ouvintes dinâmicos após subscribe()
-      // Por isso usamos o singleton para garantir que o canal seja criado uma vez com seus ouvintes
-      console.warn(`Canal ${channelName} já está em estado ${state}. Ouvintes adicionais podem não funcionar.`);
+      }, 10);
     }
 
     return channel;
@@ -90,6 +104,7 @@ class RealtimeManager {
       supabase.removeChannel(channel);
       this.channels.delete(channelName);
       this.subscriptionStates.delete(channelName);
+      this.listeners.delete(channelName);
     }
   }
 }

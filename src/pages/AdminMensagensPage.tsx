@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { MessageSquare, Send, Loader2, Search, User, ArrowLeft, Plus, Headphones } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { realtimeManager } from "@/integrations/supabase/realtime-manager";
 import { useAdmin } from "@/hooks/use-admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,13 +163,12 @@ const AdminMensagensPage = () => {
 
   // Realtime for new conversations
   useEffect(() => {
-    const channel = supabase
-      .channel("admin-support-convos")
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_messages" }, () => {
-        fetchConversations();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    realtimeManager.subscribe(
+      "admin-support-convos",
+      { event: "*", schema: "public", table: "support_messages" },
+      () => { fetchConversations(); }
+    );
+    // Note: Global admin listener, keep alive
   }, [fetchConversations]);
 
   // Fetch all chat messages for a user (across all their conversations)
@@ -220,20 +220,29 @@ const AdminMensagensPage = () => {
   // Realtime for chat messages (listen to all convos of selected user)
   useEffect(() => {
     if (!selectedUserGroup) return;
-    const channels = selectedUserGroup.conversations.map(c =>
-      supabase
-        .channel(`chat-${c.id}`)
-        .on("postgres_changes", {
+    const channelNames = selectedUserGroup.conversations.map(c => `admin-chat-${c.id}`);
+    
+    selectedUserGroup.conversations.forEach(c => {
+      realtimeManager.subscribe(
+        `admin-chat-${c.id}`,
+        {
           event: "INSERT", schema: "public", table: "chat_messages",
           filter: `conversation_id=eq.${c.id}`
         }, (payload: any) => {
-          setChatMessages(prev => [...prev, payload.new as ChatMsg]);
+          setChatMessages(prev => {
+            const exists = prev.some(m => m.id === payload.new.id);
+            if (exists) return prev;
+            return [...prev, payload.new as ChatMsg];
+          });
           scrollToBottom();
-        })
-        .subscribe()
-    );
-    return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
-  }, [selectedUserGroup]);
+        }
+      );
+    });
+
+    return () => { 
+      channelNames.forEach(name => realtimeManager.unsubscribe(name)); 
+    };
+  }, [selectedUserGroup?.user_id, selectedUserGroup?.conversations]);
 
   const handleSelectUser = (group: UserGroup) => {
     setSelectedUserGroup(group);
