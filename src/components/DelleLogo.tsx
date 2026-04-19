@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
-import logoImage from "@/assets/delle-logo.png";
+import logoImage from "@/assets/doka-logo.png";
 
-const DelleLogo = ({ size = 32, showText = true, className = "" }: { size?: number; showText?: boolean; className?: string }) => {
+const DelleLogo = ({ size = 32, showText = true }: {size?: number;showText?: boolean;}) => {
   return (
-    <div className={`flex items-center gap-2.5 bg-[#070808]/[0.01] ${className}`}>
+    <div className="flex items-center gap-2.5 bg-[#070808]/[0.01]">
       <motion.div
         className="relative flex items-center justify-center overflow-hidden rounded-xl"
         style={{ width: size, height: size }}
@@ -13,7 +13,7 @@ const DelleLogo = ({ size = 32, showText = true, className = "" }: { size?: numb
         <img
           src={logoImage}
           alt="Delle Logo"
-          className="w-full h-full object-cover pb-0 pr-0 mr-[10px] bg-black/[0.01] pl-[10px] pt-[7px] ml-0 text-4xl py-[70px]" />
+          className="w-full h-full object-cover pl-0 pt-0 py-[10px] pb-0 pr-0 ml-0 mr-[10px] bg-black/[0.01]" />
         
       </motion.div>
       {showText &&

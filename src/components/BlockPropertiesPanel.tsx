@@ -139,7 +139,7 @@ const BlockPropertiesPanel: React.FC<BlockPropertiesPanelProps> = ({
               />
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Abrir em</Label>
               <Select value={block.content.buttonTarget || '_self'} onValueChange={(val) => updateContent({ buttonTarget: val })}>
-                <SelectTrigger className="h-8 text-xs">
+                <SelectTrigger size="sm" className="text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -261,7 +261,7 @@ const BlockPropertiesPanel: React.FC<BlockPropertiesPanelProps> = ({
                   <div className="space-y-2">
                     <Label className="text-[10px] uppercase tracking-wider">Fonte</Label>
                     <Select value={block.style.fontFamily || 'Inter'} onValueChange={(val) => updateStyle({ fontFamily: val })}>
-                      <SelectTrigger className="h-8 text-xs">
+                      <SelectTrigger size="sm" className="text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -291,7 +291,7 @@ const BlockPropertiesPanel: React.FC<BlockPropertiesPanelProps> = ({
                   <div className="space-y-2">
                     <Label className="text-[10px] uppercase tracking-wider">Peso da Fonte</Label>
                     <Select value={String(block.style.fontWeight || 400)} onValueChange={(val) => updateStyle({ fontWeight: parseInt(val) })}>
-                      <SelectTrigger className="h-8 text-xs">
+                      <SelectTrigger size="sm" className="text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -409,7 +409,7 @@ const BlockPropertiesPanel: React.FC<BlockPropertiesPanelProps> = ({
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase tracking-wider">Tipo de Animação</Label>
                 <Select value={block.style.animation || 'none'} onValueChange={(val) => updateStyle({ animation: val })}>
-                  <SelectTrigger className="h-8 text-xs">
+                  <SelectTrigger size="sm" className="text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -425,7 +425,7 @@ const BlockPropertiesPanel: React.FC<BlockPropertiesPanelProps> = ({
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase tracking-wider">Easing</Label>
                 <Select value={block.style.animationEasing || 'ease'} onValueChange={(val) => updateStyle({ animationEasing: val as any })}>
-                  <SelectTrigger className="h-8 text-xs">
+                  <SelectTrigger size="sm" className="text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

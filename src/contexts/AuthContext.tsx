@@ -17,53 +17,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-
     // 1. Register listener FIRST to catch auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (!mounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
         
-        try {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setIsLoading(false);
-          
-          // Persist session state to localStorage for mobile offline support
-          if (session) {
+        // Persist session state to localStorage for mobile offline support
+        if (session) {
+          try {
             localStorage.setItem('auth_session', JSON.stringify({
               user: session.user,
               accessToken: session.access_token,
               refreshToken: session.refresh_token,
               expiresAt: session.expires_at,
             }));
-          } else {
-            localStorage.removeItem('auth_session');
+          } catch (e) {
+            console.warn('Failed to persist session:', e);
           }
-        } catch (e) {
-          console.warn('AuthContext: Error in auth state change:', e);
+        } else {
+          try {
+            localStorage.removeItem('auth_session');
+          } catch (e) {
+            console.warn('Failed to clear session:', e);
+          }
         }
       }
     );
 
     // 2. Then restore session once
-    supabase.auth.getSession()
-      .then(({ data: { session } }) => {
-        if (!mounted) return;
-        setSession(session);
-        setUser(session?.user ?? null);
-      })
-      .catch(err => {
-        console.error("AuthContext: Error getting initial session:", err);
-      })
-      .finally(() => {
-        if (mounted) setIsLoading(false);
-      });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {

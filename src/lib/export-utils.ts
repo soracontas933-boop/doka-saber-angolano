@@ -216,8 +216,7 @@ function parseMarkdownToParagraphs(markdown: string): Paragraph[] {
   const lines = normalizeExportText(markdown).split("\n");
   const paragraphs: Paragraph[] = [];
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) {
       paragraphs.push(new Paragraph({ text: "" }));
@@ -232,10 +231,6 @@ function parseMarkdownToParagraphs(markdown: string): Paragraph[] {
           spacing: { before: 240, after: 120 },
         })
       );
-      // Adicionar parágrafo vazio após heading para garantir separação
-      if (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].trim().startsWith("#")) {
-        paragraphs.push(new Paragraph({ text: "", spacing: { after: 60 } }));
-      }
       continue;
     }
 
@@ -247,10 +242,6 @@ function parseMarkdownToParagraphs(markdown: string): Paragraph[] {
           spacing: { before: 360, after: 120 },
         })
       );
-      // Adicionar parágrafo vazio após heading para garantir separação
-      if (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].trim().startsWith("#")) {
-        paragraphs.push(new Paragraph({ text: "", spacing: { after: 60 } }));
-      }
       continue;
     }
 
@@ -262,10 +253,6 @@ function parseMarkdownToParagraphs(markdown: string): Paragraph[] {
           spacing: { before: 480, after: 200 },
         })
       );
-      // Adicionar parágrafo vazio após heading para garantir separação
-      if (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].trim().startsWith("#")) {
-        paragraphs.push(new Paragraph({ text: "", spacing: { after: 60 } }));
-      }
       continue;
     }
 
@@ -469,24 +456,18 @@ function buildPdfBodyHtml(content: string): string {
     if (line.startsWith("### ")) {
       closeList();
       chunks.push(`<h3 data-pdf-section style="font-size:14pt;margin:14px 0 8px;break-inside:avoid;">${applyInlineBold(line.replace(/^###\s*/, ""))}</h3>`);
-      // Adicionar espaço após heading para garantir separação do primeiro parágrafo
-      chunks.push('<div style="height:6px"></div>');
       continue;
     }
 
     if (line.startsWith("## ")) {
       closeList();
       chunks.push(`<h2 data-pdf-section style="font-size:16pt;margin:18px 0 10px;break-inside:avoid;">${applyInlineBold(line.replace(/^##\s*/, ""))}</h2>`);
-      // Adicionar espaço após heading para garantir separação do primeiro parágrafo
-      chunks.push('<div style="height:6px"></div>');
       continue;
     }
 
     if (line.startsWith("# ")) {
       closeList();
       chunks.push(`<h1 data-pdf-section style="font-size:18pt;margin:24px 0 12px;text-align:center;break-inside:avoid;">${applyInlineBold(line.replace(/^#\s*/, ""))}</h1>`);
-      // Adicionar espaço após heading para garantir separação do primeiro parágrafo
-      chunks.push('<div style="height:6px"></div>');
       continue;
     }
 

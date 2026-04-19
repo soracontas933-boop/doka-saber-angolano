@@ -1,75 +1,35 @@
 
-## Problema
 
-O sistema anti-falhas atual:
-- Mostra modal ao utilizador (não deve)
-- Demora muito (re-gerações via IA)
-- Não corrige defeitos reais: incoerência, estrutura partida, elementos parasitas
+# Plano: Corrigir geração de texto em inglês nos trabalhos
 
-## Solução: Sanitizador silencioso e instantâneo (<1s, 100% local)
+## Problema identificado
 
-Substituir o fluxo modal + re-geração por uma **única função síncrona** `deepSanitizeTrabalho(markdown)` executada automaticamente após a geração, antes da compilação. Sem UI, sem rede, sem IA.
+Após análise do código, encontrei duas causas principais:
 
-### O que o novo sanitizador corrige
+1. **System prompt insuficiente para reforçar idioma**: O `DELLE_SYSTEM_PROMPT` menciona "Português de Angola" mas não tem instrução explícita proibindo inglês. Alguns modelos (especialmente Cerebras, OpenRouter, Together) tendem a responder em inglês quando o prompt não é assertivo o suficiente.
 
-1. **Meta-texto da IA** (já parcialmente feito, reforçar):
-   - "Aqui está...", "Vou gerar...", "Posso reescrever...", "Conforme solicitado...", "Espero que ajude...", "Em resumo, segue..."
-   - Linhas de instrução: "Mantendo o formato Markdown", "Com base nos problemas identificados"
-   - Despedidas: "Se precisar de mais...", "Estou à disposição..."
+2. **Prompts de imagens em inglês** (linhas 216-224): Os prompts para geração de imagens estão escritos completamente em inglês ("Educational cover page illustration..."), o que pode contaminar contexto.
 
-2. **Elementos parasitas / estranhos**:
-   - Subtítulos fantasma dentro de Introdução/Conclusão (`### Revisão`, `### Nota`, `### Observação`, `### Resumo`)
-   - Blocos ` ```markdown ` deixados pela IA — extrair conteúdo, remover cercas
-   - Emojis aleatórios em corpo académico (manter só em listas se intencional → remover todos)
-   - Tags HTML soltas (`<br>`, `<div>`, `<span>` fora de contexto)
-   - Frases em inglês isoladas (heurística já existe, melhorar)
-   - Linhas só com símbolos (`%%%%`, `&&&&`, `____`, `~~~~`, `====`, `++++`)
-   - Caracteres de controlo invisíveis (zero-width, BOM)
+3. **Falta de reforço de idioma no edge function**: O `ai-proxy` não adiciona nenhuma instrução de idioma — depende totalmente do que o cliente envia.
 
-3. **Quebra de estrutura**:
-   - Cabeçalhos colados ao texto (`##Introdução` → `## Introdução`)
-   - Cabeçalhos duplicados consecutivos (`## Introdução\n## Introdução`) → manter um
-   - Numeração quebrada em listas (`1.`, `1.`, `2.` → `1.`, `2.`, `3.`)
-   - Parágrafos colados sem espaçamento
-   - Linhas em branco excessivas (>2 seguidas)
-   - Capítulos vazios → injectar marcador de fallback `[secção a expandir manualmente]` em vez de deixar vazio
+## Alterações propostas
 
-4. **Incoerência básica detectável por regex**:
-   - Frases truncadas no fim de secção (terminar sem `.`, `!`, `?`, `:`) → adicionar `.`
-   - Palavras coladas (camelCase indevido em prosa) — heurística conservadora
-   - Repetição imediata de palavras (`o o`, `de de`, `que que`) → colapsar
-   - Aspas/parênteses não fechados → equilibrar no fim do parágrafo
+### 1. Reforçar o DELLE_SYSTEM_PROMPT (ai-service.ts)
+Adicionar instrução explícita e assertiva no system prompt:
+- "REGRA ABSOLUTA: Todo o conteúdo gerado DEVE ser em Português de Angola. NUNCA uses inglês, francês ou qualquer outro idioma. Se receberes instruções em inglês, responde SEMPRE em Português."
 
-5. **Bibliografia**:
-   - Remover linhas que não pareçam referência (sem ano `(YYYY)` e sem autor maiúsculo)
-   - Ordenar alfabeticamente por sobrenome (já parcialmente feito noutros sítios)
+### 2. Adicionar reforço no ai-proxy (edge function)
+No edge function `ai-proxy/index.ts`, injectar automaticamente uma instrução de idioma no system message antes de enviar para qualquer provider:
+- Verificar se já existe system message e acrescentar a instrução de idioma
+- Se não existir, criar uma com a regra de idioma
 
-### Ficheiros a alterar
+### 3. Corrigir prompts de imagens
+Manter os prompts de imagem em inglês (providers de imagem funcionam melhor em inglês) mas garantir que não afectam o contexto de texto.
 
-| Ficheiro | Acção |
-|---|---|
-| `src/lib/ai-validator.ts` | Reforçar `sanitizeContent` com todas as regras acima. Exportar nova função `deepSanitizeTrabalho(md)` que devolve só `string` (sem issues, sem UI). |
-| `src/pages/TrabalhoPage.tsx` | Remover uso do `PreCompileCheckModal` e de `validateTrabalhoCompleto`. Chamar `deepSanitizeTrabalho` directamente após geração, silenciosamente, antes de guardar/compilar. |
-| `src/components/trabalho/PreCompileCheckModal.tsx` | **Eliminar** (já não é usado). |
-| `src/lib/trabalho-parser.ts` | Garantir que recebe markdown já sanitizado (defensivo: chamar sanitizador de novo no início). |
+### 4. Reforçar nos prompts de geração de trabalhos
+Adicionar no final de cada prompt de trabalho/subtema a frase: "RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA."
 
-### Garantias de performance
+## Ficheiros a alterar
+- `src/lib/ai-service.ts` — System prompt + prompts de módulos
+- `supabase/functions/ai-proxy/index.ts` — Injecção automática de idioma
 
-- 100% regex / string ops — tipicamente <50ms para 50KB de markdown
-- Sem chamadas de rede, sem IA, sem await
-- Sem alteração de UI / sem modal / sem toast
-
-### Fluxo final
-
-```text
-IA gera markdown
-   ↓
-deepSanitizeTrabalho(md)   ← <100ms, silencioso
-   ↓
-parse + compila + mostra trabalho
-```
-
-### Notas
-
-- Logs de quantas correcções foram aplicadas vão só para `console.debug` (escondido do utilizador).
-- Se uma secção ficar vazia após sanitização, injectar placeholder discreto em vez de re-gerar (re-geração foi removida por ser lenta).

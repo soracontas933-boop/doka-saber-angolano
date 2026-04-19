@@ -15,7 +15,6 @@ import { validarBibliografia } from "@/lib/referencias-reais";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
 import SubtemasEditor, { type Subtema } from "@/components/trabalho/SubtemasEditor";
-import { deepSanitizeTrabalho } from "@/lib/ai-validator";
 import { saveProject } from "@/lib/save-project";
 
 const disciplinas = [
@@ -72,7 +71,6 @@ const TrabalhoPage = () => {
   const [resultadoCompilado, setResultadoCompilado] = useState<string | null>(null);
   const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
-
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -241,33 +239,29 @@ const TrabalhoPage = () => {
     }
   };
 
-  // Phase 3: Compile (silent deep sanitization, <100ms, no UI)
-  const performCompile = () => {
-    // Sanitize each section silently before assembling
-    const sections = subtemas
-      .filter((s) => s.status === "gerado")
-      .map((s) => {
-        const conteudoLimpo = deepSanitizeTrabalho(s.conteudo);
-        s.conteudo = conteudoLimpo;
-        const tituloPrefix = s.tipo === "capitulo"
-          ? `## ${s.titulo}`
-          : s.tipo === "introducao"
-          ? "## Introdução"
-          : s.tipo === "conclusao"
-          ? "## Conclusão"
-          : "## Bibliografia";
-        return { titulo: tituloPrefix.replace("## ", ""), markdown: `${tituloPrefix}\n\n${conteudoLimpo}` };
-      });
+  // Phase 3: Compile
+  const handleCompile = () => {
+    // Build full markdown from all subtemas
+    const sections = subtemas.map((s) => {
+      const tituloPrefix = s.tipo === "capitulo"
+        ? `## ${s.titulo}`
+        : s.tipo === "introducao"
+        ? "## Introdução"
+        : s.tipo === "conclusao"
+        ? "## Conclusão"
+        : "## Bibliografia";
+      return { titulo: tituloPrefix.replace("## ", ""), markdown: `${tituloPrefix}\n\n${s.conteudo}` };
+    });
 
+    // Generate Índice automatically with page numbers
+    // Page 1 = Capa, Page 2 = Índice, Pages 3+ = content sections
     const indiceLinhas = sections.map((s, i) => `- ${s.titulo} .......... ${i + 3}`);
     const indiceMarkdown = `## Índice\n\n${indiceLinhas.join("\n")}`;
 
-    // Final pass over the whole document
-    const fullContent = deepSanitizeTrabalho(
-      [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n")
-    );
+    const fullContent = [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n");
     setResultadoCompilado(fullContent);
 
+    // Generate cover image
     if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
       const imgUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
       setCapaImageUrl(imgUrl);
@@ -275,6 +269,8 @@ const TrabalhoPage = () => {
 
     setFase("resultado");
     toast.success("Trabalho compilado com sucesso!");
+    
+    // Log usage after successful compilation
     logUsage("trabalho");
 
     saveProject("trabalho", tema || "Trabalho sem título", {
@@ -286,10 +282,6 @@ const TrabalhoPage = () => {
       nomeDocente,
       tipoTrabalho,
     });
-  };
-
-  const handleCompile = async () => {
-    performCompile();
   };
 
   const handleBack = () => {

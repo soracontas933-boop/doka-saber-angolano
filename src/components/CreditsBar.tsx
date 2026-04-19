@@ -45,20 +45,7 @@ const CreditsBar = () => {
     }
   }, [isLow, warned, remaining, navigate]);
 
-  if (loading || !plan) {
-    return (
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
-        <div className="flex items-center justify-between px-4 py-3 gap-2 h-14">
-          <div className="w-10 h-10 rounded-full bg-muted animate-pulse shrink-0" />
-          <div className="flex-1 h-10 bg-muted animate-pulse rounded-xl" />
-          <div className="flex items-center gap-1 shrink-0">
-            <div className="w-8 h-8 bg-muted animate-pulse rounded-lg" />
-            <div className="w-8 h-8 bg-muted animate-pulse rounded-lg" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading || !plan) return null;
 
   const planKey = (plan.plano || "gratuito") as PlanKey;
   const cfg = PLAN_CONFIGS[planKey] || PLAN_CONFIGS.gratuito;
@@ -77,12 +64,9 @@ const CreditsBar = () => {
 
   return (
     <>
-      {/* NotificationBell renderizado uma única vez para ambas as barras */}
-      <NotificationBell />
-      
       {/* ===== MOBILE TOP BAR ===== */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
-        <div className="flex items-center justify-between px-4 py-3 gap-2 mb-0 my-0">
+        <div className="flex items-center justify-between px-4 py-3 gap-2">
           <button
             onClick={() => navigate("/configuracoes")}
             className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 active:scale-95"
@@ -122,15 +106,16 @@ const CreditsBar = () => {
           <div className="flex items-center gap-1 shrink-0">
             <ScannerButton />
             <button onClick={() => navigate("/suporte")} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90">
-              <Headphones className="h-4 w-4 text-black" />
+              <Headphones className="h-4 w-4" />
             </button>
+            <NotificationBell />
           </div>
         </div>
       </div>
 
       {/* ===== DESKTOP TOP BAR ===== */}
       <div className="hidden md:block sticky top-0 z-40 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl">
-        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 max-w-screen-2xl mx-auto gap-3 bg-white shadow-glass">
+        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 max-w-screen-2xl mx-auto gap-3">
           <button
             onClick={() => navigate("/planos")}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/15 border border-primary/20 transition-all active:scale-95"
@@ -179,8 +164,9 @@ const CreditsBar = () => {
 
           <div className="flex items-center gap-1">
             <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90" title={theme === "dark" ? "Modo claro" : "Modo escuro"}>
-              {theme === "dark" ? <Sun className="h-4 w-4 text-black" /> : <Moon className="h-4 w-4 text-black" />}
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+            <NotificationBell />
           </div>
         </div>
       </div>

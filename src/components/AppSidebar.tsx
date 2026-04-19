@@ -112,7 +112,7 @@ const AppSidebar = () => {
           <div className="flex items-center gap-2.5 animate-in fade-in duration-300">
             <DelleLogo size={32} />
             <div className="flex flex-col">
-              <span className="text-sm font-bold tracking-tight">&#8203;</span>
+              <span className="text-sm font-bold tracking-tight">Doka</span>
               {isAdmin && (
                 <Badge variant="secondary" className="h-4 text-[9px] px-1 font-bold bg-primary/10 text-primary border-none">
                   MASTER
@@ -127,11 +127,11 @@ const AppSidebar = () => {
         )}
       </div>
 
-      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-none shadow-glass border-foreground">
+      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-none">
         {navItems.map(renderNavItem)}
       </nav>
 
-      <div className="p-3 border-t border-border/40 space-y-1 shadow-glass">
+      <div className="p-3 border-t border-border/40 space-y-1">
         <NavLink
           to="/configuracoes"
           title="Configurações"
