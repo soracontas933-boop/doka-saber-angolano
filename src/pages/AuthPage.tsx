@@ -153,7 +153,7 @@ const AuthPage = () => {
             transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="mb-8 invert brightness-0"><DelleLogo size={40} /></div>
-            <h2 className="text-4xl font-bold mb-6 tracking-tight leading-[1.1] md:text-sm">
+            <h2 className="text-4xl font-bold mb-6 tracking-tight leading-[1.1] md:text-lg">
               A sua jornada educacional inteligente começa aqui.
             </h2>
             <p className="text-white/80 max-w-md font-medium text-sm">
