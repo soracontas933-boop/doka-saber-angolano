@@ -173,7 +173,7 @@ const HomePage = () => {
       { label: "Tipos de Ferramentas", value: "6+", icon: "Zap" }
     ],
     features: [
-      { icon: "FileText", title: "Trabalhos Escolares", description: "Gere trabalhos completos com capa, índice e conclusão no formato angolano", badge: "Mais Popular" },
+      { icon: "FileText", title: "Trabalhos Escolares", description: "Gere trabalhos completos com capa, índice e conclusão no formato do seu país.", badge: "Mais Popular" },
       { icon: "BookOpen", title: "Resumos Inteligentes", description: "Transforme fotos em resumos estruturados e flashcards de estudo", badge: "IA Avançada" },
       { icon: "HelpCircle", title: "Questionários", description: "Crie questionários interativos com correção automática", badge: "Interactivo" },
       { icon: "ClipboardList", title: "Planos de Aula", description: "Planos no formato INIDE, prontos para usar na sala de aula", badge: "Profissional" },
@@ -213,7 +213,7 @@ const HomePage = () => {
     ],
     journey: {
       title: "Sua Jornada, Sem Barreiras",
-      text: "Imagine poder transformar suas ideias, suas anotações, seus momentos de estudo em trabalhos brilhantes, com apenas alguns cliques. Com o Deli, o seu potencial não tem limites. Do resumo do caderno ao currículo perfeito, você vai se destacar.",
+      text: "Imagine poder transformar suas ideias, suas anotações, seus momentos de estudo em trabalhos brilhantes, com apenas alguns cliques. Com o Delle, o seu potencial não tem limites. Do resumo do caderno ao currículo perfeito, você vai se destacar.",
       story: "Como a Ana, que estava travada num trabalho de sociologia, tirou um A+ em menos de uma semana, ou como o professor Marcos, que agora economiza horas preparando suas aulas.",
       cta: "Dê o próximo passo na sua jornada hoje. Cadastre-se no Deli e libere o seu melhor."
     },
@@ -260,11 +260,11 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden font-apple">
       {/* Nav */}
-      <header className="relative z-[30] flex items-center justify-between px-6 md:px-12 py-4 border-b border-border/40 bg-background/70 backdrop-blur-xl sticky top-0">
+      <header className="relative z-[30] flex items-center justify-between px-6 md:px-12 py-4 border-b border-border/40 backdrop-blur-xl sticky top-0 bg-black">
         <DelleLogo size={28} />
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-9 w-9 rounded-full">
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? <Sun className="h-4 w-4 text-white" /> : <Moon className="h-4 w-4 text-white" />}
           </Button>
           {canInstall &&
             <Button variant="outline" size="sm" className="rounded-full hidden sm:inline-flex border-border/60" onClick={install}>
@@ -302,8 +302,8 @@ const HomePage = () => {
 
           <AnimatedTitle />
 
-          <p className="text-lg md:text-2xl max-w-2xl mx-auto mb-12 leading-relaxed text-muted-foreground/80 font-medium">
-            Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aula adaptados às normas de Angola.
+          <p className="text-lg max-w-2xl mx-auto mb-12 leading-relaxed text-muted-foreground/80 font-medium md:text-base">
+            Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aulas, profissionais com a melhor IA do mercado.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
@@ -319,7 +319,7 @@ const HomePage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12 border-t border-border/20 w-full">
             {content.stats.map((stat, i) => (
               <div key={i} className="text-center">
-                <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
+                <div className="font-bold text-foreground mb-1 text-sm">{stat.value}</div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</div>
               </div>
             ))}
@@ -345,14 +345,14 @@ const HomePage = () => {
                 {content.journey?.title || "Sua Jornada, Sem Barreiras"}
               </h2>
               <div className="space-y-8 text-xl text-muted-foreground leading-relaxed mb-12">
-                <p className="relative pl-8 border-l-2 border-[#3B82F6]/30">
+                <p className="relative pl-8 border-l-2 border-[#3B82F6]/30 text-lg">
                   {content.journey?.text}
                 </p>
-                <div className="relative p-10 rounded-[2rem] bg-[#F5F5F7] dark:bg-[#1D1D1F] border border-border/40 shadow-sm overflow-hidden group">
+                <div className="relative p-10 rounded-[2rem] border border-border/40 shadow-sm overflow-hidden group pt-[40px] bg-white">
                   <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                     <Users className="h-16 w-16 text-[#3B82F6]" />
                   </div>
-                  <p className="relative z-10 italic text-foreground/90 text-2xl leading-relaxed font-medium">
+                  <p className="relative z-10 italic text-foreground/90 leading-relaxed font-medium text-sm">
                     "{content.journey?.story}"
                   </p>
                   <div className="mt-6 flex items-center gap-3 text-[#3B82F6] font-bold">
@@ -362,15 +362,19 @@ const HomePage = () => {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
-                <Button size="lg" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-12 h-16 text-xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105" onClick={() => navigate("/auth")}>
+                <Button size="lg" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:shadow-apple-card-hover text-white rounded-full px-12 h-16 text-xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105 bg-black" onClick={() => navigate("/auth")}>
                   {content.journey?.cta || "Começar Agora"} <ArrowRight className="h-6 w-6 ml-2" />
                 </Button>
                 <div className="flex -space-x-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
-                      <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
+                  <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
+                    <img src="/src/assets/avatar-1.png" alt="User" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
+                    <img src="/src/assets/avatar-2.jpg" alt="User" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
+                    <img src="/src/assets/avatar-3.jpg" alt="User" className="w-full h-full object-cover" />
+                  </div>
                   <div className="w-12 h-12 rounded-full border-4 border-background bg-[#3B82F6] text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
                     +50k
                   </div>
@@ -428,7 +432,7 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-10 rounded-[2rem] bg-white dark:bg-[#1D1D1F] border border-border/40 hover:border-[#3B82F6]/30 hover:shadow-xl transition-all duration-500 group"
+                className="p-10 rounded-[2rem] border transition-all duration-500 group shadow-2xl bg-white border-neutral-950"
               >
                 <div className="p-4 rounded-2xl bg-[#3B82F6]/10 w-fit mb-8 group-hover:bg-[#3B82F6]/20 transition-colors">
                   {feature.icon === "FileText" && <FileText className="h-8 w-8 text-[#3B82F6]" />}
@@ -471,11 +475,7 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className={`relative p-10 rounded-[2.5rem] border transition-all duration-500 flex flex-col
-                ${plan.popular 
-                    ? "border-[#3B82F6] bg-[#3B82F6]/5 shadow-2xl scale-105 z-10" 
-                    : "border-border/40 bg-[#F5F5F7] dark:bg-[#1D1D1F] hover:border-[#3B82F6]/30"
-                }`}
+                className={`relative p-10 rounded-[2.5rem] border transition-all duration-500 flex flex-col bg-[#3B82F6]/5 shadow-2xl scale-105 z-10 border-neutral-950`}
               >
                 {plan.popular && (
                   <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#3B82F6] text-white text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-full shadow-lg">
@@ -509,7 +509,7 @@ const HomePage = () => {
 
       {/* CTA Final Section */}
       <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden">
-        <div className="max-w-[1000px] mx-auto relative z-10 bg-[#3B82F6] rounded-[3rem] p-16 md:p-24 text-center text-white shadow-2xl shadow-blue-500/30 overflow-hidden">
+        <div className="max-w-[1000px] mx-auto relative z-10 rounded-[3rem] p-16 md:p-24 text-center text-white shadow-2xl shadow-blue-500/30 overflow-hidden bg-black">
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -530,16 +530,16 @@ const HomePage = () => {
         <div className="max-w-[1200px] mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-12 mb-20">
             <div className="md:col-span-2">
-              <DelleLogo size={32} />
-              <p className="mt-6 text-lg text-muted-foreground max-w-xs leading-relaxed">
-                A primeira plataforma educacional de Angola potenciada por Inteligência Artificial.
+              <DelleLogo size={32} footerLogo={true} />
+              <p className="mt-6 text-muted-foreground max-w-xs leading-relaxed text-base">
+                A primeira com o super cérebro M5.7 capaz de gerar conteúdo em texto consistente 
               </p>
             </div>
             <div>
               <h4 className="font-bold text-foreground mb-6 uppercase tracking-widest text-xs">Produto</h4>
               <ul className="space-y-4 text-muted-foreground font-medium">
                 <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Funcionalidades</a></li>
-                <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Preços</a></li>
+                <li><a href="#" className="hover:text-[#3B82F6] transition-colors text-sm">Preços</a></li>
                 <li><a href="#" className="hover:text-[#3B82F6] transition-colors">Segurança</a></li>
               </ul>
             </div>
@@ -561,7 +561,7 @@ const HomePage = () => {
           </div>
           <div className="border-t border-border/20 pt-12 flex flex-col md:flex-row justify-between items-center gap-6 text-muted-foreground font-medium">
             <p>&copy; 2026 Delle. Todos os direitos reservados.</p>
-            <p>Feito com ❤️ em Angola.</p>
+            <p>Wizo</p>
           </div>
         </div>
       </footer>
