@@ -89,11 +89,11 @@ const AppSidebar = () => {
         className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
           isActive
             ? "bg-primary/10 text-primary"
-            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground shadow-apple-card-hover"
         }`}
       >
         <item.icon className={`h-4.5 w-4.5 flex-shrink-0 transition-colors ${isActive ? 'text-primary stroke-[2.5px]' : 'group-hover:text-foreground'}`} />
-        {!collapsed && <span className="truncate">{displayLabel}</span>}
+        {!collapsed && <span className="truncate text-black opacity-80">{displayLabel}</span>}
         {isActive && !collapsed && (
           <div className="absolute right-2 w-1 h-4 bg-primary rounded-full" />
         )}
@@ -112,7 +112,7 @@ const AppSidebar = () => {
           <div className="flex items-center gap-2.5 animate-in fade-in duration-300">
             <DelleLogo size={32} />
             <div className="flex flex-col">
-              <span className="text-sm font-bold tracking-tight">Doka</span>
+              <span className="text-sm font-bold tracking-tight">​</span>
               {isAdmin && (
                 <Badge variant="secondary" className="h-4 text-[9px] px-1 font-bold bg-primary/10 text-primary border-none">
                   MASTER
