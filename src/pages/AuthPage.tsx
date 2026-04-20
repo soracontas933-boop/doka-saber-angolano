@@ -153,11 +153,11 @@ const AuthPage = () => {
             transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="mb-8 invert brightness-0"><DelleLogo size={40} /></div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight leading-[1.1]">
+            <h2 className="text-4xl font-bold mb-6 tracking-tight leading-[1.1] md:text-sm">
               A sua jornada educacional inteligente começa aqui.
             </h2>
-            <p className="text-xl text-white/80 max-w-md font-medium">
-              Aceda às melhores ferramentas de IA adaptadas ao ensino em Angola.
+            <p className="text-white/80 max-w-md font-medium text-sm">
+              Aceda às melhores ferramentas de IA adaptadas ao ensino do seu país.
             </p>
           </motion.div>
         </div>
@@ -165,7 +165,7 @@ const AuthPage = () => {
 
       {/* Lado Direito: Formulário */}
       <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col relative bg-white dark:bg-[#0B0B0B]">
-        <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20">
+        <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20 bg-white">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -306,7 +306,7 @@ const AuthPage = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full h-14 rounded-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02]" disabled={loading}>
+              <Button type="submit" className="w-full h-14 rounded-full text-white text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] bg-black" disabled={loading}>
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
                 ) : null}
