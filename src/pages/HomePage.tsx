@@ -316,11 +316,11 @@ const HomePage = () => {
           </div>
 
           {/* Hero Stats - Small text at bottom */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12 border-t border-border/20 w-full">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-border/20 w-full py-0 pt-0">
             {content.stats.map((stat, i) => (
               <div key={i} className="text-center">
-                <div className="font-bold text-foreground mb-1 text-sm">{stat.value}</div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</div>
+                <div className="font-bold text-foreground mb-1 text-xs">{stat.value}</div>
+                <div className="uppercase tracking-widest text-muted-foreground text-xs font-thin">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -328,7 +328,7 @@ const HomePage = () => {
       </section>
 
       {/* Journey Section (3rd Section with Video Support) */}
-      <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden bg-white dark:bg-[#0B0B0B]">
+      <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden pt-0 bg-white">
         <div className="max-w-[1200px] mx-auto relative z-10">
           <div className={`grid grid-cols-1 ${ (sectionImages.section_image_journey || siteSettings.section_video_journey) ? 'lg:grid-cols-2' : ''} gap-20 items-center`}>
             <motion.div
@@ -341,18 +341,18 @@ const HomePage = () => {
                 <Sparkles className="h-3 w-3" />
                 Sua Evolução
               </div>
-              <h2 className="text-5xl md:text-7xl font-bold mb-10 text-foreground tracking-tight leading-[1.1]">
+              <h2 className="md:text-7xl font-bold mb-10 text-foreground tracking-tight leading-[1.1] text-3xl">
                 {content.journey?.title || "Sua Jornada, Sem Barreiras"}
               </h2>
               <div className="space-y-8 text-xl text-muted-foreground leading-relaxed mb-12">
-                <p className="relative pl-8 border-l-2 border-[#3B82F6]/30 text-lg">
+                <p className="relative pl-8 border-l-2 border-[#3B82F6]/30 text-base">
                   {content.journey?.text}
                 </p>
                 <div className="relative p-10 rounded-[2rem] border border-border/40 shadow-sm overflow-hidden group pt-[40px] bg-white">
                   <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                     <Users className="h-16 w-16 text-[#3B82F6]" />
                   </div>
-                  <p className="relative z-10 italic text-foreground/90 leading-relaxed font-medium text-sm">
+                  <p className="relative z-10 italic text-foreground/90 leading-relaxed font-medium text-xs">
                     "{content.journey?.story}"
                   </p>
                   <div className="mt-6 flex items-center gap-3 text-[#3B82F6] font-bold">
@@ -362,7 +362,7 @@ const HomePage = () => {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
-                <Button size="lg" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:shadow-apple-card-hover text-white rounded-full px-12 h-16 text-xl shadow-xl shadow-blue-500/20 transition-all hover:scale-105 bg-black" onClick={() => navigate("/auth")}>
+                <Button size="lg" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:shadow-apple-card-hover text-white rounded-full px-12 h-16 shadow-xl shadow-blue-500/20 transition-all hover:scale-105 bg-black text-sm" onClick={() => navigate("/auth")}>
                   {content.journey?.cta || "Começar Agora"} <ArrowRight className="h-6 w-6 ml-2" />
                 </Button>
                 <div className="flex -space-x-4">
@@ -419,8 +419,8 @@ const HomePage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground tracking-tight">Funcionalidades Poderosas</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
+              <h2 className="md:text-6xl font-bold mb-6 text-foreground tracking-tight text-xl">Funcionalidades Poderosas</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-sm">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
             </motion.div>
           </div>
 
