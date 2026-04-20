@@ -321,7 +321,7 @@ const UserHomePage = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.05 + i * 0.03 }}
               onClick={() => navigate(action.to)}
-              className="group relative overflow-hidden rounded-lg border border-border bg-card p-5 text-left transition-all duration-150 hover:border-primary"
+              className="group relative overflow-hidden rounded-lg border border-border bg-card p-5 text-left transition-all duration-150 hover:border-primary shadow-2xl"
             >
               <div className="inline-flex p-2.5 rounded-md bg-muted text-primary mb-3">
                 <action.icon className="h-5 w-5" />
@@ -334,7 +334,7 @@ const UserHomePage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-            className="rounded-lg border border-border bg-card p-6"
+            className="rounded-lg border border-border bg-card p-6 shadow-apple-card"
           >
             <div className="flex items-center gap-2 mb-4">
               <Zap className="h-4 w-4 text-primary" />
@@ -351,7 +351,7 @@ const UserHomePage = () => {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="rounded-lg border border-border bg-card p-6"
+            className="rounded-lg border border-border bg-card p-6 shadow-apple-card"
           >
             <div className="flex items-center gap-2 mb-4">
               <UsersRound className="h-4 w-4 text-primary" />
@@ -366,7 +366,7 @@ const UserHomePage = () => {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-            className="rounded-lg border border-border bg-card p-6"
+            className="rounded-lg border border-border bg-card p-6 shadow-apple-card"
           >
             <div className="flex items-center gap-2 mb-4">
               <FolderOpen className="h-4 w-4 text-primary" />

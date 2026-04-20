@@ -19,7 +19,7 @@ const DelleLogo = ({ size = 32, showText = true, footerLogo = false }: {size?: n
         
       </motion.div>
       {showText &&
-      <span className="font-display font-bold tracking-tight mr-[30px] rounded-lg shadow text-white" style={{ fontSize: size * 0.65 }}>
+      <span className="font-display font-bold tracking-tight mr-[30px] rounded-lg shadow text-black" style={{ fontSize: size * 0.65 }}>
           Delle  
         </span>
       }
