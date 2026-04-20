@@ -289,7 +289,7 @@ const UserHomePage = () => {
           {/* Aumentar Saldo */}
           <Button
             onClick={() => navigate("/planos")}
-            className="w-full mt-3 h-11 rounded-md font-normal text-sm bg-black shadow-glass"
+            className="w-full mt-3 h-11 rounded-md font-normal text-sm bg-black shadow-2xl"
           >
             Aumentar Saldo
           </Button>
