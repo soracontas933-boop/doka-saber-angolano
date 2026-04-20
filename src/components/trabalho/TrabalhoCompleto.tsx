@@ -64,7 +64,7 @@ const TrabalhoCompleto: React.FC<TrabalhoCompletoProps> = ({ conteudo, coverData
   }, [sections, editedSections, onContentChange]);
 
   return (
-    <div className="trabalho-completo" id="trabalho-completo" ref={containerRef}>
+    <div className="trabalho-completo shadow-apple-card" id="trabalho-completo" ref={containerRef}>
       {editable && <FloatingToolbar containerRef={containerRef} />}
 
       {/* PÁGINA 1 — CAPA */}
