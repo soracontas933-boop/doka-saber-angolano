@@ -91,20 +91,20 @@ const AdminLandingTab = () => {
       toast({ title: "Erro ao carregar secções", description: error.message, variant: "destructive" });
     } else {
       // Garantir que a estrutura de blocos existe para seções antigas
-      const normalizedData = (data || []).map(s => {
-        if (!s.conteudo.blocks) {
-          // Migração básica para seções antigas se necessário
+      const normalizedData = (data || []).map((s: any) => {
+        const conteudo = (typeof s.conteudo === 'object' && s.conteudo !== null) ? s.conteudo : {};
+        if (!conteudo.blocks) {
           return {
             ...s,
             conteudo: {
               blocks: [],
-              style: s.conteudo.style || { bg: "default", height: "auto" }
+              style: conteudo.style || { bg: "default", height: "auto" }
             }
           };
         }
-        return s;
+        return { ...s, conteudo };
       });
-      setSections(normalizedData);
+      setSections(normalizedData as any);
     }
     setLoading(false);
   }, []);
@@ -347,7 +347,7 @@ const AdminLandingTab = () => {
                     value={activeSection.conteudo.style.bg} 
                     onValueChange={(val) => setSections(prev => prev.map(s => s.id === activeSection.id ? { ...s, conteudo: { ...s.conteudo, style: { ...s.conteudo.style, bg: val } } } : s))}
                   >
-                    <SelectTrigger size="sm">
+                    <SelectTrigger className="h-8">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -549,7 +549,7 @@ const AdminLandingTab = () => {
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Animação</Label>
                     <div className="grid gap-3">
                       <Select value={selectedBlock.style.animation} onValueChange={(val) => updateBlockStyle(activeSection.id, selectedBlock.id, { animation: val })}>
-                        <SelectTrigger size="sm"><SelectValue placeholder="Tipo de animação" /></SelectTrigger>
+                        <SelectTrigger className="h-8"><SelectValue placeholder="Tipo de animação" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Nenhuma</SelectItem>
                           <SelectItem value="fade-up">Surgir (Cima)</SelectItem>

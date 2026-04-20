@@ -43,13 +43,15 @@ const ElementLibrary: React.FC<ElementLibraryProps> = ({ onAddElement }) => {
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden flex flex-col">
         <div className="mb-4">
-          <Input
-            placeholder="Pesquisar elementos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-8 text-xs"
-            prefix={<Search className="h-3 w-3" />}
-          />
+          <div className="relative">
+            <Search className="h-3 w-3 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar elementos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-8 text-xs pl-7"
+            />
+          </div>
         </div>
 
         <Tabs defaultValue="icons" className="flex-1 flex flex-col">

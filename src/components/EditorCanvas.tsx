@@ -196,7 +196,6 @@ const EditorCanvas: React.FC<EditorCanvasProps> = ({
       className={`relative w-full ${bgClass} border-2 border-dashed border-primary/20 rounded-lg overflow-hidden`}
       style={{
         minHeight: style.height || '500px',
-        backgroundColor: style.backgroundColor,
         backgroundImage: style.backgroundImage ? `url(${style.backgroundImage})` : undefined,
         backgroundSize: style.backgroundSize || 'cover',
         backgroundPosition: style.backgroundPosition || 'center',

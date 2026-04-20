@@ -139,7 +139,7 @@ const AuthPage = () => {
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-[#3B82F6]/10 to-transparent flex items-center justify-center">
-                <DelleLogo size={120} className="opacity-5" />
+                <div className="opacity-5"><DelleLogo size={120} /></div>
               </div>
             )}
             <div className="absolute inset-0 bg-black/10 dark:bg-black/40" />
@@ -152,7 +152,7 @@ const AuthPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <DelleLogo size={40} className="mb-8 invert brightness-0" />
+            <div className="mb-8 invert brightness-0"><DelleLogo size={40} /></div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight leading-[1.1]">
               A sua jornada educacional inteligente começa aqui.
             </h2>
