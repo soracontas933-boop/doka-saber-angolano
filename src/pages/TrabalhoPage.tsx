@@ -142,13 +142,7 @@ const TrabalhoPage = () => {
       const parsed = JSON.parse(jsonMatch[0]);
       if (!parsed.subtemas?.length) throw new Error("Estrutura vazia");
 
-      // Garantir ordem rigorosa: Introdução -> Capítulos -> Conclusão -> Bibliografia
-      const sortedSubtemas = [...parsed.subtemas].sort((a, b) => {
-        const order = { introducao: 0, capitulo: 1, conclusao: 2, bibliografia: 3 };
-        return order[a.tipo as keyof typeof order] - order[b.tipo as keyof typeof order];
-      });
-
-      const newSubtemas: Subtema[] = sortedSubtemas.map((s: { titulo: string; tipo: string; descricao?: string }) => ({
+      const newSubtemas: Subtema[] = parsed.subtemas.map((s: { titulo: string; tipo: string; descricao?: string }) => ({
         id: crypto.randomUUID(),
         titulo: s.titulo,
         tipo: s.tipo as Subtema["tipo"],
@@ -180,9 +174,9 @@ const TrabalhoPage = () => {
     setEtapa(`A gerar: ${sub.titulo}...`);
 
     try {
-      // Build context from previously generated subtemas to avoid duplication
+      // Build context from previously generated subtemas
       const capitulos = subtemas.filter((s) => s.status === "gerado" && s.id !== id);
-      const contexto = capitulos.map((s) => `${s.titulo}: ${s.conteudo.substring(0, 400)}`).join("\n\n");
+      const contexto = capitulos.map((s) => `${s.titulo}: ${s.conteudo.substring(0, 200)}`).join("\n");
 
       // Find bibliography content if already generated
       const bibSubtema = subtemas.find((s) => s.tipo === "bibliografia" && s.status === "gerado");
@@ -224,7 +218,7 @@ const TrabalhoPage = () => {
     }
   };
 
-  // Generate all pending subtemas sequentially
+  // Generate all pending subtemas sequentially (bibliography first for real citations)
   const handleGenerateAll = async () => {
     const pendentes = subtemas.filter((s) => s.status !== "gerado");
     if (pendentes.length === 0) {
@@ -239,129 +233,257 @@ const TrabalhoPage = () => {
     }
 
     // Then generate the rest in order
-    const restantes = subtemas.filter((s) => s.status !== "gerado");
+    const restantes = pendentes.filter((s) => s.id !== bibPendente?.id);
     for (const sub of restantes) {
       await handleGenerateOne(sub.id);
     }
   };
 
   // Phase 3: Compile
-  const handleCompile = async () => {
-    setLoading(true);
-    setEtapa("A compilar trabalho...");
+  const handleCompile = () => {
+    // Build full markdown from all subtemas
+    const sections = subtemas.map((s) => {
+      const tituloPrefix = s.tipo === "capitulo"
+        ? `## ${s.titulo}`
+        : s.tipo === "introducao"
+        ? "## Introdução"
+        : s.tipo === "conclusao"
+        ? "## Conclusão"
+        : "## Bibliografia";
+      return { titulo: tituloPrefix.replace("## ", ""), markdown: `${tituloPrefix}\n\n${s.conteudo}` };
+    });
 
-    try {
-      // Garantir a ordem final antes de compilar
-      const finalOrder = [...subtemas].sort((a, b) => {
-        const order = { introducao: 0, capitulo: 1, conclusao: 2, bibliografia: 3 };
-        const aOrder = order[a.tipo as keyof typeof order] ?? 1;
-        const bOrder = order[b.tipo as keyof typeof order] ?? 1;
-        return aOrder - bOrder;
-      });
+    // Generate Índice automatically with page numbers
+    // Page 1 = Capa, Page 2 = Índice, Pages 3+ = content sections
+    const indiceLinhas = sections.map((s, i) => `- ${s.titulo} .......... ${i + 3}`);
+    const indiceMarkdown = `## Índice\n\n${indiceLinhas.join("\n")}`;
 
-      // Build full markdown from all subtemas with strict sanitization
-      const sections = finalOrder.map((s) => {
-        const tituloPrefix = s.tipo === "capitulo"
-          ? `## ${s.titulo}`
-          : s.tipo === "introducao"
-          ? "## Introdução"
-          : s.tipo === "conclusao"
-          ? "## Conclusão"
-          : "## Bibliografia";
-        
-        // Sanitize content: remove control symbols and AI reflections
-        let sanitizedContent = s.conteudo
-          .replace(/^\s*[-]{3,}\s*$/gm, "")  // Remove --- separators
-          .replace(/^\s*[&]{4,}\s*$/gm, "")  // Remove &&&& symbols
-          .replace(/^\s*[\$]{5,}\s*$/gm, "") // Remove $$$$$ symbols
-          .trim();
-        
-        return `${tituloPrefix}\n\n${sanitizedContent}`;
-      });
+    const fullContent = [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n");
+    setResultadoCompilado(fullContent);
 
-      // Join sections WITHOUT separators (they cause visual artifacts)
-      const markdownCompilado = sections.join("\n\n");
-      
-      if (tipoCapa === "personalizada") {
-        setEtapa("A gerar imagem da capa...");
-        const imgRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: imagePrompts.capaTrabaho(tema, disciplina || "Geral") })
-        });
-        if (imgRes.ok) {
-          const data = await imgRes.json();
-          setCapaImageUrl(data.image_url);
-        }
-      }
+    // Generate cover image
+    if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
+      const imgUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
+      setCapaImageUrl(imgUrl);
+    }
 
-      // Final sanitization before storing
-      const finalSanitized = markdownCompilado
-        .replace(/^\s*[-]{3,}\s*$/gm, "")  // Remove any remaining separators
-        .replace(/^\s*[&]{4,}\s*$/gm, "")  // Remove any remaining &&&& symbols
-        .replace(/^\s*[\$]{5,}\s*$/gm, "") // Remove any remaining $$$$$ symbols
-        .replace(/\n{3,}/g, "\n\n")  // Normalize excessive line breaks
-        .trim();
-      
-      setResultadoCompilado(finalSanitized);
-      setFase("resultado");
-      await logUsage("trabalho", 1);
-      
-      // Save project with sanitized content
-      await saveProject({
-        tipo: "trabalho",
-        titulo: tema,
-        conteudo: finalSanitized,
-        metadata: { disciplina, classe, coverData: getCoverData() }
-      });
+    setFase("resultado");
+    toast.success("Trabalho compilado com sucesso!");
+    
+    // Log usage after successful compilation
+    logUsage("trabalho");
 
-      toast.success("Trabalho compilado com sucesso!");
-    } catch (err) {
-      console.error("Erro ao compilar:", err);
-      toast.error("Erro ao compilar o trabalho");
-    } finally {
-      setLoading(false);
-      setEtapa("");
+    saveProject("trabalho", tema || "Trabalho sem título", {
+      resultado: fullContent,
+      tema,
+      disciplina,
+      classe,
+      nomeEscola,
+      nomeDocente,
+      tipoTrabalho,
+    });
+  };
+
+  const handleBack = () => {
+    if (fase === "estrutura") {
+      setFase("formulario");
+    } else if (fase === "resultado") {
+      setFase("estrutura");
     }
   };
 
   return (
-    <div className="container max-w-4xl mx-auto py-6 px-4 pb-24 md:pb-12">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => fase === "formulario" ? window.history.back() : fase === "estrutura" ? setFase("formulario") : setFase("estrutura")} className="rounded-full">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Delle Trabalho</h1>
-          <p className="text-sm text-muted-foreground">Crie trabalhos escolares completos e profissionais</p>
+    <div className="p-3 sm:p-6 md:p-10 max-w-3xl mx-auto md:bg-background bg-background min-h-screen">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <div className="flex items-center gap-3 mb-4">
+          {fase !== "formulario" && (
+            <Button type="button" variant="ghost" size="icon" onClick={handleBack} className="mr-1 text-foreground">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+            <FileText className="h-4 w-4 md:h-5 md:w-5 text-secondary-foreground" />
+          </div>
+          <div>
+            <h1 className="text-base md:text-xl font-display font-bold text-foreground">Gerar Trabalho</h1>
+            <p className="text-[11px] md:text-sm text-muted-foreground">
+              {fase === "formulario" && "Preencha os dados e gere a estrutura"}
+              {fase === "estrutura" && "Edite os subtemas e gere o conteúdo"}
+              {fase === "resultado" && "Exporte em PDF ou Word"}
+            </p>
+          </div>
         </div>
-      </div>
+
+        {/* Step indicator */}
+        <div className="flex items-center gap-2 mb-4">
+          {(["formulario", "estrutura", "resultado"] as Fase[]).map((f, i) => (
+            <div key={f} className="flex items-center gap-2">
+              <div className={`h-2 w-2 rounded-full transition-colors ${
+                fase === f ? "bg-primary shadow-[0_0_6px_hsl(var(--primary))]" : i < ["formulario", "estrutura", "resultado"].indexOf(fase) ? "bg-primary/50" : "bg-border md:bg-border"
+              }`} />
+              {i < 2 && <div className="h-px w-6 md:w-8 bg-border md:bg-border" />}
+            </div>
+          ))}
+          <span className="text-[10px] md:text-xs text-muted-foreground ml-2">
+            Etapa {["formulario", "estrutura", "resultado"].indexOf(fase) + 1} de 3
+          </span>
+        </div>
+      </motion.div>
 
       {/* PHASE 1: FORM */}
       {fase === "formulario" && (
-        <motion.form initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleGenerateStructure} className="space-y-6">
-          {/* Identificação Básica */}
-          <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-4">
-            <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
-              Identificação do Trabalho
-            </h2>
-            
+        <motion.form
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          onSubmit={handleGenerateStructure}
+          className="space-y-4"
+        >
+          {/* Tema */}
+          <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="tema" className="text-foreground text-xs">Tema do Trabalho</Label>
+              <Label htmlFor="tema" className="text-foreground text-xs">Tema do Trabalho <span className="text-destructive">*</span></Label>
               <Input
                 id="tema"
-                placeholder="Ex: A Independência de Angola"
+                placeholder="Ex: A importância da água no ecossistema angolano"
                 value={tema}
                 onChange={(e) => setTema(e.target.value)}
-                className="bg-muted md:bg-background border-border md:border-input text-foreground h-11"
                 required
+                className="bg-muted md:bg-background border-border md:border-input text-foreground h-10"
               />
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
+          {/* Dados da Instituição */}
+          <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
+            <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
+              Dados da Instituição
+            </h2>
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-xs">Nome da Escola</Label>
+              <Input
+                placeholder="Ex: Instituto Médio de Economia"
+                value={nomeEscola}
+                onChange={(e) => setNomeEscola(e.target.value)}
+                className="bg-muted md:bg-background border-border md:border-input text-foreground h-10"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-xs">Logotipo</Label>
+              <label className="flex items-center gap-3 px-3 py-2.5 border border-dashed border-border md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 md:bg-accent/20">
+                <Upload className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-foreground block truncate">
+                    {logoEscola ? logoEscola.name : "Carregar Logotipo"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">Máx. 2MB</span>
+                </div>
+                <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+              </label>
+            </div>
+          </div>
+
+          {/* Dados do Aluno e Turma */}
+          <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
+            <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
+              Dados do Aluno e Turma
+            </h2>
+
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-xs">Modalidade</Label>
+              <Tabs value={modalidade} onValueChange={(v) => setModalidade(v as "individual" | "grupo")}>
+                <TabsList className="w-full bg-muted md:bg-muted">
+                  <TabsTrigger value="individual" className="flex-1 text-xs">Individual</TabsTrigger>
+                  <TabsTrigger value="grupo" className="flex-1 text-xs">Em Grupo</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {modalidade === "individual" ? (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-foreground text-xs">Nome do Aluno</Label>
+                  <Input placeholder="Nome completo" value={nomeAluno} onChange={(e) => setNomeAluno(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+                </div>
+                <div className="grid grid-cols-3 gap-2 md:grid-cols-2 md:gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-foreground text-xs">Nº</Label>
+                    <Input placeholder="01" value={numero} onChange={(e) => setNumero(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+                  </div>
+                  <div className="space-y-1.5 col-span-2 md:col-span-1">
+                    <Label className="text-foreground text-xs">Curso</Label>
+                    <Input placeholder="Ex: Mecânico" value={curso} onChange={(e) => setCurso(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-foreground text-xs">Integrantes</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-border md:border-input" onClick={() => adjustIntegrantes(numIntegrantes - 1)}>
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="text-[11px] font-medium w-12 text-center text-foreground">{numIntegrantes}</span>
+                    <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-border md:border-input" onClick={() => adjustIntegrantes(numIntegrantes + 1)}>
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  {nomesIntegrantes.map((nome, i) => (
+                    <Input key={i} placeholder={`Integrante ${i + 1}`} value={nome} onChange={(e) => updateIntegrante(i, e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-xs">Nome do Docente</Label>
+              <Input placeholder="Nome do professor(a)" value={nomeDocente} onChange={(e) => setNomeDocente(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 md:grid-cols-2 md:gap-4">
               <div className="space-y-1.5">
-                <Label className="text-foreground text-xs">Tipo de Trabalho</Label>
+                <Label className="text-foreground text-xs">Classe <span className="text-destructive">*</span></Label>
+                <Select value={classe} onValueChange={setClasse}>
+                  <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"><SelectValue placeholder="Classe" /></SelectTrigger>
+                  <SelectContent>
+                    {classesOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-foreground text-xs">Turma</Label>
+                <Input placeholder="A" value={turma} onChange={(e) => setTurma(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-foreground text-xs">Sala</Label>
+                <Input placeholder="12" value={sala} onChange={(e) => setSala(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 md:gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-foreground text-xs">Localidade</Label>
+                <Input value={localidade} onChange={(e) => setLocalidade(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-foreground text-xs">Ano Lectivo</Label>
+                <Input value={anoLectivo} onChange={(e) => setAnoLectivo(e.target.value)} className="bg-muted md:bg-background border-border md:border-input text-foreground h-10" />
+              </div>
+            </div>
+          </div>
+
+          {/* Configurações do Trabalho */}
+          <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
+            <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
+              Configurações
+            </h2>
+
+            <div className="grid grid-cols-3 gap-2 md:grid-cols-1 md:gap-4">
+              <div className="space-y-1.5 col-span-2 md:col-span-1">
+                <Label className="text-foreground text-xs">Tipo</Label>
                 <Select value={tipoTrabalho} onValueChange={setTipoTrabalho}>
                   <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -370,7 +492,7 @@ const TrabalhoPage = () => {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-foreground text-xs">Páginas (aprox.)</Label>
+                <Label className="text-foreground text-xs">Páginas</Label>
                 <div className="flex items-center gap-1">
                   <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-border md:border-input" onClick={() => setPaginas(Math.max(3, paginas - 1))}>
                     <Minus className="h-3 w-3" />
@@ -512,27 +634,13 @@ const TrabalhoPage = () => {
                 >
                   {editMode ? <><Eye className="h-3.5 w-3.5 mr-1" /> Ver</> : <><Pencil className="h-3.5 w-3.5 mr-1" /> Editar</>}
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => { 
-                  const sanitizedForCopy = resultadoCompilado
-                    .replace(/^\s*[-]{3,}\s*$/gm, "")
-                    .replace(/^\s*[&]{4,}\s*$/gm, "")
-                    .replace(/^\s*[\$]{5,}\s*$/gm, "")
-                    .trim();
-                  navigator.clipboard.writeText(sanitizedForCopy); 
-                  toast.success("Copiado!"); 
-                }}>
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => { navigator.clipboard.writeText(resultadoCompilado); toast.success("Copiado!"); }}>
                   <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
                 </Button>
                 <Button variant="outline" size="sm" className="h-8 text-xs" onClick={async () => {
                   try {
-                    // Final sanitization before export
-                    const sanitizedForExport = resultadoCompilado
-                      .replace(/^\s*[-]{3,}\s*$/gm, "")
-                      .replace(/^\s*[&]{4,}\s*$/gm, "")
-                      .replace(/^\s*[\$]{5,}\s*$/gm, "")
-                      .trim();
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
-                    await exportToWord(sanitizedForExport, nomeArquivo, getCoverData());
+                    await exportToWord(resultadoCompilado, nomeArquivo, getCoverData());
                     toast.success("Ficheiro Word exportado!");
                   } catch { toast.error("Erro ao exportar Word"); }
                 }}>
@@ -540,14 +648,8 @@ const TrabalhoPage = () => {
                 </Button>
                 <Button size="sm" className="h-8 text-xs" onClick={async () => {
                   try {
-                    // Final sanitization before export
-                    const sanitizedForExport = resultadoCompilado
-                      .replace(/^\s*[-]{3,}\s*$/gm, "")
-                      .replace(/^\s*[&]{4,}\s*$/gm, "")
-                      .replace(/^\s*[\$]{5,}\s*$/gm, "")
-                      .trim();
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
-                    await exportToPDF(sanitizedForExport, nomeArquivo, getCoverData());
+                    await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
                     toast.success("PDF exportado!");
                   } catch { toast.error("Erro ao exportar PDF"); }
                 }}>
@@ -564,7 +666,7 @@ const TrabalhoPage = () => {
 
           {/* Paginated A4 display */}
           <TrabalhoCompleto
-            conteudo={resultadoCompilado.replace(/^\s*[-]{3,}\s*$/gm, "").replace(/^\s*[&]{4,}\s*$/gm, "").replace(/^\s*[\$]{5,}\s*$/gm, "").trim()}
+            conteudo={resultadoCompilado}
             coverData={getCoverData()}
             capaImageUrl={capaImageUrl}
             editable={editMode}

@@ -100,6 +100,7 @@ async function callAI(
 }
 
 // ─── Geração de Conteúdo Principal ───────────────────────────────
+// No longer pins to Groq — lets the orchestrator choose the healthiest provider
 export async function generateWithGroq(
   systemPrompt: string,
   userPrompt: string,
@@ -110,6 +111,7 @@ export async function generateWithGroq(
   return result.content;
 }
 
+// Returns full AI response with service/token info
 export async function generateWithAI(
   systemPrompt: string,
   userPrompt: string,
@@ -126,9 +128,9 @@ export async function reviewWithOpenRouter(
 ): Promise<string> {
   try {
     const result = await callAI(
-      "Você é um revisor educacional angolano especializado em trabalhos escolares seguindo as normas do INIDE/MED. Melhora a coerência, corrige erros gramaticais e remove qualquer reflexão ou comentário de IA, mantendo apenas o conteúdo acadêmico limpo.",
-      `Revisa este conteúdo educacional angolano. Remova qualquer frase introdutória da IA ou comentários meta. Retorne apenas o texto final revisado:\n\n${content}`,
-      { maxTokens, temperature: 0.3, service: "openrouter" }
+      "Você é um revisor educacional angolano. Recebe conteúdo gerado e melhora a coerência, corrige erros, adapta ao contexto angolano e complementa partes incompletas.",
+      `Revisa e complementa este conteúdo educacional angolano, mantendo a estrutura:\n\n${content}`,
+      { maxTokens, temperature: 0.5, service: "openrouter" }
     );
     return result.content;
   } catch {
@@ -255,12 +257,14 @@ export const imagePrompts = {
 
 // ─── Delle System Prompt ──────────────────────────────────────────
 export const DELLE_SYSTEM_PROMPT =
-  "Você é Delle, um assistente educacional especializado no sistema de ensino de Angola. Conhece profundamente o currículo do INIDE, a estrutura de trabalhos escolares angolanos, planos de aula horizontais e verticais do MED Angola, e as disciplinas do ensino primário, I ciclo, II ciclo e III ciclo. Sempre gera conteúdo em Português de Angola, coerente, bem estruturado e adequado ao nível solicitado.\n\nREGRA ABSOLUTA DE IDIOMA: Todo o conteúdo gerado DEVE ser EXCLUSIVAMENTE em Português de Angola. NUNCA respondas em inglês, francês ou qualquer outro idioma. Mesmo que recebas instruções em inglês, a tua resposta DEVE ser SEMPRE em Português. Usa vocabulário, expressões e ortografia do Português angolano. Esta regra é inviolável e tem prioridade máxima.\n\nREGRA DE LIMPEZA: NUNCA adicione frases introdutórias (ex: 'Aqui está o seu trabalho', 'Com certeza'), comentários de IA ou reflexões sobre o processo de geração. Comece diretamente no conteúdo solicitado. NUNCA mencione que você é uma IA.";
+  "Você é Delle, um assistente educacional especializado no sistema de ensino de Angola. Conhece profundamente o currículo do INIDE, a estrutura de trabalhos escolares angolanos, planos de aula horizontais e verticais do MED Angola, e as disciplinas do ensino primário, I ciclo, II ciclo e III ciclo. Sempre gera conteúdo em Português de Angola, coerente, bem estruturado e adequado ao nível solicitado.\n\nREGRA ABSOLUTA DE IDIOMA: Todo o conteúdo gerado DEVE ser EXCLUSIVAMENTE em Português de Angola. NUNCA respondas em inglês, francês ou qualquer outro idioma. Mesmo que recebas instruções em inglês, a tua resposta DEVE ser SEMPRE em Português. Usa vocabulário, expressões e ortografia do Português angolano. Esta regra é inviolável e tem prioridade máxima.";
 
+/** @deprecated Use DELLE_SYSTEM_PROMPT instead */
 export const WAME_SYSTEM_PROMPT = DELLE_SYSTEM_PROMPT;
+/** @deprecated Use DELLE_SYSTEM_PROMPT instead */
 export const DOKA_SYSTEM_PROMPT = DELLE_SYSTEM_PROMPT;
 
-// ─── Module-Specific Prompts ───────────────────
+// ─── Module-Specific Prompts ─────────────────────────────────────
 export const prompts = {
   trabalho: (dados: {
     titulo: string;
@@ -274,16 +278,16 @@ export const prompts = {
     anoLectivo?: string;
     localidade?: string;
   }) =>
-    `Gera um trabalho escolar completo sobre '${dados.titulo}' para a disciplina de ${dados.disciplina}, ${dados.classe}, com ${dados.paginas} páginas. Tipo: ${dados.tipo}. Estrutura obrigatória angolana: Capa, Índice numerado, Introdução (contextualização + objectivos + justificativa), Desenvolvimento em capítulos, Conclusão, Bibliografia em normas APA. Conteúdo deve ser rico, educativo e adequado ao nível ${dados.classe} de Angola. Use referências reais. Comece direto no conteúdo, sem introduções de IA.`,
+    `Gera um trabalho escolar completo sobre '${dados.titulo}' para a disciplina de ${dados.disciplina}, ${dados.classe}, com ${dados.paginas} páginas. Tipo: ${dados.tipo}. Estrutura obrigatória angolana: Capa (com espaço para: ${dados.nomeAluno || "nome do aluno"}, ${dados.nomeEscola || "escola"}, disciplina: ${dados.disciplina}, professor: ${dados.nomeDocente || ""}, ano letivo ${dados.anoLectivo || "2025-2026"}, ${dados.localidade || "Luanda-Angola"}), Índice numerado, Introdução (contextualização + objectivos + justificativa), Desenvolvimento em ${Math.max(2, Math.floor(dados.paginas / 3))} capítulos com subcapítulos detalhados, Conclusão, Bibliografia em normas APA. Conteúdo deve ser rico, educativo e adequado ao nível ${dados.classe} de Angola. IMPORTANTE SOBRE CITAÇÕES E BIBLIOGRAFIA: Usa APENAS referências bibliográficas REAIS e VERIFICÁVEIS — livros, artigos e obras que existem de facto. Não inventes autores nem obras fictícias. Ao final de cada parágrafo da Introdução, Capítulos e Conclusão, inclui obrigatoriamente uma citação académica entre parênteses no formato (Apelido, Ano, p. X), por exemplo (Freire, 1996, p. 45) ou (Ki-Zerbo, 2010, p. 12). Os autores e obras DEVEM ser reais, publicados e relevantes ao tema. Prioriza autores africanos e lusófonos quando possível. RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA — nunca em inglês.`,
 
   resumo: (conteudo: string, classe: string, tipo: string) =>
-    `Com base neste conteúdo: ${conteudo}. Tipo de resumo: ${tipo}. Gera um resumo educativo para estudante angolano da ${classe} com tópicos, conceitos-chave, técnicas de memorização e flashcards JSON.`,
+    `Com base neste conteúdo extraído do caderno: ${conteudo}. Tipo de resumo solicitado: ${tipo}. Gera um resumo educativo para estudante angolano da ${classe} com: 1) Resumo principal em tópicos visuais com emojis educativos, 2) 5 conceitos-chave destacados, 3) 3 técnicas de memorização específicas para este conteúdo (mnemônicos, acrónimos ou histórias), 4) 10 flashcards no formato JSON: [{"frente": "pergunta", "verso": "resposta"}], 5) Mapa mental em texto estruturado com hierarquia.`,
 
   questionario: (conteudo: string, numPerguntas: number, classe: string, dificuldade: string, tipos: string) =>
-    `Com base neste conteúdo: ${conteudo}. Gera ${numPerguntas} perguntas para ${classe}, nível ${dificuldade}. Tipos: ${tipos}. Retorna JSON: { "perguntas": [...] }.`,
+    `Com base neste conteúdo: ${conteudo}. Gera ${numPerguntas} perguntas para ${classe}, nível ${dificuldade}. Tipos solicitados: ${tipos}. Retorna JSON: { "perguntas": [{ "id": number, "tipo": "string", "enunciado": "string", "opcoes": ["string"] ou null, "resposta_correta": "string", "explicacao": "string", "pontos": number }] }. Tipos disponíveis: multipla_escolha, verdadeiro_falso, resposta_curta, completar_espacos, correspondencia, dissertativa, ordenacao.`,
 
   planoVertical: (disciplina: string, classe: string, tema: string) =>
-    `Gera um Plano de Aula Vertical seguindo o modelo INIDE/MED Angola para: Disciplina: ${disciplina}, Classe: ${classe}, Tema: ${tema}.`,
+    `Gera um Plano de Aula Vertical completo seguindo o modelo INIDE/MED Angola para: Disciplina: ${disciplina}, Classe: ${classe}, Tema: ${tema}. Estrutura obrigatória: Dados de identificação, Tema e subtema, Objectivos específicos (3 a 5), Competências a desenvolver, Pré-requisitos, Conteúdos (conceptuais, procedimentais, atitudinais), Estratégias e metodologias, Recursos didácticos, Desenvolvimento da aula em fases (motivação + desenvolvimento + consolidação + avaliação) com tempo por fase, Avaliação formativa, Referências bibliográficas.`,
 
   planoHorizontal: (dados: {
     disciplina: string;
@@ -296,16 +300,97 @@ export const prompts = {
     objectivosEspecificos: string;
     tempo: string;
   }) =>
-    `Gera conteúdo das 3 fases didácticas de um Plano de Aula Horizontal INIDE/MED Angola. Disciplina: ${dados.disciplina}, Classe: ${dados.classe}, Unidade: ${dados.unidade}, Sumário: ${dados.sumario}. Retorna APENAS JSON.`,
+    `Gera o conteúdo das 3 fases didácticas de um Plano de Aula Horizontal no modelo INIDE/MED Angola.
+Disciplina: ${dados.disciplina}, Classe: ${dados.classe}, Unidade: ${dados.unidade}, Sumário: ${dados.sumario}.
+Perfil de entrada: ${dados.perfilEntrada}. Perfil de saída: ${dados.perfilSaida}.
+Objectivo geral: ${dados.objectivoGeral}. Objectivos específicos: ${dados.objectivosEspecificos}.
+Tempo total: ${dados.tempo || "45 min"}.
+
+Retorna APENAS JSON válido no seguinte formato (sem markdown, sem backticks):
+{
+  "fases": [
+    {
+      "tempo": "5min",
+      "fase": "Introdução",
+      "conteudo": "...",
+      "metodos": "- Diálogo",
+      "actividades": "...",
+      "estrategia": "...",
+      "meios": "- Quadro\\n- Giz",
+      "avaliacao": "Diagnostica",
+      "obs": ""
+    },
+    {
+      "tempo": "30min",
+      "fase": "Desenvolvimento",
+      "conteudo": "...",
+      "metodos": "- Expositivo\\n- Explicativo\\n- Elaboração conjunta",
+      "actividades": "...",
+      "estrategia": "...",
+      "meios": "...",
+      "avaliacao": "Formativa",
+      "obs": ""
+    },
+    {
+      "tempo": "10min",
+      "fase": "Conclusão",
+      "conteudo": "...",
+      "metodos": "Trabalho independente",
+      "actividades": "...",
+      "estrategia": "...",
+      "meios": "...",
+      "avaliacao": "Formativa",
+      "obs": ""
+    }
+  ]
+}
+O conteúdo deve ser detalhado, rico e contextualizado à realidade angolana. Cada campo deve ter conteúdo substancial.`,
 
   correcaoExtrair: (conteudo: string) =>
-    `Analisa este trabalho escolar e extrai conteúdo em JSON estruturado: { "capa": {}, "introducao": "", "capitulos": [], "conclusao": "", "bibliografia": [] }\n\nConteúdo:\n${conteudo}`,
+    `És um assistente educacional especializado no sistema de ensino de Angola (INIDE/MED). Analisa este trabalho escolar e extrai TODO o conteúdo em JSON estruturado: { "capa": { "titulo": "", "nome_aluno": "", "escola": "", "disciplina": "", "classe": "", "turma": "", "numero": "", "orientador": "", "ano_letivo": "", "local": "" }, "indice": null, "introducao": "", "capitulos": [{ "numero": 1, "titulo": "", "subcapitulos": [{ "numero": "1.1", "titulo": "", "conteudo": "" }] }], "conclusao": "", "bibliografia": [""], "problemas_estruturais": [""], "paginas_total": 0 }\n\nConteúdo do trabalho:\n${conteudo}`,
 
   correcaoAnalisar: (conteudo: string) =>
-    `Analisa este trabalho e identifica problemas em JSON: { "problemas": [...] }. Verifica CAPA, ÍNDICE, ESTRUTURA, INTRODUÇÃO, DESENVOLVIMENTO, CONCLUSÃO e BIBLIOGRAFIA.`,
+    `Analisa este trabalho escolar extraído e identifica TODOS os problemas.
+Conteúdo do trabalho: ${conteudo}
+
+Verifica obrigatoriamente e retorna em JSON:
+{
+  "problemas": [
+    {
+      "id": 1,
+      "categoria": "grave|moderado|conteudo|formatacao",
+      "titulo": "",
+      "descricao": "",
+      "localizacao": "",
+      "sugestao_correcao": "",
+      "prioridade": 1
+    }
+  ],
+  "pontuacao_actual": 0,
+  "pontuacao_estimada_apos_correcao": 0,
+  "resumo_geral": "",
+  "nivel_trabalho": "fraco|suficiente|bom|muito_bom|excelente"
+}
+
+Verifica: CAPA (campos completos), ÍNDICE (existência e numeração), ESTRUTURA (paginação, numeração de capítulos/subcapítulos), INTRODUÇÃO (contextualização, objectivos geral e específicos, justificativa, metodologia, estrutura do trabalho, 1-2 páginas), DESENVOLVIMENTO (mín 2 capítulos, profundidade, sem repetição, exemplos), CONCLUSÃO (retoma objectivos, síntese crítica, perspectivas futuras), BIBLIOGRAFIA (mín 5 referências APA, fontes angolanas), FORMATAÇÃO (fonte, espaçamento, margens, linguagem académica).`,
 
   correcaoGerar: (original: string, problemas: string, dadosCapa: string) =>
-    `Corrige e melhora este trabalho seguindo normas INIDE/MED Angola. Trabalho original: ${original}. Problemas: ${problemas}. Retorna JSON estruturado.`,
+    `Com base neste trabalho original e nos problemas identificados, gera uma versão COMPLETAMENTE CORRIGIDA E MELHORADA.
+
+Trabalho original: ${original}
+Problemas identificados: ${problemas}
+Dados do aluno: ${dadosCapa}
+
+Corrige e melhora TUDO seguindo normas INIDE/MED Angola. Usa APENAS referências bibliográficas REAIS e VERIFICÁVEIS.
+Retorna em JSON:
+{
+  "capa": { "titulo": "", "nome_aluno": "", "escola": "", "numero": "", "sala": "", "turma": "", "curso": "", "disciplina": "", "classe": "", "orientador": "", "ano_letivo": "", "local": "", "data": "" },
+  "indice": [{ "secao": "", "pagina": 1 }],
+  "introducao": { "contextualizacao": "", "objetivo_geral": "", "objetivos_especificos": [""], "justificativa": "", "metodologia": "", "estrutura_trabalho": "" },
+  "capitulos": [{ "numero": 1, "titulo": "", "subcapitulos": [{ "numero": "1.1", "titulo": "", "conteudo": "" }] }],
+  "conclusao": { "sintese": "", "reflexao_critica": "", "perspectivas_futuras": "" },
+  "bibliografia": [{ "referencia": "" }]
+}`,
 
   estruturaTrabalho: (dados: {
     titulo: string;
@@ -314,7 +399,7 @@ export const prompts = {
     paginas: number;
     tipo: string;
   }) =>
-    `Para o tema "${dados.titulo}", disciplina ${dados.disciplina}, ${dados.classe}, sugere uma estrutura de subtemas para o desenvolvimento. Retorna APENAS JSON: { "subtemas": [ { "titulo": "string", "tipo": "introducao|capitulo|conclusao|bibliografia", "descricao": "..." } ] }. A estrutura deve ser rigorosa: Introdução, Capítulos, Conclusão e Bibliografia.`,
+    `Para o tema "${dados.titulo}", disciplina ${dados.disciplina}, ${dados.classe}, tipo ${dados.tipo}, com aproximadamente ${dados.paginas} páginas, sugere uma estrutura de subtemas/capítulos para o desenvolvimento do trabalho. Retorna APENAS um JSON válido no formato: { "subtemas": [ { "titulo": "string", "tipo": "introducao|capitulo|conclusao|bibliografia", "descricao": "breve descrição do conteúdo esperado" } ] }. A estrutura deve incluir: Introdução, ${Math.max(2, Math.floor(dados.paginas / 2))} capítulos de desenvolvimento relevantes ao tema no contexto angolano, Conclusão e Bibliografia. Não incluas Capa nem Índice.`,
 
   subtema: (dados: {
     temaGeral: string;
@@ -335,56 +420,17 @@ export const prompts = {
       : `\n\nREFERÊNCIAS REAIS DISPONÍVEIS (usa APENAS estas para citações — NÃO inventes outras):\n${refsTexto}`;
     
     const instrucoes: Record<string, string> = {
-      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". 
-
-EXIGÊNCIAS OBRIGATÓRIAS:
-- TAMANHO MÍNIMO: 1500 caracteres (não negociável)
-- CONTEÚDO: contextualização profunda, objectivos detalhados (geral + específicos), justificativa robusta e metodologia
-- CITAÇÕES: ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida
-- LIMPEZA: NÃO adicione frases introdutórias ("Aqui está...", "Vou gerar..."), comentários de IA ou reflexões sobre o processo
-- FORMATO: apenas conteúdo académico limpo em markdown, sem símbolos estranhos (---, &&&, $$$)
-
-REFERÊNCIAS PARA CITAÇÃO:
-${bibRef}`,
-      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". 
-
-EXIGÊNCIAS OBRIGATÓRIAS:
-- CONTEÚDO: denso, rico, educativo, com subcapítulos e contextualizado a Angola
-- CITAÇÕES: ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida
-- LIMPEZA: NÃO adicione frases introdutórias, comentários de IA ou reflexões
-- FORMATO: apenas conteúdo académico limpo em markdown, sem símbolos estranhos
-- FOCO: mantenha o foco exclusivo no tema do capítulo, não antecipe conclusões
-
-REFERÊNCIAS PARA CITAÇÃO:
-${bibRef}`,
-      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". 
-
-EXIGÊNCIAS OBRIGATÓRIAS E ABSOLUTAS:
-- CONTEÚDO: APENAS considerações finais, síntese das constatações, conselhos práticos e perspectivas futuras
-- PROIBIDO: NUNCA repita a introdução, NUNCA adicione novos temas de desenvolvimento, NUNCA inclua histórico ou conceitos básicos
-- CITAÇÕES: ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida
-- LIMPEZA: NÃO adicione frases introdutórias, comentários de IA ou reflexões
-- FORMATO: apenas conteúdo académico limpo em markdown, sem símbolos estranhos
-- ESTRUTURA: parágrafos curtos e focados, sem repetição de secções anteriores
-
-REFERÊNCIAS PARA CITAÇÃO:
-${bibRef}`,
-      bibliografia: `Selecciona 5-8 referências da lista abaixo e formata em APA. Retorna APENAS as referências formatadas, sem comentários ou explicações.\n\nREFERÊNCIAS DISPONÍVEIS:\n${refsTexto}`,
+      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, objectivos do trabalho (geral e específicos), justificativa/importância do tema, e metodologia utilizada. Deve ter pelo menos 2-3 parágrafos bem desenvolvidos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
+      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 3-4 parágrafos densos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
+      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais abordados nos capítulos, apresenta as principais constatações, e sugere recomendações ou perspectivas futuras. Deve ter 2-3 parágrafos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
+      bibliografia: `Selecciona 5-8 referências da lista abaixo que sejam mais relevantes para o trabalho sobre "${dados.temaGeral}" na disciplina ${dados.disciplina}, ${dados.classe}. NÃO INVENTES nenhuma referência — usa APENAS as que estão nesta lista. Formata cada uma em APA.\n\nREFERÊNCIAS DISPONÍVEIS (escolhe apenas destas):\n${refsTexto}`,
     };
     const tipo = dados.tipoSubtema as keyof typeof instrucoes;
-    const basePrompt = instrucoes[tipo] || instrucoes.capitulo;
-    return `${basePrompt}
-
-INSTRUÇÕES FINAIS CRÍTICAS:
-- Retorna APENAS o conteúdo em markdown (sem títulos # ou ##)
-- NÃO adicione comentários de IA, reflexões ou frases introdutórias
-- NÃO use símbolos de controle (---, &&&, $$$, etc.)
-- RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA
-- Conteúdo deve ser limpo, profissional e académico
-- Se for introdução, GARANTA que tem MÍNIMO 1500 caracteres`;
+    return `${instrucoes[tipo] || instrucoes.capitulo} Disciplina: ${dados.disciplina}, Nível: ${dados.classe}. ${dados.contexto ? `Contexto dos capítulos anteriores: ${dados.contexto}` : ""} Retorna APENAS o conteúdo em markdown (sem título de nível 1 ou 2, começa directo no texto). RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA — nunca em inglês.`;
   },
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
