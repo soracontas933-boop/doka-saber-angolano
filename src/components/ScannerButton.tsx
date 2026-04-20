@@ -68,7 +68,7 @@ const ScannerButton = () => {
         className="p-2 rounded-full hover:bg-muted/50 transition-colors"
         title="Escanear conteúdo"
       >
-        <ScanFace className="lucide lucide-camera h-5 w-5 bg-black text-primary-foreground" />
+        <ScanFace className="lucide lucide-scan-face lucide lucide-camera h-5 w-5 bg-white text-black" />
       </button>
 
       <input

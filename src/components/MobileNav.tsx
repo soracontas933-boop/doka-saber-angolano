@@ -27,7 +27,7 @@ const MobileNav = () => {
               <div className={`p-1 rounded-full transition-all duration-300 ${isActive ? 'bg-primary/10' : 'bg-transparent'}`}>
                 <item.icon
                   className={`h-5.5 w-5.5 transition-all duration-300 ${
-                    isActive ? "text-primary stroke-[2.5px]" : "text-muted-foreground stroke-[1.5px]"
+                    isActive ? "text-primary stroke-[2.5px]" : "text-muted-foreground stroke-[1.5px] shadow-glass"
                   }`}
                 />
               </div>
