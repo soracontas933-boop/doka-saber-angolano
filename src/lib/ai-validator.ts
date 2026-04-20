@@ -12,7 +12,58 @@ export interface ValidationResult {
 }
 
 /**
- * Corrige erros comuns de formatação Markdown.
+ * Remove reflexões da IA e frases de conversação (meta-talk).
+ */
+export function removeAiReflections(content: string): string {
+  let fixed = content;
+
+  // 1. Remover frases comuns de introdução/conclusão da própria IA
+  const metaPhrases = [
+    /Aqui está o conteúdo solicitado[:.]?/gi,
+    /Claro, vou gerar o conteúdo[:.]?/gi,
+    /Espero que este trabalho ajude[:.]?/gi,
+    /Este conteúdo foi gerado no contexto[:.]?/gi,
+    /Como assistente de IA, meu objetivo é[:.]?/gi,
+    /Tenha em mente que este é um rascunho[:.]?/gi,
+    /Se precisar de mais alguma coisa, estou à disposição[:.]?/gi,
+    /Com base nas diretrizes do INIDE[:.]?/gi,
+    /Este texto foi elaborado em conformidade com[:.]?/gi,
+    /Note que as referências são reais[:.]?/gi,
+  ];
+
+  metaPhrases.forEach(phrase => {
+    fixed = fixed.replace(phrase, "");
+  });
+
+  // 2. Remover blocos que parecem a IA conversando consigo mesma (ex: "Entendido. Vou focar em...")
+  fixed = fixed.replace(/^(Entendido|Certo|Compreendo|Perfeito)\..*$/gm, "");
+
+  return fixed.trim();
+}
+
+/**
+ * Corrigir duplicidade de conteúdo (parágrafos idênticos ou muito similares).
+ */
+export function removeDuplicateParagraphs(content: string): string {
+  const paragraphs = content.split(/\n\s*\n/);
+  const uniqueParagraphs: string[] = [];
+  const seenNormalized = new Set<string>();
+
+  for (const p of paragraphs) {
+    const normalized = p.trim().toLowerCase().replace(/[^\w\s]/g, "").substring(0, 100);
+    if (normalized.length > 10 && !seenNormalized.has(normalized)) {
+      uniqueParagraphs.push(p);
+      seenNormalized.add(normalized);
+    } else if (normalized.length <= 10) {
+      uniqueParagraphs.push(p);
+    }
+  }
+
+  return uniqueParagraphs.join("\n\n");
+}
+
+/**
+ * Corrigir erros comuns de formatação Markdown.
  */
 export function fixMarkdownErrors(content: string): string {
   let fixed = content;
@@ -38,7 +89,6 @@ export function fixMarkdownErrors(content: string): string {
 
 /**
  * Deteta se o conteúdo contém "linguagem estranha" ou sem sentido.
- * Baseia-se em padrões de repetição excessiva ou caracteres não esperados.
  */
 export function detectStrangeLanguage(content: string): string[] {
   const errors: string[] = [];
@@ -50,7 +100,7 @@ export function detectStrangeLanguage(content: string): string[] {
   }
 
   // 2. Detetar sequências de caracteres sem sentido (ex: "asdfasdfasdf")
-  const gibberishMatch = content.match(/[bcdfghjklmnpqrstvwxyz]{10,}/gi);
+  const gibberishMatch = content.match(/[bcdfghjklmnpqrstvwxyz]{12,}/gi);
   if (gibberishMatch) {
     errors.push("Sequência de caracteres sem sentido detetada.");
   }
@@ -95,14 +145,18 @@ export async function validateAndCorrectContent(
   let currentContent = content;
   const errors: string[] = [];
 
-  // Passo 1: Correções rápidas de formatação (Regex)
+  // Passo 1: Limpeza de reflexões da IA e duplicações
+  currentContent = removeAiReflections(currentContent);
+  currentContent = removeDuplicateParagraphs(currentContent);
+
+  // Passo 2: Correções rápidas de formatação (Regex)
   currentContent = fixMarkdownErrors(currentContent);
 
-  // Passo 2: Detecção de anomalias de linguagem
+  // Passo 3: Detecção de anomalias de linguagem
   const languageErrors = detectStrangeLanguage(currentContent);
   errors.push(...languageErrors);
 
-  // Passo 3: Validação de contexto
+  // Passo 4: Validação de contexto
   const contextErrors = validateAngolanContext(currentContent, prompt);
   errors.push(...contextErrors);
 
@@ -110,9 +164,9 @@ export async function validateAndCorrectContent(
   if (errors.length > 0 && reGenerateFn) {
     console.warn("Erros detetados no conteúdo. Tentando re-geração/correção via IA...", errors);
     try {
-      // Podemos pedir à IA para especificamente corrigir os erros detetados
       const correctionPrompt = `O conteúdo seguinte foi gerado mas contém erros: ${errors.join(", ")}. 
-      Por favor, reescreva o conteúdo corrigindo estes problemas, mantendo o formato Markdown e o contexto angolano:
+      Por favor, reescreva o conteúdo corrigindo estes problemas, mantendo o formato Markdown e o contexto angolano. 
+      NÃO adicione comentários nem reflexões de IA, apenas o conteúdo limpo:
       
       ${currentContent}`;
       
@@ -120,7 +174,7 @@ export async function validateAndCorrectContent(
       if (fixed && fixed.length > 100) {
         return {
           isValid: true,
-          fixedContent: fixMarkdownErrors(fixed),
+          fixedContent: removeAiReflections(fixMarkdownErrors(fixed)),
           errors: []
         };
       }
