@@ -411,20 +411,20 @@ const HomePage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="relative w-full py-32 px-6 md:px-12 bg-[#F5F5F7] dark:bg-[#0B0B0B]/50">
+      <section className="relative w-full py-16 sm:py-32 px-4 sm:px-6 md:px-12 bg-[#F5F5F7] dark:bg-[#0B0B0B]/50">
         <div className="max-w-[1200px] mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-10 sm:mb-20">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="md:text-6xl font-bold mb-6 text-foreground tracking-tight text-xl">Funcionalidades Poderosas</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-sm">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
+              <h2 className="text-2xl sm:text-3xl md:text-6xl font-bold mb-4 sm:mb-6 text-foreground tracking-tight">Funcionalidades Poderosas</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {content.features.map((feature, i) => (
               <motion.div
                 key={i}
@@ -432,21 +432,21 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-10 rounded-[2rem] border transition-all duration-500 group shadow-2xl bg-white border-neutral-950"
+                className="p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border transition-all duration-500 group shadow-2xl bg-white border-neutral-950"
               >
-                <div className="p-4 rounded-2xl bg-[#3B82F6]/10 w-fit mb-8 group-hover:bg-[#3B82F6]/20 transition-colors">
-                  {feature.icon === "FileText" && <FileText className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "BookOpen" && <BookOpen className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "HelpCircle" && <HelpCircle className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "ClipboardList" && <ClipboardList className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "Lightbulb" && <Lightbulb className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "Shield" && <Shield className="h-8 w-8 text-[#3B82F6]" />}
+                <div className="p-3 sm:p-4 rounded-2xl bg-[#3B82F6]/10 w-fit mb-5 sm:mb-8 group-hover:bg-[#3B82F6]/20 transition-colors">
+                  {feature.icon === "FileText" && <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "BookOpen" && <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "HelpCircle" && <HelpCircle className="h-6 w-6 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "ClipboardList" && <ClipboardList className="h-6 w-6 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "Lightbulb" && <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "Shield" && <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-[#3B82F6]" />}
                 </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <h3 className="text-2xl font-bold text-foreground">{feature.title}</h3>
-                  <Badge variant="secondary" className="bg-[#3B82F6]/10 text-[#3B82F6] border-none text-[10px] uppercase tracking-widest font-bold">{feature.badge}</Badge>
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
+                  <h3 className="text-lg sm:text-2xl font-bold text-foreground">{feature.title}</h3>
+                  <Badge variant="secondary" className="bg-[#3B82F6]/10 text-[#3B82F6] border-none text-[9px] sm:text-[10px] uppercase tracking-widest font-bold">{feature.badge}</Badge>
                 </div>
-                <p className="text-lg text-muted-foreground leading-relaxed">{feature.description}</p>
+                <p className="text-sm sm:text-lg text-muted-foreground leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -454,51 +454,51 @@ const HomePage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="relative w-full py-32 px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
+      <section className="relative w-full py-16 sm:py-32 px-4 sm:px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
         <div className="max-w-[1200px] mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-10 sm:mb-20">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground tracking-tight">Planos Simples</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Escolha o plano ideal para o seu sucesso académico</p>
+              <h2 className="text-2xl sm:text-3xl md:text-6xl font-bold mb-4 sm:mb-6 text-foreground tracking-tight">Planos Simples</h2>
+              <p className="text-sm sm:text-xl text-muted-foreground max-w-2xl mx-auto">Escolha o plano ideal para o seu sucesso académico</p>
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {content.pricing.filter(p => p.name !== "Gratuito" && p.name !== "Básico").map((plan, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {content.pricing.filter(p => p.name !== "Gratuito").map((plan, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className={`relative p-10 rounded-[2.5rem] border transition-all duration-500 flex flex-col bg-[#3B82F6]/5 shadow-2xl scale-105 z-10 border-neutral-950`}
+                className={`relative p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] border transition-all duration-500 flex flex-col shadow-2xl border-neutral-950 ${plan.popular ? 'bg-[#3B82F6]/5 lg:scale-105 z-10' : 'bg-white'}`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#3B82F6] text-white text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-full shadow-lg">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#3B82F6] text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] px-4 sm:px-6 py-1.5 sm:py-2 rounded-full shadow-lg whitespace-nowrap">
                     Mais Popular
                   </div>
                 )}
-                <h3 className="text-3xl font-bold mb-2 text-foreground">{plan.name}</h3>
-                <p className="text-muted-foreground mb-8 font-medium">{plan.description}</p>
-                <div className="mb-10">
-                  <span className="text-5xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground ml-2">/mês</span>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">{plan.name}</h3>
+                <p className="text-muted-foreground mb-5 sm:mb-6 font-medium text-xs sm:text-sm">{plan.description}</p>
+                <div className="mb-6 sm:mb-8">
+                  <span className="text-3xl sm:text-4xl font-bold text-foreground">{plan.price}</span>
+                  <span className="text-muted-foreground ml-2 text-xs sm:text-sm">/mês</span>
                 </div>
-                <ul className="space-y-5 mb-12 flex-1">
+                <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex-1">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-foreground/80 font-medium">
-                      <div className="mt-1 p-0.5 rounded-full bg-[#3B82F6]/20">
-                        <Check className="h-4 w-4 text-[#3B82F6]" />
+                    <li key={idx} className="flex items-start gap-2 sm:gap-3 text-foreground/80 font-medium text-xs sm:text-sm">
+                      <div className="mt-0.5 p-0.5 rounded-full bg-[#3B82F6]/20 shrink-0">
+                        <Check className="h-3 w-3 sm:h-4 sm:w-4 text-[#3B82F6]" />
                       </div>
-                      {feature}
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-                <Button className={`w-full h-14 rounded-full text-lg font-bold transition-all hover:scale-105 ${plan.popular ? 'bg-[#3B82F6] hover:bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-black border-border/60 hover:bg-secondary'}`} variant={plan.popular ? "default" : "outline"}>
+                <Button className={`w-full h-11 sm:h-12 rounded-full text-sm font-bold transition-all hover:scale-105 ${plan.popular ? 'bg-[#3B82F6] hover:bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-black border-border/60 hover:bg-secondary'}`} variant={plan.popular ? "default" : "outline"} onClick={() => navigate("/auth")}>
                   Começar Agora
                 </Button>
               </motion.div>
@@ -508,18 +508,18 @@ const HomePage = () => {
       </section>
 
       {/* CTA Final Section */}
-      <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden">
-        <div className="max-w-[1000px] mx-auto relative z-10 rounded-[3rem] p-16 md:p-24 text-center text-white shadow-2xl shadow-blue-500/30 overflow-hidden bg-black">
+      <section className="relative w-full py-16 sm:py-32 px-4 sm:px-6 md:px-12 overflow-hidden">
+        <div className="max-w-[1000px] mx-auto relative z-10 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-16 md:p-24 text-center text-white shadow-2xl shadow-blue-500/30 overflow-hidden bg-black">
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight">{content.cta.title}</h2>
-            <p className="text-xl md:text-2xl mb-12 text-white/80 max-w-2xl mx-auto font-medium">{content.cta.subtitle}</p>
-            <Button size="lg" className="bg-white text-[#3B82F6] hover:bg-white/90 rounded-full px-12 h-16 text-xl font-bold shadow-xl transition-all hover:scale-105" onClick={() => navigate("/auth")}>
-              {content.cta.buttonText} <ArrowRight className="h-6 w-6 ml-2" />
+            <h2 className="text-2xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-8 tracking-tight">{content.cta.title}</h2>
+            <p className="text-sm sm:text-xl md:text-2xl mb-6 sm:mb-12 text-white/80 max-w-2xl mx-auto font-medium">{content.cta.subtitle}</p>
+            <Button size="lg" className="bg-white text-[#3B82F6] hover:bg-white/90 rounded-full px-8 sm:px-12 h-12 sm:h-16 text-sm sm:text-xl font-bold shadow-xl transition-all hover:scale-105" onClick={() => navigate("/auth")}>
+              {content.cta.buttonText} <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6 ml-2" />
             </Button>
           </motion.div>
         </div>
