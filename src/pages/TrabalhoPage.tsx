@@ -259,7 +259,7 @@ const TrabalhoPage = () => {
         return aOrder - bOrder;
       });
 
-      // Build full markdown from all subtemas
+      // Build full markdown from all subtemas with strict sanitization
       const sections = finalOrder.map((s) => {
         const tituloPrefix = s.tipo === "capitulo"
           ? `## ${s.titulo}`
@@ -268,10 +268,19 @@ const TrabalhoPage = () => {
           : s.tipo === "conclusao"
           ? "## Conclusão"
           : "## Bibliografia";
-        return `${tituloPrefix}\n\n${s.conteudo}`;
+        
+        // Sanitize content: remove control symbols and AI reflections
+        let sanitizedContent = s.conteudo
+          .replace(/^\s*[-]{3,}\s*$/gm, "")  // Remove --- separators
+          .replace(/^\s*[&]{4,}\s*$/gm, "")  // Remove &&&& symbols
+          .replace(/^\s*[\$]{5,}\s*$/gm, "") // Remove $$$$$ symbols
+          .trim();
+        
+        return `${tituloPrefix}\n\n${sanitizedContent}`;
       });
 
-      const markdownCompilado = sections.join("\n\n---\n\n");
+      // Join sections WITHOUT separators (they cause visual artifacts)
+      const markdownCompilado = sections.join("\n\n");
       
       if (tipoCapa === "personalizada") {
         setEtapa("A gerar imagem da capa...");
@@ -286,15 +295,23 @@ const TrabalhoPage = () => {
         }
       }
 
-      setResultadoCompilado(markdownCompilado);
+      // Final sanitization before storing
+      const finalSanitized = markdownCompilado
+        .replace(/^\s*[-]{3,}\s*$/gm, "")  // Remove any remaining separators
+        .replace(/^\s*[&]{4,}\s*$/gm, "")  // Remove any remaining &&&& symbols
+        .replace(/^\s*[\$]{5,}\s*$/gm, "") // Remove any remaining $$$$$ symbols
+        .replace(/\n{3,}/g, "\n\n")  // Normalize excessive line breaks
+        .trim();
+      
+      setResultadoCompilado(finalSanitized);
       setFase("resultado");
       await logUsage("trabalho", 1);
       
-      // Save project
+      // Save project with sanitized content
       await saveProject({
         tipo: "trabalho",
         titulo: tema,
-        conteudo: markdownCompilado,
+        conteudo: finalSanitized,
         metadata: { disciplina, classe, coverData: getCoverData() }
       });
 
@@ -495,13 +512,27 @@ const TrabalhoPage = () => {
                 >
                   {editMode ? <><Eye className="h-3.5 w-3.5 mr-1" /> Ver</> : <><Pencil className="h-3.5 w-3.5 mr-1" /> Editar</>}
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => { navigator.clipboard.writeText(resultadoCompilado); toast.success("Copiado!"); }}>
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => { 
+                  const sanitizedForCopy = resultadoCompilado
+                    .replace(/^\s*[-]{3,}\s*$/gm, "")
+                    .replace(/^\s*[&]{4,}\s*$/gm, "")
+                    .replace(/^\s*[\$]{5,}\s*$/gm, "")
+                    .trim();
+                  navigator.clipboard.writeText(sanitizedForCopy); 
+                  toast.success("Copiado!"); 
+                }}>
                   <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
                 </Button>
                 <Button variant="outline" size="sm" className="h-8 text-xs" onClick={async () => {
                   try {
+                    // Final sanitization before export
+                    const sanitizedForExport = resultadoCompilado
+                      .replace(/^\s*[-]{3,}\s*$/gm, "")
+                      .replace(/^\s*[&]{4,}\s*$/gm, "")
+                      .replace(/^\s*[\$]{5,}\s*$/gm, "")
+                      .trim();
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
-                    await exportToWord(resultadoCompilado, nomeArquivo, getCoverData());
+                    await exportToWord(sanitizedForExport, nomeArquivo, getCoverData());
                     toast.success("Ficheiro Word exportado!");
                   } catch { toast.error("Erro ao exportar Word"); }
                 }}>
@@ -509,8 +540,14 @@ const TrabalhoPage = () => {
                 </Button>
                 <Button size="sm" className="h-8 text-xs" onClick={async () => {
                   try {
+                    // Final sanitization before export
+                    const sanitizedForExport = resultadoCompilado
+                      .replace(/^\s*[-]{3,}\s*$/gm, "")
+                      .replace(/^\s*[&]{4,}\s*$/gm, "")
+                      .replace(/^\s*[\$]{5,}\s*$/gm, "")
+                      .trim();
                     const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
-                    await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
+                    await exportToPDF(sanitizedForExport, nomeArquivo, getCoverData());
                     toast.success("PDF exportado!");
                   } catch { toast.error("Erro ao exportar PDF"); }
                 }}>
@@ -527,7 +564,7 @@ const TrabalhoPage = () => {
 
           {/* Paginated A4 display */}
           <TrabalhoCompleto
-            conteudo={resultadoCompilado}
+            conteudo={resultadoCompilado.replace(/^\s*[-]{3,}\s*$/gm, "").replace(/^\s*[&]{4,}\s*$/gm, "").replace(/^\s*[\$]{5,}\s*$/gm, "").trim()}
             coverData={getCoverData()}
             capaImageUrl={capaImageUrl}
             editable={editMode}

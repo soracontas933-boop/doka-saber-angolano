@@ -41,6 +41,9 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
     // Skip capa-related lines (the capa is rendered separately)
     if (/^#{1,2}\s*Capa/i.test(trimmed)) continue;
 
+    // Skip control symbols and visual artifacts
+    if (/^[-]{3,}$|^[&]{4,}$|^[\$]{5,}$/.test(trimmed)) continue;
+
     let matched = false;
     for (const pattern of sectionPatterns) {
       const match = trimmed.match(pattern.regex);
@@ -62,14 +65,17 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
 
     if (!matched) {
       // If no current section, create an implicit one
-      if (!currentSection && trimmed) {
+      if (!currentSection && trimmed && !/^[-]{3,}$|^[&]{4,}$|^[\$]{5,}$/.test(trimmed)) {
         currentSection = {
           tipo: "introducao",
           titulo: "Introdução",
           conteudo: "",
         };
       }
-      currentLines.push(line);
+      // Only add line if it's not a control symbol
+      if (!/^[-]{3,}$|^[&]{4,}$|^[\$]{5,}$/.test(trimmed)) {
+        currentLines.push(line);
+      }
     }
   }
 

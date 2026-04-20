@@ -335,13 +335,53 @@ export const prompts = {
       : `\n\nREFERÊNCIAS REAIS DISPONÍVEIS (usa APENAS estas para citações — NÃO inventes outras):\n${refsTexto}`;
     
     const instrucoes: Record<string, string> = {
-      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". EXIGÊNCIA DE TAMANHO: O conteúdo deve ter NO MÍNIMO 1500 caracteres. Inclui: contextualização profunda do tema, objectivos detalhados (geral e específicos), justificativa robusta e metodologia. Ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
-      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Conteúdo denso, rico, educativo, com subcapítulos e contextualizado a Angola. Ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
-      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". REGRA CRUCIAL: A conclusão deve conter APENAS as considerações finais, síntese das constatações, conselhos práticos e perspectivas futuras para melhorar a área em Angola. NUNCA repita a introdução nem adicione novos temas de desenvolvimento. Ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
-      bibliografia: `Selecciona 5-8 referências da lista abaixo e formata em APA.\n\nREFERÊNCIAS DISPONÍVEIS:\n${refsTexto}`,
+      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". 
+
+EXIGÊNCIAS OBRIGATÓRIAS:
+- TAMANHO MÍNIMO: 1500 caracteres (não negociável)
+- CONTEÚDO: contextualização profunda, objectivos detalhados (geral + específicos), justificativa robusta e metodologia
+- CITAÇÕES: ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida
+- LIMPEZA: NÃO adicione frases introdutórias ("Aqui está...", "Vou gerar..."), comentários de IA ou reflexões sobre o processo
+- FORMATO: apenas conteúdo académico limpo em markdown, sem símbolos estranhos (---, &&&, $$$)
+
+REFERÊNCIAS PARA CITAÇÃO:
+${bibRef}`,
+      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". 
+
+EXIGÊNCIAS OBRIGATÓRIAS:
+- CONTEÚDO: denso, rico, educativo, com subcapítulos e contextualizado a Angola
+- CITAÇÕES: ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida
+- LIMPEZA: NÃO adicione frases introdutórias, comentários de IA ou reflexões
+- FORMATO: apenas conteúdo académico limpo em markdown, sem símbolos estranhos
+- FOCO: mantenha o foco exclusivo no tema do capítulo, não antecipe conclusões
+
+REFERÊNCIAS PARA CITAÇÃO:
+${bibRef}`,
+      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". 
+
+EXIGÊNCIAS OBRIGATÓRIAS E ABSOLUTAS:
+- CONTEÚDO: APENAS considerações finais, síntese das constatações, conselhos práticos e perspectivas futuras
+- PROIBIDO: NUNCA repita a introdução, NUNCA adicione novos temas de desenvolvimento, NUNCA inclua histórico ou conceitos básicos
+- CITAÇÕES: ao final de cada parágrafo, inclui uma citação académica (Apelido, Ano, p. X) usando APENAS autores da lista fornecida
+- LIMPEZA: NÃO adicione frases introdutórias, comentários de IA ou reflexões
+- FORMATO: apenas conteúdo académico limpo em markdown, sem símbolos estranhos
+- ESTRUTURA: parágrafos curtos e focados, sem repetição de secções anteriores
+
+REFERÊNCIAS PARA CITAÇÃO:
+${bibRef}`,
+      bibliografia: `Selecciona 5-8 referências da lista abaixo e formata em APA. Retorna APENAS as referências formatadas, sem comentários ou explicações.\n\nREFERÊNCIAS DISPONÍVEIS:\n${refsTexto}`,
     };
     const tipo = dados.tipoSubtema as keyof typeof instrucoes;
-    return `${instrucoes[tipo] || instrucoes.capitulo} Retorna APENAS o conteúdo em markdown (sem títulos # ou ##). NÃO adicione comentários de IA. RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA.`;
+    const basePrompt = instrucoes[tipo] || instrucoes.capitulo;
+    return `${basePrompt}
+
+INSTRUÇÕES FINAIS CRÍTICAS:
+- Retorna APENAS o conteúdo em markdown (sem títulos # ou ##)
+- NÃO adicione comentários de IA, reflexões ou frases introdutórias
+- NÃO use símbolos de controle (---, &&&, $$$, etc.)
+- RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA
+- Conteúdo deve ser limpo, profissional e académico
+- Se for introdução, GARANTA que tem MÍNIMO 1500 caracteres`;
   },
 };
 
