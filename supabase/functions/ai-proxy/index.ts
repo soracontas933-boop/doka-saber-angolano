@@ -27,10 +27,10 @@ const GROQ_MODELS = [
 ];
 
 const OPENROUTER_MODELS = [
-  "qwen/qwen3.6-plus:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "minimax/minimax-m2.5:free",
-  "stepfun/step-3.5-flash:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemini-2.0-flash-exp:free",
+  "deepseek/deepseek-chat-v3.1:free",
+  "qwen/qwen-2.5-72b-instruct:free",
 ];
 
 const CEREBRAS_MODELS = [
@@ -134,7 +134,7 @@ async function callGemini(messages: any[], apiKey: string, maxTokens: number, te
   const body: any = { contents, generationConfig: { maxOutputTokens: maxTokens, temperature } };
   if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction.content }] };
 
-  const res = await fetchWithTimeout(`${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+  const res = await fetchWithTimeout(`${GEMINI_URL}/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -437,8 +437,15 @@ serve(async (req) => {
       try {
         console.log(`→ ${svc} (${keyEntry.id.substring(0, 8)}...)`);
         const result = await callFn(messages, keyEntry.chave, max_tokens, temperature);
+
+        // Validate non-empty / non-trivial response
+        const respText = result?.choices?.[0]?.message?.content || "";
+        if (!respText || respText.trim().length < 50) {
+          throw new Error(`${svc} returned empty/short response (${respText.length} chars)`);
+        }
+
         await clearKeyCooldown(keyEntry.id);
-        console.log(`✓ ${svc} OK`);
+        console.log(`✓ ${svc} OK (${respText.length} chars)`);
 
         const tokensUsed = result?.usage?.total_tokens || result?.usage?.completion_tokens || result?.usage?.totalTokens || 0;
         return new Response(JSON.stringify({ ...result, service_used: svc, tokens_used: tokensUsed }), {
