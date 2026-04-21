@@ -3,10 +3,12 @@ export interface TrabalhoSection {
   titulo: string;
   conteudo: string;
   numero?: number;
+  ordemOriginal?: number;
 }
 
 /**
  * Parses AI-generated markdown into structured sections for paginated display.
+ * Aplica reordenação canónica: índice → introdução → capítulos → conclusão → bibliografia.
  */
 export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
   const sections: TrabalhoSection[] = [];
@@ -14,6 +16,7 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
 
   let currentSection: TrabalhoSection | null = null;
   let currentLines: string[] = [];
+  let ordemCounter = 0;
 
   const flushSection = () => {
     if (currentSection) {
@@ -38,7 +41,7 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Skip capa-related lines (the capa is rendered separately)
+    // Skip capa-related lines (capa is rendered separately)
     if (/^#{1,2}\s*Capa/i.test(trimmed)) continue;
 
     let matched = false;
@@ -49,11 +52,12 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
         const titulo = pattern.tipo === "capitulo"
           ? (match[2] || match[1] || trimmed.replace(/^#{1,2}\s*/, "")).trim()
           : pattern.tipo.charAt(0).toUpperCase() + pattern.tipo.slice(1);
-        
+
         currentSection = {
           tipo: pattern.tipo,
           titulo: titulo.replace(/\*\*/g, ""),
           conteudo: "",
+          ordemOriginal: ordemCounter++,
         };
         matched = true;
         break;
@@ -61,12 +65,12 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
     }
 
     if (!matched) {
-      // If no current section, create an implicit one
       if (!currentSection && trimmed) {
         currentSection = {
           tipo: "introducao",
           titulo: "Introdução",
           conteudo: "",
+          ordemOriginal: ordemCounter++,
         };
       }
       currentLines.push(line);
@@ -75,9 +79,48 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
 
   flushSection();
 
-  // Assign page numbers (capa=1, índice=2, then 3+)
+  // ─── Reordenação canónica ─────────────────────────────────────
+  // Ordem oficial: índice → introdução → capítulos (pela ordem original) → conclusão → bibliografia
+  const tipoOrder: Record<TrabalhoSection["tipo"], number> = {
+    indice: 0,
+    introducao: 1,
+    capitulo: 2,
+    conclusao: 3,
+    bibliografia: 4,
+  };
+
+  // Deduplicar (manter última ocorrência de cada tipo único exceto capítulos)
+  const dedupMap = new Map<string, TrabalhoSection>();
+  const capitulos: TrabalhoSection[] = [];
+  for (const s of sections) {
+    if (s.tipo === "capitulo") {
+      capitulos.push(s);
+    } else {
+      // mantém o mais longo se houver duplicado
+      const existing = dedupMap.get(s.tipo);
+      if (!existing || s.conteudo.length > existing.conteudo.length) {
+        dedupMap.set(s.tipo, s);
+      }
+    }
+  }
+
+  const ordered: TrabalhoSection[] = [];
+  if (dedupMap.has("indice")) ordered.push(dedupMap.get("indice")!);
+  if (dedupMap.has("introducao")) ordered.push(dedupMap.get("introducao")!);
+  // Capítulos: ordenar por número detectado no título, fallback para ordem original
+  capitulos.sort((a, b) => {
+    const numA = parseInt(a.titulo.match(/^(\d+)/)?.[1] || "", 10);
+    const numB = parseInt(b.titulo.match(/^(\d+)/)?.[1] || "", 10);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return (a.ordemOriginal ?? 0) - (b.ordemOriginal ?? 0);
+  });
+  ordered.push(...capitulos);
+  if (dedupMap.has("conclusao")) ordered.push(dedupMap.get("conclusao")!);
+  if (dedupMap.has("bibliografia")) ordered.push(dedupMap.get("bibliografia")!);
+
+  // Atribuir números de página DEPOIS da reordenação
   let pageNum = 3;
-  for (const section of sections) {
+  for (const section of ordered) {
     if (section.tipo === "indice") {
       section.numero = 2;
     } else {
@@ -85,7 +128,7 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
     }
   }
 
-  return sections;
+  return ordered;
 }
 
 /**
