@@ -507,6 +507,58 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* About Us Section (image full-height + text) */}
+      {siteSettings.section_about_enabled !== "false" && (siteSettings.section_about_image || siteSettings.section_about_text) && (
+        <section className="relative w-full bg-background overflow-hidden">
+          <div className={`grid grid-cols-1 lg:grid-cols-2 min-h-[600px] lg:min-h-[700px] ${
+            siteSettings.section_about_position === "right" ? "lg:[&>*:first-child]:order-1 lg:[&>*:last-child]:order-2" : ""
+          }`}>
+            {/* Image side — full height */}
+            <motion.div
+              initial={{ opacity: 0, scale: 1.05 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className={`relative w-full h-[400px] lg:h-auto min-h-full ${
+                siteSettings.section_about_position === "right" ? "lg:order-2" : "lg:order-1"
+              }`}
+            >
+              {siteSettings.section_about_image ? (
+                <img
+                  src={siteSettings.section_about_image}
+                  alt={siteSettings.section_about_title || "Sobre Nós"}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-[#3B82F6]/20 to-[#60A5FA]/20" />
+              )}
+            </motion.div>
+
+            {/* Text side */}
+            <motion.div
+              initial={{ opacity: 0, x: siteSettings.section_about_position === "right" ? -30 : 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className={`flex flex-col justify-center px-8 md:px-16 py-16 ${
+                siteSettings.section_about_position === "right" ? "lg:order-1" : "lg:order-2"
+              }`}
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold mb-6 border border-[#3B82F6]/20 w-fit">
+                <Sparkles className="h-3 w-3" />
+                Quem Somos
+              </div>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 text-foreground tracking-tight leading-[1.1]">
+                {siteSettings.section_about_title || "Sobre Nós"}
+              </h2>
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed whitespace-pre-line">
+                {siteSettings.section_about_text || ""}
+              </p>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
       {/* Pricing Section */}
       <section className="relative w-full py-32 px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
         <div className="max-w-[1200px] mx-auto">
