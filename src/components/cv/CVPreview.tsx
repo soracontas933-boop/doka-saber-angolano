@@ -1,39 +1,80 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { CVData, CVTemplate } from "@/types/cv";
+import { getTheme } from "@/lib/cv-themes";
 import CVTemplateModerno from "./templates/CVTemplateModerno";
 import CVTemplateClassico from "./templates/CVTemplateClassico";
 import CVTemplateMinimalista from "./templates/CVTemplateMinimalista";
+import CVTemplateExecutivo from "./templates/CVTemplateExecutivo";
+import CVTemplateCriativo from "./templates/CVTemplateCriativo";
+import CVTemplateCompacto from "./templates/CVTemplateCompacto";
+import CVTemplateElegante from "./templates/CVTemplateElegante";
+import CVTemplateTecnologico from "./templates/CVTemplateTecnologico";
 
 interface CVPreviewProps {
   data: CVData;
   template: CVTemplate;
+  themeId?: string;
 }
 
-const CVPreview: React.FC<CVPreviewProps> = ({ data, template }) => {
+// A4 at 96dpi: 794 x 1123 px
+const A4_WIDTH = 794;
+const A4_HEIGHT = 1123;
+
+const CVPreview: React.FC<CVPreviewProps> = ({ data, template, themeId = "navy" }) => {
+  const theme = getTheme(themeId);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  // Responsive scaling: fit A4 width to container width
+  useEffect(() => {
+    const update = () => {
+      if (!wrapperRef.current) return;
+      const containerWidth = wrapperRef.current.clientWidth;
+      const next = Math.min(1, (containerWidth - 8) / A4_WIDTH);
+      setScale(next);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    if (wrapperRef.current) ro.observe(wrapperRef.current);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
   const renderTemplate = () => {
     switch (template) {
-      case "moderno":
-        return <CVTemplateModerno data={data} />;
-      case "classico":
-        return <CVTemplateClassico data={data} />;
-      case "minimalista":
-        return <CVTemplateMinimalista data={data} />;
+      case "moderno": return <CVTemplateModerno data={data} theme={theme} />;
+      case "classico": return <CVTemplateClassico data={data} theme={theme} />;
+      case "minimalista": return <CVTemplateMinimalista data={data} theme={theme} />;
+      case "executivo": return <CVTemplateExecutivo data={data} theme={theme} />;
+      case "criativo": return <CVTemplateCriativo data={data} theme={theme} />;
+      case "compacto": return <CVTemplateCompacto data={data} theme={theme} />;
+      case "elegante": return <CVTemplateElegante data={data} theme={theme} />;
+      case "tecnologico": return <CVTemplateTecnologico data={data} theme={theme} />;
+      default: return <CVTemplateModerno data={data} theme={theme} />;
     }
   };
 
   return (
-    <div className="cv-preview-wrapper flex justify-center">
+    <div
+      ref={wrapperRef}
+      className="cv-preview-wrapper w-full flex justify-center"
+      style={{ height: A4_HEIGHT * scale + 16 }}
+    >
       <div
         className="bg-white shadow-xl"
         style={{
-          width: "210mm",
-          minHeight: "297mm",
-          transform: "scale(0.55)",
+          width: A4_WIDTH,
+          height: A4_HEIGHT,
+          transform: `scale(${scale})`,
           transformOrigin: "top center",
           fontFamily: "Arial, sans-serif",
           color: "#1a1a1a",
           fontSize: "11pt",
           lineHeight: 1.5,
+          overflow: "hidden",
         }}
       >
         {renderTemplate()}
