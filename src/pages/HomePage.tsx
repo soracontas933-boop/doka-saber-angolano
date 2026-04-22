@@ -348,11 +348,19 @@ const HomePage = () => {
 
           <AnimatedTitle />
 
-          <p className="text-lg max-w-2xl mx-auto mb-12 leading-relaxed text-muted-foreground/80 font-medium md:text-base">
+          <p className={`text-lg max-w-2xl mb-12 leading-relaxed text-muted-foreground/80 font-medium md:text-base ${
+            siteSettings.hero_text_align === "left" ? "" :
+            siteSettings.hero_text_align === "right" ? "ml-auto" :
+            "mx-auto"
+          }`}>
             Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aulas, profissionais com a melhor IA do mercado.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+          <div className={`flex flex-col sm:flex-row items-center gap-4 mb-20 ${
+            siteSettings.hero_text_align === "left" ? "justify-start" :
+            siteSettings.hero_text_align === "right" ? "justify-end" :
+            "justify-center"
+          }`}>
             <Button size="lg" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-10 h-14 text-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-105" onClick={() => navigate("/auth")}>
               Começar agora <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
