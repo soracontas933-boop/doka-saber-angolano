@@ -327,8 +327,8 @@ const HomePage = () => {
 
         {hasHeroImages && (
           carouselEnabled && heroImages.length > 1 ?
-            <HeroCarousel images={heroImages} /> :
-            <HeroSingle image={heroImages[0]} />)
+            <HeroCarousel items={heroImages} /> :
+            <HeroSingle item={heroImages[0]} />)
         }
 
         <motion.div
