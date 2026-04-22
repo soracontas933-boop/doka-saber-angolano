@@ -319,7 +319,11 @@ const HomePage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative px-6 md:px-12 pt-20 pb-32 max-w-7xl mx-auto text-center min-h-[90vh] flex flex-col justify-center items-center">
+      <section className={`relative px-6 md:px-12 pt-20 pb-32 max-w-7xl mx-auto min-h-[90vh] flex flex-col justify-center ${
+        siteSettings.hero_text_align === "left" ? "items-start text-left" :
+        siteSettings.hero_text_align === "right" ? "items-end text-right" :
+        "items-center text-center"
+      }`}>
         <div className="absolute inset-0 z-0 pointer-events-none opacity-50">
           <FloatingPaths position={1} />
           <FloatingPaths position={-1} />
