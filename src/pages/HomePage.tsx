@@ -174,6 +174,47 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
 const HeroSingle = ({ image }: { image: HeroImage }) =>
   <div className="absolute inset-0 overflow-hidden z-[5]">
     <img src={image.url} alt="Hero" className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
+const HeroCarousel = ({ items }: { items: HeroImage[] }) => {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const timer = setInterval(() => setCurrent((p) => (p + 1) % items.length), 7000);
+    return () => clearInterval(timer);
+  }, [items.length]);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden z-[5]">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={items[current]?.id}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8 }}
+          className="absolute inset-0 w-full h-full"
+        >
+          <HeroMediaItem item={items[current]} />
+        </motion.div>
+      </AnimatePresence>
+      <div className="absolute inset-0 z-[10] bg-black/[0.43]" />
+      {items.length > 1 &&
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
+          {items.map((_, i) =>
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-white scale-125" : "bg-white/40"}`} />
+          )}
+        </div>
+      }
+    </div>
+  );
+};
+
+const HeroSingle = ({ item }: { item: HeroImage }) =>
+  <div className="absolute inset-0 overflow-hidden z-[5]">
+    <HeroMediaItem item={item} />
     <div className="absolute inset-0 z-[10] bg-black/[0.43]" />
   </div>;
 
