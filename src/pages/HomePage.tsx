@@ -112,7 +112,7 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
           decoding="async"
           fetchPriority="high" />
       </AnimatePresence>
-      <div className="absolute inset-0 bg-black/40 dark:bg-black/70 z-[10]" />
+      <div className="absolute inset-0 z-[10] bg-black/[0.43]" />
       {images.length > 1 &&
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
           {images.map((_, i) =>
@@ -130,7 +130,7 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
 const HeroSingle = ({ image }: { image: HeroImage }) =>
   <div className="absolute inset-0 overflow-hidden z-[5]">
     <img src={image.url} alt="Hero" className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
-    <div className="absolute inset-0 bg-black/40 dark:bg-black/70 z-[10]" />
+    <div className="absolute inset-0 z-[10] bg-black/[0.43]" />
   </div>;
 
 const VideoEmbed = ({ url }: { url: string }) => {
