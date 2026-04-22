@@ -39,7 +39,51 @@ interface HeroImage {
   id: string;
   url: string;
   ordem: number;
+  tipo?: string;
+  video_url?: string | null;
 }
+
+const getYouTubeEmbed = (url: string) => {
+  if (!url) return url;
+  let videoId = "";
+  if (url.includes("youtube.com/watch?v=")) {
+    videoId = url.split("watch?v=")[1].split("&")[0];
+  } else if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  } else if (url.includes("youtube.com/embed/")) {
+    videoId = url.split("embed/")[1].split("?")[0];
+  }
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&modestbranding=1&playlist=${videoId}&rel=0&iv_load_policy=3&playsinline=1`;
+  }
+  return url;
+};
+
+const HeroMediaItem = ({ item }: { item: HeroImage }) => {
+  if (item.tipo === "video") {
+    const embed = getYouTubeEmbed(item.video_url || item.url);
+    return (
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        <iframe
+          src={embed}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[177.77vh] min-w-full h-[56.25vw] min-h-full pointer-events-none"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={item.url}
+      alt="Hero"
+      className="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+      decoding="async"
+      fetchPriority="high"
+    />
+  );
+};
 
 interface LandingContent {
   stats: Array<{ label: string; value: string; icon: string }>;
@@ -87,35 +131,33 @@ const AnimatedTitle = () => {
   );
 };
 
-const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
+const HeroCarousel = ({ items }: { items: HeroImage[] }) => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (images.length <= 1) return;
-    const timer = setInterval(() => setCurrent((p) => (p + 1) % images.length), 5000);
+    if (items.length <= 1) return;
+    const timer = setInterval(() => setCurrent((p) => (p + 1) % items.length), 7000);
     return () => clearInterval(timer);
-  }, [images.length]);
+  }, [items.length]);
 
   return (
     <div className="absolute inset-0 overflow-hidden z-[5]">
       <AnimatePresence mode="wait">
-        <motion.img
-          key={images[current]?.id}
-          src={images[current]?.url}
-          alt="Hero"
+        <motion.div
+          key={items[current]?.id}
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
-          className="absolute inset-0 w-full h-full object-cover"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high" />
+          className="absolute inset-0 w-full h-full"
+        >
+          <HeroMediaItem item={items[current]} />
+        </motion.div>
       </AnimatePresence>
       <div className="absolute inset-0 z-[10] bg-black/[0.43]" />
-      {images.length > 1 &&
+      {items.length > 1 &&
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-[20]">
-          {images.map((_, i) =>
+          {items.map((_, i) =>
             <button
               key={i}
               onClick={() => setCurrent(i)}
@@ -127,9 +169,9 @@ const HeroCarousel = ({ images }: { images: HeroImage[] }) => {
   );
 };
 
-const HeroSingle = ({ image }: { image: HeroImage }) =>
+const HeroSingle = ({ item }: { item: HeroImage }) =>
   <div className="absolute inset-0 overflow-hidden z-[5]">
-    <img src={image.url} alt="Hero" className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
+    <HeroMediaItem item={item} />
     <div className="absolute inset-0 z-[10] bg-black/[0.43]" />
   </div>;
 
@@ -277,7 +319,11 @@ const HomePage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative px-6 md:px-12 pt-20 pb-32 max-w-7xl mx-auto text-center min-h-[90vh] flex flex-col justify-center items-center">
+      <section className={`relative px-6 md:px-12 pt-20 pb-32 max-w-7xl mx-auto min-h-[90vh] flex flex-col justify-center ${
+        siteSettings.hero_text_align === "left" ? "items-start text-left" :
+        siteSettings.hero_text_align === "right" ? "items-end text-right" :
+        "items-center text-center"
+      }`}>
         <div className="absolute inset-0 z-0 pointer-events-none opacity-50">
           <FloatingPaths position={1} />
           <FloatingPaths position={-1} />
@@ -285,8 +331,8 @@ const HomePage = () => {
 
         {hasHeroImages && (
           carouselEnabled && heroImages.length > 1 ?
-            <HeroCarousel images={heroImages} /> :
-            <HeroSingle image={heroImages[0]} />)
+            <HeroCarousel items={heroImages} /> :
+            <HeroSingle item={heroImages[0]} />)
         }
 
         <motion.div
@@ -302,11 +348,19 @@ const HomePage = () => {
 
           <AnimatedTitle />
 
-          <p className="text-lg max-w-2xl mx-auto mb-12 leading-relaxed text-muted-foreground/80 font-medium md:text-base">
+          <p className={`text-lg max-w-2xl mb-12 leading-relaxed text-muted-foreground/80 font-medium md:text-base ${
+            siteSettings.hero_text_align === "left" ? "" :
+            siteSettings.hero_text_align === "right" ? "ml-auto" :
+            "mx-auto"
+          }`}>
             Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aulas, profissionais com a melhor IA do mercado.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+          <div className={`flex flex-col sm:flex-row items-center gap-4 mb-20 ${
+            siteSettings.hero_text_align === "left" ? "justify-start" :
+            siteSettings.hero_text_align === "right" ? "justify-end" :
+            "justify-center"
+          }`}>
             <Button size="lg" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-10 h-14 text-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-105" onClick={() => navigate("/auth")}>
               Começar agora <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
@@ -452,6 +506,58 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* About Us Section (image full-height + text) */}
+      {siteSettings.section_about_enabled !== "false" && (siteSettings.section_about_image || siteSettings.section_about_text) && (
+        <section className="relative w-full bg-background overflow-hidden">
+          <div className={`grid grid-cols-1 lg:grid-cols-2 min-h-[600px] lg:min-h-[700px] ${
+            siteSettings.section_about_position === "right" ? "lg:[&>*:first-child]:order-1 lg:[&>*:last-child]:order-2" : ""
+          }`}>
+            {/* Image side — full height */}
+            <motion.div
+              initial={{ opacity: 0, scale: 1.05 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className={`relative w-full h-[400px] lg:h-auto min-h-full ${
+                siteSettings.section_about_position === "right" ? "lg:order-2" : "lg:order-1"
+              }`}
+            >
+              {siteSettings.section_about_image ? (
+                <img
+                  src={siteSettings.section_about_image}
+                  alt={siteSettings.section_about_title || "Sobre Nós"}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-[#3B82F6]/20 to-[#60A5FA]/20" />
+              )}
+            </motion.div>
+
+            {/* Text side */}
+            <motion.div
+              initial={{ opacity: 0, x: siteSettings.section_about_position === "right" ? -30 : 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className={`flex flex-col justify-center px-8 md:px-16 py-16 ${
+                siteSettings.section_about_position === "right" ? "lg:order-1" : "lg:order-2"
+              }`}
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold mb-6 border border-[#3B82F6]/20 w-fit">
+                <Sparkles className="h-3 w-3" />
+                Quem Somos
+              </div>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 text-foreground tracking-tight leading-[1.1]">
+                {siteSettings.section_about_title || "Sobre Nós"}
+              </h2>
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed whitespace-pre-line">
+                {siteSettings.section_about_text || ""}
+              </p>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* Pricing Section */}
       <section className="relative w-full py-32 px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
