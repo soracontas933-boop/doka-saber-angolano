@@ -229,21 +229,27 @@ export type Database = {
           criado_em: string
           id: string
           ordem: number
+          tipo: string
           url: string
+          video_url: string | null
         }
         Insert: {
           ativo?: boolean
           criado_em?: string
           id?: string
           ordem?: number
+          tipo?: string
           url: string
+          video_url?: string | null
         }
         Update: {
           ativo?: boolean
           criado_em?: string
           id?: string
           ordem?: number
+          tipo?: string
           url?: string
+          video_url?: string | null
         }
         Relationships: []
       }
