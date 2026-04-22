@@ -57,7 +57,15 @@ export interface Projeto {
   link?: string;
 }
 
-export type CVTemplate = "moderno" | "classico" | "minimalista";
+export type CVTemplate =
+  | "moderno"
+  | "classico"
+  | "minimalista"
+  | "executivo"
+  | "criativo"
+  | "compacto"
+  | "elegante"
+  | "tecnologico";
 
 export const emptyCVData: CVData = {
   nomeCompleto: "",
