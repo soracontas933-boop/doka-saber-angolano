@@ -39,7 +39,51 @@ interface HeroImage {
   id: string;
   url: string;
   ordem: number;
+  tipo?: string;
+  video_url?: string | null;
 }
+
+const getYouTubeEmbed = (url: string) => {
+  if (!url) return url;
+  let videoId = "";
+  if (url.includes("youtube.com/watch?v=")) {
+    videoId = url.split("watch?v=")[1].split("&")[0];
+  } else if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  } else if (url.includes("youtube.com/embed/")) {
+    videoId = url.split("embed/")[1].split("?")[0];
+  }
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&modestbranding=1&playlist=${videoId}&rel=0&iv_load_policy=3&playsinline=1`;
+  }
+  return url;
+};
+
+const HeroMediaItem = ({ item }: { item: HeroImage }) => {
+  if (item.tipo === "video") {
+    const embed = getYouTubeEmbed(item.video_url || item.url);
+    return (
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        <iframe
+          src={embed}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[177.77vh] min-w-full h-[56.25vw] min-h-full pointer-events-none"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={item.url}
+      alt="Hero"
+      className="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+      decoding="async"
+      fetchPriority="high"
+    />
+  );
+};
 
 interface LandingContent {
   stats: Array<{ label: string; value: string; icon: string }>;
