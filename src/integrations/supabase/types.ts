@@ -487,6 +487,219 @@ export type Database = {
         }
         Relationships: []
       }
+      study_group_invites: {
+        Row: {
+          convidado_por: string
+          criado_em: string
+          email: string
+          estado: string
+          group_id: string
+          id: string
+        }
+        Insert: {
+          convidado_por: string
+          criado_em?: string
+          email: string
+          estado?: string
+          group_id: string
+          id?: string
+        }
+        Update: {
+          convidado_por?: string
+          criado_em?: string
+          email?: string
+          estado?: string
+          group_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_invites_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_group_members: {
+        Row: {
+          aceite: boolean
+          cor: string
+          creditos_pagos: boolean
+          entrou_em: string
+          group_id: string
+          id: string
+          nome_exibicao: string
+          papel: string
+          user_id: string
+        }
+        Insert: {
+          aceite?: boolean
+          cor?: string
+          creditos_pagos?: boolean
+          entrou_em?: string
+          group_id: string
+          id?: string
+          nome_exibicao: string
+          papel?: string
+          user_id: string
+        }
+        Update: {
+          aceite?: boolean
+          cor?: string
+          creditos_pagos?: boolean
+          entrou_em?: string
+          group_id?: string
+          id?: string
+          nome_exibicao?: string
+          papel?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_group_messages: {
+        Row: {
+          conteudo: string
+          criado_em: string
+          group_id: string
+          id: string
+          is_bot: boolean
+          mencionados: string[]
+          sender_cor: string
+          sender_id: string | null
+          sender_nome: string
+        }
+        Insert: {
+          conteudo: string
+          criado_em?: string
+          group_id: string
+          id?: string
+          is_bot?: boolean
+          mencionados?: string[]
+          sender_cor?: string
+          sender_id?: string | null
+          sender_nome: string
+        }
+        Update: {
+          conteudo?: string
+          criado_em?: string
+          group_id?: string
+          id?: string
+          is_bot?: boolean
+          mencionados?: string[]
+          sender_cor?: string
+          sender_id?: string | null
+          sender_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_group_parts: {
+        Row: {
+          atualizado_em: string
+          conteudo: string
+          criado_em: string
+          defesa: Json | null
+          group_id: string
+          id: string
+          member_id: string
+          ordem: number
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          conteudo?: string
+          criado_em?: string
+          defesa?: Json | null
+          group_id: string
+          id?: string
+          member_id: string
+          ordem?: number
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          conteudo?: string
+          criado_em?: string
+          defesa?: Json | null
+          group_id?: string
+          id?: string
+          member_id?: string
+          ordem?: number
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_parts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_group_parts_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "study_group_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_groups: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          disciplina: string
+          documento_final: Json | null
+          estado: string
+          id: string
+          nome: string
+          tema: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por: string
+          disciplina: string
+          documento_final?: Json | null
+          estado?: string
+          id?: string
+          nome: string
+          tema: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          disciplina?: string
+          documento_final?: Json | null
+          estado?: string
+          id?: string
+          nome?: string
+          tema?: string
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           assunto: string
@@ -701,6 +914,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aceitar_convite_grupo: {
+        Args: { p_cor: string; p_group_id: string; p_nome_exibicao: string }
+        Returns: Json
+      }
       add_credits: {
         Args: { p_amount: number; p_user_id: string }
         Returns: undefined
@@ -723,6 +940,14 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_admin_or_master: { Args: { _user_id: string }; Returns: boolean }
+      is_study_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_study_group_owner: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_workgroup_member: {
         Args: { _user_id: string; _workgroup_id: string }
         Returns: boolean
