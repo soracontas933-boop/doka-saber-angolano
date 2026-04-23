@@ -11,6 +11,7 @@ import AuthPage from "@/pages/AuthPage";
 import Dashboard from "@/pages/Dashboard";
 import UserHomePage from "@/pages/UserHomePage";
 import GruposPage from "@/pages/GruposPage";
+import GrupoDetalhePage from "@/pages/GrupoDetalhePage";
 import MeusProjetosPage from "@/pages/MeusProjetosPage";
 import TrabalhoPage from "@/pages/TrabalhoPage";
 import ResumoPage from "@/pages/ResumoPage";
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/home" element={<UserHomePage />} />
                 <Route path="/grupos" element={<GruposPage />} />
+                <Route path="/grupos/:id" element={<GrupoDetalhePage />} />
                 <Route path="/meus-projetos" element={<MeusProjetosPage />} />
                 <Route path="/trabalho" element={<TrabalhoPage />} />
                 <Route path="/resumo" element={<ResumoPage />} />
