@@ -1,21 +1,23 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users,
   Plus,
   Loader2,
-  UserPlus,
-  Trash2,
+  Mail,
   Check,
   X,
-  FolderOpen,
-  FileText,
+  Sparkles,
+  Trash2,
+  ArrowRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -24,380 +26,304 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
-interface Workgroup {
+const COR_OPCOES = [
+  "#1E9DF1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
+  "#EC4899", "#14B8A6", "#F97316", "#6366F1", "#84CC16",
+];
+
+interface Group {
   id: string;
   nome: string;
+  tema: string;
+  disciplina: string;
   criado_por: string;
+  estado: string;
   criado_em: string;
-  members: { user_id: string; papel: string; aceite: boolean; nome: string | null }[];
-  projectCount: number;
+  is_owner: boolean;
+  is_member: boolean;
 }
 
-interface PendingInvite {
+interface Invite {
   id: string;
-  workgroup_id: string;
-  grupo_nome: string;
+  group_id: string;
+  group_nome: string;
+  group_tema: string;
 }
 
-const GruposPage = () => {
+export default function GruposPage() {
   const { user } = useAuth();
-  const [groups, setGroups] = useState<Workgroup[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
+  const navigate = useNavigate();
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState<string | null>(null);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviting, setInviting] = useState(false);
 
-  const fetchGroups = useCallback(async () => {
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ nome: "", tema: "", disciplina: "" });
+
+  const [acceptOpen, setAcceptOpen] = useState<Invite | null>(null);
+  const [acceptingNome, setAcceptingNome] = useState("");
+  const [acceptingCor, setAcceptingCor] = useState(COR_OPCOES[0]);
+  const [accepting, setAccepting] = useState(false);
+
+  const fetchAll = async () => {
     if (!user) return;
     setLoading(true);
 
-    // Get groups where user is member
-    const { data: memberships } = await supabase
-      .from("workgroup_members")
-      .select("workgroup_id, papel, aceite")
-      .eq("user_id", user.id);
-
-    if (!memberships || memberships.length === 0) {
-      // Check for pending invites
-      const { data: pending } = await supabase
-        .from("workgroup_members")
-        .select("id, workgroup_id")
-        .eq("user_id", user.id)
-        .eq("aceite", false);
-
-      if (pending && pending.length > 0) {
-        const wgIds = pending.map(p => p.workgroup_id);
-        const { data: wgs } = await supabase
-          .from("workgroups")
-          .select("id, nome")
-          .in("id", wgIds);
-
-        setPendingInvites(pending.map(p => ({
-          id: p.id,
-          workgroup_id: p.workgroup_id,
-          grupo_nome: wgs?.find(w => w.id === p.workgroup_id)?.nome || "Grupo",
-        })));
-      }
-      setGroups([]);
-      setLoading(false);
-      return;
-    }
-
-    const acceptedIds = memberships.filter(m => m.aceite).map(m => m.workgroup_id);
-    const pendingIds = memberships.filter(m => !m.aceite).map(m => m.workgroup_id);
-
-    // Fetch pending invites
-    if (pendingIds.length > 0) {
-      const { data: wgs } = await supabase.from("workgroups").select("id, nome").in("id", pendingIds);
-      setPendingInvites(
-        memberships
-          .filter(m => !m.aceite)
-          .map(m => ({
-            id: m.workgroup_id, // use workgroup_id for now
-            workgroup_id: m.workgroup_id,
-            grupo_nome: wgs?.find(w => w.id === m.workgroup_id)?.nome || "Grupo",
-          }))
-      );
-    } else {
-      setPendingInvites([]);
-    }
-
-    if (acceptedIds.length === 0) {
-      setGroups([]);
-      setLoading(false);
-      return;
-    }
-
-    // Fetch workgroup details
-    const { data: wgData } = await supabase
-      .from("workgroups")
+    // Grupos onde sou dono
+    const { data: owned } = await (supabase as any)
+      .from("study_groups")
       .select("*")
-      .in("id", acceptedIds);
+      .eq("criado_por", user.id);
 
-    // Fetch all members
-    const { data: allMembers } = await supabase
-      .from("workgroup_members")
-      .select("workgroup_id, user_id, papel, aceite")
-      .in("workgroup_id", acceptedIds);
+    // Grupos onde sou membro aceite
+    const { data: memberRows } = await (supabase as any)
+      .from("study_group_members")
+      .select("group_id, study_groups(*)")
+      .eq("user_id", user.id)
+      .eq("aceite", true);
 
-    // Fetch member profiles
-    const memberIds = [...new Set((allMembers || []).map(m => m.user_id))];
-    const { data: profiles } = memberIds.length > 0
-      ? await supabase.from("profiles").select("id, nome").in("id", memberIds)
-      : { data: [] };
-
-    // Fetch project counts
-    const { data: wpData } = await supabase
-      .from("workgroup_projects")
-      .select("workgroup_id")
-      .in("workgroup_id", acceptedIds);
-
-    const projectCounts: Record<string, number> = {};
-    (wpData || []).forEach(wp => {
-      projectCounts[wp.workgroup_id] = (projectCounts[wp.workgroup_id] || 0) + 1;
+    const map = new Map<string, Group>();
+    (owned || []).forEach((g: any) =>
+      map.set(g.id, { ...g, is_owner: true, is_member: true }),
+    );
+    (memberRows || []).forEach((r: any) => {
+      if (r.study_groups && !map.has(r.study_groups.id)) {
+        map.set(r.study_groups.id, {
+          ...r.study_groups,
+          is_owner: r.study_groups.criado_por === user.id,
+          is_member: true,
+        });
+      }
     });
 
-    const profileMap = new Map((profiles || []).map(p => [p.id, p.nome]));
+    setGroups(Array.from(map.values()).sort((a, b) => b.criado_em.localeCompare(a.criado_em)));
 
-    const mapped: Workgroup[] = (wgData || []).map(wg => ({
-      ...wg,
-      members: (allMembers || [])
-        .filter(m => m.workgroup_id === wg.id)
-        .map(m => ({ ...m, nome: profileMap.get(m.user_id) || null })),
-      projectCount: projectCounts[wg.id] || 0,
-    }));
+    // Convites pendentes para o meu email
+    const userEmail = user.email?.toLowerCase() || "";
+    if (userEmail) {
+      const { data: invs } = await (supabase as any)
+        .from("study_group_invites")
+        .select("id, group_id, study_groups(nome, tema)")
+        .ilike("email", userEmail)
+        .eq("estado", "pendente");
+      setInvites(
+        (invs || []).map((i: any) => ({
+          id: i.id,
+          group_id: i.group_id,
+          group_nome: i.study_groups?.nome || "Grupo",
+          group_tema: i.study_groups?.tema || "",
+        })),
+      );
+    }
 
-    setGroups(mapped);
     setLoading(false);
-  }, [user]);
+  };
 
   useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
-  const handleCreateGroup = async () => {
-    if (!user || !newGroupName.trim()) return;
+  const handleCreate = async () => {
+    if (!user) return;
+    if (!form.nome.trim() || !form.tema.trim() || !form.disciplina.trim()) {
+      toast.error("Preenche todos os campos.");
+      return;
+    }
     setCreating(true);
+    try {
+      const { data: g, error } = await (supabase as any)
+        .from("study_groups")
+        .insert({
+          nome: form.nome.trim(),
+          tema: form.tema.trim(),
+          disciplina: form.disciplina.trim(),
+          criado_por: user.id,
+        })
+        .select()
+        .single();
+      if (error) throw error;
 
-    const { data: wg, error } = await supabase
-      .from("workgroups")
-      .insert({ nome: newGroupName.trim(), criado_por: user.id })
-      .select()
-      .single();
+      // Adiciona dono como membro pendente (vai aceitar e pagar 20 cr ao entrar)
+      await (supabase as any).from("study_group_members").insert({
+        group_id: g.id,
+        user_id: user.id,
+        nome_exibicao: user.email?.split("@")[0] || "Dono",
+        cor: COR_OPCOES[0],
+        papel: "dono",
+        aceite: false,
+        creditos_pagos: false,
+      });
 
-    if (error || !wg) {
-      toast({ title: "Erro ao criar grupo", description: error?.message, variant: "destructive" });
+      toast.success("Grupo criado! Confirma a tua entrada (20 créditos).");
+      setCreateOpen(false);
+      setForm({ nome: "", tema: "", disciplina: "" });
+      navigate(`/grupos/${g.id}`);
+    } catch (e: any) {
+      toast.error(e.message || "Falha ao criar grupo.");
+    } finally {
       setCreating(false);
-      return;
     }
-
-    // Add creator as owner member
-    await supabase.from("workgroup_members").insert({
-      workgroup_id: wg.id,
-      user_id: user.id,
-      papel: "dono",
-      aceite: true,
-    });
-
-    toast({ title: "Grupo criado com sucesso!" });
-    setCreateOpen(false);
-    setNewGroupName("");
-    setCreating(false);
-    fetchGroups();
   };
 
-  const handleInvite = async (workgroupId: string) => {
-    if (!user || !inviteEmail.trim()) return;
-    setInviting(true);
+  const openAccept = (inv: Invite | { id: string; group_id: string; group_nome: string; group_tema: string } | Group) => {
+    const baseName = user?.email?.split("@")[0] || "";
+    setAcceptingNome(baseName);
+    setAcceptingCor(COR_OPCOES[Math.floor(Math.random() * COR_OPCOES.length)]);
+    setAcceptOpen("group_id" in inv ? (inv as Invite) : { id: "self", group_id: (inv as Group).id, group_nome: (inv as Group).nome, group_tema: (inv as Group).tema });
+  };
 
-    // Find user by email
-    const { data: found, error: findErr } = await supabase
-      .rpc("find_user_by_email", { _email: inviteEmail.trim().toLowerCase() });
-
-    if (findErr || !found || found.length === 0) {
-      toast({ title: "Utilizador não encontrado", description: "Verifica o email e tenta novamente.", variant: "destructive" });
-      setInviting(false);
+  const handleAccept = async () => {
+    if (!acceptOpen || !acceptingNome.trim()) {
+      toast.error("Indica o teu nome de exibição.");
       return;
     }
-
-    const targetUserId = found[0].user_id;
-    if (targetUserId === user.id) {
-      toast({ title: "Não podes convidar-te a ti mesmo", variant: "destructive" });
-      setInviting(false);
-      return;
-    }
-
-    // Insert member
-    const { error: insertErr } = await supabase.from("workgroup_members").insert({
-      workgroup_id: workgroupId,
-      user_id: targetUserId,
-      papel: "membro",
-      aceite: false,
-    });
-
-    if (insertErr) {
-      if (insertErr.message.includes("duplicate")) {
-        toast({ title: "Este utilizador já foi convidado", variant: "destructive" });
-      } else {
-        toast({ title: "Erro ao convidar", description: insertErr.message, variant: "destructive" });
+    setAccepting(true);
+    try {
+      const { data, error } = await (supabase as any).rpc("aceitar_convite_grupo", {
+        p_group_id: acceptOpen.group_id,
+        p_nome_exibicao: acceptingNome.trim(),
+        p_cor: acceptingCor,
+      });
+      if (error) throw error;
+      if (!data?.ok) {
+        if (data?.error === "creditos_insuficientes") {
+          toast.error("Precisas de pelo menos 20 créditos para entrar no grupo.");
+          window.dispatchEvent(new CustomEvent("delle:no-credits", { detail: { needed: 20, available: 0 } }));
+        } else {
+          toast.error(data?.error || "Falha ao aceitar.");
+        }
+        return;
       }
-      setInviting(false);
+      toast.success("Entraste no grupo!");
+      const gid = acceptOpen.group_id;
+      setAcceptOpen(null);
+      navigate(`/grupos/${gid}`);
+    } catch (e: any) {
+      toast.error(e.message || "Falha ao aceitar.");
+    } finally {
+      setAccepting(false);
+    }
+  };
+
+  const handleReject = async (inviteId: string) => {
+    await (supabase as any).from("study_group_invites").update({ estado: "recusado" }).eq("id", inviteId);
+    setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+    toast.success("Convite recusado.");
+  };
+
+  const handleDelete = async (g: Group) => {
+    if (!confirm(`Eliminar o grupo "${g.nome}"? Esta acção é irreversível.`)) return;
+    const { error } = await (supabase as any).from("study_groups").delete().eq("id", g.id);
+    if (error) {
+      toast.error(error.message);
       return;
     }
-
-    // Send notification
-    await supabase.from("notifications").insert({
-      user_id: targetUserId,
-      titulo: "Convite para grupo",
-      mensagem: `Foste convidado para o grupo "${groups.find(g => g.id === workgroupId)?.nome}". Aceita o convite na página de Grupos.`,
-      tipo: "convite_grupo",
-    });
-
-    toast({ title: "Convite enviado com sucesso!" });
-    setInviteOpen(null);
-    setInviteEmail("");
-    setInviting(false);
-    fetchGroups();
+    setGroups((prev) => prev.filter((x) => x.id !== g.id));
+    toast.success("Grupo eliminado.");
   };
-
-  const handleAcceptInvite = async (workgroupId: string) => {
-    if (!user) return;
-    await supabase
-      .from("workgroup_members")
-      .update({ aceite: true })
-      .eq("workgroup_id", workgroupId)
-      .eq("user_id", user.id);
-
-    toast({ title: "Convite aceite!" });
-    fetchGroups();
-  };
-
-  const handleRejectInvite = async (workgroupId: string) => {
-    if (!user) return;
-    await supabase
-      .from("workgroup_members")
-      .delete()
-      .eq("workgroup_id", workgroupId)
-      .eq("user_id", user.id);
-
-    toast({ title: "Convite recusado" });
-    fetchGroups();
-  };
-
-  const handleDeleteGroup = async (groupId: string) => {
-    await supabase.from("workgroups").delete().eq("id", groupId);
-    toast({ title: "Grupo eliminado" });
-    fetchGroups();
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Trabalho em Grupo</h1>
-            <p className="text-sm text-muted-foreground">Colabora com os teus colegas</p>
-          </div>
+    <div className="container mx-auto p-4 md:p-6 max-w-6xl">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            Grupos Inteligentes de Estudo
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Cria grupos, divide o trabalho com IA e prepara a defesa em conjunto. Cada membro paga 20 créditos ao entrar.
+          </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Criar Grupo</span>
+        <Button onClick={() => setCreateOpen(true)} size="lg" className="gap-2">
+          <Plus className="w-4 h-4" /> Criar grupo
         </Button>
-      </motion.div>
+      </div>
 
-      {/* Pending Invites */}
-      {pendingInvites.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Convites Pendentes</h2>
-          {pendingInvites.map((inv) => (
-            <Card key={inv.workgroup_id} className="border-amber-500/30 bg-amber-500/5">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <Users className="h-5 w-5 text-amber-500" />
-                  <span className="font-medium text-foreground">{inv.grupo_nome}</span>
+      {/* Convites pendentes */}
+      {invites.length > 0 && (
+        <Card className="mb-6 border-primary/40 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Mail className="w-4 h-4" /> Convites pendentes ({invites.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {invites.map((i) => (
+              <div key={i.id} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-background border">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{i.group_nome}</div>
+                  <div className="text-xs text-muted-foreground truncate">Tema: {i.group_tema}</div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleRejectInvite(inv.workgroup_id)}>
-                    <X className="h-4 w-4" />
+                <div className="flex gap-2 shrink-0">
+                  <Button size="sm" variant="outline" onClick={() => handleReject(i.id)}>
+                    <X className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" onClick={() => handleAcceptInvite(inv.workgroup_id)}>
-                    <Check className="h-4 w-4 mr-1" />
-                    Aceitar
+                  <Button size="sm" onClick={() => openAccept(i)} className="gap-1">
+                    <Check className="w-4 h-4" /> Aceitar (20 cr)
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </motion.div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
-      {/* Groups List */}
-      {groups.length === 0 && pendingInvites.length === 0 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
-          <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Sem grupos ainda</h2>
-          <p className="text-muted-foreground mb-6">Cria um grupo e convida os teus colegas para trabalharem juntos.</p>
-          <Button onClick={() => setCreateOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Criar primeiro grupo
-          </Button>
-        </motion.div>
+      {/* Lista de grupos */}
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : groups.length === 0 ? (
+        <Card className="text-center py-16">
+          <CardContent>
+            <Users className="w-16 h-16 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-muted-foreground mb-4">Ainda não tens nenhum grupo.</p>
+            <Button onClick={() => setCreateOpen(true)} className="gap-2">
+              <Plus className="w-4 h-4" /> Criar o primeiro grupo
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {groups.map((group, i) => (
+        <div className="grid gap-3 md:grid-cols-2">
+          {groups.map((g, i) => (
             <motion.div
-              key={group.id}
-              initial={{ opacity: 0, y: 10 }}
+              key={g.id}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.04 }}
             >
-              <Card className="h-full hover:border-primary/30 transition-colors">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{group.nome}</CardTitle>
-                    {group.criado_por === user?.id && (
-                      <Badge variant="outline" className="text-xs">Dono</Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Members */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>
-                      {group.members.filter(m => m.aceite).length} membro{group.members.filter(m => m.aceite).length !== 1 ? "s" : ""}
-                    </span>
-                    {group.members.filter(m => !m.aceite).length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {group.members.filter(m => !m.aceite).length} pendente{group.members.filter(m => !m.aceite).length !== 1 ? "s" : ""}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Member names */}
-                  <div className="flex flex-wrap gap-1">
-                    {group.members.filter(m => m.aceite).map(m => (
-                      <Badge key={m.user_id} variant="secondary" className="text-xs">
-                        {m.nome || "Sem nome"}
-                        {m.papel === "dono" && " 👑"}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  {/* Project count */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FolderOpen className="h-4 w-4" />
-                    <span>{group.projectCount} projecto{group.projectCount !== 1 ? "s" : ""}</span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    {group.criado_por === user?.id && (
-                      <>
-                        <Button size="sm" variant="outline" className="gap-1" onClick={() => { setInviteOpen(group.id); setInviteEmail(""); }}>
-                          <UserPlus className="h-3.5 w-3.5" />
-                          Convidar
+              <Card
+                className="cursor-pointer hover:shadow-md transition-shadow group"
+                onClick={() => navigate(`/grupos/${g.id}`)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold truncate">{g.nome}</h3>
+                      <p className="text-sm text-muted-foreground truncate">{g.tema}</p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        <Badge variant="secondary" className="text-xs">{g.disciplina}</Badge>
+                        {g.is_owner && <Badge className="text-xs">Dono</Badge>}
+                        <Badge variant="outline" className="text-xs capitalize">{g.estado}</Badge>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      {g.is_owner && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive"
+                          onClick={(e) => { e.stopPropagation(); handleDelete(g); }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
-                        <Button size="sm" variant="ghost" className="text-destructive gap-1" onClick={() => handleDeleteGroup(group.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -406,59 +332,78 @@ const GruposPage = () => {
         </div>
       )}
 
-      {/* Create Group Dialog */}
+      {/* Dialog: criar grupo */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Criar Novo Grupo</DialogTitle>
+            <DialogTitle>Novo grupo de estudo</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <Input
-              placeholder="Nome do grupo (ex: Grupo de Biologia)"
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCreateGroup()}
-            />
+          <div className="space-y-3">
+            <div>
+              <Label>Nome do grupo</Label>
+              <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Equipa Rocha" />
+            </div>
+            <div>
+              <Label>Tema do trabalho</Label>
+              <Input value={form.tema} onChange={(e) => setForm({ ...form, tema: e.target.value })} placeholder="Ex.: Revolução Industrial" />
+            </div>
+            <div>
+              <Label>Disciplina</Label>
+              <Input value={form.disciplina} onChange={(e) => setForm({ ...form, disciplina: e.target.value })} placeholder="Ex.: História" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Vais ser redirecionado para confirmar a tua entrada no grupo (20 créditos).
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreateGroup} disabled={creating || !newGroupName.trim()}>
-              {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+            <Button onClick={handleCreate} disabled={creating}>
+              {creating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Criar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Invite Dialog */}
-      <Dialog open={!!inviteOpen} onOpenChange={() => setInviteOpen(null)}>
+      {/* Dialog: aceitar (escolher nome + cor) */}
+      <Dialog open={!!acceptOpen} onOpenChange={(o) => !o && setAcceptOpen(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Convidar Membro</DialogTitle>
+            <DialogTitle>Entrar no grupo: {acceptOpen?.group_nome}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">
-              Introduz o email do colega que queres convidar. Ele precisa ter conta na plataforma.
+          <div className="space-y-4">
+            <div>
+              <Label>O teu nome no grupo</Label>
+              <Input value={acceptingNome} onChange={(e) => setAcceptingNome(e.target.value)} />
+            </div>
+            <div>
+              <Label className="mb-2 block">Cor (emblema)</Label>
+              <div className="flex flex-wrap gap-2">
+                {COR_OPCOES.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setAcceptingCor(c)}
+                    className={`w-9 h-9 rounded-full border-2 transition-transform ${acceptingCor === c ? "scale-110 border-foreground" : "border-transparent"}`}
+                    style={{ background: c }}
+                    aria-label={c}
+                  />
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Confirmar custa <strong>20 créditos</strong>.
             </p>
-            <Input
-              type="email"
-              placeholder="email@exemplo.com"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && inviteOpen && handleInvite(inviteOpen)}
-            />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setInviteOpen(null)}>Cancelar</Button>
-            <Button onClick={() => inviteOpen && handleInvite(inviteOpen)} disabled={inviting || !inviteEmail.trim()}>
-              {inviting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-              Enviar Convite
+            <Button variant="outline" onClick={() => setAcceptOpen(null)}>Cancelar</Button>
+            <Button onClick={handleAccept} disabled={accepting}>
+              {accepting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Confirmar entrada
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-};
-
-export default GruposPage;
+}
