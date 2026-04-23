@@ -150,7 +150,7 @@ export async function exportPartToPDF(d: PartExportData) {
       }
     </div>
   `;
-  await exportHtmlToPdf(html, `${d.tema} - ${d.membroNome}.pdf`);
+  await exportHtmlToPdf({ html, filename: `${d.tema} - ${d.membroNome}.pdf` });
 }
 
 function escapeHtml(s: string): string {
