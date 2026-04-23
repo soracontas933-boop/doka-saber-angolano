@@ -34,6 +34,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { FloatingPaths } from "@/components/ui/background-paths";
 import AdminLandingPanelFloat from "@/components/AdminLandingPanelFloat";
 import { useAdmin } from "@/hooks/use-admin";
+import avatar1 from "@/assets/avatar-1.png";
+import avatar2 from "@/assets/avatar-2.jpg";
+import avatar3 from "@/assets/avatar-3.jpg";
 
 interface HeroImage {
   id: string;
@@ -421,13 +424,13 @@ const HomePage = () => {
                 </Button>
                 <div className="flex -space-x-4">
                   <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
-                    <img src="/src/assets/avatar-1.png" alt="User" className="w-full h-full object-cover" />
+                    <img src={avatar1} alt="User" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
-                    <img src="/src/assets/avatar-2.jpg" alt="User" className="w-full h-full object-cover" />
+                    <img src={avatar2} alt="User" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
-                    <img src="/src/assets/avatar-3.jpg" alt="User" className="w-full h-full object-cover" />
+                    <img src={avatar3} alt="User" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-12 h-12 rounded-full border-4 border-background bg-[#3B82F6] text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
                     +50k
