@@ -686,17 +686,7 @@ const HomePage = () => {
         </div>
       </footer>
 
-      {/* Admin Floating Button */}
-      {isAdmin && (
-        <motion.button
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="fixed bottom-8 right-8 z-[40] p-4 rounded-full bg-[#3B82F6] text-white shadow-2xl hover:shadow-blue-500/40 hover:scale-110 transition-all"
-          onClick={() => setAdminOpen(!adminOpen)}
-        >
-          <Settings className="h-7 w-7" />
-        </motion.button>
-      )}
+      {/* Admin Floating Button removido — gestão da landing feita no Painel Admin */}
 
       {/* Admin Panel */}
       {isAdmin && adminOpen && (
