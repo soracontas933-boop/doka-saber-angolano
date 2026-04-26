@@ -468,20 +468,20 @@ const HomePage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="relative w-full py-32 px-6 md:px-12 bg-[#F5F5F7] dark:bg-[#0B0B0B]/50">
+      <section className="relative w-full py-16 sm:py-24 lg:py-32 px-4 sm:px-6 md:px-12 bg-[#F5F5F7] dark:bg-[#0B0B0B]/50">
         <div className="max-w-[1200px] mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-10 sm:mb-20">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="md:text-6xl font-bold mb-6 text-foreground tracking-tight text-xl">Funcionalidades Poderosas</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-sm">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
+              <h2 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-3 sm:mb-6 text-foreground tracking-tight">Funcionalidades Poderosas</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-xs sm:text-base">Tudo que você precisa para dominar seus estudos, em um único lugar</p>
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
             {content.features.map((feature, i) => (
               <motion.div
                 key={i}
@@ -489,21 +489,21 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-10 rounded-[2rem] border transition-all duration-500 group shadow-2xl bg-white border-neutral-950"
+                className="p-4 sm:p-10 rounded-2xl sm:rounded-[2rem] border transition-all duration-500 group shadow-lg sm:shadow-2xl bg-white border-neutral-950"
               >
-                <div className="p-4 rounded-2xl bg-[#3B82F6]/10 w-fit mb-8 group-hover:bg-[#3B82F6]/20 transition-colors">
-                  {feature.icon === "FileText" && <FileText className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "BookOpen" && <BookOpen className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "HelpCircle" && <HelpCircle className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "ClipboardList" && <ClipboardList className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "Lightbulb" && <Lightbulb className="h-8 w-8 text-[#3B82F6]" />}
-                  {feature.icon === "Shield" && <Shield className="h-8 w-8 text-[#3B82F6]" />}
+                <div className="p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-[#3B82F6]/10 w-fit mb-3 sm:mb-8 group-hover:bg-[#3B82F6]/20 transition-colors">
+                  {feature.icon === "FileText" && <FileText className="h-5 w-5 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "BookOpen" && <BookOpen className="h-5 w-5 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "HelpCircle" && <HelpCircle className="h-5 w-5 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "ClipboardList" && <ClipboardList className="h-5 w-5 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "Lightbulb" && <Lightbulb className="h-5 w-5 sm:h-8 sm:w-8 text-[#3B82F6]" />}
+                  {feature.icon === "Shield" && <Shield className="h-5 w-5 sm:h-8 sm:w-8 text-[#3B82F6]" />}
                 </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <h3 className="text-2xl font-bold text-foreground">{feature.title}</h3>
-                  <Badge variant="secondary" className="bg-[#3B82F6]/10 text-[#3B82F6] border-none text-[10px] uppercase tracking-widest font-bold">{feature.badge}</Badge>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-2 sm:mb-4">
+                  <h3 className="text-sm sm:text-2xl font-bold text-foreground leading-tight">{feature.title}</h3>
+                  <Badge variant="secondary" className="bg-[#3B82F6]/10 text-[#3B82F6] border-none text-[8px] sm:text-[10px] uppercase tracking-widest font-bold w-fit">{feature.badge}</Badge>
                 </div>
-                <p className="text-lg text-muted-foreground leading-relaxed">{feature.description}</p>
+                <p className="text-xs sm:text-lg text-muted-foreground leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>
