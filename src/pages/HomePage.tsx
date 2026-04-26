@@ -105,7 +105,7 @@ const AnimatedTitle = () => {
   const line2 = "estude melhor";
 
   return (
-    <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold tracking-tight leading-[1.05] mb-8 text-foreground">
+    <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold tracking-tight leading-[1.05] mb-6 sm:mb-8 text-foreground">
       <span className="block">
         {line1.split("").map((letter, i) =>
           <motion.span
