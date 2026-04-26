@@ -77,8 +77,8 @@ export function stripSymbolNoise(content: string): string {
   let fixed = content;
   // 4+ ampersands
   fixed = fixed.replace(/&{3,}/g, "");
-  // 3+ barras (mas preservar URLs e //)
-  fixed = fixed.replace(/(?<!https?:)\/{4,}/g, "");
+  // 4+ barras (mas preservar URLs http(s)://). Sem lookbehind para compatibilidade com Safari iOS < 16.4.
+  fixed = fixed.replace(/(https?:)?\/{4,}/g, (_m, proto) => (proto ? proto + "//" : ""));
   // 5+ traços (markdown hr é ---, então só removemos 5+)
   fixed = fixed.replace(/^-{5,}$/gm, "---");
   // 5+ iguais
