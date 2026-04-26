@@ -617,18 +617,18 @@ const HomePage = () => {
       </section>
 
       {/* CTA Final Section */}
-      <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden">
-        <div className="max-w-[1000px] mx-auto relative z-10 rounded-[3rem] p-16 md:p-24 text-center text-white shadow-2xl shadow-blue-500/30 overflow-hidden bg-black">
+      <section className="relative w-full py-16 sm:py-24 lg:py-32 px-4 sm:px-6 md:px-12 overflow-hidden">
+        <div className="max-w-[1000px] mx-auto relative z-10 rounded-2xl sm:rounded-[3rem] p-8 sm:p-16 md:p-24 text-center text-white shadow-xl sm:shadow-2xl shadow-blue-500/30 overflow-hidden bg-black">
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight">{content.cta.title}</h2>
-            <p className="text-xl md:text-2xl mb-12 text-white/80 max-w-2xl mx-auto font-medium">{content.cta.subtitle}</p>
-            <Button size="lg" className="bg-white text-[#3B82F6] hover:bg-white/90 rounded-full px-12 h-16 text-xl font-bold shadow-xl transition-all hover:scale-105" onClick={() => navigate("/auth")}>
-              {content.cta.buttonText} <ArrowRight className="h-6 w-6 ml-2" />
+            <h2 className="text-2xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-8 tracking-tight">{content.cta.title}</h2>
+            <p className="text-sm sm:text-xl md:text-2xl mb-6 sm:mb-12 text-white/80 max-w-2xl mx-auto font-medium">{content.cta.subtitle}</p>
+            <Button size="lg" className="bg-white text-[#3B82F6] hover:bg-white/90 rounded-full px-6 sm:px-12 h-12 sm:h-16 text-sm sm:text-xl font-bold shadow-xl transition-all hover:scale-105" onClick={() => navigate("/auth")}>
+              {content.cta.buttonText} <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6 ml-2" />
             </Button>
           </motion.div>
         </div>
