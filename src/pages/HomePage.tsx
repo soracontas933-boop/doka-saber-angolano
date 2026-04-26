@@ -305,10 +305,10 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden font-apple">
       {/* Nav */}
-      <header className="relative z-[30] flex items-center justify-between px-6 md:px-12 py-4 border-b border-border/40 backdrop-blur-xl sticky top-0 bg-black">
+      <header className="relative z-[30] flex items-center justify-between px-3 sm:px-6 md:px-12 py-3 sm:py-4 border-b border-border/40 backdrop-blur-xl sticky top-0 bg-black gap-2">
         <DelleLogo size={28} />
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-9 w-9 rounded-full">
+        <div className="flex items-center gap-1 sm:gap-4">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-9 w-9 rounded-full shrink-0">
             {theme === "dark" ? <Sun className="h-4 w-4 text-white" /> : <Moon className="h-4 w-4 text-white" />}
           </Button>
           {canInstall &&
@@ -316,8 +316,8 @@ const HomePage = () => {
               <Download className="h-4 w-4 mr-2" /> Baixar App
             </Button>
           }
-          <Button variant="ghost" size="sm" className="rounded-full px-5 text-white" onClick={() => navigate("/auth")}>Entrar</Button>
-          <Button size="sm" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-6 shadow-sm" onClick={() => navigate("/auth")}>Começar grátis</Button>
+          <Button variant="ghost" size="sm" className="rounded-full px-3 sm:px-5 text-white text-xs sm:text-sm" onClick={() => navigate("/auth")}>Entrar</Button>
+          <Button size="sm" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-3 sm:px-6 shadow-sm text-xs sm:text-sm whitespace-nowrap" onClick={() => navigate("/auth")}>Começar grátis</Button>
         </div>
       </header>
 
