@@ -449,7 +449,7 @@ const HomePage = () => {
               {siteSettings.section_video_journey ? (
                 <VideoEmbed url={siteSettings.section_video_journey} />
               ) : sectionImages.section_image_journey ? (
-                <div className="relative aspect-[4/5] lg:aspect-square rounded-[2.5rem] overflow-hidden border border-border/40 shadow-2xl group">
+                <div className="relative aspect-square rounded-xl sm:rounded-[2.5rem] overflow-hidden border border-border/40 shadow-xl sm:shadow-2xl group">
                   <img 
                     src={sectionImages.section_image_journey} 
                     alt="Jornada" 
