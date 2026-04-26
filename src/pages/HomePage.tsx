@@ -565,18 +565,18 @@ const HomePage = () => {
       {/* Pricing Section */}
       <section className="relative w-full py-16 sm:py-24 lg:py-32 px-4 sm:px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
         <div className="max-w-[1200px] mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-10 sm:mb-20">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground tracking-tight">Planos Simples</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Escolha o plano ideal para o seu sucesso académico</p>
+              <h2 className="text-2xl sm:text-5xl md:text-6xl font-bold mb-3 sm:mb-6 text-foreground tracking-tight">Planos Simples</h2>
+              <p className="text-sm sm:text-xl text-muted-foreground max-w-2xl mx-auto">Escolha o plano ideal para o seu sucesso académico</p>
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {content.pricing.filter(p => p.name !== "Gratuito" && p.name !== "Básico").map((plan, i) => (
               <motion.div
                 key={i}
@@ -584,30 +584,30 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className={`relative p-10 rounded-[2.5rem] border transition-all duration-500 flex flex-col bg-[#3B82F6]/5 shadow-2xl scale-105 z-10 border-neutral-950`}
+                className={`relative p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] border transition-all duration-500 flex flex-col bg-[#3B82F6]/5 shadow-xl sm:shadow-2xl sm:scale-105 z-10 border-neutral-950`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#3B82F6] text-white text-[10px] font-bold uppercase tracking-[0.2em] px-6 py-2 rounded-full shadow-lg">
+                  <div className="absolute -top-3 sm:-top-5 left-1/2 -translate-x-1/2 bg-[#3B82F6] text-white text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] px-3 sm:px-6 py-1 sm:py-2 rounded-full shadow-lg whitespace-nowrap">
                     Mais Popular
                   </div>
                 )}
-                <h3 className="text-3xl font-bold mb-2 text-foreground">{plan.name}</h3>
-                <p className="text-muted-foreground mb-8 font-medium">{plan.description}</p>
-                <div className="mb-10">
-                  <span className="text-5xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground ml-2">/mês</span>
+                <h3 className="text-lg sm:text-3xl font-bold mb-1 sm:mb-2 text-foreground">{plan.name}</h3>
+                <p className="text-xs sm:text-base text-muted-foreground mb-4 sm:mb-8 font-medium">{plan.description}</p>
+                <div className="mb-5 sm:mb-10">
+                  <span className="text-2xl sm:text-5xl font-bold text-foreground">{plan.price}</span>
+                  <span className="text-xs sm:text-base text-muted-foreground ml-1 sm:ml-2">/mês</span>
                 </div>
-                <ul className="space-y-5 mb-12 flex-1">
+                <ul className="space-y-2 sm:space-y-5 mb-6 sm:mb-12 flex-1">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-foreground/80 font-medium">
-                      <div className="mt-1 p-0.5 rounded-full bg-[#3B82F6]/20">
-                        <Check className="h-4 w-4 text-[#3B82F6]" />
+                    <li key={idx} className="flex items-start gap-2 sm:gap-3 text-foreground/80 font-medium text-xs sm:text-base">
+                      <div className="mt-0.5 sm:mt-1 p-0.5 rounded-full bg-[#3B82F6]/20 shrink-0">
+                        <Check className="h-3 w-3 sm:h-4 sm:w-4 text-[#3B82F6]" />
                       </div>
-                      {feature}
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-                <Button className={`w-full h-14 rounded-full text-lg font-bold transition-all hover:scale-105 ${plan.popular ? 'bg-[#3B82F6] hover:bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-black border-border/60 hover:bg-secondary'}`} variant={plan.popular ? "default" : "outline"}>
+                <Button className={`w-full h-10 sm:h-14 rounded-full text-xs sm:text-lg font-bold transition-all hover:scale-105 ${plan.popular ? 'bg-[#3B82F6] hover:bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-black border-border/60 hover:bg-secondary'}`} variant={plan.popular ? "default" : "outline"}>
                   Começar Agora
                 </Button>
               </motion.div>
