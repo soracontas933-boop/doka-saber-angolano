@@ -394,45 +394,45 @@ const HomePage = () => {
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               viewport={{ once: true }}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold mb-8 border border-[#3B82F6]/20">
+              <div className="inline-flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-[10px] sm:text-xs font-bold mb-4 sm:mb-8 border border-[#3B82F6]/20">
                 <Sparkles className="h-3 w-3" />
                 Sua Evolução
               </div>
-              <h2 className="md:text-7xl font-bold mb-10 text-foreground tracking-tight leading-[1.1] text-3xl">
+              <h2 className="text-xl sm:text-3xl md:text-5xl lg:text-7xl font-bold mb-4 sm:mb-10 text-foreground tracking-tight leading-[1.1]">
                 {content.journey?.title || "Sua Jornada, Sem Barreiras"}
               </h2>
-              <div className="space-y-8 text-xl text-muted-foreground leading-relaxed mb-12">
-                <p className="relative pl-8 border-l-2 border-[#3B82F6]/30 text-base">
+              <div className="space-y-4 sm:space-y-8 text-muted-foreground leading-relaxed mb-6 sm:mb-12">
+                <p className="relative pl-3 sm:pl-8 border-l-2 border-[#3B82F6]/30 text-xs sm:text-base">
                   {content.journey?.text}
                 </p>
-                <div className="relative p-10 rounded-[2rem] border border-border/40 shadow-sm overflow-hidden group pt-[40px] bg-white">
-                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <Users className="h-16 w-16 text-[#3B82F6]" />
+                <div className="relative p-4 sm:p-10 rounded-2xl sm:rounded-[2rem] border border-border/40 shadow-sm overflow-hidden group bg-white">
+                  <div className="absolute top-0 right-0 p-3 sm:p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <Users className="h-8 w-8 sm:h-16 sm:w-16 text-[#3B82F6]" />
                   </div>
-                  <p className="relative z-10 italic text-foreground/90 leading-relaxed font-medium text-xs">
+                  <p className="relative z-10 italic text-foreground/90 leading-relaxed font-medium text-[10px] sm:text-xs">
                     "{content.journey?.story}"
                   </p>
-                  <div className="mt-6 flex items-center gap-3 text-[#3B82F6] font-bold">
-                    <div className="h-px w-10 bg-[#3B82F6]/30" />
-                    <span className="text-xs uppercase tracking-widest">História de Sucesso</span>
+                  <div className="mt-3 sm:mt-6 flex items-center gap-2 sm:gap-3 text-[#3B82F6] font-bold">
+                    <div className="h-px w-6 sm:w-10 bg-[#3B82F6]/30" />
+                    <span className="text-[9px] sm:text-xs uppercase tracking-widest">História de Sucesso</span>
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
-                <Button size="lg" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:shadow-apple-card-hover text-white rounded-full px-12 h-16 shadow-xl shadow-blue-500/20 transition-all hover:scale-105 bg-black text-sm" onClick={() => navigate("/auth")}>
-                  {content.journey?.cta || "Começar Agora"} <ArrowRight className="h-6 w-6 ml-2" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
+                <Button size="lg" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:shadow-apple-card-hover text-white rounded-full px-6 sm:px-12 h-12 sm:h-16 shadow-xl shadow-blue-500/20 transition-all hover:scale-105 bg-black text-xs sm:text-sm w-full sm:w-auto" onClick={() => navigate("/auth")}>
+                  {content.journey?.cta || "Começar Agora"} <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6 ml-2" />
                 </Button>
-                <div className="flex -space-x-4">
-                  <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
+                <div className="flex -space-x-3 sm:-space-x-4">
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
                     <img src={avatar1} alt="User" className="w-full h-full object-cover" />
                   </div>
-                  <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
                     <img src={avatar2} alt="User" className="w-full h-full object-cover" />
                   </div>
-                  <div className="w-12 h-12 rounded-full border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-background bg-muted flex items-center justify-center text-xs font-bold overflow-hidden shadow-sm">
                     <img src={avatar3} alt="User" className="w-full h-full object-cover" />
                   </div>
-                  <div className="w-12 h-12 rounded-full border-4 border-background bg-[#3B82F6] text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-background bg-[#3B82F6] text-white flex items-center justify-center text-[8px] sm:text-[10px] font-bold shadow-sm">
                     +50k
                   </div>
                 </div>
