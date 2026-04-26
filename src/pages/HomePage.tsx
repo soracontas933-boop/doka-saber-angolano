@@ -513,8 +513,8 @@ const HomePage = () => {
       {/* About Us Section (image full-height + text) */}
       {siteSettings.section_about_enabled !== "false" && (siteSettings.section_about_image || siteSettings.section_about_text) && (
         <section className="relative w-full bg-background overflow-hidden">
-          <div className={`grid grid-cols-1 lg:grid-cols-2 min-h-[600px] lg:min-h-[700px] ${
-            siteSettings.section_about_position === "right" ? "lg:[&>*:first-child]:order-1 lg:[&>*:last-child]:order-2" : ""
+          <div className={`grid grid-cols-2 min-h-[300px] sm:min-h-[500px] lg:min-h-[700px] ${
+            siteSettings.section_about_position === "right" ? "[&>*:first-child]:order-1 [&>*:last-child]:order-2" : ""
           }`}>
             {/* Image side — full height */}
             <motion.div
@@ -522,8 +522,8 @@ const HomePage = () => {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
               viewport={{ once: true }}
-              className={`relative w-full h-[400px] lg:h-auto min-h-full ${
-                siteSettings.section_about_position === "right" ? "lg:order-2" : "lg:order-1"
+              className={`relative w-full h-full min-h-[300px] sm:min-h-[500px] lg:min-h-[700px] ${
+                siteSettings.section_about_position === "right" ? "order-2" : "order-1"
               }`}
             >
               {siteSettings.section_about_image ? (
@@ -543,18 +543,18 @@ const HomePage = () => {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               viewport={{ once: true }}
-              className={`flex flex-col justify-center px-8 md:px-16 py-16 ${
-                siteSettings.section_about_position === "right" ? "lg:order-1" : "lg:order-2"
+              className={`flex flex-col justify-center px-3 sm:px-8 md:px-16 py-6 sm:py-16 ${
+                siteSettings.section_about_position === "right" ? "order-1" : "order-2"
               }`}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold mb-6 border border-[#3B82F6]/20 w-fit">
-                <Sparkles className="h-3 w-3" />
+              <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-[9px] sm:text-xs font-bold mb-2 sm:mb-6 border border-[#3B82F6]/20 w-fit">
+                <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                 Quem Somos
               </div>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 text-foreground tracking-tight leading-[1.1]">
+              <h2 className="text-lg sm:text-3xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-8 text-foreground tracking-tight leading-[1.1]">
                 {siteSettings.section_about_title || "Sobre Nós"}
               </h2>
-              <p className="text-base md:text-lg text-muted-foreground leading-relaxed whitespace-pre-line">
+              <p className="text-[11px] sm:text-base md:text-lg text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-6 sm:line-clamp-none">
                 {siteSettings.section_about_text || ""}
               </p>
             </motion.div>
