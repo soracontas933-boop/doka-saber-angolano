@@ -385,9 +385,9 @@ const HomePage = () => {
       </section>
 
       {/* Journey Section (3rd Section with Video Support) */}
-      <section className="relative w-full py-32 px-6 md:px-12 overflow-hidden pt-0 bg-white">
+      <section className="relative w-full py-16 sm:py-24 lg:py-32 px-4 sm:px-6 md:px-12 overflow-hidden pt-0 bg-white">
         <div className="max-w-[1200px] mx-auto relative z-10">
-          <div className={`grid grid-cols-1 ${ (sectionImages.section_image_journey || siteSettings.section_video_journey) ? 'lg:grid-cols-2' : ''} gap-20 items-center`}>
+          <div className={`grid grid-cols-2 ${ (sectionImages.section_image_journey || siteSettings.section_video_journey) ? '' : 'lg:grid-cols-1'} gap-4 sm:gap-10 lg:gap-20 items-center`}>
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
