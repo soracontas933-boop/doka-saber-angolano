@@ -311,11 +311,22 @@ const HomePage = () => {
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground h-9 w-9 rounded-full shrink-0">
             {theme === "dark" ? <Sun className="h-4 w-4 text-white" /> : <Moon className="h-4 w-4 text-white" />}
           </Button>
-          {canInstall &&
-            <Button variant="outline" size="sm" className="rounded-full hidden sm:inline-flex border-border/60" onClick={install}>
-              <Download className="h-4 w-4 mr-2" /> Baixar App
-            </Button>
-          }
+          {canInstall && (
+            <>
+              <Button variant="outline" size="sm" className="rounded-full hidden sm:inline-flex border-border/60" onClick={install}>
+                <Download className="h-4 w-4 mr-2" /> Baixar App
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Baixar App"
+                className="rounded-full sm:hidden h-9 w-9 border-border/60 shrink-0"
+                onClick={install}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </>
+          )}
           <Button variant="ghost" size="sm" className="rounded-full px-3 sm:px-5 text-white text-xs sm:text-sm" onClick={() => navigate("/auth")}>Entrar</Button>
           <Button size="sm" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-3 sm:px-6 shadow-sm text-xs sm:text-sm whitespace-nowrap" onClick={() => navigate("/auth")}>Começar grátis</Button>
         </div>
