@@ -322,7 +322,7 @@ const HomePage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className={`relative px-6 md:px-12 pt-20 pb-32 max-w-7xl mx-auto min-h-[90vh] flex flex-col justify-center ${
+      <section className={`relative px-4 sm:px-6 md:px-12 pt-12 sm:pt-20 pb-20 sm:pb-32 max-w-7xl mx-auto min-h-[80vh] sm:min-h-[90vh] flex flex-col justify-center ${
         siteSettings.hero_text_align === "left" ? "items-start text-left" :
         siteSettings.hero_text_align === "right" ? "items-end text-right" :
         "items-center text-center"
@@ -342,16 +342,16 @@ const HomePage = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-[20] max-w-4xl"
+          className="relative z-[20] max-w-4xl w-full"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-semibold mb-10 border border-[#3B82F6]/20 backdrop-blur-md">
-            <Sparkles className="h-3.5 w-3.5" />
-            Plataforma educacional angolana com IA
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-[10px] sm:text-xs font-semibold mb-6 sm:mb-10 border border-[#3B82F6]/20 backdrop-blur-md">
+            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span className="line-clamp-1">Plataforma educacional angolana com IA</span>
           </div>
 
           <AnimatedTitle />
 
-          <p className={`text-lg max-w-2xl mb-12 leading-relaxed text-muted-foreground/80 font-medium md:text-base ${
+          <p className={`text-sm sm:text-base md:text-lg max-w-2xl mb-8 sm:mb-12 leading-relaxed text-muted-foreground/80 font-medium ${
             siteSettings.hero_text_align === "left" ? "" :
             siteSettings.hero_text_align === "right" ? "ml-auto" :
             "mx-auto"
@@ -359,15 +359,15 @@ const HomePage = () => {
             Gere trabalhos escolares, resumos de conteúdo, questionários e planos de aulas, profissionais com a melhor IA do mercado.
           </p>
 
-          <div className={`flex flex-col sm:flex-row items-center gap-4 mb-20 ${
+          <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-12 sm:mb-20 ${
             siteSettings.hero_text_align === "left" ? "justify-start" :
             siteSettings.hero_text_align === "right" ? "justify-end" :
             "justify-center"
           }`}>
-            <Button size="lg" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-10 h-14 text-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-105" onClick={() => navigate("/auth")}>
-              Começar agora <ArrowRight className="h-5 w-5 ml-2" />
+            <Button size="lg" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full px-6 sm:px-10 h-12 sm:h-14 text-sm sm:text-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-105" onClick={() => navigate("/auth")}>
+              Começar agora <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
             </Button>
-            <Button variant="outline" size="lg" className="rounded-full px-10 h-14 text-lg border-border/60 hover:bg-secondary transition-all hover:scale-105" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
+            <Button variant="outline" size="lg" className="rounded-full px-6 sm:px-10 h-12 sm:h-14 text-sm sm:text-lg border-border/60 hover:bg-secondary transition-all hover:scale-105" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
               Ver funcionalidades
             </Button>
           </div>
