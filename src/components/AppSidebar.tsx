@@ -56,6 +56,7 @@ const navItems: NavItem[] = [
   { to: "/apresentacao", icon: Presentation, label: "Apresentação" },
   { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
   { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
+  { to: "/livraria", icon: Library, label: "Livraria", masterLabel: "Livraria" },
   { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
   { to: "/creditos", icon: Zap, label: "Créditos Extras", userOnly: true },
   { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
