@@ -104,6 +104,192 @@ export type Database = {
         }
         Relationships: []
       }
+      book_categories: {
+        Row: {
+          ativo: boolean
+          criado_em: string
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          slug: string
+        }
+        Insert: {
+          ativo?: boolean
+          criado_em?: string
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          slug: string
+        }
+        Update: {
+          ativo?: boolean
+          criado_em?: string
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      book_library: {
+        Row: {
+          book_id: string
+          id: string
+          metodo: string
+          obtido_em: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          id?: string
+          metodo?: string
+          obtido_em?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          id?: string
+          metodo?: string
+          obtido_em?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_library_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_purchase_requests: {
+        Row: {
+          atualizado_em: string
+          book_id: string
+          criado_em: string
+          email_confirmacao: string
+          estado: string
+          ficheiro_url: string | null
+          id: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          atualizado_em?: string
+          book_id: string
+          criado_em?: string
+          email_confirmacao: string
+          estado?: string
+          ficheiro_url?: string | null
+          id?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          atualizado_em?: string
+          book_id?: string
+          criado_em?: string
+          email_confirmacao?: string
+          estado?: string
+          ficheiro_url?: string | null
+          id?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_purchase_requests_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      books: {
+        Row: {
+          atualizado_em: string
+          autor: string
+          capa_url: string | null
+          category_id: string | null
+          classe: string | null
+          criado_em: string
+          criado_por: string | null
+          descricao: string | null
+          destaque: boolean
+          downloads: number
+          ficheiro_path: string
+          gratuito: boolean
+          id: string
+          idioma: string | null
+          isbn: string | null
+          paginas: number | null
+          preco_creditos: number
+          preco_kz: number
+          publicado: boolean
+          titulo: string
+          visualizacoes: number
+        }
+        Insert: {
+          atualizado_em?: string
+          autor: string
+          capa_url?: string | null
+          category_id?: string | null
+          classe?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          destaque?: boolean
+          downloads?: number
+          ficheiro_path: string
+          gratuito?: boolean
+          id?: string
+          idioma?: string | null
+          isbn?: string | null
+          paginas?: number | null
+          preco_creditos?: number
+          preco_kz?: number
+          publicado?: boolean
+          titulo: string
+          visualizacoes?: number
+        }
+        Update: {
+          atualizado_em?: string
+          autor?: string
+          capa_url?: string | null
+          category_id?: string | null
+          classe?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string | null
+          destaque?: boolean
+          downloads?: number
+          ficheiro_path?: string
+          gratuito?: boolean
+          id?: string
+          idioma?: string | null
+          isbn?: string | null
+          paginas?: number | null
+          preco_creditos?: number
+          preco_kz?: number
+          publicado?: boolean
+          titulo?: string
+          visualizacoes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "book_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       button_covers: {
         Row: {
           atualizado_em: string
@@ -922,6 +1108,8 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: undefined
       }
+      aprovar_compra_livro: { Args: { p_request_id: string }; Returns: Json }
+      comprar_livro_com_creditos: { Args: { p_book_id: string }; Returns: Json }
       consume_credits: {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
@@ -956,6 +1144,8 @@ export type Database = {
         Args: { _user_id: string; _workgroup_id: string }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
