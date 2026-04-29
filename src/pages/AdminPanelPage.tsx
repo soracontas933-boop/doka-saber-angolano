@@ -22,6 +22,7 @@ import {
   ImageIcon,
   Crown,
   Smartphone,
+  Library,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
@@ -29,6 +30,7 @@ import AdminMastersTab from "@/components/AdminMastersTab";
 import AdminHeroTab from "@/components/AdminHeroTab";
 import AdminButtonCoversTab from "@/components/AdminButtonCoversTab";
 import AdminLandingTabNew from "@/components/AdminLandingTabNew";
+import AdminLivrariaTab from "@/components/AdminLivrariaTab";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -674,6 +676,9 @@ const AdminPanelPage = () => {
               <TabsTrigger value="landing" className="gap-2">
                 <Globe className="h-4 w-4" /> Landing Page
               </TabsTrigger>
+              <TabsTrigger value="livraria" className="gap-2">
+                <Library className="h-4 w-4" /> Livraria
+              </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -908,6 +913,9 @@ const AdminPanelPage = () => {
           </TabsContent>
           <TabsContent value="landing">
             <AdminLandingTabNew />
+          </TabsContent>
+          <TabsContent value="livraria">
+            <AdminLivrariaTab />
           </TabsContent>
       </Tabs>
 

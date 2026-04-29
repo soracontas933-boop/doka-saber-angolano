@@ -27,6 +27,9 @@ import AdminMensagensPage from "@/pages/AdminMensagensPage";
 import CurriculoPage from "@/pages/CurriculoPage";
 import FaturamentoPage from "@/pages/FaturamentoPage";
 import ApresentacaoPage from "@/pages/ApresentacaoPage";
+import LivrariaPage from "@/pages/LivrariaPage";
+import LivroDetalhePage from "@/pages/LivroDetalhePage";
+import MinhaBibliotecaPage from "@/pages/MinhaBibliotecaPage";
 import NotFound from "@/pages/NotFound";
 import RootRedirect from "@/components/RootRedirect";
 import CreditosPage from "@/pages/CreditosPage";
@@ -67,6 +70,9 @@ const App = () => (
                 <Route path="/mensagens" element={<AdminMensagensPage />} />
                 <Route path="/curriculo" element={<CurriculoPage />} />
                 <Route path="/apresentacao" element={<ApresentacaoPage />} />
+                <Route path="/livraria" element={<LivrariaPage />} />
+                <Route path="/livraria/:id" element={<LivroDetalhePage />} />
+                <Route path="/minha-biblioteca" element={<MinhaBibliotecaPage />} />
                 <Route path="/faturamento" element={<FaturamentoPage />} />
               </Route>
             </Route>
