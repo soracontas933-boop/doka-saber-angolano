@@ -20,6 +20,7 @@ import {
   Home,
   Users,
   Presentation,
+  Library,
   Zap,
   type LucideIcon,
   ChevronLeft,
