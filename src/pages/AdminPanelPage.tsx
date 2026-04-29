@@ -914,6 +914,9 @@ const AdminPanelPage = () => {
           <TabsContent value="landing">
             <AdminLandingTabNew />
           </TabsContent>
+          <TabsContent value="livraria">
+            <AdminLivrariaTab />
+          </TabsContent>
       </Tabs>
 
       {/* User Management Dialog */}
