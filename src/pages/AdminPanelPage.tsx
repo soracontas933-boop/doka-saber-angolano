@@ -676,6 +676,9 @@ const AdminPanelPage = () => {
               <TabsTrigger value="landing" className="gap-2">
                 <Globe className="h-4 w-4" /> Landing Page
               </TabsTrigger>
+              <TabsTrigger value="livraria" className="gap-2">
+                <Library className="h-4 w-4" /> Livraria
+              </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
