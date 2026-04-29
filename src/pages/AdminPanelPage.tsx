@@ -22,6 +22,7 @@ import {
   ImageIcon,
   Crown,
   Smartphone,
+  Library,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
