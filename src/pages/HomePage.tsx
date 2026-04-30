@@ -267,6 +267,10 @@ const HomePage = () => {
   const [adminOpen, setAdminOpen] = useState(false);
 
   useEffect(() => {
+    import("@/lib/device-tracking").then(({ trackPageView }) => trackPageView("/landing"));
+  }, []);
+
+  useEffect(() => {
     const load = async () => {
       const [imgRes, settingsRes] = await Promise.all([
         supabase.from("hero_images").select("*").eq("ativo", true).order("ordem", { ascending: true }),

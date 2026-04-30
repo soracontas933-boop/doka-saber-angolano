@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { trackAppDownload } from "@/lib/device-tracking";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -28,6 +29,7 @@ export function usePwaInstall() {
     const installedHandler = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
+      trackAppDownload({ status: "accepted", source: "pwa" });
     };
 
     window.addEventListener("beforeinstallprompt", handler);
@@ -41,11 +43,14 @@ export function usePwaInstall() {
 
   const install = async () => {
     if (!deferredPrompt) return false;
+    trackAppDownload({ status: "prompted", source: "landing" });
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
       setIsInstalled(true);
       setDeferredPrompt(null);
+    } else {
+      trackAppDownload({ status: "dismissed", source: "landing" });
     }
     return outcome === "accepted";
   };

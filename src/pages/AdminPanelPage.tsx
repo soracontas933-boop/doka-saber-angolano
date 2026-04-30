@@ -24,6 +24,7 @@ import {
   Smartphone,
   Library,
   SlidersHorizontal,
+  Download,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
@@ -33,6 +34,7 @@ import AdminButtonCoversTab from "@/components/AdminButtonCoversTab";
 import AdminLandingTabNew from "@/components/AdminLandingTabNew";
 import AdminLivrariaTab from "@/components/AdminLivrariaTab";
 import AdminFeaturesTab from "@/components/AdminFeaturesTab";
+import AdminDownloadsTab from "@/components/AdminDownloadsTab";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -684,6 +686,9 @@ const AdminPanelPage = () => {
               <TabsTrigger value="features" className="gap-2">
                 <SlidersHorizontal className="h-4 w-4" /> Funcionalidades
               </TabsTrigger>
+              <TabsTrigger value="downloads" className="gap-2">
+                <Download className="h-4 w-4" /> Downloads
+              </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -924,6 +929,9 @@ const AdminPanelPage = () => {
           </TabsContent>
           <TabsContent value="features">
             <AdminFeaturesTab />
+          </TabsContent>
+          <TabsContent value="downloads">
+            <AdminDownloadsTab />
           </TabsContent>
       </Tabs>
 
