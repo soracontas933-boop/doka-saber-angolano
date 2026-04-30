@@ -44,7 +44,7 @@ const DeviceIcon = ({ type }: { type: string }) => {
 
 export const AdminDownloadsTab = () => {
   const [downloads, setDownloads] = useState<DownloadRow[]>([]);
-  const [pageViewsCount, setPageViewsCount] = useState(0);
+  const [pageViews, setPageViews] = useState<{ created_at: string; device_type: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>("7d");
   const [liveCounter, setLiveCounter] = useState(0);
@@ -57,15 +57,15 @@ export const AdminDownloadsTab = () => {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from("app_downloads").select("*").order("created_at", { ascending: false }).limit(500);
+    let q = supabase.from("app_downloads").select("*").order("created_at", { ascending: false }).limit(2000);
     if (sinceIso) q = q.gte("created_at", sinceIso);
     const { data } = await q;
     setDownloads((data as DownloadRow[]) || []);
 
-    let pv = supabase.from("page_views").select("id", { count: "exact", head: true });
+    let pv = supabase.from("page_views").select("created_at, device_type").order("created_at", { ascending: false }).limit(5000);
     if (sinceIso) pv = pv.gte("created_at", sinceIso);
-    const { count } = await pv;
-    setPageViewsCount(count || 0);
+    const { data: pvData } = await pv;
+    setPageViews((pvData as any[]) || []);
     setLoading(false);
   };
 
@@ -78,17 +78,19 @@ export const AdminDownloadsTab = () => {
     const ch = supabase
       .channel("admin-downloads-realtime")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "app_downloads" }, (payload) => {
-        setDownloads((prev) => [payload.new as DownloadRow, ...prev].slice(0, 500));
+        setDownloads((prev) => [payload.new as DownloadRow, ...prev].slice(0, 2000));
         setLiveCounter((n) => n + 1);
       })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "page_views" }, () => {
-        setPageViewsCount((n) => n + 1);
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "page_views" }, (payload) => {
+        setPageViews((prev) => [payload.new as any, ...prev].slice(0, 5000));
       })
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
   }, []);
+
+  const pageViewsCount = pageViews.length;
 
   const stats = useMemo(() => {
     const total = downloads.length;
