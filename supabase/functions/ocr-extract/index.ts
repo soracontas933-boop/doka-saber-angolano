@@ -88,11 +88,11 @@ serve(async (req) => {
     }
 
     // Limita tamanho do payload para evitar WORKER_RESOURCE_LIMIT (memória)
-    // ~6MB de base64 ≈ 4.5MB de ficheiro original
-    const MAX_BASE64_LEN = 6 * 1024 * 1024;
+    // ~14MB de base64 ≈ 10MB de ficheiro original
+    const MAX_BASE64_LEN = 14 * 1024 * 1024;
     if (image_base64.length > MAX_BASE64_LEN) {
       return new Response(JSON.stringify({
-        error: `Ficheiro muito grande (${(image_base64.length / 1024 / 1024).toFixed(1)}MB). Máximo ~4.5MB. Comprime ou reduz a resolução.`
+        error: `Ficheiro muito grande (${(image_base64.length * 0.75 / 1024 / 1024).toFixed(1)}MB). Máximo 10MB. Reduz a resolução ou divide o documento.`
       }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
