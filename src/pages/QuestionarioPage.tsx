@@ -3,7 +3,7 @@ import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { HelpCircle, Upload, Camera, X, Image, Loader2 } from "lucide-react";
+import { HelpCircle, Upload, Camera, X, Image, Loader2, FileText, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
