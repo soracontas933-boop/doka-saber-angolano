@@ -452,7 +452,7 @@ Retorna em JSON:
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────
-function fileToBase64(file: File): Promise<string> {
+function fileToBase64(file: File | Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -463,4 +463,36 @@ function fileToBase64(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Comprime uma imagem no browser via canvas para reduzir o payload do OCR.
+ * Mantém qualidade legível para texto, com no máximo 2000px no maior lado.
+ */
+async function compressImageFile(file: File, maxDim = 2000, quality = 0.82): Promise<File | Blob> {
+  if (!file.type.startsWith("image/")) return file;
+  // Se já é pequena (<1.5MB), envia directamente
+  if (file.size < 1.5 * 1024 * 1024) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    const blob: Blob = await new Promise((res) =>
+      canvas.toBlob((b) => res(b as Blob), "image/jpeg", quality)
+    );
+    if (!blob || blob.size >= file.size) return file;
+    console.log(`[OCR] Imagem comprimida: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+    return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+  } catch (e) {
+    console.warn("[OCR] Compressão falhou, enviando original:", e);
+    return file;
+  }
 }
