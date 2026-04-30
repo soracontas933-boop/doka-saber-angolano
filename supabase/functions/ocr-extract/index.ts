@@ -87,20 +87,27 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Limita tamanho do payload para evitar WORKER_RESOURCE_LIMIT (memória)
+    // ~6MB de base64 ≈ 4.5MB de ficheiro original
+    const MAX_BASE64_LEN = 6 * 1024 * 1024;
+    if (image_base64.length > MAX_BASE64_LEN) {
+      return new Response(JSON.stringify({
+        error: `Ficheiro muito grande (${(image_base64.length / 1024 / 1024).toFixed(1)}MB). Máximo ~4.5MB. Comprime ou reduz a resolução.`
+      }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const allKeys = await getAllApiKeys();
     const promptToUse = is_document ? DOC_PROMPT : OCR_PROMPT;
 
-    // Collect ALL keys per provider
-    const geminiKeys = allKeys.filter(k => k.servico === "gemini").map(k => k.chave);
-    const groqKeys = allKeys.filter(k => k.servico === "groq").map(k => k.chave);
+    // Limita a 2 chaves por provider para não estourar CPU/memória da edge function
+    const MAX_KEYS_PER_PROVIDER = 2;
+    const geminiKeys = allKeys.filter(k => k.servico === "gemini").map(k => k.chave).slice(0, MAX_KEYS_PER_PROVIDER);
+    const groqKeys = allKeys.filter(k => k.servico === "groq").map(k => k.chave).slice(0, MAX_KEYS_PER_PROVIDER);
 
-    // Build provider list: try every Gemini key, then every Groq key
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [];
-
     for (const key of geminiKeys) {
       providers.push({ name: `gemini`, fn: () => ocrWithGemini(image_base64, mime_type, key, promptToUse) });
     }
-    // Groq Vision works for images; also allow for PDFs as fallback
     for (const key of groqKeys) {
       providers.push({ name: `groq-vision`, fn: () => ocrWithGroq(image_base64, mime_type, key, promptToUse) });
     }
