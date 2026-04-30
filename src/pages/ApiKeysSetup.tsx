@@ -65,8 +65,26 @@ export default function ApiKeysSetup() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
+  const [collapsedProviders, setCollapsedProviders] = useState<Set<string>>(new Set());
   const [bulkProvider, setBulkProvider] = useState<ProviderConfig | null>(null);
   const [bulkValue, setBulkValue] = useState("");
+
+  const toggleProviderCollapsed = (providerKey: string) => {
+    setCollapsedProviders((current) => {
+      const next = new Set(current);
+      if (next.has(providerKey)) next.delete(providerKey);
+      else next.add(providerKey);
+      return next;
+    });
+  };
+
+  const collapseAll = () => {
+    setCollapsedProviders(new Set(PROVIDERS.map((p) => p.key)));
+  };
+
+  const expandAll = () => {
+    setCollapsedProviders(new Set());
+  };
 
   const getNextPriority = (items: KeyRow[], servico: ProviderKey) => {
     const existing = items.filter((item) => item.servico === servico);
