@@ -204,7 +204,18 @@ const VideoEmbed = ({ url }: { url: string }) => {
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { canInstall, install } = usePwaInstall();
+  const { canInstall, install, hasNativePrompt, platform } = usePwaInstall();
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+
+  const handleInstallClick = async () => {
+    if (hasNativePrompt) {
+      await install();
+    } else {
+      // Track manual click and show platform-specific instructions
+      install();
+      setShowInstallHelp(true);
+    }
+  };
   const { theme, toggleTheme } = useTheme();
   const { isAdmin } = useAdmin();
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
