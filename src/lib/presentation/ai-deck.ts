@@ -33,7 +33,7 @@ export interface RawAISlide {
   title: string;
   subtitle?: string;
   body?: string[];
-  blocks?: Array<{ type: string; label?: string; value?: string; description?: string }>;
+  blocks?: import("@/types/presentation").Block[];
   imagePrompt?: string;
 }
 
