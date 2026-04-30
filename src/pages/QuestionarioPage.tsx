@@ -366,7 +366,7 @@ const QuestionarioPage = () => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full h-12 text-base" disabled={loading || files.length === 0}>
+        <Button type="submit" className="w-full h-12 text-base" disabled={loading || (files.length === 0 && docFiles.length === 0)}>
           {loading ? (
             <span className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
