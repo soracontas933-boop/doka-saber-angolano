@@ -79,10 +79,26 @@ const QuestionarioPage = () => {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newDocs = Array.from(e.target.files);
+      setDocFiles((prev) => [...prev, ...newDocs].slice(0, 10));
+      toast.success(`${newDocs.length} documento(s) adicionado(s)`);
+      e.target.value = "";
+    }
+  };
+
+  const removeDoc = (index: number) => {
+    setDocFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (files.length === 0) {
-      toast.error("Seleccione pelo menos uma foto do conteúdo");
+    const hasImages = files.length > 0;
+    const hasDocs = docFiles.length > 0;
+
+    if (!hasImages && !hasDocs) {
+      toast.error("Seleccione fotos ou documentos do conteúdo");
       return;
     }
 
@@ -93,12 +109,31 @@ const QuestionarioPage = () => {
     setResultado(null);
 
     try {
-      setEtapa("A extrair texto das fotos (Gemini Vision)...");
-      const extractedTexts = await extractTextFromImages(files);
-      const combinedText = extractedTexts.filter(Boolean).join("\n\n---\n\n");
+      let combinedText = "";
+
+      if (hasImages) {
+        setEtapa("A extrair texto das fotos (Gemini Vision)...");
+        const extractedTexts = await extractTextFromImages(files);
+        combinedText += extractedTexts.filter(Boolean).join("\n\n---\n\n");
+      }
+
+      if (hasDocs) {
+        for (let i = 0; i < docFiles.length; i++) {
+          setEtapa(`A extrair texto do documento ${i + 1}/${docFiles.length}...`);
+          try {
+            const docText = await extractTextFromDocument(docFiles[i]);
+            if (docText.trim()) {
+              combinedText += (combinedText ? "\n\n---\n\n" : "") + docText;
+            }
+          } catch (err) {
+            console.error(`Erro ao extrair documento ${docFiles[i].name}:`, err);
+            toast.error(`Erro ao ler ${docFiles[i].name}`);
+          }
+        }
+      }
 
       if (!combinedText.trim()) {
-        toast.error("Não foi possível extrair texto das fotos.");
+        toast.error("Não foi possível extrair texto do conteúdo.");
         setLoading(false);
         return;
       }
