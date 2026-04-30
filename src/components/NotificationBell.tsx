@@ -108,31 +108,31 @@ const NotificationBell = () => {
   };
 
   useEffect(() => {
+    if (!user?.id) return;
     fetchNotifications();
 
-    const channelName = `user-notifications-${Date.now()}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        { 
-          event: "INSERT", 
-          schema: "public", 
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload: any) => {
-          const newNotif = payload.new as Notification;
-          setNotifications((prev) => [newNotif, ...prev]);
-          playNotificationSound();
-        }
-      )
-      .subscribe();
+    const channelName = `user-notifications-${user.id}-${Math.random().toString(36).slice(2)}`;
+    const channel = supabase.channel(channelName);
+    channel.on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "notifications",
+        filter: `user_id=eq.${user.id}`,
+      },
+      (payload: any) => {
+        const newNotif = payload.new as Notification;
+        setNotifications((prev) => [newNotif, ...prev]);
+        playNotificationSound();
+      }
+    );
+    channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user?.id]);
 
   const markAsRead = async (id: string) => {
     await supabase
