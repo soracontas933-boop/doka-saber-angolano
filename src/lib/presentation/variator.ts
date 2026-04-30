@@ -91,6 +91,9 @@ export function assembleDeck(args: {
       title: ai.title || "",
       subtitle: ai.subtitle,
       body: ai.body || [],
+      richBody: (ai as any).richBody,
+      pill: (ai as any).pill,
+      footnote: (ai as any).footnote,
       blocks: ai.blocks || [],
       imagePrompt: ai.imagePrompt,
     };
