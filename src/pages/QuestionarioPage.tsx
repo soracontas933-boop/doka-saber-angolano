@@ -3,14 +3,14 @@ import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { HelpCircle, Upload, Camera, X, Image, Loader2 } from "lucide-react";
+import { HelpCircle, Upload, Camera, X, Image, Loader2, FileText, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { extractTextFromImages, generateWithGroq, reviewWithOpenRouter, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { extractTextFromImages, extractTextFromDocument, generateWithGroq, reviewWithOpenRouter, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { saveProject } from "@/lib/save-project";
 import { parseQuestionarioContent } from "@/lib/questionario-parser";
 import QuestionarioPreview from "@/components/questionario/QuestionarioPreview";
@@ -37,7 +37,8 @@ const QuestionarioPage = () => {
   const { checkLimit, logUsage } = useUsageTracker();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [fonte, setFonte] = useState<"upload" | "camera">("upload");
+  const [docFiles, setDocFiles] = useState<File[]>([]);
+  const [fonte, setFonte] = useState<"upload" | "camera" | "documento">("upload");
   const [numPerguntas, setNumPerguntas] = useLocalStorage("doka_quest_numPerguntas", "10");
   const [tipo, setTipo] = useLocalStorage("doka_quest_tipo", "multipla_escolha");
   const [disciplina, setDisciplina] = useLocalStorage("doka_quest_disciplina", "");
@@ -78,10 +79,26 @@ const QuestionarioPage = () => {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newDocs = Array.from(e.target.files);
+      setDocFiles((prev) => [...prev, ...newDocs].slice(0, 10));
+      toast.success(`${newDocs.length} documento(s) adicionado(s)`);
+      e.target.value = "";
+    }
+  };
+
+  const removeDoc = (index: number) => {
+    setDocFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (files.length === 0) {
-      toast.error("Seleccione pelo menos uma foto do conteúdo");
+    const hasImages = files.length > 0;
+    const hasDocs = docFiles.length > 0;
+
+    if (!hasImages && !hasDocs) {
+      toast.error("Seleccione fotos ou documentos do conteúdo");
       return;
     }
 
@@ -92,12 +109,31 @@ const QuestionarioPage = () => {
     setResultado(null);
 
     try {
-      setEtapa("A extrair texto das fotos (Gemini Vision)...");
-      const extractedTexts = await extractTextFromImages(files);
-      const combinedText = extractedTexts.filter(Boolean).join("\n\n---\n\n");
+      let combinedText = "";
+
+      if (hasImages) {
+        setEtapa("A extrair texto das fotos (Gemini Vision)...");
+        const extractedTexts = await extractTextFromImages(files);
+        combinedText += extractedTexts.filter(Boolean).join("\n\n---\n\n");
+      }
+
+      if (hasDocs) {
+        for (let i = 0; i < docFiles.length; i++) {
+          setEtapa(`A extrair texto do documento ${i + 1}/${docFiles.length}...`);
+          try {
+            const docText = await extractTextFromDocument(docFiles[i]);
+            if (docText.trim()) {
+              combinedText += (combinedText ? "\n\n---\n\n" : "") + docText;
+            }
+          } catch (err) {
+            console.error(`Erro ao extrair documento ${docFiles[i].name}:`, err);
+            toast.error(`Erro ao ler ${docFiles[i].name}`);
+          }
+        }
+      }
 
       if (!combinedText.trim()) {
-        toast.error("Não foi possível extrair texto das fotos.");
+        toast.error("Não foi possível extrair texto do conteúdo.");
         setLoading(false);
         return;
       }
@@ -183,16 +219,19 @@ const QuestionarioPage = () => {
         {/* Fotos */}
         <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
           <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
-            Fotos do Conteúdo
+            Conteúdo (Fotos ou Documentos)
           </h2>
 
-          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera")}>
+          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera" | "documento")}>
             <TabsList className="w-full">
               <TabsTrigger value="upload" className="flex-1 gap-2">
                 <Upload className="h-4 w-4" /> Galeria
               </TabsTrigger>
               <TabsTrigger value="camera" className="flex-1 gap-2">
                 <Camera className="h-4 w-4" /> Câmera
+              </TabsTrigger>
+              <TabsTrigger value="documento" className="flex-1 gap-2">
+                <File className="h-4 w-4" /> Documento
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -203,7 +242,7 @@ const QuestionarioPage = () => {
               <span className="text-sm text-muted-foreground font-medium">Carregar fotos da galeria</span>
               <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} />
             </label>
-          ) : (
+          ) : fonte === "camera" ? (
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
@@ -213,6 +252,13 @@ const QuestionarioPage = () => {
               <span className="text-sm text-muted-foreground font-medium">Abrir câmera</span>
               <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture onChange={handleFileChange} />
             </button>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-border md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 md:bg-accent/20">
+              <File className="h-7 w-7 text-muted-foreground mb-2" />
+              <span className="text-sm text-muted-foreground font-medium">Carregar PDF ou Word</span>
+              <span className="text-xs text-muted-foreground mt-1">.pdf, .doc, .docx — máx. 10 ficheiros</span>
+              <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple onChange={handleDocChange} />
+            </label>
           )}
 
           {previews.length > 0 && (
@@ -226,6 +272,23 @@ const QuestionarioPage = () => {
                     className="absolute top-1 right-1 w-5 h-5 bg-card/90 md:bg-foreground/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="h-3 w-3 text-background" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {docFiles.length > 0 && (
+            <div className="space-y-2">
+              {docFiles.map((doc, i) => (
+                <div key={i} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 border border-border/50">
+                  <FileText className="h-5 w-5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                    <p className="text-xs text-muted-foreground">{(doc.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                  <button type="button" onClick={() => removeDoc(i)} className="p-1 hover:bg-destructive/10 rounded">
+                    <X className="h-4 w-4 text-destructive" />
                   </button>
                 </div>
               ))}
@@ -303,7 +366,7 @@ const QuestionarioPage = () => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full h-12 text-base" disabled={loading || files.length === 0}>
+        <Button type="submit" className="w-full h-12 text-base" disabled={loading || (files.length === 0 && docFiles.length === 0)}>
           {loading ? (
             <span className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
