@@ -23,6 +23,9 @@ const OCR_PROMPT = `Você é um OCR especializado. Extraia TODO o texto visível
 const DOC_PROMPT = `Extraia TODO o texto deste documento com máxima fidelidade. Mantenha a estrutura original: títulos, parágrafos, listas, tabelas, notas de rodapé. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem comentários adicionais. Preserve a formatação e hierarquia do conteúdo.`;
 
 async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: string, prompt: string): Promise<string> {
+  const isPdf = mime_type === "application/pdf" || mime_type.includes("pdf");
+  // Para PDFs, usa modelo mais robusto que entende documentos nativamente
+  const model = isPdf ? "gemini-2.5-flash" : "gemini-2.0-flash";
   const body = {
     contents: [{
       role: "user",
@@ -34,7 +37,7 @@ async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: st
     generationConfig: { maxOutputTokens: 8192, temperature: 0.2 },
   };
 
-  const res = await fetch(`${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+  const res = await fetch(`${GEMINI_URL}/${model}:generateContent?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
