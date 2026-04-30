@@ -686,6 +686,9 @@ const AdminPanelPage = () => {
               <TabsTrigger value="features" className="gap-2">
                 <SlidersHorizontal className="h-4 w-4" /> Funcionalidades
               </TabsTrigger>
+              <TabsTrigger value="downloads" className="gap-2">
+                <Download className="h-4 w-4" /> Downloads
+              </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
