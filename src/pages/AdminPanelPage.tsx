@@ -930,6 +930,9 @@ const AdminPanelPage = () => {
           <TabsContent value="features">
             <AdminFeaturesTab />
           </TabsContent>
+          <TabsContent value="downloads">
+            <AdminDownloadsTab />
+          </TabsContent>
       </Tabs>
 
       {/* User Management Dialog */}
