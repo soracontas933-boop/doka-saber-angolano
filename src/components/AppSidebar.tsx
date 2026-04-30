@@ -70,6 +70,7 @@ const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin, hasPermission } = useAdmin();
+  const { isFeatureEnabled } = useFeatureFlags();
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
@@ -81,6 +82,8 @@ const AppSidebar = () => {
     if (item.adminOnly && !isAdmin) return null;
     if (item.userOnly && isAdmin) return null;
     if (item.adminOnly && item.permission && !hasPermission(item.permission)) return null;
+    // Esconder funcionalidades desativadas (admins veem sempre tudo)
+    if (!isAdmin && item.featureKey && !isFeatureEnabled(item.featureKey)) return null;
 
     const isActive = location.pathname.startsWith(item.to);
     const displayLabel = isAdmin && item.masterLabel ? item.masterLabel : item.label;
