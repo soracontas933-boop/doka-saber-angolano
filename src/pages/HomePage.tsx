@@ -329,7 +329,7 @@ const HomePage = () => {
           </Button>
           {canInstall && (
             <>
-              <Button variant="outline" size="sm" className="rounded-full hidden sm:inline-flex border-border/60" onClick={install}>
+              <Button variant="outline" size="sm" className="rounded-full hidden sm:inline-flex border-border/60" onClick={handleInstallClick}>
                 <Download className="h-4 w-4 mr-2" /> Baixar App
               </Button>
               <Button
@@ -337,7 +337,7 @@ const HomePage = () => {
                 size="icon"
                 aria-label="Baixar App"
                 className="rounded-full sm:hidden h-9 w-9 border-border/60 shrink-0"
-                onClick={install}
+                onClick={handleInstallClick}
               >
                 <Download className="h-4 w-4" />
               </Button>
