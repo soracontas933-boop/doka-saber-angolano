@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft, ChevronDown, ChevronRight, Minimize2, Maximize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const TEXT_PROVIDERS = [
@@ -65,8 +65,26 @@ export default function ApiKeysSetup() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
+  const [collapsedProviders, setCollapsedProviders] = useState<Set<string>>(new Set());
   const [bulkProvider, setBulkProvider] = useState<ProviderConfig | null>(null);
   const [bulkValue, setBulkValue] = useState("");
+
+  const toggleProviderCollapsed = (providerKey: string) => {
+    setCollapsedProviders((current) => {
+      const next = new Set(current);
+      if (next.has(providerKey)) next.delete(providerKey);
+      else next.add(providerKey);
+      return next;
+    });
+  };
+
+  const collapseAll = () => {
+    setCollapsedProviders(new Set(PROVIDERS.map((p) => p.key)));
+  };
+
+  const expandAll = () => {
+    setCollapsedProviders(new Set());
+  };
 
   const getNextPriority = (items: KeyRow[], servico: ProviderKey) => {
     const existing = items.filter((item) => item.servico === servico);
@@ -349,6 +367,16 @@ export default function ApiKeysSetup() {
                   {totalActiveKeys} chave(s) activa(s) no total
                 </span>
               </CardDescription>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={collapseAll} className="gap-1.5">
+                  <Minimize2 className="h-3.5 w-3.5" />
+                  Recolher tudo
+                </Button>
+                <Button variant="outline" size="sm" onClick={expandAll} className="gap-1.5">
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  Expandir tudo
+                </Button>
+              </div>
             </CardHeader>
 
             <CardContent className="space-y-6">
@@ -361,30 +389,46 @@ export default function ApiKeysSetup() {
                 return (
                   <div key={provider.key} className="space-y-4 rounded-xl border border-border bg-card p-4">
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Label className="text-sm font-semibold">{provider.label}</Label>
-                          <Badge variant="secondary">
-                            {filledCount} chave{filledCount === 1 ? "" : "s"}
-                          </Badge>
-                          {exhaustedCount > 0 && (
-                            <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
+                      <button
+                        type="button"
+                        onClick={() => toggleProviderCollapsed(provider.key)}
+                        className="flex items-start gap-2 text-left flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                      >
+                        {collapsedProviders.has(provider.key) ? (
+                          <ChevronRight className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
+                        )}
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Label className="text-sm font-semibold cursor-pointer">{provider.label}</Label>
+                            <Badge variant="secondary">
+                              {filledCount} chave{filledCount === 1 ? "" : "s"}
+                            </Badge>
+                            {exhaustedCount > 0 && (
+                              <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
+                            )}
+                          </div>
+                          {!collapsedProviders.has(provider.key) && (
+                            <p className="text-xs text-muted-foreground">{provider.description}</p>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">{provider.description}</p>
-                      </div>
+                      </button>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => openBulkModal(provider)}>
-                          Colar chaves
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => addKey(provider.key)}>
-                          <Plus className="mr-1.5 h-3.5 w-3.5" />
-                          Adicionar campo
-                        </Button>
-                      </div>
+                      {!collapsedProviders.has(provider.key) && (
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="secondary" size="sm" onClick={() => openBulkModal(provider)}>
+                            Colar chaves
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => addKey(provider.key)}>
+                            <Plus className="mr-1.5 h-3.5 w-3.5" />
+                            Adicionar campo
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
+                    {!collapsedProviders.has(provider.key) && (
                     <div className="space-y-3">
                       {providerKeys.map((keyRow) => {
                         const globalIndex = keys.findIndex((row) => row === keyRow);
@@ -435,6 +479,7 @@ export default function ApiKeysSetup() {
                         );
                       })}
                     </div>
+                    )}
                   </div>
                 );
               })}
@@ -448,30 +493,46 @@ export default function ApiKeysSetup() {
                 return (
                   <div key={provider.key} className="space-y-4 rounded-xl border border-border bg-card p-4">
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Label className="text-sm font-semibold">{provider.label}</Label>
-                          <Badge variant="secondary">
-                            {filledCount} chave{filledCount === 1 ? "" : "s"}
-                          </Badge>
-                          {exhaustedCount > 0 && (
-                            <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
+                      <button
+                        type="button"
+                        onClick={() => toggleProviderCollapsed(provider.key)}
+                        className="flex items-start gap-2 text-left flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                      >
+                        {collapsedProviders.has(provider.key) ? (
+                          <ChevronRight className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
+                        )}
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Label className="text-sm font-semibold cursor-pointer">{provider.label}</Label>
+                            <Badge variant="secondary">
+                              {filledCount} chave{filledCount === 1 ? "" : "s"}
+                            </Badge>
+                            {exhaustedCount > 0 && (
+                              <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
+                            )}
+                          </div>
+                          {!collapsedProviders.has(provider.key) && (
+                            <p className="text-xs text-muted-foreground">{provider.description}</p>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">{provider.description}</p>
-                      </div>
+                      </button>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => openBulkModal(provider)}>
-                          Colar chaves
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => addKey(provider.key)}>
-                          <Plus className="mr-1.5 h-3.5 w-3.5" />
-                          Adicionar campo
-                        </Button>
-                      </div>
+                      {!collapsedProviders.has(provider.key) && (
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="secondary" size="sm" onClick={() => openBulkModal(provider)}>
+                            Colar chaves
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => addKey(provider.key)}>
+                            <Plus className="mr-1.5 h-3.5 w-3.5" />
+                            Adicionar campo
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
+                    {!collapsedProviders.has(provider.key) && (
                     <div className="space-y-3">
                       {providerKeys.map((keyRow) => {
                         const globalIndex = keys.findIndex((row) => row === keyRow);
@@ -522,6 +583,7 @@ export default function ApiKeysSetup() {
                         );
                       })}
                     </div>
+                    )}
                   </div>
                 );
               })}
