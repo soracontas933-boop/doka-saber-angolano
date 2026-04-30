@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { Badge } from "@/components/ui/badge";
 import DelleLogo from "./DelleLogo";
 import { useState } from "react";
@@ -40,26 +41,27 @@ interface NavItem {
   adminOnly?: boolean;
   userOnly?: boolean;
   permission?: string;
+  featureKey?: string;
 }
 
 const navItems: NavItem[] = [
-  { to: "/home", icon: Home, label: "Início", userOnly: true },
+  { to: "/home", icon: Home, label: "Início", userOnly: true, featureKey: "home" },
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true, permission: "dashboard" },
   { to: "/faturamento", icon: Receipt, label: "Faturamento", adminOnly: true, permission: "faturamento" },
   { to: "/admin", icon: ShieldCheck, label: "Painel Admin", adminOnly: true, permission: "admin_panel" },
-  { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos" },
-  { to: "/trabalho", icon: FileText, label: "Trabalho Escolar" },
-  { to: "/curriculo", icon: FileText, label: "Currículo (CV)" },
-  { to: "/resumo", icon: BookOpen, label: "Resumo" },
-  { to: "/questionario", icon: HelpCircle, label: "Questionário" },
-  { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula" },
-  { to: "/apresentacao", icon: Presentation, label: "Apresentação" },
-  { to: "/correcao", icon: Search, label: "Corrigir Trabalho" },
-  { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true },
-  { to: "/livraria", icon: Library, label: "Livraria", masterLabel: "Livraria" },
-  { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas" },
-  { to: "/creditos", icon: Zap, label: "Créditos Extras", userOnly: true },
-  { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true },
+  { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos", featureKey: "meus-projetos" },
+  { to: "/trabalho", icon: FileText, label: "Trabalho Escolar", featureKey: "trabalho" },
+  { to: "/curriculo", icon: FileText, label: "Currículo (CV)", featureKey: "curriculo" },
+  { to: "/resumo", icon: BookOpen, label: "Resumo", featureKey: "resumo" },
+  { to: "/questionario", icon: HelpCircle, label: "Questionário", featureKey: "questionario" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", featureKey: "plano-aula" },
+  { to: "/apresentacao", icon: Presentation, label: "Apresentação", featureKey: "apresentacao" },
+  { to: "/correcao", icon: Search, label: "Corrigir Trabalho", featureKey: "correcao" },
+  { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true, featureKey: "grupos" },
+  { to: "/livraria", icon: Library, label: "Livraria", masterLabel: "Livraria", featureKey: "livraria" },
+  { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas", featureKey: "planos" },
+  { to: "/creditos", icon: Zap, label: "Créditos Extras", userOnly: true, featureKey: "creditos" },
+  { to: "/suporte", icon: LifeBuoy, label: "Suporte & Ajuda", userOnly: true, featureKey: "suporte" },
   { to: "/mensagens", icon: MessageSquare, label: "Mensagens", adminOnly: true, permission: "mensagens" },
   { to: "/setup-api-keys", icon: Key, label: "Chaves API", adminOnly: true, permission: "admin_panel" },
 ];
@@ -68,6 +70,7 @@ const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin, hasPermission } = useAdmin();
+  const { isFeatureEnabled } = useFeatureFlags();
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
@@ -79,6 +82,8 @@ const AppSidebar = () => {
     if (item.adminOnly && !isAdmin) return null;
     if (item.userOnly && isAdmin) return null;
     if (item.adminOnly && item.permission && !hasPermission(item.permission)) return null;
+    // Esconder funcionalidades desativadas (admins veem sempre tudo)
+    if (!isAdmin && item.featureKey && !isFeatureEnabled(item.featureKey)) return null;
 
     const isActive = location.pathname.startsWith(item.to);
     const displayLabel = isAdmin && item.masterLabel ? item.masterLabel : item.label;
