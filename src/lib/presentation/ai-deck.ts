@@ -10,6 +10,7 @@ const MOTIF_PROMPT_HINTS: Record<string, string> = {
   brutalist:  "brutalist design, bold typography, raw textures, high contrast",
   luxury:     "luxury corporate design, deep shadows, premium materials, gold accents",
   cinematic:  "cinematic lighting, volumetric light, film still, dramatic mood",
+  iridescent: "soft iridescent holographic illustration, pastel pink lavender cyan reflections, soap-bubble shimmer, hand-drawn modern editorial style, dreamy diffuse light, premium magazine illustration",
 };
 
 export type DensityLevel = "low" | "medium" | "high";
