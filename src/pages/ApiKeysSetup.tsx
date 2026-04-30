@@ -367,6 +367,16 @@ export default function ApiKeysSetup() {
                   {totalActiveKeys} chave(s) activa(s) no total
                 </span>
               </CardDescription>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={collapseAll} className="gap-1.5">
+                  <Minimize2 className="h-3.5 w-3.5" />
+                  Recolher tudo
+                </Button>
+                <Button variant="outline" size="sm" onClick={expandAll} className="gap-1.5">
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  Expandir tudo
+                </Button>
+              </div>
             </CardHeader>
 
             <CardContent className="space-y-6">
