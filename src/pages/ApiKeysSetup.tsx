@@ -493,30 +493,46 @@ export default function ApiKeysSetup() {
                 return (
                   <div key={provider.key} className="space-y-4 rounded-xl border border-border bg-card p-4">
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Label className="text-sm font-semibold">{provider.label}</Label>
-                          <Badge variant="secondary">
-                            {filledCount} chave{filledCount === 1 ? "" : "s"}
-                          </Badge>
-                          {exhaustedCount > 0 && (
-                            <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
+                      <button
+                        type="button"
+                        onClick={() => toggleProviderCollapsed(provider.key)}
+                        className="flex items-start gap-2 text-left flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                      >
+                        {collapsedProviders.has(provider.key) ? (
+                          <ChevronRight className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
+                        )}
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Label className="text-sm font-semibold cursor-pointer">{provider.label}</Label>
+                            <Badge variant="secondary">
+                              {filledCount} chave{filledCount === 1 ? "" : "s"}
+                            </Badge>
+                            {exhaustedCount > 0 && (
+                              <Badge variant="destructive">{exhaustedCount} em cooldown</Badge>
+                            )}
+                          </div>
+                          {!collapsedProviders.has(provider.key) && (
+                            <p className="text-xs text-muted-foreground">{provider.description}</p>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">{provider.description}</p>
-                      </div>
+                      </button>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => openBulkModal(provider)}>
-                          Colar chaves
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => addKey(provider.key)}>
-                          <Plus className="mr-1.5 h-3.5 w-3.5" />
-                          Adicionar campo
-                        </Button>
-                      </div>
+                      {!collapsedProviders.has(provider.key) && (
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="secondary" size="sm" onClick={() => openBulkModal(provider)}>
+                            Colar chaves
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => addKey(provider.key)}>
+                            <Plus className="mr-1.5 h-3.5 w-3.5" />
+                            Adicionar campo
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
+                    {!collapsedProviders.has(provider.key) && (
                     <div className="space-y-3">
                       {providerKeys.map((keyRow) => {
                         const globalIndex = keys.findIndex((row) => row === keyRow);
@@ -567,6 +583,7 @@ export default function ApiKeysSetup() {
                         );
                       })}
                     </div>
+                    )}
                   </div>
                 );
               })}
