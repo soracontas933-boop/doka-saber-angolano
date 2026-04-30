@@ -33,6 +33,7 @@ import AdminButtonCoversTab from "@/components/AdminButtonCoversTab";
 import AdminLandingTabNew from "@/components/AdminLandingTabNew";
 import AdminLivrariaTab from "@/components/AdminLivrariaTab";
 import AdminFeaturesTab from "@/components/AdminFeaturesTab";
+import AdminDownloadsTab from "@/components/AdminDownloadsTab";
 import { useAdmin } from "@/hooks/use-admin";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
