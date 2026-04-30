@@ -37,7 +37,8 @@ const QuestionarioPage = () => {
   const { checkLimit, logUsage } = useUsageTracker();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [fonte, setFonte] = useState<"upload" | "camera">("upload");
+  const [docFiles, setDocFiles] = useState<File[]>([]);
+  const [fonte, setFonte] = useState<"upload" | "camera" | "documento">("upload");
   const [numPerguntas, setNumPerguntas] = useLocalStorage("doka_quest_numPerguntas", "10");
   const [tipo, setTipo] = useLocalStorage("doka_quest_tipo", "multipla_escolha");
   const [disciplina, setDisciplina] = useLocalStorage("doka_quest_disciplina", "");
