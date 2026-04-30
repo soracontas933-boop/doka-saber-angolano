@@ -1,7 +1,15 @@
 import type { DeckTheme } from "@/types/presentation";
 
-// 12 paletas curadas inspiradas em decks premium
+// 13 paletas curadas — a primeira (iridescent-delle) replica o estilo Gamma de referência
 export const DECK_THEMES: DeckTheme[] = [
+  {
+    id: "iridescent-delle",
+    name: "Iridescent Delle",
+    palette: { bg: "#FAFBFE", surface: "#FFFFFF", text: "#1F2230", muted: "#5A6275", primary: "#4F6FFF", accent: "#B5BFFF", isDark: false },
+    fonts: { heading: "'SF Pro Display', system-ui, sans-serif", body: "'Inter', sans-serif" },
+    motif: "iridescent",
+    radius: 18,
+  },
   {
     id: "midnight-executive",
     name: "Midnight Executive",

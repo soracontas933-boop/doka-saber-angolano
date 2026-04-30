@@ -132,7 +132,8 @@ export default function ApresentacaoPage() {
     const slots = composeSlots(deck.slides.length, seed);
     // mantém o conteúdo mas redistribui — usa títulos/body existentes
     const aiSlides = deck.slides.map(s => ({
-      title: s.title, subtitle: s.subtitle, body: s.body, blocks: s.blocks, imagePrompt: s.imagePrompt,
+      title: s.title, subtitle: s.subtitle, body: s.body, richBody: s.richBody,
+      pill: s.pill, footnote: s.footnote, blocks: s.blocks, imagePrompt: s.imagePrompt,
     }));
     const theme = pickTheme(seed); // tema aleatório novo
     const newDeck = assembleDeck({
