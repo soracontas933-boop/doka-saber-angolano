@@ -29,6 +29,7 @@ export function usePwaInstall() {
     const installedHandler = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
+      trackAppDownload({ status: "accepted", source: "pwa" });
     };
 
     window.addEventListener("beforeinstallprompt", handler);
