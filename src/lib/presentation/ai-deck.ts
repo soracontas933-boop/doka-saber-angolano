@@ -34,6 +34,12 @@ export interface RawAISlide {
   title: string;
   subtitle?: string;
   body?: string[];
+  /** Parágrafo rico estilo Gamma com **negrito** inline em palavras-chave */
+  richBody?: string;
+  /** Pill curta no topo (ex: "OPORTUNIDADE · ANGOLA · 2025") */
+  pill?: string;
+  /** Frase de impacto no rodapé do slide */
+  footnote?: string;
   blocks?: import("@/types/presentation").Block[];
   imagePrompt?: string;
 }
@@ -44,36 +50,45 @@ export async function generateDeckContent(args: GenDeckContentArgs): Promise<Raw
     .join("\n");
 
   const userPrompt = `
-Cria o conteúdo de uma apresentação profissional sobre: "${args.topic}".
+Cria o conteúdo de uma apresentação executiva premium estilo Gamma sobre: "${args.topic}".
 
-Tópicos do utilizador (usa-os como matéria-prima — distribui pelos slides certos):
+Tópicos do utilizador (matéria-prima — distribui pelos slides certos):
 ${args.cardsOutline}
 
-Estrutura narrativa obrigatória (segue EXACTAMENTE esta ordem e tipo de cada slide):
+Estrutura narrativa obrigatória (ordem e tipo exactos):
 ${slotsList}
 
 Regras INVIOLÁVEIS:
-- Total: ${args.slots.length} slides, na ordem exacta acima.
-- Para cada slide, devolve "title" (curto, impacto), opcional "subtitle", "body" (array de bullets curtos) e "imagePrompt" (descrição em INGLÊS para gerar imagem).
-- Para slides de tipo "stats", "bento", "comparison", "timeline", "process", "dashboard", "summary": devolve "blocks" — array de objectos com {type, label, value, description}.
-  • stats   → blocks com value (ex "78%") e label.
-  • timeline/process → blocks com label (ano/etapa) e description.
-  • comparison → blocks com label e description (2-4 itens).
-  • bento/summary → blocks com label e description curta.
-- ${DENSITY_HINT[args.density]}
-- Slides "quote": title = a citação completa, subtitle = autor.
-- Slides "references": body = lista de fontes formatadas.
-- Slides "closing": title curto ("Obrigado", "Q&A"), subtitle opcional.
-- Idioma: ${args.language === "pt-AO" ? "Português de Angola" : "Português"}.
-- Tom: cinematográfico, executivo, premium. ZERO meta-comentário.
-${args.extraKeywords?.length ? `- Vibe visual: ${args.extraKeywords.join(", ")}.` : ""}
+- Total: ${args.slots.length} slides, ordem exacta.
+- Idioma: ${args.language === "pt-AO" ? "Português de Angola (use 'utilizador', 'parceria', 'ficheiro')" : "Português do Brasil"}.
+- Tom: executivo, cinematográfico, premium. ZERO meta-comentário, ZERO "neste slide".
 
-Devolve APENAS JSON válido com este formato exacto:
-{
-  "slides": [
-    { "title": "...", "subtitle": "...", "body": ["...","..."], "blocks": [{"type":"stat","label":"...","value":"..."}], "imagePrompt": "..." }
-  ]
-}
+CAMPOS POR SLIDE:
+- "title": curto, impacto, 3-7 palavras (vai aparecer GIGANTE em azul).
+- "subtitle": uma frase de contexto (≤20 palavras), opcional.
+- "richBody": **PREFERIDO**. Parágrafo único curto (40-80 palavras) com 2-3 palavras em **negrito**. Ex: "Angola tem **2,9 milhões de estudantes** sem ferramentas digitais — a Delle chega primeiro."
+- "body": só quando faz sentido bullets (lista de features). 3-5 itens curtos.
+- "pill": tag MAIÚSCULAS (ex: "OPORTUNIDADE · 2025"). Apenas no hero/closing.
+- "footnote": frase de impacto final (≤15 palavras), opcional.
+- "imagePrompt": EM INGLÊS, ≤30 palavras, sem texto na imagem.
+- "blocks": para stats/bento/process/timeline/comparison — {type, label, value, description, icon}.
+  • stats → value ("1,6M","85%"), label, description curta.
+  • bento-numbered → label (título) + description curta.
+  • bento-icon-grid → icon (📚 🚀 ◆), label, description.
+  • process/timeline → label (etapa), description.
+
+DENSIDADE: ${DENSITY_HINT[args.density]}
+
+REGRAS ESPECIAIS:
+- HERO: usa "pill" + "title" curto + "subtitle" tagline.
+- Slides "quote": title = citação, subtitle = autor.
+- Slides "references": body = lista APA.
+- Slides "closing": title curto + blocks com próximos passos numerados.
+
+${args.extraKeywords?.length ? `Vibe visual: ${args.extraKeywords.join(", ")}.` : ""}
+
+Devolve APENAS JSON válido:
+{ "slides": [ { "title": "...", "pill": "...", "richBody": "...", "footnote": "...", "blocks": [...], "imagePrompt": "..." } ] }
 `.trim();
 
   const result = await generateWithAI(DELLE_SYSTEM_PROMPT, userPrompt, 6000, 0.85);
