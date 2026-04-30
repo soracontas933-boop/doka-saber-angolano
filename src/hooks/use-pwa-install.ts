@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { trackAppDownload } from "@/lib/device-tracking";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
