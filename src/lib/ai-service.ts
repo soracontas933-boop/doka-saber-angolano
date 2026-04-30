@@ -159,8 +159,10 @@ export async function extractTextFromImages(files: File[]): Promise<string[]> {
   const results: string[] = [];
 
   for (const file of files) {
-    const base64 = await fileToBase64(file);
-    const mimeType = file.type || "image/jpeg";
+    // Comprime imagens antes do envio para evitar limite de payload
+    const compressed = await compressImageFile(file);
+    const base64 = await fileToBase64(compressed);
+    const mimeType = compressed.type || "image/jpeg";
     try {
       const text = await extractTextFromImage(base64, mimeType);
       results.push(text);
