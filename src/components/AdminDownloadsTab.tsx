@@ -210,10 +210,11 @@ export const AdminDownloadsTab = () => {
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Recusados</p>
-            <XCircle className="h-4 w-4 text-rose-500" />
+            <p className="text-xs text-muted-foreground">Conversão</p>
+            <Activity className="h-4 w-4 text-amber-500" />
           </div>
-          <p className="text-2xl font-bold mt-1 text-rose-500">{stats.dismissed}</p>
+          <p className="text-2xl font-bold mt-1 text-amber-500">{stats.conversion}%</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">instalações / visitas</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -222,6 +223,95 @@ export const AdminDownloadsTab = () => {
           </div>
           <p className="text-2xl font-bold mt-1">{pageViewsCount}</p>
         </CardContent></Card>
+      </div>
+
+      {/* Charts */}
+      <Card>
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" /> Evolução temporal
+          </CardTitle>
+          <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> ao vivo
+          </span>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[260px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={timeseries} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gVisits" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(217 91% 60%)" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(217 91% 60%)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gDownloads" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gInstalled" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(142 71% 45%)" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="hsl(142 71% 45%)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.4)" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Area type="monotone" dataKey="visits" name="Visitas" stroke="hsl(217 91% 60%)" fill="url(#gVisits)" strokeWidth={2} />
+                <Area type="monotone" dataKey="downloads" name="Cliques download" stroke="hsl(var(--primary))" fill="url(#gDownloads)" strokeWidth={2} />
+                <Area type="monotone" dataKey="installed" name="Instalações" stroke="hsl(142 71% 45%)" fill="url(#gInstalled)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição por dispositivo</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              {deviceChartData.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-12">Sem dados ainda.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={deviceChartData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={85} paddingAngle={3}>
+                      {deviceChartData.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
+                    </Pie>
+                    <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Top países (downloads)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              {countryChartData.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-12">Sem geolocalização registada ainda.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={countryChartData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.4)" />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={90} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
+                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Distribution */}
