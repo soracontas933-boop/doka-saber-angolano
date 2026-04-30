@@ -29,6 +29,7 @@ import DelleLogo from "@/components/DelleLogo";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingPaths } from "@/components/ui/background-paths";
@@ -203,7 +204,18 @@ const VideoEmbed = ({ url }: { url: string }) => {
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { canInstall, install } = usePwaInstall();
+  const { canInstall, install, hasNativePrompt, platform } = usePwaInstall();
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+
+  const handleInstallClick = async () => {
+    if (hasNativePrompt) {
+      await install();
+    } else {
+      // Track manual click and show platform-specific instructions
+      install();
+      setShowInstallHelp(true);
+    }
+  };
   const { theme, toggleTheme } = useTheme();
   const { isAdmin } = useAdmin();
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
@@ -317,7 +329,7 @@ const HomePage = () => {
           </Button>
           {canInstall && (
             <>
-              <Button variant="outline" size="sm" className="rounded-full hidden sm:inline-flex border-border/60" onClick={install}>
+              <Button variant="outline" size="sm" className="rounded-full hidden sm:inline-flex border-border/60" onClick={handleInstallClick}>
                 <Download className="h-4 w-4 mr-2" /> Baixar App
               </Button>
               <Button
@@ -325,7 +337,7 @@ const HomePage = () => {
                 size="icon"
                 aria-label="Baixar App"
                 className="rounded-full sm:hidden h-9 w-9 border-border/60 shrink-0"
-                onClick={install}
+                onClick={handleInstallClick}
               >
                 <Download className="h-4 w-4" />
               </Button>
@@ -576,6 +588,50 @@ const HomePage = () => {
           </div>
         </section>
       )}
+
+      <Dialog open={showInstallHelp} onOpenChange={setShowInstallHelp}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5 text-primary" /> Instalar a Delle
+            </DialogTitle>
+            <DialogDescription>
+              {platform === "ios"
+                ? "Para instalar no iPhone/iPad:"
+                : platform === "android"
+                ? "Para instalar no Android:"
+                : "Para instalar no seu computador:"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            {platform === "ios" && (
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>Abra este site no <strong>Safari</strong>.</li>
+                <li>Toque no ícone <strong>Compartilhar</strong> (quadrado com seta para cima) na barra inferior.</li>
+                <li>Selecione <strong>"Adicionar à Tela de Início"</strong>.</li>
+                <li>Toque em <strong>Adicionar</strong> no canto superior direito.</li>
+              </ol>
+            )}
+            {platform === "android" && (
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>Abra o menu do navegador (três pontos no canto superior direito).</li>
+                <li>Selecione <strong>"Instalar app"</strong> ou <strong>"Adicionar à tela inicial"</strong>.</li>
+                <li>Confirme a instalação.</li>
+              </ol>
+            )}
+            {(platform === "desktop" || platform === "unknown") && (
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>No <strong>Chrome</strong> ou <strong>Edge</strong>: clique no ícone de instalação (⊕) na barra de endereços.</li>
+                <li>Ou abra o menu (três pontos) → <strong>"Instalar Delle..."</strong>.</li>
+                <li>Confirme clicando em <strong>Instalar</strong>.</li>
+              </ol>
+            )}
+            <p className="text-muted-foreground text-xs pt-2 border-t">
+              Após instalar, a Delle aparecerá como um app no seu dispositivo, com acesso rápido e experiência de tela cheia.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Pricing Section */}
       <section className="relative w-full py-16 sm:py-24 lg:py-32 px-4 sm:px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
