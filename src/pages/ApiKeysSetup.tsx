@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft, ChevronDown, ChevronRight, Minimize2, Maximize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const TEXT_PROVIDERS = [
