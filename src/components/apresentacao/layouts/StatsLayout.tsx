@@ -4,7 +4,7 @@ export function StatsLayout({ slide, theme }: LayoutProps) {
   const m = getMotifStyles(theme);
   const stats = slide.blocks && slide.blocks.length > 0
     ? slide.blocks
-    : (slide.body || []).slice(0, 4).map((b, i) => ({ type: "stat" as const, value: `0${i + 1}`, label: b }));
+    : (slide.body || []).slice(0, 4).map((b, i) => ({ type: "stat" as const, value: `0${i + 1}`, label: b, description: undefined as string | undefined }));
 
   if (slide.layoutVariant === "stats-hero" && stats[0]) {
     return (
