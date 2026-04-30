@@ -99,15 +99,66 @@ export const AdminDownloadsTab = () => {
     const byDevice: Record<string, number> = { mobile: 0, tablet: 0, desktop: 0 };
     const byCountry: Record<string, number> = {};
     const byOs: Record<string, number> = {};
+    const byBrowser: Record<string, number> = {};
     downloads.forEach((d) => {
       byDevice[d.device_type] = (byDevice[d.device_type] || 0) + 1;
       if (d.country) byCountry[d.country] = (byCountry[d.country] || 0) + 1;
       if (d.os) byOs[d.os] = (byOs[d.os] || 0) + 1;
+      if (d.browser) byBrowser[d.browser] = (byBrowser[d.browser] || 0) + 1;
     });
     const topCountries = Object.entries(byCountry).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const topOs = Object.entries(byOs).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    return { total, accepted, dismissed, byDevice, topCountries, topOs };
-  }, [downloads]);
+    const topBrowsers = Object.entries(byBrowser).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const conversion = pageViews.length ? Math.round((accepted / pageViews.length) * 100) : 0;
+    return { total, accepted, dismissed, byDevice, topCountries, topOs, topBrowsers, conversion };
+  }, [downloads, pageViews]);
+
+  // Time series buckets aligned to selected period
+  const timeseries = useMemo(() => {
+    const now = Date.now();
+    const ms = periodMs[period];
+    const range = ms ?? (downloads.length || pageViews.length
+      ? now - new Date([...downloads, ...pageViews].reduce((min, r) => r.created_at < min ? r.created_at : min, new Date().toISOString())).getTime()
+      : 24 * 60 * 60 * 1000);
+    // Bucket: 24h -> hourly (24), 7d -> daily (7), 30d -> daily (30), all -> daily
+    const useHourly = period === "24h";
+    const bucketMs = useHourly ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const bucketCount = Math.max(1, Math.ceil(range / bucketMs));
+    const buckets: { label: string; ts: number; downloads: number; installed: number; visits: number }[] = [];
+    for (let i = bucketCount - 1; i >= 0; i--) {
+      const ts = now - i * bucketMs;
+      const d = new Date(ts);
+      const label = useHourly ? format(d, "HH:00") : format(d, "dd/MM");
+      buckets.push({ label, ts, downloads: 0, installed: 0, visits: 0 });
+    }
+    const start = buckets[0].ts - bucketMs;
+    const idxOf = (iso: string) => {
+      const t = new Date(iso).getTime();
+      const i = Math.floor((t - start) / bucketMs);
+      return i >= 0 && i < buckets.length ? i : -1;
+    };
+    downloads.forEach((d) => {
+      const i = idxOf(d.created_at);
+      if (i < 0) return;
+      buckets[i].downloads++;
+      if (d.status === "accepted") buckets[i].installed++;
+    });
+    pageViews.forEach((p) => {
+      const i = idxOf(p.created_at);
+      if (i >= 0) buckets[i].visits++;
+    });
+    return buckets;
+  }, [downloads, pageViews, period]);
+
+  const deviceChartData = useMemo(() => (
+    [
+      { name: "Mobile", value: stats.byDevice.mobile || 0, color: "hsl(var(--primary))" },
+      { name: "Desktop", value: stats.byDevice.desktop || 0, color: "hsl(217 91% 60%)" },
+      { name: "Tablet", value: stats.byDevice.tablet || 0, color: "hsl(280 80% 60%)" },
+    ].filter((d) => d.value > 0)
+  ), [stats]);
+
+  const countryChartData = useMemo(() => stats.topCountries.map(([name, value]) => ({ name, value })), [stats]);
 
   return (
     <div className="space-y-6">
