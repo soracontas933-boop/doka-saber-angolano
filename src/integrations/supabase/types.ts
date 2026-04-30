@@ -409,6 +409,54 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags_global: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          enabled: boolean
+          feature_key: string
+          label: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          enabled?: boolean
+          feature_key: string
+          label?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          enabled?: boolean
+          feature_key?: string
+          label?: string | null
+        }
+        Relationships: []
+      }
+      feature_flags_user: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          enabled: boolean
+          feature_key: string
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          enabled: boolean
+          feature_key: string
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          enabled?: boolean
+          feature_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hero_images: {
         Row: {
           ativo: boolean
