@@ -71,6 +71,57 @@ export type Database = {
         }
         Relationships: []
       }
+      app_downloads: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string
+          id: string
+          ip: string | null
+          os: string | null
+          referrer: string | null
+          region: string | null
+          source: string
+          status: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string
+          id?: string
+          ip?: string | null
+          os?: string | null
+          referrer?: string | null
+          region?: string | null
+          source?: string
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string
+          id?: string
+          ip?: string | null
+          os?: string | null
+          referrer?: string | null
+          region?: string | null
+          source?: string
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       billing_records: {
         Row: {
           categoria: string | null
@@ -552,26 +603,47 @@ export type Database = {
       }
       page_views: {
         Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          device_type: string | null
           id: string
+          ip: string | null
+          os: string | null
           page: string
           referrer: string | null
+          region: string | null
           user_agent: string | null
           user_id: string | null
         }
         Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          device_type?: string | null
           id?: string
+          ip?: string | null
+          os?: string | null
           page: string
           referrer?: string | null
+          region?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
         Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          device_type?: string | null
           id?: string
+          ip?: string | null
+          os?: string | null
           page?: string
           referrer?: string | null
+          region?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
