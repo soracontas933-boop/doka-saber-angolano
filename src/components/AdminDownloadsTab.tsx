@@ -4,9 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Smartphone, Tablet, Monitor, MapPin, Globe, Eye, Loader2, RefreshCw, TrendingUp, CheckCircle2, XCircle } from "lucide-react";
+import { Download, Smartphone, Tablet, Monitor, MapPin, Globe, Eye, Loader2, RefreshCw, TrendingUp, CheckCircle2, XCircle, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
+  BarChart, Bar, PieChart, Pie, Cell, Legend,
+} from "recharts";
 
 type Period = "24h" | "7d" | "30d" | "all";
 
