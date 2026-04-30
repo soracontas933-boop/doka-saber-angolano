@@ -280,8 +280,27 @@ export const prompts = {
   }) =>
     `Gera um trabalho escolar completo sobre '${dados.titulo}' para a disciplina de ${dados.disciplina}, ${dados.classe}, com ${dados.paginas} páginas. Tipo: ${dados.tipo}. Estrutura obrigatória angolana: Capa (com espaço para: ${dados.nomeAluno || "nome do aluno"}, ${dados.nomeEscola || "escola"}, disciplina: ${dados.disciplina}, professor: ${dados.nomeDocente || ""}, ano letivo ${dados.anoLectivo || "2025-2026"}, ${dados.localidade || "Luanda-Angola"}), Índice numerado, Introdução (contextualização + objectivos + justificativa), Desenvolvimento em ${Math.max(2, Math.floor(dados.paginas / 3))} capítulos com subcapítulos detalhados, Conclusão, Bibliografia em normas APA. Conteúdo deve ser rico, educativo e adequado ao nível ${dados.classe} de Angola. IMPORTANTE SOBRE CITAÇÕES E BIBLIOGRAFIA: Usa APENAS referências bibliográficas REAIS e VERIFICÁVEIS — livros, artigos e obras que existem de facto. Não inventes autores nem obras fictícias. Ao final de cada parágrafo da Introdução, Capítulos e Conclusão, inclui obrigatoriamente uma citação académica entre parênteses no formato (Apelido, Ano, p. X), por exemplo (Freire, 1996, p. 45) ou (Ki-Zerbo, 2010, p. 12). Os autores e obras DEVEM ser reais, publicados e relevantes ao tema. Prioriza autores africanos e lusófonos quando possível. RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA — nunca em inglês.`,
 
-  resumo: (conteudo: string, classe: string, tipo: string) =>
-    `Com base neste conteúdo extraído do caderno: ${conteudo}. Tipo de resumo solicitado: ${tipo}. Gera um resumo educativo para estudante angolano da ${classe} com: 1) Resumo principal em tópicos visuais com emojis educativos, 2) 5 conceitos-chave destacados, 3) 3 técnicas de memorização específicas para este conteúdo (mnemônicos, acrónimos ou histórias), 4) 10 flashcards no formato JSON: [{"frente": "pergunta", "verso": "resposta"}], 5) Mapa mental em texto estruturado com hierarquia.`,
+  resumo: (conteudo: string, classe: string, tipo: string) => {
+    const base = `Conteúdo de origem (do caderno do estudante):\n"""\n${conteudo}\n"""\n\nDisciplina/nível: ${classe}. Estudante angolano. Português de Angola obrigatório.\n\nREGRAS ABSOLUTAS DE FORMATO:\n- NUNCA escrevas blocos JSON, código, chaves { } ou colchetes [ ] na resposta.\n- NUNCA uses os símbolos: • em sequência, "•[", "•{", aspas curvas estranhas.\n- USA EXCLUSIVAMENTE Markdown limpo (# título, ## secção, - item, **negrito**).\n- Não inventes nem repitas instruções; entrega só o conteúdo final.\n`;
+    switch (tipo) {
+      case "Mapa Mental":
+        return base + `\nGera um MAPA MENTAL hierárquico em Markdown estrito, com no mínimo 4 ramos principais e 3 a 5 subtópicos por ramo. Formato OBRIGATÓRIO:\n\n# <Tema Central curto>\n\n## <Ramo 1>\n- <subtópico 1>\n- <subtópico 2>\n- <subtópico 3>\n\n## <Ramo 2>\n- ...\n\nNão incluas introdução, conclusão, JSON nem flashcards. Apenas a estrutura hierárquica.`;
+      case "Flashcards":
+        return base + `\nGera 12 FLASHCARDS de estudo. Formato OBRIGATÓRIO em Markdown (sem JSON):\n\n# Flashcards — <Tema>\n\n## 1\n**Frente:** <pergunta clara e curta>\n**Verso:** <resposta precisa, 1-3 frases>\n\n## 2\n**Frente:** ...\n**Verso:** ...\n\n(continua até 12). Não escrevas mais nada além disso.`;
+      case "Linha do Tempo":
+        return base + `\nGera uma LINHA DO TEMPO com 6 a 10 eventos relevantes. Formato OBRIGATÓRIO:\n\n# <Tema> — Linha do Tempo\n\n## <Ano ou Data 1>\n- **<Evento>:** <descrição curta>\n\n## <Ano 2>\n- ...\n\nOrdem cronológica. Sem introdução longa, sem JSON.`;
+      case "Quadro Comparativo":
+        return base + `\nGera um QUADRO COMPARATIVO entre 2 a 4 conceitos/elementos do conteúdo. Formato OBRIGATÓRIO em tabela Markdown:\n\n# <Tema> — Comparação\n\n| Critério | <Item A> | <Item B> | <Item C> |\n|---|---|---|---|\n| <critério 1> | ... | ... | ... |\n| <critério 2> | ... | ... | ... |\n\nMínimo 6 critérios. Sem JSON, sem flashcards.`;
+      case "Resumo Esquemático":
+        return base + `\nGera um RESUMO ESQUEMÁTICO em tópicos hierárquicos. Formato:\n\n# <Tema>\n\n## <Bloco 1>\n- <ideia chave>\n- <ideia chave>\n\n## <Bloco 2>\n- ...\n\n4 a 6 blocos, 3 a 6 itens cada. Direto, sem texto corrido longo.`;
+      case "Resumo Narrativo":
+        return base + `\nGera um RESUMO NARRATIVO contínuo, didáctico, em 4 a 6 parágrafos coesos. Formato:\n\n# <Tema>\n\n## Introdução\n<parágrafo>\n\n## Desenvolvimento\n<2 a 3 parágrafos>\n\n## Síntese final\n<parágrafo>\n\nSem listas longas, sem JSON.`;
+      case "Resumo com Mnemônicos":
+        return base + `\nGera um RESUMO com TÉCNICAS DE MEMORIZAÇÃO. Formato:\n\n# <Tema>\n\n## Síntese\n- <ideia 1>\n- <ideia 2>\n- <ideia 3>\n\n## Mnemónicos\n- **<Acrónimo ou frase>:** <o que ajuda a lembrar>\n- ...\n\n## Truques de memorização\n- <história curta ou associação>\n- ...\n\nMínimo 5 mnemónicos. Sem JSON.`;
+      default: // Resumo por Tópicos
+        return base + `\nGera um RESUMO POR TÓPICOS claro e didáctico. Formato:\n\n# <Tema>\n\n## <Secção 1>\n- <ponto chave>\n- <ponto chave>\n\n## <Secção 2>\n- ...\n\n4 a 6 secções, 3 a 6 tópicos cada. Negrito **assim** nos termos importantes. Sem JSON, sem flashcards, sem mapa mental.`;
+    }
+  },
 
   questionario: (conteudo: string, numPerguntas: number, classe: string, dificuldade: string, tipos: string) =>
     `Com base neste conteúdo: ${conteudo}. Gera ${numPerguntas} perguntas para ${classe}, nível ${dificuldade}. Tipos solicitados: ${tipos}. Retorna JSON: { "perguntas": [{ "id": number, "tipo": "string", "enunciado": "string", "opcoes": ["string"] ou null, "resposta_correta": "string", "explicacao": "string", "pontos": number }] }. Tipos disponíveis: multipla_escolha, verdadeiro_falso, resposta_curta, completar_espacos, correspondencia, dissertativa, ordenacao.`,
