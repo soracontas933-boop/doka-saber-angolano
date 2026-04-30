@@ -639,33 +639,52 @@ const AdminPanelPage = () => {
 
       {/* Tabs */}
       <Tabs defaultValue={defaultTab} className="space-y-4">
-        <div className="bg-card border border-border/60 rounded-2xl p-1.5 shadow-sm overflow-x-auto">
-          <TabsList className="bg-transparent h-auto p-0 gap-1 grid grid-flow-col auto-cols-max md:auto-cols-fr md:w-full">
-            {[
-              { value: "users", icon: Users, label: "Utilizadores" },
-              { value: "plans", icon: CreditCard, label: "Planos" },
-              { value: "stats", icon: BarChart3, label: "Estatísticas" },
-              { value: "logs", icon: Activity, label: "Logs" },
-              { value: "traffic", icon: Globe, label: "Tráfego" },
-              { value: "payments", icon: Receipt, label: "Pagamentos" },
-              { value: "hero", icon: ImageIcon, label: "Hero / Site" },
-              { value: "masters", icon: Crown, label: "Masters" },
-              { value: "button-covers", icon: Smartphone, label: "Capas Mobile" },
-              { value: "landing", icon: Globe, label: "Landing" },
-              { value: "livraria", icon: Library, label: "Livraria" },
-              { value: "features", icon: SlidersHorizontal, label: "Funcionalidades" },
-            ].map(({ value, icon: Icon, label }) => (
-              <TabsTrigger
-                key={value}
-                value={value}
-                className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-3 py-2.5 rounded-xl text-[12px] font-medium text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm hover:bg-muted/50 transition-all whitespace-nowrap"
-              >
-                <Icon className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">{label}</span>
+        <TabsList className="flex flex-wrap h-auto justify-start gap-1 p-1">
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="h-4 w-4" />
+            Utilizadores
+          </TabsTrigger>
+          <TabsTrigger value="plans" className="gap-2">
+            <CreditCard className="h-4 w-4" />
+            Planos
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Estatísticas
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="gap-2">
+            <Activity className="h-4 w-4" />
+            Logs
+          </TabsTrigger>
+          <TabsTrigger value="traffic" className="gap-2">
+            <Globe className="h-4 w-4" />
+            Tráfego
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="gap-2">
+            <Receipt className="h-4 w-4" />
+            Pagamentos
+          </TabsTrigger>
+          <TabsTrigger value="hero" className="gap-2">
+            <ImageIcon className="h-4 w-4" />
+            Hero / Site
+          </TabsTrigger>
+          <TabsTrigger value="masters" className="gap-2">
+            <Crown className="h-4 w-4" />
+            Masters
+          </TabsTrigger>
+          <TabsTrigger value="button-covers" className="gap-2">
+                <Smartphone className="h-4 w-4" /> Capas Mobile
               </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
+              <TabsTrigger value="landing" className="gap-2">
+                <Globe className="h-4 w-4" /> Landing Page
+              </TabsTrigger>
+              <TabsTrigger value="livraria" className="gap-2">
+                <Library className="h-4 w-4" /> Livraria
+              </TabsTrigger>
+              <TabsTrigger value="features" className="gap-2">
+                <SlidersHorizontal className="h-4 w-4" /> Funcionalidades
+              </TabsTrigger>
+        </TabsList>
 
         {/* Users Tab */}
         <TabsContent value="users">
