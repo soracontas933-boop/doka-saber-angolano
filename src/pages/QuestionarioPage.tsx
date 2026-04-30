@@ -219,16 +219,19 @@ const QuestionarioPage = () => {
         {/* Fotos */}
         <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
           <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
-            Fotos do Conteúdo
+            Conteúdo (Fotos ou Documentos)
           </h2>
 
-          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera")}>
+          <Tabs value={fonte} onValueChange={(v) => setFonte(v as "upload" | "camera" | "documento")}>
             <TabsList className="w-full">
               <TabsTrigger value="upload" className="flex-1 gap-2">
                 <Upload className="h-4 w-4" /> Galeria
               </TabsTrigger>
               <TabsTrigger value="camera" className="flex-1 gap-2">
                 <Camera className="h-4 w-4" /> Câmera
+              </TabsTrigger>
+              <TabsTrigger value="documento" className="flex-1 gap-2">
+                <File className="h-4 w-4" /> Documento
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -239,7 +242,7 @@ const QuestionarioPage = () => {
               <span className="text-sm text-muted-foreground font-medium">Carregar fotos da galeria</span>
               <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} />
             </label>
-          ) : (
+          ) : fonte === "camera" ? (
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
@@ -249,6 +252,13 @@ const QuestionarioPage = () => {
               <span className="text-sm text-muted-foreground font-medium">Abrir câmera</span>
               <input ref={cameraRef} type="file" className="hidden" accept="image/*" capture onChange={handleFileChange} />
             </button>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-border md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 md:bg-accent/20">
+              <File className="h-7 w-7 text-muted-foreground mb-2" />
+              <span className="text-sm text-muted-foreground font-medium">Carregar PDF ou Word</span>
+              <span className="text-xs text-muted-foreground mt-1">.pdf, .doc, .docx — máx. 10 ficheiros</span>
+              <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple onChange={handleDocChange} />
+            </label>
           )}
 
           {previews.length > 0 && (
@@ -262,6 +272,23 @@ const QuestionarioPage = () => {
                     className="absolute top-1 right-1 w-5 h-5 bg-card/90 md:bg-foreground/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="h-3 w-3 text-background" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {docFiles.length > 0 && (
+            <div className="space-y-2">
+              {docFiles.map((doc, i) => (
+                <div key={i} className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 border border-border/50">
+                  <FileText className="h-5 w-5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                    <p className="text-xs text-muted-foreground">{(doc.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                  <button type="button" onClick={() => removeDoc(i)} className="p-1 hover:bg-destructive/10 rounded">
+                    <X className="h-4 w-4 text-destructive" />
                   </button>
                 </div>
               ))}
