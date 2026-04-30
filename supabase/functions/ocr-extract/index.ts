@@ -23,6 +23,9 @@ const OCR_PROMPT = `Você é um OCR especializado. Extraia TODO o texto visível
 const DOC_PROMPT = `Extraia TODO o texto deste documento com máxima fidelidade. Mantenha a estrutura original: títulos, parágrafos, listas, tabelas, notas de rodapé. Se o texto estiver em português, mantenha em português. Retorne APENAS o texto extraído, sem comentários adicionais. Preserve a formatação e hierarquia do conteúdo.`;
 
 async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: string, prompt: string): Promise<string> {
+  const isPdf = mime_type === "application/pdf" || mime_type.includes("pdf");
+  // Para PDFs, usa modelo mais robusto que entende documentos nativamente
+  const model = isPdf ? "gemini-2.5-flash" : "gemini-2.0-flash";
   const body = {
     contents: [{
       role: "user",
@@ -34,7 +37,7 @@ async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: st
     generationConfig: { maxOutputTokens: 8192, temperature: 0.2 },
   };
 
-  const res = await fetch(`${GEMINI_URL}/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+  const res = await fetch(`${GEMINI_URL}/${model}:generateContent?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -98,11 +101,14 @@ serve(async (req) => {
 
     const allKeys = await getAllApiKeys();
     const promptToUse = is_document ? DOC_PROMPT : OCR_PROMPT;
+    const isPdf = mime_type === "application/pdf" || mime_type.includes("pdf");
 
-    // Limita a 2 chaves por provider para não estourar CPU/memória da edge function
-    const MAX_KEYS_PER_PROVIDER = 2;
-    const geminiKeys = allKeys.filter(k => k.servico === "gemini").map(k => k.chave).slice(0, MAX_KEYS_PER_PROVIDER);
-    const groqKeys = allKeys.filter(k => k.servico === "groq").map(k => k.chave).slice(0, MAX_KEYS_PER_PROVIDER);
+    // PDFs: tentar mais chaves Gemini (Groq Vision NÃO aceita PDFs)
+    // Imagens: 2 Gemini + 2 Groq como fallback
+    const MAX_GEMINI = isPdf ? 4 : 2;
+    const MAX_GROQ = isPdf ? 0 : 2;
+    const geminiKeys = allKeys.filter(k => k.servico === "gemini").map(k => k.chave).slice(0, MAX_GEMINI);
+    const groqKeys = allKeys.filter(k => k.servico === "groq").map(k => k.chave).slice(0, MAX_GROQ);
 
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [];
     for (const key of geminiKeys) {
