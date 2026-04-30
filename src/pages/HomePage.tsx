@@ -589,6 +589,50 @@ const HomePage = () => {
         </section>
       )}
 
+      <Dialog open={showInstallHelp} onOpenChange={setShowInstallHelp}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5 text-primary" /> Instalar a Delle
+            </DialogTitle>
+            <DialogDescription>
+              {platform === "ios"
+                ? "Para instalar no iPhone/iPad:"
+                : platform === "android"
+                ? "Para instalar no Android:"
+                : "Para instalar no seu computador:"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            {platform === "ios" && (
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>Abra este site no <strong>Safari</strong>.</li>
+                <li>Toque no ícone <strong>Compartilhar</strong> (quadrado com seta para cima) na barra inferior.</li>
+                <li>Selecione <strong>"Adicionar à Tela de Início"</strong>.</li>
+                <li>Toque em <strong>Adicionar</strong> no canto superior direito.</li>
+              </ol>
+            )}
+            {platform === "android" && (
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>Abra o menu do navegador (três pontos no canto superior direito).</li>
+                <li>Selecione <strong>"Instalar app"</strong> ou <strong>"Adicionar à tela inicial"</strong>.</li>
+                <li>Confirme a instalação.</li>
+              </ol>
+            )}
+            {(platform === "desktop" || platform === "unknown") && (
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>No <strong>Chrome</strong> ou <strong>Edge</strong>: clique no ícone de instalação (⊕) na barra de endereços.</li>
+                <li>Ou abra o menu (três pontos) → <strong>"Instalar Delle..."</strong>.</li>
+                <li>Confirme clicando em <strong>Instalar</strong>.</li>
+              </ol>
+            )}
+            <p className="text-muted-foreground text-xs pt-2 border-t">
+              Após instalar, a Delle aparecerá como um app no seu dispositivo, com acesso rápido e experiência de tela cheia.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Pricing Section */}
       <section className="relative w-full py-16 sm:py-24 lg:py-32 px-4 sm:px-6 md:px-12 bg-white dark:bg-[#0B0B0B]">
         <div className="max-w-[1200px] mx-auto">
