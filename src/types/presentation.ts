@@ -50,7 +50,14 @@ export interface Slide {
   layoutVariant: string;
   title: string;
   subtitle?: string;
+  /** Bullets curtos (compatibilidade) */
   body?: string[];
+  /** Parágrafo rico estilo Gamma — pode conter **bold** inline. Preferido sobre body. */
+  richBody?: string;
+  /** Pill/badge curta no topo (estilo "OPORTUNIDADE · 2025") */
+  pill?: string;
+  /** Frase curta de impacto no rodapé do slide */
+  footnote?: string;
   blocks?: Block[];
   imagePrompt?: string;
   imageUrl?: string;
@@ -64,7 +71,8 @@ export type ThemeMotif =
   | "glass"
   | "brutalist"
   | "luxury"
-  | "cinematic";
+  | "cinematic"
+  | "iridescent";
 
 export interface DeckPalette {
   bg: string;
