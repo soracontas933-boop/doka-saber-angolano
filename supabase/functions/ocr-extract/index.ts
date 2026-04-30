@@ -98,11 +98,14 @@ serve(async (req) => {
 
     const allKeys = await getAllApiKeys();
     const promptToUse = is_document ? DOC_PROMPT : OCR_PROMPT;
+    const isPdf = mime_type === "application/pdf" || mime_type.includes("pdf");
 
-    // Limita a 2 chaves por provider para não estourar CPU/memória da edge function
-    const MAX_KEYS_PER_PROVIDER = 2;
-    const geminiKeys = allKeys.filter(k => k.servico === "gemini").map(k => k.chave).slice(0, MAX_KEYS_PER_PROVIDER);
-    const groqKeys = allKeys.filter(k => k.servico === "groq").map(k => k.chave).slice(0, MAX_KEYS_PER_PROVIDER);
+    // PDFs: tentar mais chaves Gemini (Groq Vision NÃO aceita PDFs)
+    // Imagens: 2 Gemini + 2 Groq como fallback
+    const MAX_GEMINI = isPdf ? 4 : 2;
+    const MAX_GROQ = isPdf ? 0 : 2;
+    const geminiKeys = allKeys.filter(k => k.servico === "gemini").map(k => k.chave).slice(0, MAX_GEMINI);
+    const groqKeys = allKeys.filter(k => k.servico === "groq").map(k => k.chave).slice(0, MAX_GROQ);
 
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [];
     for (const key of geminiKeys) {
