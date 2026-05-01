@@ -772,6 +772,39 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          criado_em: string
+          endpoint: string
+          id: string
+          p256dh: string
+          ultimo_uso: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          criado_em?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          ultimo_uso?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          criado_em?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          ultimo_uso?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           atualizado_em: string
