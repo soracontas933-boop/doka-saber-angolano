@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { FileDown, FileText, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { exportResumoPDF, exportResumoWord } from "@/lib/resumo-export";
+import { exportResumoPDF, exportResumoWord, exportResumoVisualPDF } from "@/lib/resumo-export";
 import {
   sanitizeResumo,
   parseMapaMental,
