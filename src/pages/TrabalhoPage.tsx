@@ -280,10 +280,11 @@ const TrabalhoPage = () => {
     // Generate cover image
     if (tipoCapa === "upload" && capaUpload) {
       setCapaImageUrl(URL.createObjectURL(capaUpload));
-    } else if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
+    } else if (tipoCapa === "personalizada") {
       const imgUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
       setCapaImageUrl(imgUrl);
     } else {
+      // tipoCapa === "padrao" or anything else: use Angolan coat of arms (or school logo if uploaded)
       setCapaImageUrl(null);
     }
 
