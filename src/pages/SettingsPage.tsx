@@ -105,7 +105,65 @@ const SettingsPage = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
+  const handleAvatarFile = async (file: File) => {
+    if (!userId) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Ficheiro inválido", description: "Seleciona uma imagem.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande", description: "Máximo 5MB.", variant: "destructive" });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${userId}/avatar-${Date.now()}.${ext}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
+      if (upErr) throw upErr;
+
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const publicUrl = `${pub.publicUrl}?t=${Date.now()}`;
+
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+        .eq("id", userId);
+      if (updErr) throw updErr;
+
+      setProfile((p) => ({ ...p, avatar_url: publicUrl }));
+      toast({ title: "Foto atualizada!", description: "A tua nova foto de perfil foi guardada." });
+    } catch (err) {
+      toast({
+        title: "Erro ao carregar foto",
+        description: err instanceof Error ? err.message : "Tenta novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!userId) return;
+    try {
+      await supabase
+        .from("profiles")
+        .update({ avatar_url: null, updated_at: new Date().toISOString() })
+        .eq("id", userId);
+      setProfile((p) => ({ ...p, avatar_url: "" }));
+      toast({ title: "Foto removida" });
+    } catch {
+      toast({ title: "Erro ao remover", variant: "destructive" });
+    }
+  };
+
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
