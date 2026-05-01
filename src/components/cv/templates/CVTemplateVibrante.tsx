@@ -13,7 +13,7 @@ const CVTemplateVibrante: React.FC<Props> = ({ data, theme }) => {
   );
 
   return (
-    <div style={{ width: "100%", minHeight: "297mm", background: "#fff", display: "flex", fontFamily: "Arial, sans-serif", color: theme.text }}>
+    <div style={{ width: "100%", minHeight: "1123px", background: "#fff", display: "flex", fontFamily: "Arial, sans-serif", color: theme.text }}>
       {/* LEFT 60% */}
       <div style={{ width: "62%", display: "flex", flexDirection: "column" }}>
         {/* header */}

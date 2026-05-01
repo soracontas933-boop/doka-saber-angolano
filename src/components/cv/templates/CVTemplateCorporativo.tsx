@@ -16,7 +16,7 @@ const SkillBar: React.FC<{ label: string; pct: number; color: string }> = ({ lab
 const CVTemplateCorporativo: React.FC<Props> = ({ data, theme }) => {
   const accent = theme.secondary;
   return (
-    <div style={{ width: "100%", minHeight: "297mm", background: "#fff", color: theme.text, fontFamily: "Arial, sans-serif" }}>
+    <div style={{ width: "100%", minHeight: "1123px", background: "#fff", color: theme.text, fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column" }}>
       {/* Header */}
       <div style={{ background: theme.primary, color: "#fff", padding: "26px 30px 22px", display: "flex", gap: 20, alignItems: "center" }}>
         {data.foto && (
