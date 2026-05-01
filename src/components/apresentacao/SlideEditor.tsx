@@ -220,22 +220,23 @@ export function SlideEditor({
         )}
       </div>
 
-      {/* Slide list (compact) */}
-      <div className="shrink-0 border-b p-2 max-h-32 overflow-y-auto space-y-1">
-        {deck.slides.map((s, i) => (
-          <button
-            key={s.id}
-            onClick={() => onChange(i)}
-            className={`w-full text-left text-xs px-2 py-1.5 rounded-md flex items-center gap-2 ${
-              i === current ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-            }`}
-          >
-            <GripVertical className="h-3 w-3 opacity-40" />
-            <span className="opacity-60 w-5">{i + 1}.</span>
-            <span className="truncate flex-1">{s.title || "—"}</span>
-            <span className="text-[9px] uppercase opacity-50">{s.kind}</span>
-          </button>
-        ))}
+      {/* Slide list (drag-and-drop) */}
+      <div className="shrink-0 border-b p-2 max-h-40 overflow-y-auto">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={deck.slides.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-1">
+              {deck.slides.map((s, i) => (
+                <SortableSlideItem
+                  key={s.id}
+                  slide={s}
+                  index={i}
+                  current={current}
+                  onClick={() => onChange(i)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* Toolbar */}
