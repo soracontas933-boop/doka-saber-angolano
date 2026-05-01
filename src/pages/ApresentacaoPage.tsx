@@ -88,6 +88,7 @@ export default function ApresentacaoPage() {
       const cardsOutline = cards.map(c =>
         `${c.title}: ${c.subtopics.join("; ")}`
       ).join("\n");
+      setCardsOutlineSnapshot(cardsOutline);
 
       setProgress("A gerar conteúdo cinematográfico…");
       const aiSlides = await generateDeckContent({
