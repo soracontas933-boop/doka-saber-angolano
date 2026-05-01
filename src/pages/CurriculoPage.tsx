@@ -41,6 +41,7 @@ const CurriculoPage: React.FC = () => {
   const [generated, setGenerated] = useLocalStorage<boolean>("delle-cv-generated", false);
   const [editTab, setEditTab] = useState<string>("dados");
   const [generating, setGenerating] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ nomeCompleto?: boolean; titulo?: boolean }>({});
   const photoRef = useRef<HTMLInputElement>(null);
 
   const { checkLimit, logUsage } = useUsageTracker();
@@ -49,10 +50,26 @@ const CurriculoPage: React.FC = () => {
   const canGenerate = cvData.nomeCompleto.trim().length > 1 && cvData.titulo.trim().length > 0;
 
   const handleGenerate = async () => {
-    if (!canGenerate) {
-      toast.error("Preencha pelo menos o nome e o título profissional.");
+    const errs: { nomeCompleto?: boolean; titulo?: boolean } = {};
+    if (cvData.nomeCompleto.trim().length < 2) errs.nomeCompleto = true;
+    if (cvData.titulo.trim().length < 1) errs.titulo = true;
+
+    if (errs.nomeCompleto || errs.titulo) {
+      setFormErrors(errs);
+      toast.error("Preencha os campos obrigatórios destacados em vermelho.");
+      // Garante que o accordion de Dados Pessoais esteja aberto e dá foco ao primeiro campo
+      setTimeout(() => {
+        const firstKey = errs.nomeCompleto ? "nomeCompleto" : "titulo";
+        const el = document.querySelector<HTMLInputElement>(`[data-cv-field="${firstKey}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus({ preventScroll: true });
+        }
+      }, 50);
       return;
     }
+
+    setFormErrors({});
     const ok = await checkLimit("cv");
     if (!ok) return;
 
@@ -99,7 +116,19 @@ const CurriculoPage: React.FC = () => {
           ({CV_COST} créditos). Poderá editar, mudar modelo, cores, fonte e exportar em seguida.
         </p>
 
-        <CVForm data={cvData} onChange={setCvData} />
+        <CVForm
+          data={cvData}
+          onChange={(d) => {
+            setCvData(d);
+            if (formErrors.nomeCompleto && d.nomeCompleto.trim().length >= 2) {
+              setFormErrors((p) => ({ ...p, nomeCompleto: false }));
+            }
+            if (formErrors.titulo && d.titulo.trim().length >= 1) {
+              setFormErrors((p) => ({ ...p, titulo: false }));
+            }
+          }}
+          errors={formErrors}
+        />
 
         {/* Sticky CTA bar */}
         <div className="fixed bottom-0 left-0 right-0 md:left-[var(--sidebar-width,16rem)] bg-background/95 backdrop-blur border-t border-border p-4 z-40">
