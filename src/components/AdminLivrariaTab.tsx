@@ -309,6 +309,7 @@ const AdminLivrariaTab = () => {
         </Card>
       </TabsContent>
 
+      <Dialog open={openBook} onOpenChange={setOpenBook}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{form.id ? "Editar livro" : "Novo livro"}</DialogTitle></DialogHeader>
           <div className="grid gap-3">
