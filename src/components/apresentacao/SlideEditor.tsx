@@ -8,6 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, verticalListSortingStrategy, arrayMove,
+  useSortable, sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { Deck, Slide, SlideKind } from "@/types/presentation";
 import { LAYOUT_VARIANTS } from "@/lib/presentation/narrative";
 import { regenerateSingleSlide, type DensityLevel } from "@/lib/presentation/ai-deck";
@@ -17,6 +26,46 @@ const ALL_KINDS: SlideKind[] = [
   "timeline", "process", "comparison", "quote", "gallery", "dashboard",
   "case-study", "summary", "conclusion", "references", "closing", "cta",
 ];
+
+// ─── Item arrastável da lista de miniaturas ─────────────────────
+function SortableSlideItem({
+  slide, index, current, onClick,
+}: {
+  slide: Slide; index: number; current: number; onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: slide.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : "auto",
+  };
+  const active = index === current;
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      className={`text-xs px-2 py-1.5 rounded-md flex items-center gap-2 cursor-pointer ${
+        active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+      }`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+        className="touch-none cursor-grab active:cursor-grabbing opacity-50 hover:opacity-100"
+        aria-label="Arrastar slide"
+      >
+        <GripVertical className="h-3 w-3" />
+      </button>
+      <span className="opacity-60 w-5">{index + 1}.</span>
+      <span className="truncate flex-1">{slide.title || "—"}</span>
+      <span className="text-[9px] uppercase opacity-50">{slide.kind}</span>
+    </div>
+  );
+}
 
 interface Props {
   deck: Deck;
