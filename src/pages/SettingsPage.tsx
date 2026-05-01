@@ -16,8 +16,6 @@ import {
   User,
   Moon,
   Sun,
-  Type,
-  Ruler,
   Save,
   Loader2,
   Camera,
@@ -27,16 +25,6 @@ import {
   LogOut,
 } from "lucide-react";
 
-const FONT_OPTIONS = [
-  "Times New Roman",
-  "Arial",
-  "Calibri",
-  "Georgia",
-  "Verdana",
-  "Tahoma",
-  "Cambria",
-  "Garamond",
-];
 
 const SettingsPage = () => {
   const { toast } = useToast();
