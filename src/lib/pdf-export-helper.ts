@@ -15,6 +15,8 @@ export function escapeHtml(value: string) {
 export interface PdfExportOptions {
   html?: string;
   element?: HTMLElement;
+  /** When true and `element` is provided, deep-clone it (preserving inline styles) before staging. */
+  cloneElement?: boolean;
   filename: string;
   overlayMessage?: string;
   containerWidth?: number;
@@ -45,6 +47,7 @@ async function waitForImages(root: HTMLElement) {
 export async function exportHtmlToPdf({
   html,
   element,
+  cloneElement = false,
   filename,
   overlayMessage = "A gerar ficheiro PDF...",
   containerWidth = 794,
@@ -84,7 +87,8 @@ export async function exportHtmlToPdf({
     ].join(";");
 
     if (element) {
-      container.appendChild(element);
+      const node = cloneElement ? (element.cloneNode(true) as HTMLElement) : element;
+      container.appendChild(node);
     } else if (html && html.trim().length >= 10) {
       container.innerHTML = html;
     } else {
