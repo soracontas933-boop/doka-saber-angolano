@@ -30,14 +30,20 @@ const AdminLivrariaTab = () => {
   const [saving, setSaving] = useState(false);
   const [newCat, setNewCat] = useState("");
 
+  const [pendingBooks, setPendingBooks] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
+
   const load = async () => {
     setLoading(true);
-    const [{ data: bs }, { data: cs }, { data: rs }] = await Promise.all([
+    const [{ data: bs }, { data: cs }, { data: rs }, { data: pb }, { data: po }] = await Promise.all([
       supabase.from("books").select("*, book_categories(nome)").order("criado_em", { ascending: false }),
       supabase.from("book_categories").select("*").order("ordem"),
       supabase.from("book_purchase_requests").select("*, books(titulo)").order("criado_em", { ascending: false }),
+      supabase.from("books").select("*, book_categories(nome)").eq("estado_aprovacao", "pendente").order("submetido_em", { ascending: false }),
+      supabase.from("book_author_payouts").select("*, books(titulo)").order("criado_em", { ascending: false }).limit(100),
     ]);
     setBooks(bs || []); setCategories(cs || []); setRequests(rs || []);
+    setPendingBooks(pb || []); setPayouts(po || []);
     setLoading(false);
   };
 
