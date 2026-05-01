@@ -1,6 +1,6 @@
 import { generateWithAI, generateImageAI, DELLE_SYSTEM_PROMPT } from "@/lib/ai-service";
 import type { ComposedSlideSpec } from "./variator";
-import type { Deck, DeckTheme } from "@/types/presentation";
+import type { Deck, DeckTheme, Block, SlideKind } from "@/types/presentation";
 
 const MOTIF_PROMPT_HINTS: Record<string, string> = {
   bento:      "modern bento UI style, soft rounded blocks, premium product design",
@@ -16,14 +16,14 @@ const MOTIF_PROMPT_HINTS: Record<string, string> = {
 export type DensityLevel = "low" | "medium" | "high";
 
 const DENSITY_HINT: Record<DensityLevel, string> = {
-  low:    "Mínimo de texto: 2-3 bullets curtos (≤8 palavras cada). Estilo Gamma.",
-  medium: "Equilibrado: 3-5 bullets (≤12 palavras cada).",
-  high:   "Detalhado: 5-7 bullets (≤16 palavras cada). Inclui dados concretos.",
+  low:    "Texto enxuto: 2-3 bullets curtos OU richBody de 30-50 palavras.",
+  medium: "Equilibrado: 3-5 bullets OU richBody de 50-90 palavras.",
+  high:   "Detalhado: 5-7 bullets OU richBody de 80-130 palavras com dados concretos.",
 };
 
 interface GenDeckContentArgs {
   topic: string;
-  cardsOutline: string;          // texto formatado dos cards do utilizador
+  cardsOutline: string;
   slots: ComposedSlideSpec[];
   language: "pt-AO" | "pt-BR";
   density: DensityLevel;
@@ -34,64 +34,163 @@ export interface RawAISlide {
   title: string;
   subtitle?: string;
   body?: string[];
-  /** Parágrafo rico estilo Gamma com **negrito** inline em palavras-chave */
   richBody?: string;
-  /** Pill curta no topo (ex: "OPORTUNIDADE · ANGOLA · 2025") */
   pill?: string;
-  /** Frase de impacto no rodapé do slide */
   footnote?: string;
-  blocks?: import("@/types/presentation").Block[];
+  blocks?: Block[];
   imagePrompt?: string;
+}
+
+// ─── Requisitos mínimos por tipo de slide ────────────────────────
+// Determina o que CADA kind precisa para não renderizar vazio.
+function kindRequirements(kind: SlideKind): {
+  needsRichBody: boolean;
+  minBullets: number;
+  minBlocks: number;
+  blockShape: string; // descrição para o prompt
+} {
+  switch (kind) {
+    case "hero":
+      return { needsRichBody: false, minBullets: 0, minBlocks: 0, blockShape: "" };
+    case "agenda":
+      return { needsRichBody: false, minBullets: 4, minBlocks: 0, blockShape: "body[]: 4-7 títulos curtos das secções" };
+    case "stats":
+      return { needsRichBody: false, minBullets: 0, minBlocks: 3, blockShape: "blocks[]: 3-4 stats {value:'85%', label:'curto', description:'frase explicativa'}" };
+    case "bento":
+      return { needsRichBody: false, minBullets: 0, minBlocks: 3, blockShape: "blocks[]: 3-4 cards {label:'título', description:'2 frases', icon:'📚'}" };
+    case "timeline":
+      return { needsRichBody: false, minBullets: 0, minBlocks: 4, blockShape: "blocks[]: 4-5 etapas {label:'Etapa/Ano', description:'1 frase'}" };
+    case "process":
+      return { needsRichBody: false, minBullets: 0, minBlocks: 3, blockShape: "blocks[]: 3-5 passos {label:'Passo', description:'1 frase'}" };
+    case "comparison":
+      return { needsRichBody: false, minBullets: 0, minBlocks: 4, blockShape: "blocks[]: 4-6 linhas {label:'critério', value:'col A', description:'col B'}" };
+    case "quote":
+      return { needsRichBody: false, minBullets: 0, minBlocks: 0, blockShape: "title=citação completa, subtitle=autor — fonte" };
+    case "split":
+    case "context":
+    case "case-study":
+    case "insight":
+      return { needsRichBody: true, minBullets: 3, minBlocks: 0, blockShape: "richBody (40-90 palavras com **negrito**) + body[]: 3-4 bullets" };
+    case "summary":
+    case "conclusion":
+      return { needsRichBody: false, minBullets: 4, minBlocks: 0, blockShape: "body[]: 4-6 takeaways" };
+    case "references":
+      return { needsRichBody: false, minBullets: 4, minBlocks: 0, blockShape: "body[]: 4-8 referências formatadas APA" };
+    case "closing":
+    case "cta":
+      return { needsRichBody: false, minBullets: 1, minBlocks: 0, blockShape: "title + subtitle + body[0]=texto do botão CTA" };
+    case "dashboard":
+    case "gallery":
+      return { needsRichBody: false, minBullets: 3, minBlocks: 0, blockShape: "body[]: 3-4 captions curtas" };
+    default:
+      return { needsRichBody: true, minBullets: 0, minBlocks: 0, blockShape: "richBody (40-80 palavras)" };
+  }
+}
+
+// ─── Validação: slide tem conteúdo suficiente para o seu kind? ───
+function isSlideValid(s: RawAISlide, kind: SlideKind): boolean {
+  if (!s.title || s.title.trim().length < 2) return false;
+  const req = kindRequirements(kind);
+  const richOk = !req.needsRichBody || (s.richBody && s.richBody.trim().length >= 30);
+  const bulletsOk = req.minBullets === 0 || (s.body || []).filter(b => b && b.trim().length > 2).length >= req.minBullets;
+  const blocksOk = req.minBlocks === 0 || (s.blocks || []).filter(b => (b.label || b.value) && (b.description || b.value)).length >= req.minBlocks;
+  // Pelo menos uma das condições aplicáveis tem de estar OK
+  if (req.needsRichBody && !richOk) return false;
+  if (req.minBlocks > 0 && !blocksOk) return false;
+  if (req.minBullets > 0 && !bulletsOk && !richOk) return false;
+  return true;
+}
+
+// ─── Sanitiza: remove bullets/blocks vazios para layouts não renderizarem lixo
+function sanitizeSlide(s: RawAISlide): RawAISlide {
+  return {
+    ...s,
+    body: (s.body || []).map(b => (b || "").trim()).filter(b => b.length > 0),
+    blocks: (s.blocks || []).filter(b => (b.label || b.value || b.description)),
+  };
+}
+
+// ─── Fallback: gera conteúdo derivado quando a IA falha ──────────
+function buildFallback(kind: SlideKind, original: RawAISlide, topic: string, cardsOutline: string): RawAISlide {
+  const req = kindRequirements(kind);
+  const lines = cardsOutline.split("\n").filter(Boolean).slice(0, 6);
+  const fb: RawAISlide = { ...original, title: original.title || topic };
+
+  if (req.needsRichBody && !fb.richBody) {
+    fb.richBody = original.subtitle || `Análise sobre **${topic}** no contexto angolano, com foco em impacto, oportunidades e próximos passos concretos.`;
+  }
+  if (req.minBullets > 0 && (!fb.body || fb.body.length < req.minBullets)) {
+    fb.body = lines.length >= req.minBullets
+      ? lines.map(l => l.split(":")[0].trim()).slice(0, req.minBullets + 1)
+      : Array.from({ length: req.minBullets }, (_, i) => `Ponto-chave ${i + 1} sobre ${topic}`);
+  }
+  if (req.minBlocks > 0 && (!fb.blocks || fb.blocks.length < req.minBlocks)) {
+    fb.blocks = Array.from({ length: req.minBlocks }, (_, i) => ({
+      type: "card" as const,
+      label: lines[i]?.split(":")[0].trim() || `Aspecto ${i + 1}`,
+      value: kind === "stats" ? `0${i + 1}` : undefined,
+      description: lines[i]?.split(":")[1]?.trim() || `Detalhe relevante sobre ${topic}.`,
+      icon: ["📚", "🚀", "◆", "✦", "⚡", "🎯"][i % 6],
+    }));
+  }
+  return fb;
 }
 
 export async function generateDeckContent(args: GenDeckContentArgs): Promise<RawAISlide[]> {
   const slotsList = args.slots
-    .map((s, i) => `${i + 1}. [${s.section} / ${s.kind} / ${s.layoutVariant}]`)
+    .map((s, i) => {
+      const req = kindRequirements(s.kind);
+      return `${i + 1}. [${s.kind}] → ${req.blockShape || "richBody"}`;
+    })
     .join("\n");
 
   const userPrompt = `
 Cria o conteúdo de uma apresentação executiva premium estilo Gamma sobre: "${args.topic}".
 
-Tópicos do utilizador (matéria-prima — distribui pelos slides certos):
+Tópicos do utilizador (matéria-prima — distribui pelos slides certos, NUNCA inventes do zero ignorando isto):
 ${args.cardsOutline}
 
-Estrutura narrativa obrigatória (ordem e tipo exactos):
+ESTRUTURA OBRIGATÓRIA (respeita a ordem e o tipo de cada slot, e PREENCHE OS CAMPOS PEDIDOS):
 ${slotsList}
 
-Regras INVIOLÁVEIS:
-- Total: ${args.slots.length} slides, ordem exacta.
-- Idioma: ${args.language === "pt-AO" ? "Português de Angola (use 'utilizador', 'parceria', 'ficheiro')" : "Português do Brasil"}.
-- Tom: executivo, cinematográfico, premium. ZERO meta-comentário, ZERO "neste slide".
+REGRA #1 — NENHUM SLIDE PODE TER CARDS/BULLETS VAZIOS.
+Se um slot pede "blocks: 3-4 stats", devolves 3-4 blocks completos com value, label E description.
+Se pede "body: 4-6 takeaways", devolves 4-6 strings reais (não placeholders).
+Slides vazios serão rejeitados e regenerados — não desperdices tokens.
 
-CAMPOS POR SLIDE:
-- "title": curto, impacto, 3-7 palavras (vai aparecer GIGANTE em azul).
-- "subtitle": uma frase de contexto (≤20 palavras), opcional.
-- "richBody": **PREFERIDO**. Parágrafo único curto (40-80 palavras) com 2-3 palavras em **negrito**. Ex: "Angola tem **2,9 milhões de estudantes** sem ferramentas digitais — a Delle chega primeiro."
-- "body": só quando faz sentido bullets (lista de features). 3-5 itens curtos.
-- "pill": tag MAIÚSCULAS (ex: "OPORTUNIDADE · 2025"). Apenas no hero/closing.
-- "footnote": frase de impacto final (≤15 palavras), opcional.
-- "imagePrompt": EM INGLÊS, ≤30 palavras, sem texto na imagem.
-- "blocks": para stats/bento/process/timeline/comparison — {type, label, value, description, icon}.
-  • stats → value ("1,6M","85%"), label, description curta.
-  • bento-numbered → label (título) + description curta.
-  • bento-icon-grid → icon (📚 🚀 ◆), label, description.
-  • process/timeline → label (etapa), description.
+REGRA #2 — IDIOMA: ${args.language === "pt-AO" ? "Português de Angola ('utilizador', 'parceria', 'ficheiro', 'óptimo')" : "Português do Brasil"}.
 
-DENSIDADE: ${DENSITY_HINT[args.density]}
+REGRA #3 — Tom executivo, cinematográfico, premium. ZERO meta-comentário ("neste slide", "vamos ver"). Frases directas e densas.
+
+REGRA #4 — DENSIDADE: ${DENSITY_HINT[args.density]}
+
+CAMPOS DISPONÍVEIS POR SLIDE:
+- title (obrigatório, 3-7 palavras de impacto, vai aparecer GIGANTE)
+- subtitle (opcional, ≤20 palavras de contexto)
+- pill (opcional, MAIÚSCULAS curtas tipo "OPORTUNIDADE · 2025") — usar sobretudo no hero
+- richBody (parágrafo único 40-90 palavras com 2-3 expressões em **negrito**)
+- body (array de strings curtas, sem markdown)
+- footnote (frase ≤15 palavras de impacto, opcional)
+- blocks (array de objectos {type, label, value, description, icon})
+  • stats → {value:"85%", label:"Curto", description:"frase explicativa"}
+  • bento → {label:"Título", description:"2 frases", icon:"📚"}
+  • timeline/process → {label:"Etapa", description:"1 frase"}
+  • comparison → {label:"critério", value:"opção A", description:"opção B"}
+- imagePrompt (EM INGLÊS, ≤30 palavras, sem texto na imagem)
 
 REGRAS ESPECIAIS:
-- HERO: usa "pill" + "title" curto + "subtitle" tagline.
-- Slides "quote": title = citação, subtitle = autor.
-- Slides "references": body = lista APA.
-- Slides "closing": title curto + blocks com próximos passos numerados.
+- HERO: pill + title curto + subtitle tagline. Sem body/blocks.
+- QUOTE: title = citação completa entre aspas; subtitle = "Autor — Fonte".
+- REFERENCES: body = 4-8 referências APA reais (autor, ano, título, fonte).
+- CLOSING/CTA: title curto + subtitle + body[0] = texto do botão.
 
 ${args.extraKeywords?.length ? `Vibe visual: ${args.extraKeywords.join(", ")}.` : ""}
 
-Devolve APENAS JSON válido:
-{ "slides": [ { "title": "...", "pill": "...", "richBody": "...", "footnote": "...", "blocks": [...], "imagePrompt": "..." } ] }
+Devolve APENAS JSON válido (sem comentários, sem markdown):
+{ "slides": [ {...}, {...} ] }
 `.trim();
 
-  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, userPrompt, 6000, 0.85);
+  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, userPrompt, 8000, 0.8);
   const match = result.content.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("Resposta da IA sem JSON");
 
@@ -99,20 +198,69 @@ Devolve APENAS JSON válido:
   try {
     parsed = JSON.parse(match[0]);
   } catch {
-    // tenta limpar trailing commas
     const cleaned = match[0].replace(/,(\s*[}\]])/g, "$1");
     parsed = JSON.parse(cleaned);
   }
 
-  const slides = parsed.slides || [];
-  // Garante que temos um item por slot (preenche faltas)
+  let slides = (parsed.slides || []).map(sanitizeSlide);
+
   while (slides.length < args.slots.length) {
-    slides.push({ title: "Slide", body: [] });
+    slides.push({ title: args.topic, body: [] });
   }
-  return slides.slice(0, args.slots.length);
+  slides = slides.slice(0, args.slots.length);
+
+  // ─── Identificar slides inválidos ──
+  const invalidIndexes = slides
+    .map((s, i) => (isSlideValid(s, args.slots[i].kind) ? -1 : i))
+    .filter(i => i >= 0);
+
+  // ─── Tentar regenerar inválidos numa segunda passagem (uma vez) ──
+  if (invalidIndexes.length > 0) {
+    console.log(`[ai-deck] ${invalidIndexes.length} slides inválidos — a regenerar`);
+    try {
+      const fixPrompt = `
+Os seguintes slides ficaram incompletos. PREENCHE-OS por completo respeitando o tipo e os campos obrigatórios.
+
+Tema: "${args.topic}"
+Tópicos do utilizador:
+${args.cardsOutline}
+
+Slides a corrigir (devolve no MESMO índice):
+${invalidIndexes.map(i => {
+  const req = kindRequirements(args.slots[i].kind);
+  return `Índice ${i} — tipo "${args.slots[i].kind}" — precisa de: ${req.blockShape}\nTítulo actual: "${slides[i].title}"`;
+}).join("\n\n")}
+
+Devolve APENAS JSON: { "fixes": [ { "index": 0, "slide": { ...slide completo... } }, ... ] }
+Idioma: ${args.language === "pt-AO" ? "pt-AO" : "pt-BR"}.
+`.trim();
+
+      const fixResult = await generateWithAI(DELLE_SYSTEM_PROMPT, fixPrompt, 4000, 0.7);
+      const fmatch = fixResult.content.match(/\{[\s\S]*\}/);
+      if (fmatch) {
+        const fparsed = JSON.parse(fmatch[0].replace(/,(\s*[}\]])/g, "$1"));
+        for (const fix of (fparsed.fixes || [])) {
+          if (typeof fix.index === "number" && fix.slide) {
+            slides[fix.index] = sanitizeSlide({ ...slides[fix.index], ...fix.slide });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[ai-deck] regeneração falhou — a usar fallback determinístico", e);
+    }
+  }
+
+  // ─── Fallback determinístico para os que ainda estão inválidos ──
+  slides = slides.map((s, i) => {
+    if (isSlideValid(s, args.slots[i].kind)) return s;
+    console.log(`[ai-deck] fallback no slide ${i} (${args.slots[i].kind})`);
+    return buildFallback(args.slots[i].kind, s, args.topic, args.cardsOutline);
+  });
+
+  return slides;
 }
 
-// Geração paralela com limite de concorrência
+// ─── Image generation (inalterado) ───────────────────────────────
 async function pMapLimit<T, R>(items: T[], limit: number, fn: (item: T, idx: number) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
   let cursor = 0;
@@ -141,7 +289,6 @@ export async function generateDeckImages(
 
   const tasks = deck.slides
     .map((s, i) => ({ slide: s, index: i }))
-    // skipa slides puramente tipográficos
     .filter(t => !["quote", "closing", "references"].includes(t.slide.kind));
 
   await pMapLimit(tasks, 3, async (task) => {
