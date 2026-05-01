@@ -246,7 +246,7 @@ Devolve APENAS JSON válido (sem comentários, sem markdown):
 { "slides": [ {...}, {...} ] }
 `.trim();
 
-  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, userPrompt, 8000, 0.8);
+  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, userPrompt, DENSITY_TOKEN_BUDGET[args.density], 0.8);
   const match = result.content.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("Resposta da IA sem JSON");
 
