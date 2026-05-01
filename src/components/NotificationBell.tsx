@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
+import { PushNotificationButton } from "@/components/PushNotificationButton";
 
 interface Notification {
   id: string;
@@ -329,6 +330,9 @@ const NotificationBell = () => {
               </Button>
             )}
           </div>
+        </div>
+        <div className="px-3 py-2 border-b bg-muted/30">
+          <PushNotificationButton variant="outline" size="sm" className="w-full text-xs" />
         </div>
         <ScrollArea className="max-h-80">
           {notifications.length === 0 ? (

@@ -74,7 +74,7 @@ export function useFeatureFlags() {
     })();
 
     const channel = supabase
-      .channel(`feature-flags-user-${user.id}`)
+      .channel(`feature-flags-user-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         {
