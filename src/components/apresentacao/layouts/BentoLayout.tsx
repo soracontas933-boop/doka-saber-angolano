@@ -1,10 +1,13 @@
 import { LayoutProps, SlideShell, H1, RichText, Eyebrow, getMotifStyles } from "./_shared";
+import type { Block } from "@/types/presentation";
 
 export function BentoLayout({ slide, theme }: LayoutProps) {
   const m = getMotifStyles(theme);
-  const blocks = slide.blocks && slide.blocks.length > 0
+  const rawBlocks: Block[] = slide.blocks && slide.blocks.length > 0
     ? slide.blocks
-    : (slide.body || []).map((b, i) => ({ type: "card" as const, label: `Ponto ${i + 1}`, description: b }));
+    : (slide.body || []).filter(Boolean).map((b, i) => ({ type: "card" as const, label: `Ponto ${i + 1}`, description: b }));
+  // Filtra blocks completamente vazios para não renderizar cards fantasma
+  const blocks = rawBlocks.filter(b => (b.label?.trim() || b.value?.trim() || b.description?.trim()));
 
   const variant = slide.layoutVariant;
 

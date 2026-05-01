@@ -1,8 +1,10 @@
-import { LayoutProps, SlideShell, H1, Eyebrow, getMotifStyles } from "./_shared";
+import { LayoutProps, SlideShell, H1, Eyebrow, RichText, getMotifStyles } from "./_shared";
 
 // Cobre: insight, summary, conclusion, references, cta, case-study, context
 export function GenericLayout({ slide, theme }: LayoutProps) {
   const m = getMotifStyles(theme);
+
+  const bodyClean = (slide.body || []).map(b => (b || "").trim()).filter(Boolean);
 
   if (slide.kind === "references") {
     return (
@@ -13,7 +15,7 @@ export function GenericLayout({ slide, theme }: LayoutProps) {
             <H1 theme={theme} className="text-5xl">{slide.title}</H1>
           </div>
           <div className="flex-1 overflow-hidden columns-2 gap-8">
-            {(slide.body || []).map((ref, i) => (
+            {bodyClean.map((ref, i) => (
               <div key={i} className="text-sm py-2 break-inside-avoid border-b" style={{ color: theme.palette.muted, borderColor: `${theme.palette.muted}22` }}>
                 <span className="font-bold mr-2" style={{ color: theme.palette.primary }}>[{i + 1}]</span>
                 {ref}
@@ -26,7 +28,7 @@ export function GenericLayout({ slide, theme }: LayoutProps) {
   }
 
   if (slide.kind === "summary" || slide.kind === "insight") {
-    const items = slide.body || [];
+    const items = bodyClean;
     return (
       <SlideShell theme={theme}>
         <div className="h-full flex flex-col gap-8 justify-center">
@@ -34,18 +36,22 @@ export function GenericLayout({ slide, theme }: LayoutProps) {
             {slide.subtitle && <Eyebrow theme={theme}>{slide.subtitle}</Eyebrow>}
             <H1 theme={theme} className="text-5xl">{slide.title}</H1>
           </div>
-          <div className="grid grid-cols-2 gap-4 max-w-5xl mx-auto w-full">
-            {items.slice(0, 6).map((it, i) => (
-              <div key={i} className="p-5 flex gap-4 items-start"
-                style={{ backgroundColor: m.cardBg, border: m.cardBorder, boxShadow: m.cardShadow, borderRadius: m.radius, backdropFilter: m.backdrop }}>
-                <div className="h-9 w-9 rounded-full flex items-center justify-center font-bold shrink-0"
-                  style={{ backgroundColor: theme.palette.primary, color: theme.palette.bg }}>
-                  ✓
+          {items.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 max-w-5xl mx-auto w-full">
+              {items.slice(0, 6).map((it, i) => (
+                <div key={i} className="p-5 flex gap-4 items-start"
+                  style={{ backgroundColor: m.cardBg, border: m.cardBorder, boxShadow: m.cardShadow, borderRadius: m.radius, backdropFilter: m.backdrop }}>
+                  <div className="h-9 w-9 rounded-full flex items-center justify-center font-bold shrink-0"
+                    style={{ backgroundColor: theme.palette.primary, color: theme.palette.bg }}>
+                    ✓
+                  </div>
+                  <div className="text-base">{it}</div>
                 </div>
-                <div className="text-base">{it}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : slide.richBody ? (
+            <div className="max-w-3xl mx-auto text-center text-xl" style={{ color: theme.palette.muted }}>{slide.richBody}</div>
+          ) : null}
         </div>
       </SlideShell>
     );
@@ -75,9 +81,10 @@ export function GenericLayout({ slide, theme }: LayoutProps) {
       <div className="w-1/2 flex flex-col justify-center p-14 gap-5">
         {slide.subtitle && <Eyebrow theme={theme}>{slide.subtitle}</Eyebrow>}
         <H1 theme={theme} className="text-5xl">{slide.title}</H1>
-        {slide.body && (
+        {slide.richBody && <RichText text={slide.richBody} theme={theme} className="text-lg" />}
+        {bodyClean.length > 0 && (
           <ul className="space-y-2 mt-3">
-            {slide.body.map((b, i) => (
+            {bodyClean.map((b, i) => (
               <li key={i} className="flex gap-3 text-base" style={{ color: theme.palette.muted }}>
                 <span style={{ color: theme.palette.accent }}>▸</span>
                 <span>{b}</span>
