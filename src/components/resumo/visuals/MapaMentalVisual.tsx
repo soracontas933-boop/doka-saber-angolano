@@ -315,7 +315,8 @@ export const MapaMentalVisual: React.FC<Props> = ({ central, branches, fillA4 = 
         })}
       </div>
 
-      {/* Legenda inferior */}
+      {/* Legenda inferior — escondida no modo A4 para preservar layout */}
+      {!fillA4 && (
       <div
         style={{
           marginTop: "16px",
