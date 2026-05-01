@@ -70,7 +70,7 @@ const TrabalhoCompleto: React.FC<TrabalhoCompletoProps> = ({ conteudo, coverData
 
       {/* PÁGINA 1 — CAPA */}
       <PaginaA4 tipo="capa">
-        <CapaPage data={coverData} capaImageUrl={capaImageUrl} />
+        <CapaPage data={coverData} capaImageUrl={capaImageUrl} logoUrl={logoUrl} />
       </PaginaA4>
 
       {/* DEMAIS PÁGINAS */}
