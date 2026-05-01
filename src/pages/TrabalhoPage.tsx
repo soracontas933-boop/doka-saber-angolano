@@ -76,6 +76,17 @@ const TrabalhoPage = () => {
   const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
 
+  // Object URL for the uploaded school logo (used on cover header)
+  const logoEscolaUrl = useMemo(
+    () => (logoEscola ? URL.createObjectURL(logoEscola) : null),
+    [logoEscola]
+  );
+  useEffect(() => {
+    return () => {
+      if (logoEscolaUrl) URL.revokeObjectURL(logoEscolaUrl);
+    };
+  }, [logoEscolaUrl]);
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
