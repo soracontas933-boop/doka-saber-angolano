@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { FileDown, FileText, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { exportResumoPDF, exportResumoWord } from "@/lib/resumo-export";
+import { exportResumoPDF, exportResumoWord, exportResumoVisualPDF } from "@/lib/resumo-export";
 import {
   sanitizeResumo,
   parseMapaMental,
@@ -77,10 +77,19 @@ function renderInlineBold(text: string) {
 const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, disciplina }) => {
   const cleaned = sanitizeResumo(resultado);
   const { title, sections } = parseResumoContent(cleaned);
+  const visualRef = React.useRef<HTMLDivElement>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(cleaned);
     toast.success("Copiado!");
+  };
+
+  const handleExportPDF = () => {
+    // Se houver visual rico (mapa mental, flashcards, etc.) exporta o visual real
+    if (visualRef.current) {
+      return exportResumoVisualPDF(visualRef.current, tipoResumo, disciplina, title || tipoResumo);
+    }
+    return exportResumoPDF(cleaned, tipoResumo, disciplina, title);
   };
 
   // Decide o componente visual conforme o tipo
@@ -121,7 +130,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
           <Button size="sm" variant="outline" onClick={handleCopy}>
             <Copy className="h-4 w-4 mr-1" /> Copiar
           </Button>
-          <Button size="sm" variant="outline" onClick={() => exportResumoPDF(cleaned, tipoResumo, disciplina, title)}>
+          <Button size="sm" variant="outline" onClick={handleExportPDF}>
             <FileDown className="h-4 w-4 mr-1" /> PDF
           </Button>
           <Button size="sm" onClick={() => exportResumoWord(cleaned, tipoResumo, disciplina, title)}>
@@ -132,7 +141,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
 
       {/* Componente visual quando aplicável */}
       {visual && (
-        <div className="bg-card border border-border rounded-2xl shadow-card overflow-hidden">
+        <div ref={visualRef} className="bg-card border border-border rounded-2xl shadow-card overflow-hidden">
           <div className="px-5 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
