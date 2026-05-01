@@ -196,6 +196,7 @@ const TrabalhoPage = () => {
         totalSubtemas: subtemas.length,
         contexto: contexto || undefined,
         bibliografia,
+        incluirCitacoes: trabalhoSettings.incluirCitacoes,
       });
 
       const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 6000, 0.7);
