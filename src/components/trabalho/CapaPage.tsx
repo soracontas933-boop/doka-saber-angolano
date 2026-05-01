@@ -5,19 +5,22 @@ import brasaoAngola from "@/assets/brasao-angola.svg";
 interface CapaPageProps {
   data: CoverPageData;
   capaImageUrl?: string | null;
+  logoUrl?: string | null;
 }
 
-const CapaPage: React.FC<CapaPageProps> = ({ data, capaImageUrl }) => {
+const CapaPage: React.FC<CapaPageProps> = ({ data, capaImageUrl, logoUrl }) => {
   const currentMonth = new Date().toLocaleDateString("pt-AO", { month: "long", year: "numeric" });
 
   return (
     <div className="capa-page">
       {/* Decorative border */}
       <div className="capa-border">
-        {/* Header: Coat of arms + institutional info */}
+        {/* Header: Coat of arms / logo / cover image + institutional info */}
         <div className="capa-header">
           {capaImageUrl ? (
-            <img src={capaImageUrl} alt="Capa" className="capa-img-gerada" />
+            <img src={capaImageUrl} alt="Capa" className="capa-img-gerada" crossOrigin="anonymous" />
+          ) : logoUrl ? (
+            <img src={logoUrl} alt="Logotipo da Escola" className="capa-brasao" />
           ) : (
             <img src={brasaoAngola} alt="Brasão de Angola" className="capa-brasao" />
           )}
