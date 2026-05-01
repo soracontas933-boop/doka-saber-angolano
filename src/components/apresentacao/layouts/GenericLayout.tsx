@@ -1,4 +1,4 @@
-import { LayoutProps, SlideShell, H1, Eyebrow, getMotifStyles } from "./_shared";
+import { LayoutProps, SlideShell, H1, Eyebrow, RichText, getMotifStyles } from "./_shared";
 
 // Cobre: insight, summary, conclusion, references, cta, case-study, context
 export function GenericLayout({ slide, theme }: LayoutProps) {
