@@ -7,9 +7,9 @@ interface Props { data: CVData; theme: CVTheme; }
 const CVTemplatePremium: React.FC<Props> = ({ data, theme }) => {
   const accent = theme.secondary;
   return (
-    <div style={{ width: "100%", minHeight: "297mm", background: "#f5f3ef", padding: "32px 28px", fontFamily: "Georgia, 'Times New Roman', serif", color: theme.text }}>
+    <div style={{ width: "100%", minHeight: "1123px", background: "#f5f3ef", padding: "32px 28px", fontFamily: "Georgia, 'Times New Roman', serif", color: theme.text, boxSizing: "border-box", display: "flex" }}>
       {/* Card */}
-      <div style={{ background: "#fff", border: `1px solid ${accent}`, padding: "30px 32px", boxShadow: "0 0 0 4px #fff inset" }}>
+      <div style={{ background: "#fff", border: `1px solid ${accent}`, padding: "30px 32px", boxShadow: "0 0 0 4px #fff inset", flex: 1, display: "flex", flexDirection: "column" }}>
         {/* Header */}
         <div style={{ display: "flex", gap: 22, paddingBottom: 18, borderBottom: `1px solid ${accent}` }}>
           {data.foto && (
