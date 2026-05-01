@@ -161,6 +161,7 @@ const SettingsPage = () => {
         .update({ avatar_url: null, updated_at: new Date().toISOString() })
         .eq("id", userId);
       setProfile((p) => ({ ...p, avatar_url: "" }));
+      window.dispatchEvent(new CustomEvent("profile:updated"));
       toast({ title: "Foto removida" });
     } catch {
       toast({ title: "Erro ao remover", variant: "destructive" });
