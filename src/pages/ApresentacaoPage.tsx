@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Presentation, Download, Loader2, Sparkles, Send,
-  Edit2, Trash2, Plus, Save, Shuffle, Play,
+  Edit2, Trash2, Plus, Save, Shuffle, PanelRightOpen, PanelRightClose,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,9 @@ import { DECK_THEMES } from "@/lib/presentation/themes";
 import { composeSlots, assembleDeck, newSeed, pickTheme } from "@/lib/presentation/variator";
 import { generateDeckContent, generateDeckImages, type DensityLevel } from "@/lib/presentation/ai-deck";
 import { DeckRenderer } from "@/components/apresentacao/DeckRenderer";
+import { SlideEditor } from "@/components/apresentacao/SlideEditor";
 import { exportDeckToPDF } from "@/lib/presentation/deck-export";
-import type { Deck, AspectRatio } from "@/types/presentation";
+import type { Deck, AspectRatio, Slide } from "@/types/presentation";
 
 interface Card { id: string; title: string; subtopics: string[] }
 
