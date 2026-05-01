@@ -267,9 +267,13 @@ const TrabalhoPage = () => {
     setResultadoCompilado(fullContent);
 
     // Generate cover image
-    if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
+    if (tipoCapa === "upload" && capaUpload) {
+      setCapaImageUrl(URL.createObjectURL(capaUpload));
+    } else if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
       const imgUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
       setCapaImageUrl(imgUrl);
+    } else {
+      setCapaImageUrl(null);
     }
 
     setFase("resultado");
