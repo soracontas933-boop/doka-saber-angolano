@@ -16,9 +16,29 @@ const MOTIF_PROMPT_HINTS: Record<string, string> = {
 export type DensityLevel = "low" | "medium" | "high";
 
 const DENSITY_HINT: Record<DensityLevel, string> = {
-  low:    "Texto enxuto: 2-3 bullets curtos OU richBody de 30-50 palavras.",
-  medium: "Equilibrado: 3-5 bullets OU richBody de 50-90 palavras.",
-  high:   "Detalhado: 5-7 bullets OU richBody de 80-130 palavras com dados concretos.",
+  low:    "CURTO — richBody 40-70 palavras OU 3-4 bullets de 6-12 palavras. Cada block.description tem 1 frase (10-18 palavras). Linguagem sintética, directa.",
+  medium: "MODERADO — richBody 90-140 palavras com 2-3 expressões em **negrito** OU 4-6 bullets de 12-22 palavras. Cada block.description tem 2 frases (25-40 palavras). Desenvolve causa→efeito→exemplo.",
+  high:   "EXTENSO — richBody 180-260 palavras estruturado em 2 parágrafos com **negritos**, dados concretos (anos, percentagens, exemplos angolanos) E 5-7 bullets de 18-30 palavras quando aplicável. Cada block.description tem 3-4 frases (50-80 palavras) explicando contexto, evidência e implicação. Desenvolve cada subtema em profundidade — proibido ficar superficial.",
+};
+
+const DENSITY_TOKEN_BUDGET: Record<DensityLevel, number> = {
+  low: 6000,
+  medium: 10000,
+  high: 16000,
+};
+
+// Tamanho mínimo do richBody por densidade (validação)
+const DENSITY_MIN_RICHBODY: Record<DensityLevel, number> = {
+  low: 120,    // ~25 palavras
+  medium: 280, // ~55 palavras
+  high: 600,   // ~120 palavras
+};
+
+// Tamanho mínimo de description em block por densidade
+const DENSITY_MIN_BLOCK_DESC: Record<DensityLevel, number> = {
+  low: 25,
+  medium: 60,
+  high: 140,
 };
 
 interface GenDeckContentArgs {
