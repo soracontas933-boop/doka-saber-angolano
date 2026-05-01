@@ -23,6 +23,8 @@ import {
   Save,
   Loader2,
   Camera,
+  Upload,
+  Trash2,
   Settings,
   LogOut,
 } from "lucide-react";
