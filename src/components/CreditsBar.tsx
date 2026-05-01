@@ -110,9 +110,13 @@ const CreditsBar = () => {
         <div className="flex items-center justify-between px-4 py-3 gap-2 shadow-glass">
           <button
             onClick={() => navigate("/configuracoes")}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 active:scale-95"
+            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 active:scale-95"
           >
-            {initials}
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={initials} className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
           </button>
 
           {/* Centro: Créditos com barra de progresso */}
