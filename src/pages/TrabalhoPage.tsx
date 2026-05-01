@@ -812,6 +812,7 @@ const TrabalhoPage = () => {
             conteudo={resultadoCompilado}
             coverData={getCoverData()}
             capaImageUrl={capaImageUrl}
+            logoUrl={logoEscolaUrl}
             editable={editMode}
             onContentChange={(updatedHtml) => setResultadoCompilado(updatedHtml)}
           />
