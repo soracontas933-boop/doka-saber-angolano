@@ -77,10 +77,19 @@ function renderInlineBold(text: string) {
 const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, disciplina }) => {
   const cleaned = sanitizeResumo(resultado);
   const { title, sections } = parseResumoContent(cleaned);
+  const visualRef = React.useRef<HTMLDivElement>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(cleaned);
     toast.success("Copiado!");
+  };
+
+  const handleExportPDF = () => {
+    // Se houver visual rico (mapa mental, flashcards, etc.) exporta o visual real
+    if (visualRef.current) {
+      return exportResumoVisualPDF(visualRef.current, tipoResumo, disciplina, title || tipoResumo);
+    }
+    return exportResumoPDF(cleaned, tipoResumo, disciplina, title);
   };
 
   // Decide o componente visual conforme o tipo
