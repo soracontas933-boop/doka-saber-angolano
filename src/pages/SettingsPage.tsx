@@ -43,7 +43,6 @@ const FONT_OPTIONS = [
 const SettingsPage = () => {
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
-  const { settings: trabalhoSettings, updateSettings } = useTrabalhoSettings();
   const { signOut } = useAuth();
   const navigate = useNavigate();
 
