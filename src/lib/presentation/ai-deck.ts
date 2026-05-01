@@ -16,9 +16,29 @@ const MOTIF_PROMPT_HINTS: Record<string, string> = {
 export type DensityLevel = "low" | "medium" | "high";
 
 const DENSITY_HINT: Record<DensityLevel, string> = {
-  low:    "Texto enxuto: 2-3 bullets curtos OU richBody de 30-50 palavras.",
-  medium: "Equilibrado: 3-5 bullets OU richBody de 50-90 palavras.",
-  high:   "Detalhado: 5-7 bullets OU richBody de 80-130 palavras com dados concretos.",
+  low:    "CURTO — richBody 40-70 palavras OU 3-4 bullets de 6-12 palavras. Cada block.description tem 1 frase (10-18 palavras). Linguagem sintética, directa.",
+  medium: "MODERADO — richBody 90-140 palavras com 2-3 expressões em **negrito** OU 4-6 bullets de 12-22 palavras. Cada block.description tem 2 frases (25-40 palavras). Desenvolve causa→efeito→exemplo.",
+  high:   "EXTENSO — richBody 180-260 palavras estruturado em 2 parágrafos com **negritos**, dados concretos (anos, percentagens, exemplos angolanos) E 5-7 bullets de 18-30 palavras quando aplicável. Cada block.description tem 3-4 frases (50-80 palavras) explicando contexto, evidência e implicação. Desenvolve cada subtema em profundidade — proibido ficar superficial.",
+};
+
+const DENSITY_TOKEN_BUDGET: Record<DensityLevel, number> = {
+  low: 6000,
+  medium: 10000,
+  high: 16000,
+};
+
+// Tamanho mínimo do richBody por densidade (validação)
+const DENSITY_MIN_RICHBODY: Record<DensityLevel, number> = {
+  low: 120,    // ~25 palavras
+  medium: 280, // ~55 palavras
+  high: 600,   // ~120 palavras
+};
+
+// Tamanho mínimo de description em block por densidade
+const DENSITY_MIN_BLOCK_DESC: Record<DensityLevel, number> = {
+  low: 25,
+  medium: 60,
+  high: 140,
 };
 
 interface GenDeckContentArgs {
@@ -87,21 +107,29 @@ function kindRequirements(kind: SlideKind): {
   }
 }
 
-// ─── Validação: slide tem conteúdo suficiente para o seu kind? ───
-function isSlideValid(s: RawAISlide, kind: SlideKind): boolean {
+// ─── Validação sensível à densidade ───────────────────────────────
+function isSlideValid(s: RawAISlide, kind: SlideKind, density: DensityLevel = "medium"): boolean {
   if (!s.title || s.title.trim().length < 2) return false;
   const req = kindRequirements(kind);
-  const richOk = !req.needsRichBody || (s.richBody && s.richBody.trim().length >= 30);
-  const bulletsOk = req.minBullets === 0 || (s.body || []).filter(b => b && b.trim().length > 2).length >= req.minBullets;
-  const blocksOk = req.minBlocks === 0 || (s.blocks || []).filter(b => (b.label || b.value) && (b.description || b.value)).length >= req.minBlocks;
-  // Pelo menos uma das condições aplicáveis tem de estar OK
+  const minRich = DENSITY_MIN_RICHBODY[density];
+  const minDesc = DENSITY_MIN_BLOCK_DESC[density];
+
+  const richOk = !req.needsRichBody || (!!s.richBody && s.richBody.trim().length >= minRich);
+  const validBullets = (s.body || []).filter(b => b && b.trim().length > 4);
+  const bulletsOk = req.minBullets === 0 || validBullets.length >= req.minBullets;
+  const validBlocks = (s.blocks || []).filter(b =>
+    (b.label || b.value) &&
+    (b.description ? b.description.trim().length >= minDesc : !!b.value)
+  );
+  const blocksOk = req.minBlocks === 0 || validBlocks.length >= req.minBlocks;
+
   if (req.needsRichBody && !richOk) return false;
   if (req.minBlocks > 0 && !blocksOk) return false;
   if (req.minBullets > 0 && !bulletsOk && !richOk) return false;
   return true;
 }
 
-// ─── Sanitiza: remove bullets/blocks vazios para layouts não renderizarem lixo
+// ─── Sanitiza ──────────────────────────────────────────────────────
 function sanitizeSlide(s: RawAISlide): RawAISlide {
   return {
     ...s,
@@ -110,28 +138,55 @@ function sanitizeSlide(s: RawAISlide): RawAISlide {
   };
 }
 
-// ─── Fallback: gera conteúdo derivado quando a IA falha ──────────
-function buildFallback(kind: SlideKind, original: RawAISlide, topic: string, cardsOutline: string): RawAISlide {
+// ─── Fallback determinístico — usa SEMPRE o cardsOutline real ─────
+function buildFallback(kind: SlideKind, original: RawAISlide, topic: string, cardsOutline: string, density: DensityLevel = "medium"): RawAISlide {
   const req = kindRequirements(kind);
-  const lines = cardsOutline.split("\n").filter(Boolean).slice(0, 6);
+  const lines = cardsOutline.split("\n").map(l => l.trim()).filter(Boolean);
   const fb: RawAISlide = { ...original, title: original.title || topic };
 
-  if (req.needsRichBody && !fb.richBody) {
-    fb.richBody = original.subtitle || `Análise sobre **${topic}** no contexto angolano, com foco em impacto, oportunidades e próximos passos concretos.`;
+  // Extrai pares título/subtemas do outline
+  const parsedLines = lines.map(l => {
+    const [head, ...rest] = l.split(":");
+    return { head: head.trim(), tail: rest.join(":").trim() };
+  });
+
+  const expandTo = (base: string, target: number): string => {
+    let out = base;
+    while (out.length < target) {
+      out += ` Este aspecto é particularmente relevante no contexto de ${topic}, exigindo análise cuidadosa das suas implicações práticas e estratégicas.`;
+    }
+    return out;
+  };
+
+  if (req.needsRichBody && (!fb.richBody || fb.richBody.length < DENSITY_MIN_RICHBODY[density])) {
+    const seed = original.subtitle ||
+      parsedLines.slice(0, 3).map(p => `**${p.head}** — ${p.tail || "aspecto crítico"}`).join(". ") ||
+      `Análise sobre **${topic}** com foco em impacto, oportunidades e próximos passos concretos.`;
+    fb.richBody = expandTo(seed + ".", DENSITY_MIN_RICHBODY[density]);
   }
+
   if (req.minBullets > 0 && (!fb.body || fb.body.length < req.minBullets)) {
-    fb.body = lines.length >= req.minBullets
-      ? lines.map(l => l.split(":")[0].trim()).slice(0, req.minBullets + 1)
-      : Array.from({ length: req.minBullets }, (_, i) => `Ponto-chave ${i + 1} sobre ${topic}`);
+    const need = Math.max(req.minBullets, density === "high" ? 6 : density === "medium" ? 4 : 3);
+    fb.body = parsedLines.length >= need
+      ? parsedLines.slice(0, need + 1).map(p => p.tail ? `${p.head}: ${p.tail}` : p.head)
+      : Array.from({ length: need }, (_, i) =>
+          parsedLines[i]?.head || `Ponto-chave ${i + 1} sobre ${topic}`
+        );
   }
+
   if (req.minBlocks > 0 && (!fb.blocks || fb.blocks.length < req.minBlocks)) {
-    fb.blocks = Array.from({ length: req.minBlocks }, (_, i) => ({
-      type: "card" as const,
-      label: lines[i]?.split(":")[0].trim() || `Aspecto ${i + 1}`,
-      value: kind === "stats" ? `0${i + 1}` : undefined,
-      description: lines[i]?.split(":")[1]?.trim() || `Detalhe relevante sobre ${topic}.`,
-      icon: ["📚", "🚀", "◆", "✦", "⚡", "🎯"][i % 6],
-    }));
+    const need = Math.max(req.minBlocks, density === "high" ? 4 : 3);
+    fb.blocks = Array.from({ length: need }, (_, i) => {
+      const p = parsedLines[i];
+      const baseDesc = p?.tail || `Detalhe relevante sobre ${p?.head || topic}.`;
+      return {
+        type: "card" as const,
+        label: p?.head || `Aspecto ${i + 1}`,
+        value: kind === "stats" ? `0${i + 1}` : undefined,
+        description: expandTo(baseDesc, DENSITY_MIN_BLOCK_DESC[density]),
+        icon: ["📚", "🚀", "◆", "✦", "⚡", "🎯"][i % 6],
+      };
+    });
   }
   return fb;
 }
@@ -162,7 +217,8 @@ REGRA #2 — IDIOMA: ${args.language === "pt-AO" ? "Português de Angola ('utili
 
 REGRA #3 — Tom executivo, cinematográfico, premium. ZERO meta-comentário ("neste slide", "vamos ver"). Frases directas e densas.
 
-REGRA #4 — DENSIDADE: ${DENSITY_HINT[args.density]}
+REGRA #4 — DENSIDADE OBRIGATÓRIA: ${DENSITY_HINT[args.density]}
+   ⚠ Esta regra é IMPERATIVA. Slides com texto abaixo do limiar serão rejeitados. Cada subtema do utilizador DEVE ser desenvolvido com profundidade proporcional à densidade pedida — não te limites a repetir o título do subtema, EXPLICA, contextualiza e dá exemplos concretos angolanos.
 
 CAMPOS DISPONÍVEIS POR SLIDE:
 - title (obrigatório, 3-7 palavras de impacto, vai aparecer GIGANTE)
@@ -190,7 +246,7 @@ Devolve APENAS JSON válido (sem comentários, sem markdown):
 { "slides": [ {...}, {...} ] }
 `.trim();
 
-  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, userPrompt, 8000, 0.8);
+  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, userPrompt, DENSITY_TOKEN_BUDGET[args.density], 0.8);
   const match = result.content.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("Resposta da IA sem JSON");
 
@@ -209,23 +265,23 @@ Devolve APENAS JSON válido (sem comentários, sem markdown):
   }
   slides = slides.slice(0, args.slots.length);
 
-  // ─── Identificar slides inválidos ──
+  // ─── Identificar slides inválidos (com densidade) ──
   const invalidIndexes = slides
-    .map((s, i) => (isSlideValid(s, args.slots[i].kind) ? -1 : i))
+    .map((s, i) => (isSlideValid(s, args.slots[i].kind, args.density) ? -1 : i))
     .filter(i => i >= 0);
 
-  // ─── Tentar regenerar inválidos numa segunda passagem (uma vez) ──
   if (invalidIndexes.length > 0) {
-    console.log(`[ai-deck] ${invalidIndexes.length} slides inválidos — a regenerar`);
+    console.log(`[ai-deck] ${invalidIndexes.length} slides abaixo da densidade — a regenerar`);
     try {
       const fixPrompt = `
-Os seguintes slides ficaram incompletos. PREENCHE-OS por completo respeitando o tipo e os campos obrigatórios.
+Os seguintes slides ficaram com TEXTO INSUFICIENTE para a densidade pedida (${args.density.toUpperCase()}).
+DENSIDADE EXIGIDA: ${DENSITY_HINT[args.density]}
 
 Tema: "${args.topic}"
-Tópicos do utilizador:
+Tópicos do utilizador (matéria-prima REAL — desenvolve cada um em profundidade):
 ${args.cardsOutline}
 
-Slides a corrigir (devolve no MESMO índice):
+Slides a corrigir (devolve no MESMO índice, com TODO o conteúdo expandido):
 ${invalidIndexes.map(i => {
   const req = kindRequirements(args.slots[i].kind);
   return `Índice ${i} — tipo "${args.slots[i].kind}" — precisa de: ${req.blockShape}\nTítulo actual: "${slides[i].title}"`;
@@ -235,7 +291,7 @@ Devolve APENAS JSON: { "fixes": [ { "index": 0, "slide": { ...slide completo... 
 Idioma: ${args.language === "pt-AO" ? "pt-AO" : "pt-BR"}.
 `.trim();
 
-      const fixResult = await generateWithAI(DELLE_SYSTEM_PROMPT, fixPrompt, 4000, 0.7);
+      const fixResult = await generateWithAI(DELLE_SYSTEM_PROMPT, fixPrompt, Math.floor(DENSITY_TOKEN_BUDGET[args.density] * 0.6), 0.7);
       const fmatch = fixResult.content.match(/\{[\s\S]*\}/);
       if (fmatch) {
         const fparsed = JSON.parse(fmatch[0].replace(/,(\s*[}\]])/g, "$1"));
@@ -252,9 +308,9 @@ Idioma: ${args.language === "pt-AO" ? "pt-AO" : "pt-BR"}.
 
   // ─── Fallback determinístico para os que ainda estão inválidos ──
   slides = slides.map((s, i) => {
-    if (isSlideValid(s, args.slots[i].kind)) return s;
+    if (isSlideValid(s, args.slots[i].kind, args.density)) return s;
     console.log(`[ai-deck] fallback no slide ${i} (${args.slots[i].kind})`);
-    return buildFallback(args.slots[i].kind, s, args.topic, args.cardsOutline);
+    return buildFallback(args.slots[i].kind, s, args.topic, args.cardsOutline, args.density);
   });
 
   return slides;
@@ -289,12 +345,13 @@ Tom executivo, cinematográfico. ZERO meta-comentário.
 Devolve APENAS JSON: { "slide": { "title":"...", "subtitle":"...", "richBody":"...", "body":[...], "blocks":[...], "pill":"...", "footnote":"...", "imagePrompt":"..." } }
 `.trim();
 
-  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, prompt, 2500, 0.8);
+  const tokenBudget = Math.max(2500, Math.floor(DENSITY_TOKEN_BUDGET[args.density] / 4));
+  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, prompt, tokenBudget, 0.8);
   const m = result.content.match(/\{[\s\S]*\}/);
   if (!m) throw new Error("Sem JSON");
   const parsed = JSON.parse(m[0].replace(/,(\s*[}\]])/g, "$1"));
   let s = sanitizeSlide(parsed.slide || {});
-  if (!isSlideValid(s, args.kind)) s = buildFallback(args.kind, s, args.topic, args.cardsOutline);
+  if (!isSlideValid(s, args.kind, args.density)) s = buildFallback(args.kind, s, args.topic, args.cardsOutline, args.density);
   return s;
 }
 

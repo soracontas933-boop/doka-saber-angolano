@@ -308,12 +308,18 @@ export default function ApresentacaoPage() {
 
               <section className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <h3 className="text-sm font-bold uppercase tracking-wider">Densidade de texto</h3>
+                  <h3 className="text-sm font-bold uppercase tracking-wider">Densidade de conteúdo</h3>
+                  <p className="text-xs text-muted-foreground">Define quão desenvolvido será cada subtema nos slides.</p>
                   <div className="grid grid-cols-3 gap-2">
-                    {(["low", "medium", "high"] as DensityLevel[]).map(d => (
-                      <button key={d} onClick={() => setDensity(d)}
-                        className={`p-3 rounded-xl border-2 text-sm font-medium ${density === d ? "border-primary bg-primary/5" : "border-border"}`}>
-                        {d === "low" ? "Mínimo" : d === "medium" ? "Equilibrado" : "Detalhado"}
+                    {([
+                      { id: "low" as DensityLevel, label: "Curto", desc: "Bullets sintéticos, ideal para pitch rápido." },
+                      { id: "medium" as DensityLevel, label: "Moderado", desc: "Equilíbrio entre profundidade e leitura fluida." },
+                      { id: "high" as DensityLevel, label: "Extenso", desc: "Análise detalhada com dados, exemplos e contexto." },
+                    ]).map(d => (
+                      <button key={d.id} onClick={() => setDensity(d.id)}
+                        className={`p-3 rounded-xl border-2 text-left ${density === d.id ? "border-primary bg-primary/5" : "border-border"}`}>
+                        <div className="text-sm font-semibold">{d.label}</div>
+                        <div className="text-[11px] text-muted-foreground mt-1 leading-tight">{d.desc}</div>
                       </button>
                     ))}
                   </div>
