@@ -14,6 +14,7 @@ import MapaMentalVisual from "./visuals/MapaMentalVisual";
 import FlashcardsVisual from "./visuals/FlashcardsVisual";
 import LinhaTempoVisual from "./visuals/LinhaTempoVisual";
 import QuadroComparativoVisual from "./visuals/QuadroComparativoVisual";
+import A4Sheet from "./A4Sheet";
 
 interface ResumoPreviewProps {
   resultado: string;
@@ -92,13 +93,17 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
     return exportResumoPDF(cleaned, tipoResumo, disciplina, title);
   };
 
-  // Decide o componente visual conforme o tipo
+  // Decide o componente visual conforme o tipo — todos dentro de uma folha A4 real
   const renderVisual = () => {
     switch (tipoResumo) {
       case "Mapa Mental": {
         const data = parseMapaMental(cleaned);
         if (data.branches.length === 0) return null;
-        return <MapaMentalVisual central={data.central} branches={data.branches} />;
+        return (
+          <A4Sheet orientation="landscape">
+            <MapaMentalVisual central={data.central} branches={data.branches} fillA4 />
+          </A4Sheet>
+        );
       }
       case "Flashcards": {
         const cards = parseFlashcards(cleaned);
