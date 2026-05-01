@@ -9,6 +9,9 @@ import CVTemplateCriativo from "./templates/CVTemplateCriativo";
 import CVTemplateCompacto from "./templates/CVTemplateCompacto";
 import CVTemplateElegante from "./templates/CVTemplateElegante";
 import CVTemplateTecnologico from "./templates/CVTemplateTecnologico";
+import CVTemplateCorporativo from "./templates/CVTemplateCorporativo";
+import CVTemplateVibrante from "./templates/CVTemplateVibrante";
+import CVTemplatePremium from "./templates/CVTemplatePremium";
 
 interface CVPreviewProps {
   data: CVData;
