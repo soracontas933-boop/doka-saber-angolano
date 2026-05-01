@@ -359,6 +359,7 @@ export const MapaMentalVisual: React.FC<Props> = ({ central, branches, fillA4 = 
           );
         })}
       </div>
+      )}
     </div>
   );
 };
