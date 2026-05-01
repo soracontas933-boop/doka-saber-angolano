@@ -24,15 +24,37 @@ export function usePwaInstall() {
   useEffect(() => {
     setPlatform(detectPlatform());
 
-    // Check if already installed (standalone mode)
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true;
+    const checkInstalled = async () => {
+      // 1. Standalone display mode (PWA aberto como app)
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.matchMedia("(display-mode: fullscreen)").matches ||
+        window.matchMedia("(display-mode: minimal-ui)").matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.startsWith("android-app://");
 
-    if (isStandalone) {
-      setIsInstalled(true);
-      return;
-    }
+      if (isStandalone) {
+        setIsInstalled(true);
+        return true;
+      }
+
+      // 2. getInstalledRelatedApps (Chrome Android) — detecta PWA instalado mesmo no browser
+      try {
+        const nav = navigator as any;
+        if (typeof nav.getInstalledRelatedApps === "function") {
+          const related = await nav.getInstalledRelatedApps();
+          if (Array.isArray(related) && related.length > 0) {
+            setIsInstalled(true);
+            return true;
+          }
+        }
+      } catch {
+        // ignore
+      }
+      return false;
+    };
+
+    checkInstalled();
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -45,14 +67,23 @@ export function usePwaInstall() {
       trackAppDownload({ status: "accepted", source: "pwa" });
     };
 
+    // Listener para mudanças no display-mode (ex: utilizador instala e abre como app)
+    const mql = window.matchMedia("(display-mode: standalone)");
+    const displayModeHandler = (e: MediaQueryListEvent) => {
+      if (e.matches) setIsInstalled(true);
+    };
+    mql.addEventListener?.("change", displayModeHandler);
+
     window.addEventListener("beforeinstallprompt", handler);
     window.addEventListener("appinstalled", installedHandler);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
       window.removeEventListener("appinstalled", installedHandler);
+      mql.removeEventListener?.("change", displayModeHandler);
     };
   }, []);
+
 
   const install = async () => {
     // Native prompt available → use it
