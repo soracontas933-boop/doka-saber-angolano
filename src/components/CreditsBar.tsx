@@ -15,6 +15,7 @@ const CreditsBar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [initials, setInitials] = useState("U");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [warned, setWarned] = useState(false);
   const [hidden, setHidden] = useState(false);
 
