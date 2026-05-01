@@ -160,8 +160,9 @@ const ResumoPage = () => {
         imagemResumo: imgUrl,
       });
 
-      // Navega para o editor com o conteúdo gerado
-      navigate("/resumo/editar", {
+      // Mapa Mental tem editor visual dedicado, restantes vão ao editor genérico
+      const targetRoute = tipoResumo === "Mapa Mental" ? "/resumo/mapa-mental" : "/resumo/editar";
+      navigate(targetRoute, {
         state: { resultado: revisado, tipoResumo, disciplina },
       });
     } catch (err) {
