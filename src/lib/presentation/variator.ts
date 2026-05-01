@@ -37,19 +37,34 @@ export function composeSlots(targetSlideCount: number, seed: number): ComposedSl
   const blueprint = buildBlueprint(targetSlideCount);
   const slots: ComposedSlideSpec[] = [];
   let lastVariant: string | undefined;
+  let lastKind: string | undefined;
   const variantCounts: Record<string, number> = {};
+  const kindCounts: Record<string, number> = {};
 
   for (const sec of blueprint) {
     for (let i = 0; i < sec.defaultCount; i++) {
-      const kind = pick(rng, sec.allowedKinds);
+      // ─── Escolher kind evitando repetir o anterior ──
+      let kind = pick(rng, sec.allowedKinds);
+      if (sec.allowedKinds.length > 1 && kind === lastKind) {
+        const alts = sec.allowedKinds.filter(k => k !== lastKind);
+        kind = pick(rng, alts);
+      }
+      // Evita o mesmo kind 3+ vezes no deck (excepto seções single-kind)
+      if ((kindCounts[kind] || 0) >= 2 && sec.allowedKinds.length > 1) {
+        const alts = sec.allowedKinds.filter(k => (kindCounts[k] || 0) < 2 && k !== lastKind);
+        if (alts.length > 0) kind = pick(rng, alts);
+      }
+      kindCounts[kind] = (kindCounts[kind] || 0) + 1;
+
+      // ─── Escolher variant evitando repetir o anterior ──
       const variants = LAYOUT_VARIANTS[kind];
       let variant = pickAvoiding(rng, variants, lastVariant);
-      // Evita usar o mesmo variant 3+ vezes no deck
       if ((variantCounts[variant] || 0) >= 2 && variants.length > 1) {
         variant = pickAvoiding(rng, variants, variant);
       }
       variantCounts[variant] = (variantCounts[variant] || 0) + 1;
       lastVariant = variant;
+      lastKind = kind;
       slots.push({ section: sec.section, kind, layoutVariant: variant });
     }
   }
