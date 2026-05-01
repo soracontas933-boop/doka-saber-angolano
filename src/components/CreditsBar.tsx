@@ -53,10 +53,11 @@ const CreditsBar = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("nome").eq("id", user.id).single().then(({ data }) => {
+    supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single().then(({ data }) => {
       if (data?.nome) {
         setInitials(data.nome.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase());
       }
+      setAvatarUrl((data as any)?.avatar_url ?? null);
     });
   }, [user]);
 
