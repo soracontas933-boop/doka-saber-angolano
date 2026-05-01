@@ -15,6 +15,7 @@ const CreditsBar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [initials, setInitials] = useState("U");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [warned, setWarned] = useState(false);
   const [hidden, setHidden] = useState(false);
 
@@ -52,11 +53,18 @@ const CreditsBar = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("nome").eq("id", user.id).single().then(({ data }) => {
-      if (data?.nome) {
-        setInitials(data.nome.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase());
-      }
-    });
+    const load = () => {
+      supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single().then(({ data }) => {
+        if (data?.nome) {
+          setInitials(data.nome.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase());
+        }
+        setAvatarUrl((data as any)?.avatar_url ?? null);
+      });
+    };
+    load();
+    const onUpdate = () => load();
+    window.addEventListener("profile:updated", onUpdate);
+    return () => window.removeEventListener("profile:updated", onUpdate);
   }, [user]);
 
   const totalCredits = plan?.creditos_totais === -1 ? Infinity : (plan?.creditos_totais ?? 0);
@@ -102,9 +110,13 @@ const CreditsBar = () => {
         <div className="flex items-center justify-between px-4 py-3 gap-2 shadow-glass">
           <button
             onClick={() => navigate("/configuracoes")}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 active:scale-95"
+            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 active:scale-95"
           >
-            {initials}
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={initials} className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
           </button>
 
           {/* Centro: Créditos com barra de progresso */}

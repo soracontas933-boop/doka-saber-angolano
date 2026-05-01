@@ -138,6 +138,7 @@ const SettingsPage = () => {
       if (updErr) throw updErr;
 
       setProfile((p) => ({ ...p, avatar_url: publicUrl }));
+      window.dispatchEvent(new CustomEvent("profile:updated"));
       toast({ title: "Foto atualizada!", description: "A tua nova foto de perfil foi guardada." });
     } catch (err) {
       toast({
@@ -160,6 +161,7 @@ const SettingsPage = () => {
         .update({ avatar_url: null, updated_at: new Date().toISOString() })
         .eq("id", userId);
       setProfile((p) => ({ ...p, avatar_url: "" }));
+      window.dispatchEvent(new CustomEvent("profile:updated"));
       toast({ title: "Foto removida" });
     } catch {
       toast({ title: "Erro ao remover", variant: "destructive" });
