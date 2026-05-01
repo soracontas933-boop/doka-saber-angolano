@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -75,6 +75,17 @@ const TrabalhoPage = () => {
   const [resultadoCompilado, setResultadoCompilado] = useState<string | null>(null);
   const [capaImageUrl, setCapaImageUrl] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+
+  // Object URL for the uploaded school logo (used on cover header)
+  const logoEscolaUrl = useMemo(
+    () => (logoEscola ? URL.createObjectURL(logoEscola) : null),
+    [logoEscola]
+  );
+  useEffect(() => {
+    return () => {
+      if (logoEscolaUrl) URL.revokeObjectURL(logoEscolaUrl);
+    };
+  }, [logoEscolaUrl]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -267,9 +278,13 @@ const TrabalhoPage = () => {
     setResultadoCompilado(fullContent);
 
     // Generate cover image
-    if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
+    if (tipoCapa === "upload" && capaUpload) {
+      setCapaImageUrl(URL.createObjectURL(capaUpload));
+    } else if (tipoCapa === "personalizada" || tipoCapa === "padrao") {
       const imgUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
       setCapaImageUrl(imgUrl);
+    } else {
+      setCapaImageUrl(null);
     }
 
     setFase("resultado");
@@ -797,6 +812,7 @@ const TrabalhoPage = () => {
             conteudo={resultadoCompilado}
             coverData={getCoverData()}
             capaImageUrl={capaImageUrl}
+            logoUrl={logoEscolaUrl}
             editable={editMode}
             onContentChange={(updatedHtml) => setResultadoCompilado(updatedHtml)}
           />

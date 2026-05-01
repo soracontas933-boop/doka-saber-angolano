@@ -10,6 +10,7 @@ interface TrabalhoCompletoProps {
   conteudo: string;
   coverData: CoverPageData;
   capaImageUrl?: string | null;
+  logoUrl?: string | null;
   editable?: boolean;
   onContentChange?: (updatedHtml: string) => void;
 }
@@ -33,7 +34,7 @@ const SectionContent: React.FC<{ titulo: string; html: string; tipo: string }> =
   );
 };
 
-const TrabalhoCompleto: React.FC<TrabalhoCompletoProps> = ({ conteudo, coverData, capaImageUrl, editable = false, onContentChange }) => {
+const TrabalhoCompleto: React.FC<TrabalhoCompletoProps> = ({ conteudo, coverData, capaImageUrl, logoUrl, editable = false, onContentChange }) => {
   const sections = parseTrabalhoSections(conteudo);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
@@ -69,7 +70,7 @@ const TrabalhoCompleto: React.FC<TrabalhoCompletoProps> = ({ conteudo, coverData
 
       {/* PÁGINA 1 — CAPA */}
       <PaginaA4 tipo="capa">
-        <CapaPage data={coverData} capaImageUrl={capaImageUrl} />
+        <CapaPage data={coverData} capaImageUrl={capaImageUrl} logoUrl={logoUrl} />
       </PaginaA4>
 
       {/* DEMAIS PÁGINAS */}
