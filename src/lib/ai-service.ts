@@ -432,18 +432,26 @@ Retorna em JSON:
     totalSubtemas: number;
     contexto?: string;
     bibliografia?: string;
+    incluirCitacoes?: boolean;
   }) => {
     const refsReais = getReferenciasParaDisciplina(dados.disciplina);
     const refsTexto = formatarReferenciasParaPrompt(refsReais);
+    const incluirCitacoes = dados.incluirCitacoes !== false; // default true
 
-    const bibRef = dados.bibliografia
+    const bibRef = !incluirCitacoes
+      ? ""
+      : dados.bibliografia
       ? `\n\nREFERÊNCIAS BIBLIOGRÁFICAS DISPONÍVEIS (usa APENAS estas para citações):\n${dados.bibliografia}`
       : `\n\nREFERÊNCIAS REAIS DISPONÍVEIS (usa APENAS estas para citações — NÃO inventes outras):\n${refsTexto}`;
-    
+
+    const citacaoNota = incluirCitacoes
+      ? " Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida."
+      : " NÃO incluas citações entre parênteses (ex.: (Apelido, Ano, p. X)) no corpo do texto. Escreve um texto corrido, académico, sem referências inline.";
+
     const instrucoes: Record<string, string> = {
-      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, objectivos do trabalho (geral e específicos), justificativa/importância do tema, e metodologia utilizada. Deve ter pelo menos 2-3 parágrafos bem desenvolvidos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
-      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 3-4 parágrafos densos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
-      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais abordados nos capítulos, apresenta as principais constatações, e sugere recomendações ou perspectivas futuras. Deve ter 2-3 parágrafos. Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida.${bibRef}`,
+      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, objectivos do trabalho (geral e específicos), justificativa/importância do tema, e metodologia utilizada. Deve ter pelo menos 2-3 parágrafos bem desenvolvidos.${citacaoNota}${bibRef}`,
+      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 3-4 parágrafos densos.${citacaoNota}${bibRef}`,
+      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais abordados nos capítulos, apresenta as principais constatações, e sugere recomendações ou perspectivas futuras. Deve ter 2-3 parágrafos.${citacaoNota}${bibRef}`,
       bibliografia: `Selecciona 5-8 referências da lista abaixo que sejam mais relevantes para o trabalho sobre "${dados.temaGeral}" na disciplina ${dados.disciplina}, ${dados.classe}. NÃO INVENTES nenhuma referência — usa APENAS as que estão nesta lista. Formata cada uma em APA.\n\nREFERÊNCIAS DISPONÍVEIS (escolhe apenas destas):\n${refsTexto}`,
     };
     const tipo = dados.tipoSubtema as keyof typeof instrucoes;

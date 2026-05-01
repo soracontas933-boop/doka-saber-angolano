@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useTrabalhoSettings, FONT_OPTIONS, TRABALHO_DEFAULTS } from "@/hooks/use-trabalho-settings";
 import { motion } from "framer-motion";
-import { FileText, Download, Copy, Upload, Plus, Minus, Image, Loader2, FileDown, ArrowLeft, Pencil, Eye, Save } from "lucide-react";
+import { FileText, Download, Copy, Upload, Plus, Minus, Image, Loader2, FileDown, ArrowLeft, Pencil, Eye, Save, Type, Ruler, RotateCcw, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { generateWithGroq, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
@@ -41,6 +44,7 @@ type Fase = "formulario" | "estrutura" | "resultado";
 
 const TrabalhoPage = () => {
   const { checkLimit, logUsage } = useUsageTracker();
+  const { settings: trabalhoSettings, updateSettings: updateTrabalhoSettings, resetSettings: resetTrabalhoSettings } = useTrabalhoSettings();
   const [tema, setTema] = useLocalStorage("doka_trabalho_tema", "");
   const [nomeEscola, setNomeEscola] = useLocalStorage("doka_trabalho_escola", "");
   const [logoEscola, setLogoEscola] = useState<File | null>(null);
@@ -192,6 +196,7 @@ const TrabalhoPage = () => {
         totalSubtemas: subtemas.length,
         contexto: contexto || undefined,
         bibliografia,
+        incluirCitacoes: trabalhoSettings.incluirCitacoes,
       });
 
       const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 6000, 0.7);
@@ -577,6 +582,129 @@ const TrabalhoPage = () => {
                 Capa personalizada gerada pela IA com design exclusivo.
               </p>
             )}
+          </div>
+
+          {/* Formatação do Trabalho */}
+          <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Type className="h-4 w-4 text-primary" />
+                <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
+                  Formatação
+                </h2>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  resetTrabalhoSettings();
+                  toast.success("Formatação restaurada para o padrão");
+                }}
+                className="h-7 px-2 text-[10px] md:text-xs gap-1 text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Padrão
+              </Button>
+            </div>
+
+            {/* Tipo de letra + tamanho */}
+            <div className="grid grid-cols-2 gap-2 md:gap-4">
+              <div className="space-y-1.5 col-span-2 md:col-span-1">
+                <Label className="text-foreground text-xs">Tipo de letra</Label>
+                <Select
+                  value={trabalhoSettings.fontFamily}
+                  onValueChange={(v) => updateTrabalhoSettings({ fontFamily: v })}
+                >
+                  <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONT_OPTIONS.map((font) => (
+                      <SelectItem key={font} value={font}>
+                        <span style={{ fontFamily: font }}>{font}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5 col-span-2 md:col-span-1">
+                <Label className="text-foreground text-xs">Tamanho da fonte</Label>
+                <Select
+                  value={String(trabalhoSettings.fontSize)}
+                  onValueChange={(v) => updateTrabalhoSettings({ fontSize: parseInt(v, 10) })}
+                >
+                  <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[10, 11, 12, 13, 14, 16].map((s) => (
+                      <SelectItem key={s} value={String(s)}>
+                        {s} pt {s === TRABALHO_DEFAULTS.fontSize && "(padrão)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Pré-visualização */}
+            <div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
+              <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                Pré-visualização
+              </p>
+              <p
+                style={{
+                  fontFamily: trabalhoSettings.fontFamily,
+                  fontSize: `${trabalhoSettings.fontSize}pt`,
+                }}
+                className="text-foreground"
+              >
+                AaBbCc 123 — O saber não ocupa lugar.
+              </p>
+            </div>
+
+            {/* Margens */}
+            <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2 text-foreground text-xs">
+                  <Ruler className="h-3.5 w-3.5" />
+                  Margens
+                </Label>
+                <span className="text-xs font-medium text-primary">{trabalhoSettings.marginMm} mm</span>
+              </div>
+              <Slider
+                value={[trabalhoSettings.marginMm]}
+                onValueChange={([v]) => updateTrabalhoSettings({ marginMm: v })}
+                min={15}
+                max={40}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[9px] md:text-[10px] text-muted-foreground">
+                <span>15 mm</span>
+                <span>25 mm (padrão)</span>
+                <span>40 mm</span>
+              </div>
+            </div>
+
+            {/* Citações */}
+            <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/30 p-3">
+              <div className="flex gap-2">
+                <Quote className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <Label className="text-foreground text-xs font-medium">Citações bibliográficas</Label>
+                  <p className="text-[10px] md:text-[11px] text-muted-foreground mt-0.5">
+                    Inclui citações inline (Apelido, Ano, p. X) ao longo do texto.
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={trabalhoSettings.incluirCitacoes}
+                onCheckedChange={(v) => updateTrabalhoSettings({ incluirCitacoes: v })}
+              />
+            </div>
           </div>
 
           {/* Submit */}

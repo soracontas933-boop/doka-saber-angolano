@@ -5,21 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
-import { useTrabalhoSettings } from "@/hooks/use-trabalho-settings";
+
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import {
   User,
   Moon,
   Sun,
-  Type,
-  Ruler,
   Save,
   Loader2,
   Camera,
@@ -29,21 +25,10 @@ import {
   LogOut,
 } from "lucide-react";
 
-const FONT_OPTIONS = [
-  "Times New Roman",
-  "Arial",
-  "Calibri",
-  "Georgia",
-  "Verdana",
-  "Tahoma",
-  "Cambria",
-  "Garamond",
-];
 
 const SettingsPage = () => {
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
-  const { settings: trabalhoSettings, updateSettings } = useTrabalhoSettings();
   const { signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -413,71 +398,6 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Trabalho Settings Section */}
-      <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card">
-        <div className="flex items-center gap-2 sm:gap-3 mb-4 md:mb-6">
-          <Type className="h-5 w-5 text-primary" />
-          <div>
-            <h2 className="text-sm md:text-lg font-display font-semibold text-foreground">Formatação dos Trabalhos</h2>
-            <p className="text-[10px] md:text-sm text-muted-foreground">Define o tipo de letra e margens dos trabalhos escolares</p>
-          </div>
-        </div>
-
-        <div className="space-y-4 md:space-y-6">
-          {/* Font - 2 Columns Layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-1.5 md:space-y-2 bg-muted/30 md:bg-background/50 p-3 md:p-4 rounded-lg border border-border md:border-border col-span-1 sm:col-span-2">
-              <Label className="text-foreground text-xs md:text-sm font-medium">Tipo de Letra</Label>
-              <Select
-                value={trabalhoSettings.fontFamily}
-                onValueChange={(v) => updateSettings({ fontFamily: v })}
-              >
-                <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-9 md:h-10 text-xs md:text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FONT_OPTIONS.map((font) => (
-                    <SelectItem key={font} value={font}>
-                      <span style={{ fontFamily: font }}>{font}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[9px] md:text-xs text-muted-foreground">
-                Pré-visualização: <span style={{ fontFamily: trabalhoSettings.fontFamily }} className="font-medium text-foreground">AaBbCc 123</span>
-              </p>
-            </div>
-          </div>
-
-          <Separator className="bg-muted md:bg-border" />
-
-          {/* Margins - 2 Columns Layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-2 md:space-y-3 bg-muted/30 md:bg-background/50 p-3 md:p-4 rounded-lg border border-border md:border-border col-span-1 sm:col-span-2">
-              <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-2 text-foreground text-xs md:text-sm font-medium">
-                  <Ruler className="h-4 w-4" />
-                  Margens
-                </Label>
-                <span className="text-xs md:text-sm font-medium text-primary">{trabalhoSettings.marginMm} mm</span>
-              </div>
-              <Slider
-                value={[trabalhoSettings.marginMm]}
-                onValueChange={([v]) => updateSettings({ marginMm: v })}
-                min={15}
-                max={40}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-[9px] md:text-xs text-muted-foreground">
-                <span>15 mm</span>
-                <span>25 mm (padrão)</span>
-                <span>40 mm</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
