@@ -1,10 +1,13 @@
 import { LayoutProps, SlideShell, H1, RichText, Eyebrow, getMotifStyles, MadeWithBadge } from "./_shared";
+import type { Block } from "@/types/presentation";
 
 export function StatsLayout({ slide, theme }: LayoutProps) {
   const m = getMotifStyles(theme);
-  const stats = slide.blocks && slide.blocks.length > 0
+  const rawStats: Block[] = slide.blocks && slide.blocks.length > 0
     ? slide.blocks
-    : (slide.body || []).slice(0, 4).map((b, i) => ({ type: "stat" as const, value: `0${i + 1}`, label: b, description: undefined as string | undefined }));
+    : (slide.body || []).filter(Boolean).slice(0, 4).map((b, i) => ({ type: "stat" as const, value: `0${i + 1}`, label: b }));
+  // Só conta como stat se tiver value (o destaque do layout)
+  const stats = rawStats.filter(s => s.value?.trim() || s.label?.trim());
 
   // Variant 1: stats-hero — 1 número gigante centralizado
   if (slide.layoutVariant === "stats-hero" && stats[0]) {
