@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
-import { useTrabalhoSettings } from "@/hooks/use-trabalho-settings";
+
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import {
