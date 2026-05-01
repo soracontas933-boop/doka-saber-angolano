@@ -254,7 +254,61 @@ const AdminLivrariaTab = () => {
         </Card>
       </TabsContent>
 
-      <Dialog open={openBook} onOpenChange={setOpenBook}>
+      <TabsContent value="pending">
+        <Card>
+          <CardHeader><CardTitle>Livros submetidos por utilizadores</CardTitle></CardHeader>
+          <CardContent>
+            {pendingBooks.length === 0 ? <p className="text-sm text-muted-foreground py-8 text-center">Sem livros pendentes.</p> : (
+              <div className="space-y-3">
+                {pendingBooks.map((b) => (
+                  <div key={b.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                    <div className="w-16 h-22 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
+                      {b.capa_url ? <img src={b.capa_url} alt="" className="w-full h-full object-cover" /> : <BookOpen className="h-6 w-6 m-auto mt-4 text-muted-foreground" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm">{b.titulo}</p>
+                      <p className="text-xs text-muted-foreground">por {b.autor} · {b.gratuito ? "Grátis" : `${b.preco_kz} Kz`} · {b.book_categories?.nome || "—"}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{b.descricao}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">Submetido: {new Date(b.submetido_em).toLocaleString()}</p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Button size="sm" onClick={() => aprovarLivro(b.id, true)} className="h-8 gap-1"><Check className="h-3 w-3" /> Aprovar</Button>
+                      <Button size="sm" variant="outline" onClick={() => aprovarLivro(b.id, false)} className="h-8 gap-1 text-red-600"><X className="h-3 w-3" /> Rejeitar</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="payouts">
+        <Card>
+          <CardHeader><CardTitle>Pagamentos a autores</CardTitle></CardHeader>
+          <CardContent>
+            {payouts.length === 0 ? <p className="text-sm text-muted-foreground py-8 text-center">Sem payouts.</p> : (
+              <div className="space-y-2">
+                {payouts.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium text-sm">{p.books?.titulo}</p>
+                      <p className="text-xs text-muted-foreground">{p.valor} {p.metodo === "kz" ? "Kz" : "créditos"} · {new Date(p.criado_em).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={p.estado === "pago" ? "default" : "secondary"}>{p.estado}</Badge>
+                      {p.estado === "pendente" && p.metodo === "kz" && (
+                        <Button size="sm" onClick={() => marcarPayoutPago(p.id)} className="h-8">Marcar pago</Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{form.id ? "Editar livro" : "Novo livro"}</DialogTitle></DialogHeader>
           <div className="grid gap-3">
