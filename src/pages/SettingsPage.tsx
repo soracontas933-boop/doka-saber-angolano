@@ -248,25 +248,82 @@ const SettingsPage = () => {
         <div className="space-y-4 md:space-y-6">
           {/* Avatar */}
           <div className="flex items-start gap-3 sm:gap-4">
-            <Avatar className="h-16 w-16 md:h-20 md:w-20 border-2 border-primary/20 flex-shrink-0">
-              <AvatarImage src={profile.avatar_url} alt={profile.nome || "Avatar"} />
-              <AvatarFallback className="bg-primary/10 text-primary text-sm md:text-lg font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative flex-shrink-0">
+              <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-primary/20">
+                <AvatarImage src={profile.avatar_url} alt={profile.nome || "Avatar"} />
+                <AvatarFallback className="bg-primary/10 text-primary text-base md:text-xl font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              {uploadingAvatar && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+
             <div className="flex-1 space-y-2">
-              <Label htmlFor="avatar_url" className="text-foreground text-xs md:text-sm">URL da Foto de Perfil</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="avatar_url"
-                  value={profile.avatar_url}
-                  onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })}
-                  placeholder="https://exemplo.com/foto.jpg"
-                  className="flex-1 bg-muted md:bg-background border-border md:border-input text-foreground h-9 md:h-10 text-xs md:text-sm"
-                />
-                <Button variant="outline" size="icon" className="shrink-0 h-9 md:h-10 w-9 md:w-10 bg-muted md:bg-background border-border md:border-input">
-                  <Camera className="h-4 w-4" />
+              <Label className="text-foreground text-xs md:text-sm font-medium">Foto de Perfil</Label>
+              <p className="text-[10px] md:text-xs text-muted-foreground">JPG, PNG ou WebP — máx. 5MB</p>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleAvatarFile(f);
+                }}
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleAvatarFile(f);
+                }}
+              />
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingAvatar}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-8 md:h-9 text-xs gap-1.5"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Galeria
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingAvatar}
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="h-8 md:h-9 text-xs gap-1.5 md:hidden"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  Câmara
+                </Button>
+                {profile.avatar_url && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={uploadingAvatar}
+                    onClick={handleRemoveAvatar}
+                    className="h-8 md:h-9 text-xs gap-1.5 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remover
+                  </Button>
+                )}
               </div>
             </div>
           </div>
