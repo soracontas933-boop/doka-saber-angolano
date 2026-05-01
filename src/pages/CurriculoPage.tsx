@@ -111,8 +111,9 @@ const CurriculoPage: React.FC = () => {
             <Button
               size="lg"
               onClick={handleGenerate}
-              disabled={!canGenerate || generating}
+              disabled={generating}
               className="min-w-[170px]"
+              title={!canGenerate ? "Preenche o nome e o título profissional" : undefined}
             >
               <Sparkles className="h-4 w-4 mr-2" />
               {generating ? "A gerar..." : `Gerar CV (${CV_COST})`}
