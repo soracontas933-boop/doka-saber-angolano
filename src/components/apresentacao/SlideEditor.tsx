@@ -86,6 +86,25 @@ export function SlideEditor({
   const [regenHint, setRegenHint] = useState("");
   const [regenerating, setRegenerating] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIndex = deck.slides.findIndex(s => s.id === active.id);
+    const newIndex = deck.slides.findIndex(s => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const next = arrayMove(deck.slides, oldIndex, newIndex);
+    onUpdate(next);
+    // mantém o mesmo slide seleccionado (segue-o para a nova posição)
+    const currentId = slide?.id;
+    const followed = next.findIndex(s => s.id === currentId);
+    if (followed >= 0) onChange(followed);
+  };
+
   if (!slide) return null;
 
   const update = (patch: Partial<Slide>) => {
