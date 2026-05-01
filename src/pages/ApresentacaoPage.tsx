@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Presentation, Download, Loader2, Sparkles, Send,
-  Edit2, Trash2, Plus, Save, Shuffle, Play,
+  Edit2, Trash2, Plus, Save, Shuffle, PanelRightOpen, PanelRightClose,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,9 @@ import { DECK_THEMES } from "@/lib/presentation/themes";
 import { composeSlots, assembleDeck, newSeed, pickTheme } from "@/lib/presentation/variator";
 import { generateDeckContent, generateDeckImages, type DensityLevel } from "@/lib/presentation/ai-deck";
 import { DeckRenderer } from "@/components/apresentacao/DeckRenderer";
+import { SlideEditor } from "@/components/apresentacao/SlideEditor";
 import { exportDeckToPDF } from "@/lib/presentation/deck-export";
-import type { Deck, AspectRatio } from "@/types/presentation";
+import type { Deck, AspectRatio, Slide } from "@/types/presentation";
 
 interface Card { id: string; title: string; subtopics: string[] }
 
@@ -44,6 +45,8 @@ export default function ApresentacaoPage() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<string>("");
   const [generatingImages, setGeneratingImages] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(true);
+  const [cardsOutlineSnapshot, setCardsOutlineSnapshot] = useState("");
 
   // ─── Step 1: Chat ───────────────────────────
   const handleChatSubmit = async () => {
@@ -85,6 +88,7 @@ export default function ApresentacaoPage() {
       const cardsOutline = cards.map(c =>
         `${c.title}: ${c.subtopics.join("; ")}`
       ).join("\n");
+      setCardsOutlineSnapshot(cardsOutline);
 
       setProgress("A gerar conteúdo cinematográfico…");
       const aiSlides = await generateDeckContent({
@@ -176,6 +180,10 @@ export default function ApresentacaoPage() {
         </div>
         {step === "preview" && deck && (
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditorOpen(o => !o)}>
+              {editorOpen ? <PanelRightClose className="h-4 w-4 mr-2" /> : <PanelRightOpen className="h-4 w-4 mr-2" />}
+              Editor
+            </Button>
             <Button variant="outline" size="sm" onClick={reshuffle}><Shuffle className="h-4 w-4 mr-2" />Re-design</Button>
             <Button variant="outline" size="sm" onClick={handleSave}><Save className="h-4 w-4 mr-2" />Guardar</Button>
             <Button size="sm" onClick={handleExport}><Download className="h-4 w-4 mr-2" />PDF</Button>
@@ -350,14 +358,29 @@ export default function ApresentacaoPage() {
 
           {/* PREVIEW */}
           {step === "preview" && deck && (
-            <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[calc(100vh-4rem)] flex flex-col">
-              <div className="flex-1 min-h-0">
-                <DeckRenderer deck={deck} current={currentSlide} onChange={setCurrentSlide} />
-              </div>
-              {generatingImages && (
-                <div className="shrink-0 flex items-center justify-center gap-2 p-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
-                  <Loader2 className="h-3 w-3 animate-spin" />A gerar visuais HD…
+            <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[calc(100vh-4rem)] flex">
+              <div className="flex-1 min-w-0 flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <DeckRenderer deck={deck} current={currentSlide} onChange={setCurrentSlide} />
                 </div>
+                {generatingImages && (
+                  <div className="shrink-0 flex items-center justify-center gap-2 p-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+                    <Loader2 className="h-3 w-3 animate-spin" />A gerar visuais HD…
+                  </div>
+                )}
+              </div>
+              {editorOpen && (
+                <SlideEditor
+                  deck={deck}
+                  current={currentSlide}
+                  onChange={setCurrentSlide}
+                  onUpdate={(slides: Slide[]) => setDeck({ ...deck, slides })}
+                  topic={deck.topic}
+                  cardsOutline={cardsOutlineSnapshot}
+                  density={density}
+                  language={language}
+                  onClose={() => setEditorOpen(false)}
+                />
               )}
             </motion.div>
           )}

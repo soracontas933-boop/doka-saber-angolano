@@ -260,6 +260,44 @@ Idioma: ${args.language === "pt-AO" ? "pt-AO" : "pt-BR"}.
   return slides;
 }
 
+// ─── Regenerar UM slide isolado (usado pelo editor lateral) ──────
+export async function regenerateSingleSlide(args: {
+  topic: string;
+  cardsOutline: string;
+  kind: SlideKind;
+  currentTitle?: string;
+  language: "pt-AO" | "pt-BR";
+  density: DensityLevel;
+  hint?: string;
+}): Promise<RawAISlide> {
+  const req = kindRequirements(args.kind);
+  const prompt = `
+Regenera UM slide de uma apresentação premium sobre "${args.topic}".
+
+Tipo: "${args.kind}"
+Campos exigidos: ${req.blockShape || "richBody (40-80 palavras)"}
+${args.currentTitle ? `Título actual (podes manter ou melhorar): "${args.currentTitle}"` : ""}
+${args.hint ? `Pedido extra do utilizador: ${args.hint}` : ""}
+
+Tópicos do utilizador (matéria-prima):
+${args.cardsOutline}
+
+Idioma: ${args.language === "pt-AO" ? "pt-AO" : "pt-BR"}.
+Densidade: ${DENSITY_HINT[args.density]}
+Tom executivo, cinematográfico. ZERO meta-comentário.
+
+Devolve APENAS JSON: { "slide": { "title":"...", "subtitle":"...", "richBody":"...", "body":[...], "blocks":[...], "pill":"...", "footnote":"...", "imagePrompt":"..." } }
+`.trim();
+
+  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, prompt, 2500, 0.8);
+  const m = result.content.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error("Sem JSON");
+  const parsed = JSON.parse(m[0].replace(/,(\s*[}\]])/g, "$1"));
+  let s = sanitizeSlide(parsed.slide || {});
+  if (!isSlideValid(s, args.kind)) s = buildFallback(args.kind, s, args.topic, args.cardsOutline);
+  return s;
+}
+
 // ─── Image generation (inalterado) ───────────────────────────────
 async function pMapLimit<T, R>(items: T[], limit: number, fn: (item: T, idx: number) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
