@@ -34,6 +34,7 @@ const disciplinas = [
 ];
 
 const ResumoPage = () => {
+  const navigate = useNavigate();
   const { checkLimit, logUsage } = useUsageTracker();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -149,7 +150,7 @@ const ResumoPage = () => {
       const imgUrl = generateImageUrl(imagePrompts.resumo(disciplina || "educação angolana"));
       setImagemResumo(imgUrl);
 
-      toast.success("Resumo gerado com sucesso!");
+      toast.success("Resumo gerado! A abrir o editor...");
       logUsage("resumo");
 
       saveProject("resumo", `${tipoResumo} - ${disciplina || "Geral"}`, {
@@ -157,6 +158,11 @@ const ResumoPage = () => {
         tipoResumo,
         disciplina,
         imagemResumo: imgUrl,
+      });
+
+      // Navega para o editor com o conteúdo gerado
+      navigate("/resumo/editar", {
+        state: { resultado: revisado, tipoResumo, disciplina },
       });
     } catch (err) {
       console.error("Erro ao gerar resumo:", err);
