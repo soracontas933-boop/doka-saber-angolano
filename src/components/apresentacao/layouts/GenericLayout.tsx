@@ -81,9 +81,10 @@ export function GenericLayout({ slide, theme }: LayoutProps) {
       <div className="w-1/2 flex flex-col justify-center p-14 gap-5">
         {slide.subtitle && <Eyebrow theme={theme}>{slide.subtitle}</Eyebrow>}
         <H1 theme={theme} className="text-5xl">{slide.title}</H1>
-        {slide.body && (
+        {slide.richBody && <RichText text={slide.richBody} theme={theme} className="text-lg" />}
+        {bodyClean.length > 0 && (
           <ul className="space-y-2 mt-3">
-            {slide.body.map((b, i) => (
+            {bodyClean.map((b, i) => (
               <li key={i} className="flex gap-3 text-base" style={{ color: theme.palette.muted }}>
                 <span style={{ color: theme.palette.accent }}>▸</span>
                 <span>{b}</span>
