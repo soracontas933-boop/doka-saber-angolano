@@ -47,6 +47,8 @@ const SettingsPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [profile, setProfile] = useState({
     nome: "",
@@ -54,6 +56,8 @@ const SettingsPage = () => {
     idade: "",
     avatar_url: "",
   });
+
+  const fileInputRef = useState<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const load = async () => {
