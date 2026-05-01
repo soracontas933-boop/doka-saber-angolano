@@ -7,6 +7,7 @@ export const CREDIT_COSTS = {
   tfc: 50,
   correcao: 8,
   apresentacao: 12,
+  cv: 14,
 } as const;
 
 export type ModuloType = keyof typeof CREDIT_COSTS;
@@ -19,6 +20,7 @@ export const MODULE_LABELS: Record<ModuloType, string> = {
   tfc: "TFC/Monografia",
   correcao: "Correção",
   apresentacao: "Apresentação",
+  cv: "Currículo",
 };
 
 // Limite "fair use" diário no plano Premium para evitar abuso
