@@ -5,84 +5,55 @@ import { exportHtmlToPdf } from "@/lib/pdf-export-helper";
 import type { CVData, CVTemplate } from "@/types/cv";
 import { toast } from "sonner";
 
-/* ── Clone element with computed styles for PDF fidelity ── */
-function deepCloneWithStyles(source: HTMLElement): HTMLElement {
-  const clone = source.cloneNode(true) as HTMLElement;
-
-  // Copy computed styles from source tree to clone tree
-  const sourceAll = source.querySelectorAll("*");
-  const cloneAll = clone.querySelectorAll("*");
-
-  // Copy styles on the root element
-  const rootStyles = window.getComputedStyle(source);
-  const importantProps = [
-    "display", "flex-direction", "align-items", "justify-content", "gap",
-    "background-color", "background", "color", "font-family", "font-size",
-    "font-weight", "line-height", "padding", "margin", "border",
-    "border-radius", "width", "min-width", "max-width", "height", "min-height",
-    "text-align", "letter-spacing", "text-transform", "box-sizing",
-    "position", "top", "left", "right", "bottom",
-    "grid-template-columns", "grid-template-rows", "grid-gap",
-  ];
-  importantProps.forEach((prop) => {
-    clone.style.setProperty(prop, rootStyles.getPropertyValue(prop));
-  });
-
-  sourceAll.forEach((srcEl, i) => {
-    if (i < cloneAll.length) {
-      const computed = window.getComputedStyle(srcEl as HTMLElement);
-      const target = cloneAll[i] as HTMLElement;
-      importantProps.forEach((prop) => {
-        target.style.setProperty(prop, computed.getPropertyValue(prop));
-      });
-    }
-  });
-
-  return clone;
-}
-
 export async function exportCVToPdf(data: CVData, template: CVTemplate) {
-  const el = document.getElementById("cv-preview-capture");
-  if (!el || !el.innerHTML.trim()) {
+  const wrapper = document.getElementById("cv-preview-capture");
+  if (!wrapper || !wrapper.innerHTML.trim()) {
     toast.error("Preencha os dados do CV antes de exportar.");
     return;
   }
 
-  // Clone with computed styles to preserve visual fidelity
-  const cloned = deepCloneWithStyles(el);
-
-  // Remove preview transform scaling — render at true A4 width, allow multi-page height
-  cloned.style.transform = "none";
-  cloned.style.transformOrigin = "top left";
-  cloned.style.width = "794px"; // A4 width at 96dpi
-  cloned.style.minHeight = "1123px"; // at least 1 A4 page
-  cloned.style.height = "auto";
-  cloned.style.overflow = "visible";
-  cloned.style.position = "relative";
-
-  // Also fix the inner wrapper that has the scale transform
-  const innerWrapper = cloned.querySelector(".bg-white.shadow-xl, [style*='scale']") as HTMLElement;
-  if (innerWrapper) {
-    innerWrapper.style.transform = "none";
-    innerWrapper.style.transformOrigin = "top left";
-    innerWrapper.style.width = "100%";
-    innerWrapper.style.minHeight = "1123px";
-    innerWrapper.style.height = "auto";
-    innerWrapper.style.overflow = "visible";
-    innerWrapper.style.boxShadow = "none";
+  // The actual A4 page is the inner div (sibling of any scale transform)
+  const innerPage = wrapper.querySelector<HTMLElement>(".bg-white.shadow-xl") || (wrapper.firstElementChild as HTMLElement);
+  if (!innerPage) {
+    toast.error("Erro ao localizar o conteúdo do CV.");
+    return;
   }
+
+  // Save original styles so we can restore them after capture
+  const originalInnerTransform = innerPage.style.transform;
+  const originalInnerTransformOrigin = innerPage.style.transformOrigin;
+  const originalInnerBoxShadow = innerPage.style.boxShadow;
+  const originalWrapperHeight = wrapper.style.height;
+  const originalWrapperOverflow = wrapper.style.overflow;
+
+  // Temporarily remove the preview scale so html2canvas captures at true A4 size
+  innerPage.style.transform = "none";
+  innerPage.style.transformOrigin = "top left";
+  innerPage.style.boxShadow = "none";
+  wrapper.style.height = "auto";
+  wrapper.style.overflow = "visible";
 
   const filename = `delle-cv-${data.nomeCompleto?.replace(/\s+/g, "-").toLowerCase() || "curriculo"}.pdf`;
 
-  await exportHtmlToPdf({
-    element: cloned,
-    filename,
-    overlayMessage: "A gerar CV em PDF...",
-    containerWidth: 794,
-    padding: "0",
-    scale: 2,
-    margin: [0, 0, 0, 0],
-  });
+  try {
+    await exportHtmlToPdf({
+      element: innerPage,
+      cloneElement: true,
+      filename,
+      overlayMessage: "A gerar CV em PDF...",
+      containerWidth: 794,
+      padding: "0",
+      scale: 2,
+      margin: [0, 0, 0, 0],
+    });
+  } finally {
+    // Restore preview styling
+    innerPage.style.transform = originalInnerTransform;
+    innerPage.style.transformOrigin = originalInnerTransformOrigin;
+    innerPage.style.boxShadow = originalInnerBoxShadow;
+    wrapper.style.height = originalWrapperHeight;
+    wrapper.style.overflow = originalWrapperOverflow;
+  }
 }
 
 /* ── Word Export ── */
