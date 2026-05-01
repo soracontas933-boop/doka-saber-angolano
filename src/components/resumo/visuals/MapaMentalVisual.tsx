@@ -33,19 +33,22 @@ const ICONS = ["◆", "★", "●", "▲", "✦", "■", "✚", "◉", "♦", "�
 interface Props {
   central: string;
   branches: Branch[];
+  /** Quando true, ocupa toda a folha A4 paisagem (1123×794) sem padding extra. */
+  fillA4?: boolean;
+  accent?: string;
 }
 
-export const MapaMentalVisual: React.FC<Props> = ({ central, branches }) => {
-  // Layout radial: nó central no meio, ramos distribuídos em volta
-  const W = 1100;
-  const H = Math.max(720, 380 + Math.ceil(branches.length / 2) * 220);
+export const MapaMentalVisual: React.FC<Props> = ({ central, branches, fillA4 = false }) => {
+  // Layout radial encaixado em A4 paisagem: 1123 × 794 px
+  const W = fillA4 ? 1123 : 1100;
+  const H = fillA4 ? 794 : Math.max(720, 380 + Math.ceil(branches.length / 2) * 220);
   const cx = W / 2;
   const cy = H / 2;
 
-  // Posiciona ramos em círculo
+  // Posiciona ramos em elipse — raios menores para não sair da folha
   const total = branches.length;
-  const radiusX = 380;
-  const radiusY = 260;
+  const radiusX = fillA4 ? 360 : 380;
+  const radiusY = fillA4 ? 230 : 260;
 
   const positions = branches.map((_, i) => {
     const angle = (i / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
@@ -61,11 +64,12 @@ export const MapaMentalVisual: React.FC<Props> = ({ central, branches }) => {
       className="mapa-mental-premium"
       style={{
         position: "relative",
-        width: "100%",
+        width: fillA4 ? "100%" : "100%",
+        height: fillA4 ? "100%" : "auto",
         background:
           "radial-gradient(ellipse at center, #f8fbff 0%, #eef4fb 50%, #e3ecf6 100%)",
-        padding: "24px",
-        borderRadius: "20px",
+        padding: fillA4 ? "0" : "24px",
+        borderRadius: fillA4 ? "0" : "20px",
         overflow: "hidden",
       }}
     >
@@ -311,7 +315,8 @@ export const MapaMentalVisual: React.FC<Props> = ({ central, branches }) => {
         })}
       </div>
 
-      {/* Legenda inferior */}
+      {/* Legenda inferior — escondida no modo A4 para preservar layout */}
+      {!fillA4 && (
       <div
         style={{
           marginTop: "16px",
@@ -354,6 +359,7 @@ export const MapaMentalVisual: React.FC<Props> = ({ central, branches }) => {
           );
         })}
       </div>
+      )}
     </div>
   );
 };

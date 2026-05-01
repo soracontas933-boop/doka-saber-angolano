@@ -15,6 +15,7 @@ import GrupoDetalhePage from "@/pages/GrupoDetalhePage";
 import MeusProjetosPage from "@/pages/MeusProjetosPage";
 import TrabalhoPage from "@/pages/TrabalhoPage";
 import ResumoPage from "@/pages/ResumoPage";
+import ResumoEditorPage from "@/pages/ResumoEditorPage";
 import QuestionarioPage from "@/pages/QuestionarioPage";
 import PlanoAulaPage from "@/pages/PlanoAulaPage";
 import AdminPanelPage from "@/pages/AdminPanelPage";
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="/meus-projetos" element={<MeusProjetosPage />} />
                 <Route path="/trabalho" element={<TrabalhoPage />} />
                 <Route path="/resumo" element={<ResumoPage />} />
+                <Route path="/resumo/editar" element={<ResumoEditorPage />} />
                 <Route path="/questionario" element={<QuestionarioPage />} />
                 <Route path="/plano-aula" element={<PlanoAulaPage />} />
                 <Route path="/correcao" element={<CorrecaoPage />} />
