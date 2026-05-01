@@ -1,21 +1,31 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, FolderOpen, Library, Presentation, Settings } from "lucide-react";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { useAdmin } from "@/hooks/use-admin";
 
 const navItems = [
-  { to: "/home", icon: Home, label: "Início" },
-  { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
-  { to: "/livraria", icon: Library, label: "Livraria" },
-  { to: "/apresentacao", icon: Presentation, label: "Slides" },
+  { to: "/home", icon: Home, label: "Início", featureKey: "home" },
+  { to: "/meus-projetos", icon: FolderOpen, label: "Projetos", featureKey: "meus-projetos" },
+  { to: "/livraria", icon: Library, label: "Livraria", featureKey: "livraria" },
+  { to: "/apresentacao", icon: Presentation, label: "Slides", featureKey: "apresentacao" },
   { to: "/configuracoes", icon: Settings, label: "Ajustes" },
 ];
 
 const MobileNav = () => {
   const location = useLocation();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const { isAdmin } = useAdmin();
+
+  const visibleItems = navItems.filter((item) => {
+    if (!item.featureKey) return true;
+    if (isAdmin) return true;
+    return isFeatureEnabled(item.featureKey);
+  });
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-background/80 backdrop-blur-xl border-t border-border/40">
       <div className="flex items-center justify-around px-4 py-3">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           
           return (
