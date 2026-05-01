@@ -98,7 +98,7 @@ const CreditsBar = () => {
   return (
     <>
       {/* ===== MOBILE TOP BAR ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
+      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40 transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}>
         <div className="flex items-center justify-between px-4 py-3 gap-2 shadow-glass">
           <button
             onClick={() => navigate("/configuracoes")}
