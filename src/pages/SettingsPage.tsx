@@ -164,6 +164,7 @@ const SettingsPage = () => {
     }
   };
 
+  const handleSaveProfile = async () => {
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
