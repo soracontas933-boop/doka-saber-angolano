@@ -180,6 +180,10 @@ export default function ApresentacaoPage() {
         </div>
         {step === "preview" && deck && (
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditorOpen(o => !o)}>
+              {editorOpen ? <PanelRightClose className="h-4 w-4 mr-2" /> : <PanelRightOpen className="h-4 w-4 mr-2" />}
+              Editor
+            </Button>
             <Button variant="outline" size="sm" onClick={reshuffle}><Shuffle className="h-4 w-4 mr-2" />Re-design</Button>
             <Button variant="outline" size="sm" onClick={handleSave}><Save className="h-4 w-4 mr-2" />Guardar</Button>
             <Button size="sm" onClick={handleExport}><Download className="h-4 w-4 mr-2" />PDF</Button>
