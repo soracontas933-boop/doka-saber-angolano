@@ -12,11 +12,12 @@ import type { CVData, Experiencia, Formacao, Idioma, Certificacao, Projeto } fro
 interface CVFormProps {
   data: CVData;
   onChange: (data: CVData) => void;
+  errors?: { nomeCompleto?: boolean; titulo?: boolean };
 }
 
 const uid = () => crypto.randomUUID();
 
-const CVForm: React.FC<CVFormProps> = ({ data, onChange }) => {
+const CVForm: React.FC<CVFormProps> = ({ data, onChange, errors }) => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof CVData>(key: K, value: CVData[K]) =>
@@ -114,8 +115,20 @@ const CVForm: React.FC<CVFormProps> = ({ data, onChange }) => {
               </div>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
               <div className="flex-1 space-y-2">
-                <Input placeholder="Nome completo" value={data.nomeCompleto} onChange={(e) => set("nomeCompleto", e.target.value)} />
-                <Input placeholder="Título profissional (ex: Engenheiro Civil)" value={data.titulo} onChange={(e) => set("titulo", e.target.value)} />
+                <Input
+                  data-cv-field="nomeCompleto"
+                  placeholder="Nome completo *"
+                  value={data.nomeCompleto}
+                  onChange={(e) => set("nomeCompleto", e.target.value)}
+                  className={errors?.nomeCompleto ? "border-destructive ring-2 ring-destructive/40 focus-visible:ring-destructive" : ""}
+                />
+                <Input
+                  data-cv-field="titulo"
+                  placeholder="Título profissional (ex: Engenheiro Civil) *"
+                  value={data.titulo}
+                  onChange={(e) => set("titulo", e.target.value)}
+                  className={errors?.titulo ? "border-destructive ring-2 ring-destructive/40 focus-visible:ring-destructive" : ""}
+                />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
