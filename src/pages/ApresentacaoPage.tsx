@@ -45,6 +45,8 @@ export default function ApresentacaoPage() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<string>("");
   const [generatingImages, setGeneratingImages] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(true);
+  const [cardsOutlineSnapshot, setCardsOutlineSnapshot] = useState("");
 
   // ─── Step 1: Chat ───────────────────────────
   const handleChatSubmit = async () => {
