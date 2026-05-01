@@ -32,10 +32,13 @@ const LivroDetalhePage = () => {
       const { data: b } = await supabase.from("books").select("*, book_categories(nome)").eq("id", id).maybeSingle();
       setBook(b);
 
-      if (user && b) {
-        const { data: lib } = await supabase.from("book_library").select("id").eq("user_id", user.id).eq("book_id", b.id).maybeSingle();
-        setOwned(!!lib);
+      if (b) {
+        if (user) {
+          const { data: lib } = await supabase.from("book_library").select("id").eq("user_id", user.id).eq("book_id", b.id).maybeSingle();
+          setOwned(!!lib);
+        }
         await supabase.from("books").update({ visualizacoes: (b.visualizacoes || 0) + 1 }).eq("id", b.id);
+        await supabase.from("book_views").insert({ book_id: b.id, user_id: user?.id || null });
       }
       setLoading(false);
     };

@@ -155,6 +155,45 @@ export type Database = {
         }
         Relationships: []
       }
+      book_author_payouts: {
+        Row: {
+          author_id: string
+          book_id: string
+          buyer_id: string | null
+          criado_em: string
+          estado: string
+          id: string
+          metodo: string
+          pago_em: string | null
+          purchase_request_id: string | null
+          valor: number
+        }
+        Insert: {
+          author_id: string
+          book_id: string
+          buyer_id?: string | null
+          criado_em?: string
+          estado?: string
+          id?: string
+          metodo?: string
+          pago_em?: string | null
+          purchase_request_id?: string | null
+          valor?: number
+        }
+        Update: {
+          author_id?: string
+          book_id?: string
+          buyer_id?: string | null
+          criado_em?: string
+          estado?: string
+          id?: string
+          metodo?: string
+          pago_em?: string | null
+          purchase_request_id?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       book_categories: {
         Row: {
           ativo: boolean
@@ -217,6 +256,45 @@ export type Database = {
           },
         ]
       }
+      book_payout_methods: {
+        Row: {
+          atualizado_em: string
+          banco: string | null
+          criado_em: string
+          iban: string | null
+          id: string
+          preferido: boolean
+          telefone: string | null
+          tipo: string
+          titular: string | null
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          banco?: string | null
+          criado_em?: string
+          iban?: string | null
+          id?: string
+          preferido?: boolean
+          telefone?: string | null
+          tipo?: string
+          titular?: string | null
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          banco?: string | null
+          criado_em?: string
+          iban?: string | null
+          id?: string
+          preferido?: boolean
+          telefone?: string | null
+          tipo?: string
+          titular?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       book_purchase_requests: {
         Row: {
           atualizado_em: string
@@ -261,8 +339,31 @@ export type Database = {
           },
         ]
       }
+      book_views: {
+        Row: {
+          book_id: string
+          id: string
+          user_id: string | null
+          visto_em: string
+        }
+        Insert: {
+          book_id: string
+          id?: string
+          user_id?: string | null
+          visto_em?: string
+        }
+        Update: {
+          book_id?: string
+          id?: string
+          user_id?: string | null
+          visto_em?: string
+        }
+        Relationships: []
+      }
       books: {
         Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
           atualizado_em: string
           autor: string
           capa_url: string | null
@@ -273,19 +374,24 @@ export type Database = {
           descricao: string | null
           destaque: boolean
           downloads: number
+          estado_aprovacao: string
           ficheiro_path: string
           gratuito: boolean
           id: string
           idioma: string | null
           isbn: string | null
+          motivo_rejeicao: string | null
           paginas: number | null
           preco_creditos: number
           preco_kz: number
           publicado: boolean
+          submetido_em: string | null
           titulo: string
           visualizacoes: number
         }
         Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           atualizado_em?: string
           autor: string
           capa_url?: string | null
@@ -296,19 +402,24 @@ export type Database = {
           descricao?: string | null
           destaque?: boolean
           downloads?: number
+          estado_aprovacao?: string
           ficheiro_path: string
           gratuito?: boolean
           id?: string
           idioma?: string | null
           isbn?: string | null
+          motivo_rejeicao?: string | null
           paginas?: number | null
           preco_creditos?: number
           preco_kz?: number
           publicado?: boolean
+          submetido_em?: string | null
           titulo: string
           visualizacoes?: number
         }
         Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           atualizado_em?: string
           autor?: string
           capa_url?: string | null
@@ -319,15 +430,18 @@ export type Database = {
           descricao?: string | null
           destaque?: boolean
           downloads?: number
+          estado_aprovacao?: string
           ficheiro_path?: string
           gratuito?: boolean
           id?: string
           idioma?: string | null
           isbn?: string | null
+          motivo_rejeicao?: string | null
           paginas?: number | null
           preco_creditos?: number
           preco_kz?: number
           publicado?: boolean
+          submetido_em?: string | null
           titulo?: string
           visualizacoes?: number
         }
@@ -1262,6 +1376,10 @@ export type Database = {
         Returns: undefined
       }
       aprovar_compra_livro: { Args: { p_request_id: string }; Returns: Json }
+      aprovar_livro: {
+        Args: { p_aprovar: boolean; p_book_id: string; p_motivo?: string }
+        Returns: Json
+      }
       comprar_livro_com_creditos: { Args: { p_book_id: string }; Returns: Json }
       consume_credits: {
         Args: { p_amount: number; p_user_id: string }
@@ -1297,8 +1415,26 @@ export type Database = {
         Args: { _user_id: string; _workgroup_id: string }
         Returns: boolean
       }
+      marcar_payout_pago: { Args: { p_payout_id: string }; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      submeter_livro: {
+        Args: {
+          p_autor: string
+          p_capa_url: string
+          p_categoria_id: string
+          p_classe: string
+          p_descricao: string
+          p_ficheiro_path: string
+          p_gratuito: boolean
+          p_idioma: string
+          p_paginas: number
+          p_preco_creditos: number
+          p_preco_kz: number
+          p_titulo: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

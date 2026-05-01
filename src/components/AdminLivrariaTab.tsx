@@ -30,14 +30,20 @@ const AdminLivrariaTab = () => {
   const [saving, setSaving] = useState(false);
   const [newCat, setNewCat] = useState("");
 
+  const [pendingBooks, setPendingBooks] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
+
   const load = async () => {
     setLoading(true);
-    const [{ data: bs }, { data: cs }, { data: rs }] = await Promise.all([
+    const [{ data: bs }, { data: cs }, { data: rs }, { data: pb }, { data: po }] = await Promise.all([
       supabase.from("books").select("*, book_categories(nome)").order("criado_em", { ascending: false }),
       supabase.from("book_categories").select("*").order("ordem"),
       supabase.from("book_purchase_requests").select("*, books(titulo)").order("criado_em", { ascending: false }),
+      supabase.from("books").select("*, book_categories(nome)").eq("estado_aprovacao", "pendente").order("submetido_em", { ascending: false }),
+      supabase.from("book_author_payouts").select("*, books(titulo)").order("criado_em", { ascending: false }).limit(100),
     ]);
     setBooks(bs || []); setCategories(cs || []); setRequests(rs || []);
+    setPendingBooks(pb || []); setPayouts(po || []);
     setLoading(false);
   };
 
@@ -139,14 +145,32 @@ const AdminLivrariaTab = () => {
     load();
   };
 
+  const aprovarLivro = async (id: string, ok: boolean) => {
+    const motivo = ok ? null : prompt("Motivo da rejeição:") || "Não cumpre os requisitos";
+    const { data, error } = await supabase.rpc("aprovar_livro", { p_book_id: id, p_aprovar: ok, p_motivo: motivo });
+    if (error || !(data as any)?.ok) return toast({ title: "Erro", variant: "destructive" });
+    toast({ title: ok ? "Livro aprovado" : "Livro rejeitado" });
+    load();
+  };
+
+  const marcarPayoutPago = async (id: string) => {
+    if (!confirm("Confirmar que o pagamento foi efetuado ao autor?")) return;
+    const { data, error } = await supabase.rpc("marcar_payout_pago", { p_payout_id: id });
+    if (error || !(data as any)?.ok) return toast({ title: "Erro", variant: "destructive" });
+    toast({ title: "Marcado como pago" });
+    load();
+  };
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <Tabs defaultValue="books">
-      <TabsList>
+      <TabsList className="flex-wrap h-auto">
         <TabsTrigger value="books">Livros ({books.length})</TabsTrigger>
+        <TabsTrigger value="pending">Aprovar ({pendingBooks.length})</TabsTrigger>
         <TabsTrigger value="cats">Categorias ({categories.length})</TabsTrigger>
         <TabsTrigger value="reqs">Pedidos ({requests.filter((r) => r.estado === "pendente").length})</TabsTrigger>
+        <TabsTrigger value="payouts">Payouts ({payouts.filter((p) => p.estado === "pendente").length})</TabsTrigger>
       </TabsList>
 
       <TabsContent value="books">
@@ -222,6 +246,61 @@ const AdminLivrariaTab = () => {
                         <Button size="sm" variant="outline" onClick={() => recusar(r.id)} className="h-8 gap-1 text-red-600"><X className="h-3 w-3" /></Button>
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="pending">
+        <Card>
+          <CardHeader><CardTitle>Livros submetidos por utilizadores</CardTitle></CardHeader>
+          <CardContent>
+            {pendingBooks.length === 0 ? <p className="text-sm text-muted-foreground py-8 text-center">Sem livros pendentes.</p> : (
+              <div className="space-y-3">
+                {pendingBooks.map((b) => (
+                  <div key={b.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                    <div className="w-16 h-22 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
+                      {b.capa_url ? <img src={b.capa_url} alt="" className="w-full h-full object-cover" /> : <BookOpen className="h-6 w-6 m-auto mt-4 text-muted-foreground" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm">{b.titulo}</p>
+                      <p className="text-xs text-muted-foreground">por {b.autor} · {b.gratuito ? "Grátis" : `${b.preco_kz} Kz`} · {b.book_categories?.nome || "—"}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{b.descricao}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">Submetido: {new Date(b.submetido_em).toLocaleString()}</p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Button size="sm" onClick={() => aprovarLivro(b.id, true)} className="h-8 gap-1"><Check className="h-3 w-3" /> Aprovar</Button>
+                      <Button size="sm" variant="outline" onClick={() => aprovarLivro(b.id, false)} className="h-8 gap-1 text-red-600"><X className="h-3 w-3" /> Rejeitar</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="payouts">
+        <Card>
+          <CardHeader><CardTitle>Pagamentos a autores</CardTitle></CardHeader>
+          <CardContent>
+            {payouts.length === 0 ? <p className="text-sm text-muted-foreground py-8 text-center">Sem payouts.</p> : (
+              <div className="space-y-2">
+                {payouts.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium text-sm">{p.books?.titulo}</p>
+                      <p className="text-xs text-muted-foreground">{p.valor} {p.metodo === "kz" ? "Kz" : "créditos"} · {new Date(p.criado_em).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={p.estado === "pago" ? "default" : "secondary"}>{p.estado}</Badge>
+                      {p.estado === "pendente" && p.metodo === "kz" && (
+                        <Button size="sm" onClick={() => marcarPayoutPago(p.id)} className="h-8">Marcar pago</Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
