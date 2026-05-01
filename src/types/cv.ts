@@ -65,7 +65,10 @@ export type CVTemplate =
   | "criativo"
   | "compacto"
   | "elegante"
-  | "tecnologico";
+  | "tecnologico"
+  | "corporativo"
+  | "vibrante"
+  | "premium";
 
 export const emptyCVData: CVData = {
   nomeCompleto: "",

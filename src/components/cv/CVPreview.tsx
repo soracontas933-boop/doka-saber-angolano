@@ -9,6 +9,9 @@ import CVTemplateCriativo from "./templates/CVTemplateCriativo";
 import CVTemplateCompacto from "./templates/CVTemplateCompacto";
 import CVTemplateElegante from "./templates/CVTemplateElegante";
 import CVTemplateTecnologico from "./templates/CVTemplateTecnologico";
+import CVTemplateCorporativo from "./templates/CVTemplateCorporativo";
+import CVTemplateVibrante from "./templates/CVTemplateVibrante";
+import CVTemplatePremium from "./templates/CVTemplatePremium";
 
 interface CVPreviewProps {
   data: CVData;
@@ -53,6 +56,9 @@ const CVPreview: React.FC<CVPreviewProps> = ({ data, template, themeId = "navy" 
       case "compacto": return <CVTemplateCompacto data={data} theme={theme} />;
       case "elegante": return <CVTemplateElegante data={data} theme={theme} />;
       case "tecnologico": return <CVTemplateTecnologico data={data} theme={theme} />;
+      case "corporativo": return <CVTemplateCorporativo data={data} theme={theme} />;
+      case "vibrante": return <CVTemplateVibrante data={data} theme={theme} />;
+      case "premium": return <CVTemplatePremium data={data} theme={theme} />;
       default: return <CVTemplateModerno data={data} theme={theme} />;
     }
   };

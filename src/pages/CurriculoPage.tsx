@@ -25,6 +25,9 @@ const templates: { id: CVTemplate; label: string; desc: string }[] = [
   { id: "compacto", label: "Compacto", desc: "Denso e ATS-friendly" },
   { id: "elegante", label: "Elegante", desc: "Serifa, estilo refinado" },
   { id: "tecnologico", label: "Tecnológico", desc: "Estilo dev, monoespaçado" },
+  { id: "corporativo", label: "Corporativo", desc: "Header com foto e barras de skill" },
+  { id: "vibrante", label: "Vibrante", desc: "Sidebar escura com badges coloridos" },
+  { id: "premium", label: "Premium", desc: "Cartão refinado com serifa e accent" },
 ];
 
 const CurriculoPage: React.FC = () => {
