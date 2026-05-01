@@ -358,14 +358,29 @@ export default function ApresentacaoPage() {
 
           {/* PREVIEW */}
           {step === "preview" && deck && (
-            <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[calc(100vh-4rem)] flex flex-col">
-              <div className="flex-1 min-h-0">
-                <DeckRenderer deck={deck} current={currentSlide} onChange={setCurrentSlide} />
-              </div>
-              {generatingImages && (
-                <div className="shrink-0 flex items-center justify-center gap-2 p-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
-                  <Loader2 className="h-3 w-3 animate-spin" />A gerar visuais HD…
+            <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[calc(100vh-4rem)] flex">
+              <div className="flex-1 min-w-0 flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <DeckRenderer deck={deck} current={currentSlide} onChange={setCurrentSlide} />
                 </div>
+                {generatingImages && (
+                  <div className="shrink-0 flex items-center justify-center gap-2 p-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+                    <Loader2 className="h-3 w-3 animate-spin" />A gerar visuais HD…
+                  </div>
+                )}
+              </div>
+              {editorOpen && (
+                <SlideEditor
+                  deck={deck}
+                  current={currentSlide}
+                  onChange={setCurrentSlide}
+                  onUpdate={(slides: Slide[]) => setDeck({ ...deck, slides })}
+                  topic={deck.topic}
+                  cardsOutline={cardsOutlineSnapshot}
+                  density={density}
+                  language={language}
+                  onClose={() => setEditorOpen(false)}
+                />
               )}
             </motion.div>
           )}
