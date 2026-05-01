@@ -145,14 +145,32 @@ const AdminLivrariaTab = () => {
     load();
   };
 
+  const aprovarLivro = async (id: string, ok: boolean) => {
+    const motivo = ok ? null : prompt("Motivo da rejeição:") || "Não cumpre os requisitos";
+    const { data, error } = await supabase.rpc("aprovar_livro", { p_book_id: id, p_aprovar: ok, p_motivo: motivo });
+    if (error || !(data as any)?.ok) return toast({ title: "Erro", variant: "destructive" });
+    toast({ title: ok ? "Livro aprovado" : "Livro rejeitado" });
+    load();
+  };
+
+  const marcarPayoutPago = async (id: string) => {
+    if (!confirm("Confirmar que o pagamento foi efetuado ao autor?")) return;
+    const { data, error } = await supabase.rpc("marcar_payout_pago", { p_payout_id: id });
+    if (error || !(data as any)?.ok) return toast({ title: "Erro", variant: "destructive" });
+    toast({ title: "Marcado como pago" });
+    load();
+  };
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <Tabs defaultValue="books">
-      <TabsList>
+      <TabsList className="flex-wrap h-auto">
         <TabsTrigger value="books">Livros ({books.length})</TabsTrigger>
+        <TabsTrigger value="pending">Aprovar ({pendingBooks.length})</TabsTrigger>
         <TabsTrigger value="cats">Categorias ({categories.length})</TabsTrigger>
         <TabsTrigger value="reqs">Pedidos ({requests.filter((r) => r.estado === "pendente").length})</TabsTrigger>
+        <TabsTrigger value="payouts">Payouts ({payouts.filter((p) => p.estado === "pendente").length})</TabsTrigger>
       </TabsList>
 
       <TabsContent value="books">
