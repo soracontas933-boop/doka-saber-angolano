@@ -345,12 +345,13 @@ Tom executivo, cinematográfico. ZERO meta-comentário.
 Devolve APENAS JSON: { "slide": { "title":"...", "subtitle":"...", "richBody":"...", "body":[...], "blocks":[...], "pill":"...", "footnote":"...", "imagePrompt":"..." } }
 `.trim();
 
-  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, prompt, 2500, 0.8);
+  const tokenBudget = Math.max(2500, Math.floor(DENSITY_TOKEN_BUDGET[args.density] / 4));
+  const result = await generateWithAI(DELLE_SYSTEM_PROMPT, prompt, tokenBudget, 0.8);
   const m = result.content.match(/\{[\s\S]*\}/);
   if (!m) throw new Error("Sem JSON");
   const parsed = JSON.parse(m[0].replace(/,(\s*[}\]])/g, "$1"));
   let s = sanitizeSlide(parsed.slide || {});
-  if (!isSlideValid(s, args.kind)) s = buildFallback(args.kind, s, args.topic, args.cardsOutline);
+  if (!isSlideValid(s, args.kind, args.density)) s = buildFallback(args.kind, s, args.topic, args.cardsOutline, args.density);
   return s;
 }
 
