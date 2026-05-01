@@ -10,6 +10,7 @@ interface TrabalhoCompletoProps {
   conteudo: string;
   coverData: CoverPageData;
   capaImageUrl?: string | null;
+  logoUrl?: string | null;
   editable?: boolean;
   onContentChange?: (updatedHtml: string) => void;
 }
