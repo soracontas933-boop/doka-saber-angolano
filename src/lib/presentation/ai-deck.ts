@@ -107,21 +107,29 @@ function kindRequirements(kind: SlideKind): {
   }
 }
 
-// ─── Validação: slide tem conteúdo suficiente para o seu kind? ───
-function isSlideValid(s: RawAISlide, kind: SlideKind): boolean {
+// ─── Validação sensível à densidade ───────────────────────────────
+function isSlideValid(s: RawAISlide, kind: SlideKind, density: DensityLevel = "medium"): boolean {
   if (!s.title || s.title.trim().length < 2) return false;
   const req = kindRequirements(kind);
-  const richOk = !req.needsRichBody || (s.richBody && s.richBody.trim().length >= 30);
-  const bulletsOk = req.minBullets === 0 || (s.body || []).filter(b => b && b.trim().length > 2).length >= req.minBullets;
-  const blocksOk = req.minBlocks === 0 || (s.blocks || []).filter(b => (b.label || b.value) && (b.description || b.value)).length >= req.minBlocks;
-  // Pelo menos uma das condições aplicáveis tem de estar OK
+  const minRich = DENSITY_MIN_RICHBODY[density];
+  const minDesc = DENSITY_MIN_BLOCK_DESC[density];
+
+  const richOk = !req.needsRichBody || (!!s.richBody && s.richBody.trim().length >= minRich);
+  const validBullets = (s.body || []).filter(b => b && b.trim().length > 4);
+  const bulletsOk = req.minBullets === 0 || validBullets.length >= req.minBullets;
+  const validBlocks = (s.blocks || []).filter(b =>
+    (b.label || b.value) &&
+    (b.description ? b.description.trim().length >= minDesc : !!b.value)
+  );
+  const blocksOk = req.minBlocks === 0 || validBlocks.length >= req.minBlocks;
+
   if (req.needsRichBody && !richOk) return false;
   if (req.minBlocks > 0 && !blocksOk) return false;
   if (req.minBullets > 0 && !bulletsOk && !richOk) return false;
   return true;
 }
 
-// ─── Sanitiza: remove bullets/blocks vazios para layouts não renderizarem lixo
+// ─── Sanitiza ──────────────────────────────────────────────────────
 function sanitizeSlide(s: RawAISlide): RawAISlide {
   return {
     ...s,
@@ -130,28 +138,55 @@ function sanitizeSlide(s: RawAISlide): RawAISlide {
   };
 }
 
-// ─── Fallback: gera conteúdo derivado quando a IA falha ──────────
-function buildFallback(kind: SlideKind, original: RawAISlide, topic: string, cardsOutline: string): RawAISlide {
+// ─── Fallback determinístico — usa SEMPRE o cardsOutline real ─────
+function buildFallback(kind: SlideKind, original: RawAISlide, topic: string, cardsOutline: string, density: DensityLevel = "medium"): RawAISlide {
   const req = kindRequirements(kind);
-  const lines = cardsOutline.split("\n").filter(Boolean).slice(0, 6);
+  const lines = cardsOutline.split("\n").map(l => l.trim()).filter(Boolean);
   const fb: RawAISlide = { ...original, title: original.title || topic };
 
-  if (req.needsRichBody && !fb.richBody) {
-    fb.richBody = original.subtitle || `Análise sobre **${topic}** no contexto angolano, com foco em impacto, oportunidades e próximos passos concretos.`;
+  // Extrai pares título/subtemas do outline
+  const parsedLines = lines.map(l => {
+    const [head, ...rest] = l.split(":");
+    return { head: head.trim(), tail: rest.join(":").trim() };
+  });
+
+  const expandTo = (base: string, target: number): string => {
+    let out = base;
+    while (out.length < target) {
+      out += ` Este aspecto é particularmente relevante no contexto de ${topic}, exigindo análise cuidadosa das suas implicações práticas e estratégicas.`;
+    }
+    return out;
+  };
+
+  if (req.needsRichBody && (!fb.richBody || fb.richBody.length < DENSITY_MIN_RICHBODY[density])) {
+    const seed = original.subtitle ||
+      parsedLines.slice(0, 3).map(p => `**${p.head}** — ${p.tail || "aspecto crítico"}`).join(". ") ||
+      `Análise sobre **${topic}** com foco em impacto, oportunidades e próximos passos concretos.`;
+    fb.richBody = expandTo(seed + ".", DENSITY_MIN_RICHBODY[density]);
   }
+
   if (req.minBullets > 0 && (!fb.body || fb.body.length < req.minBullets)) {
-    fb.body = lines.length >= req.minBullets
-      ? lines.map(l => l.split(":")[0].trim()).slice(0, req.minBullets + 1)
-      : Array.from({ length: req.minBullets }, (_, i) => `Ponto-chave ${i + 1} sobre ${topic}`);
+    const need = Math.max(req.minBullets, density === "high" ? 6 : density === "medium" ? 4 : 3);
+    fb.body = parsedLines.length >= need
+      ? parsedLines.slice(0, need + 1).map(p => p.tail ? `${p.head}: ${p.tail}` : p.head)
+      : Array.from({ length: need }, (_, i) =>
+          parsedLines[i]?.head || `Ponto-chave ${i + 1} sobre ${topic}`
+        );
   }
+
   if (req.minBlocks > 0 && (!fb.blocks || fb.blocks.length < req.minBlocks)) {
-    fb.blocks = Array.from({ length: req.minBlocks }, (_, i) => ({
-      type: "card" as const,
-      label: lines[i]?.split(":")[0].trim() || `Aspecto ${i + 1}`,
-      value: kind === "stats" ? `0${i + 1}` : undefined,
-      description: lines[i]?.split(":")[1]?.trim() || `Detalhe relevante sobre ${topic}.`,
-      icon: ["📚", "🚀", "◆", "✦", "⚡", "🎯"][i % 6],
-    }));
+    const need = Math.max(req.minBlocks, density === "high" ? 4 : 3);
+    fb.blocks = Array.from({ length: need }, (_, i) => {
+      const p = parsedLines[i];
+      const baseDesc = p?.tail || `Detalhe relevante sobre ${p?.head || topic}.`;
+      return {
+        type: "card" as const,
+        label: p?.head || `Aspecto ${i + 1}`,
+        value: kind === "stats" ? `0${i + 1}` : undefined,
+        description: expandTo(baseDesc, DENSITY_MIN_BLOCK_DESC[density]),
+        icon: ["📚", "🚀", "◆", "✦", "⚡", "🎯"][i % 6],
+      };
+    });
   }
   return fb;
 }
