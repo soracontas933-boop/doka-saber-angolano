@@ -190,7 +190,71 @@ export async function exportResumoWord(resultado: string, tipoResumo: string, di
   }
 }
 
-// ─── PDF Export ─────────────────────────────────────────────────
+// ─── PDF Export — visual capture (mapa mental, flashcards, etc.) ─────────────
+
+/**
+ * Exporta o componente visual real (DOM) em PDF, garantindo que o ficheiro
+ * gerado seja idêntico à pré-visualização. Usa orientação paisagem para
+ * mapas mentais radiais e retrato para os restantes.
+ */
+export async function exportResumoVisualPDF(
+  visualElement: HTMLElement,
+  tipoResumo: string,
+  disciplina: string,
+  title: string
+) {
+  const isWide = tipoResumo === "Mapa Mental";
+  const filename = `resumo-${(disciplina || "geral").toLowerCase().replace(/\s+/g, "-")}-${tipoResumo
+    .toLowerCase()
+    .replace(/\s+/g, "-")}.pdf`;
+
+  // Embrulha o visual num "documento" branco com cabeçalho compatível
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = [
+    "background:#fff",
+    "padding:24px 28px",
+    "font-family:'SF Pro Display','Open Sans',system-ui,sans-serif",
+    "color:#0f172a",
+  ].join(";");
+
+  const header = document.createElement("div");
+  header.style.cssText =
+    "text-align:center;margin-bottom:16px;border-bottom:2px solid #1E9DF1;padding-bottom:10px;";
+  header.innerHTML = `
+    <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#1E9DF1;font-weight:700;margin-bottom:4px;">${escapeHtml(
+      tipoResumo
+    )}</div>
+    <h1 style="font-size:20px;font-weight:800;margin:0;letter-spacing:0.5px;">${escapeHtml(title)}</h1>
+    ${
+      disciplina
+        ? `<div style="font-size:11px;color:#64748b;margin-top:4px;">Disciplina: <b>${escapeHtml(
+            disciplina
+          )}</b></div>`
+        : ""
+    }
+  `;
+  wrapper.appendChild(header);
+
+  const clone = visualElement.cloneNode(true) as HTMLElement;
+  wrapper.appendChild(clone);
+
+  const footer = document.createElement("div");
+  footer.style.cssText =
+    "margin-top:16px;padding-top:8px;border-top:1px solid #e2e8f0;text-align:center;font-size:9px;color:#94a3b8;";
+  footer.textContent = "Gerado por Delle — Plataforma de Estudo Inteligente";
+  wrapper.appendChild(footer);
+
+  await exportHtmlToPdf({
+    element: wrapper,
+    filename,
+    overlayMessage: "A gerar PDF visual...",
+    containerWidth: isWide ? 1180 : 794,
+    padding: "0",
+    orientation: isWide ? "landscape" : "portrait",
+    scale: 2,
+    margin: [8, 8, 8, 8],
+  });
+}
 
 export async function exportResumoPDF(resultado: string, tipoResumo: string, disciplina: string, titleOverride?: string) {
   const { title: parsedTitle, sections } = parseResumo(resultado);
