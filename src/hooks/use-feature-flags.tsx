@@ -37,7 +37,7 @@ export function useFeatureFlags() {
     else sub();
 
     const channel = supabase
-      .channel("feature-flags-global")
+      .channel(`feature-flags-global-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "feature_flags_global" },
