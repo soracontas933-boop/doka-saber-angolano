@@ -265,23 +265,23 @@ Devolve APENAS JSON válido (sem comentários, sem markdown):
   }
   slides = slides.slice(0, args.slots.length);
 
-  // ─── Identificar slides inválidos ──
+  // ─── Identificar slides inválidos (com densidade) ──
   const invalidIndexes = slides
-    .map((s, i) => (isSlideValid(s, args.slots[i].kind) ? -1 : i))
+    .map((s, i) => (isSlideValid(s, args.slots[i].kind, args.density) ? -1 : i))
     .filter(i => i >= 0);
 
-  // ─── Tentar regenerar inválidos numa segunda passagem (uma vez) ──
   if (invalidIndexes.length > 0) {
-    console.log(`[ai-deck] ${invalidIndexes.length} slides inválidos — a regenerar`);
+    console.log(`[ai-deck] ${invalidIndexes.length} slides abaixo da densidade — a regenerar`);
     try {
       const fixPrompt = `
-Os seguintes slides ficaram incompletos. PREENCHE-OS por completo respeitando o tipo e os campos obrigatórios.
+Os seguintes slides ficaram com TEXTO INSUFICIENTE para a densidade pedida (${args.density.toUpperCase()}).
+DENSIDADE EXIGIDA: ${DENSITY_HINT[args.density]}
 
 Tema: "${args.topic}"
-Tópicos do utilizador:
+Tópicos do utilizador (matéria-prima REAL — desenvolve cada um em profundidade):
 ${args.cardsOutline}
 
-Slides a corrigir (devolve no MESMO índice):
+Slides a corrigir (devolve no MESMO índice, com TODO o conteúdo expandido):
 ${invalidIndexes.map(i => {
   const req = kindRequirements(args.slots[i].kind);
   return `Índice ${i} — tipo "${args.slots[i].kind}" — precisa de: ${req.blockShape}\nTítulo actual: "${slides[i].title}"`;
@@ -291,7 +291,7 @@ Devolve APENAS JSON: { "fixes": [ { "index": 0, "slide": { ...slide completo... 
 Idioma: ${args.language === "pt-AO" ? "pt-AO" : "pt-BR"}.
 `.trim();
 
-      const fixResult = await generateWithAI(DELLE_SYSTEM_PROMPT, fixPrompt, 4000, 0.7);
+      const fixResult = await generateWithAI(DELLE_SYSTEM_PROMPT, fixPrompt, Math.floor(DENSITY_TOKEN_BUDGET[args.density] * 0.6), 0.7);
       const fmatch = fixResult.content.match(/\{[\s\S]*\}/);
       if (fmatch) {
         const fparsed = JSON.parse(fmatch[0].replace(/,(\s*[}\]])/g, "$1"));
@@ -308,9 +308,9 @@ Idioma: ${args.language === "pt-AO" ? "pt-AO" : "pt-BR"}.
 
   // ─── Fallback determinístico para os que ainda estão inválidos ──
   slides = slides.map((s, i) => {
-    if (isSlideValid(s, args.slots[i].kind)) return s;
+    if (isSlideValid(s, args.slots[i].kind, args.density)) return s;
     console.log(`[ai-deck] fallback no slide ${i} (${args.slots[i].kind})`);
-    return buildFallback(args.slots[i].kind, s, args.topic, args.cardsOutline);
+    return buildFallback(args.slots[i].kind, s, args.topic, args.cardsOutline, args.density);
   });
 
   return slides;
