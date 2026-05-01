@@ -16,6 +16,39 @@ const CreditsBar = () => {
   const navigate = useNavigate();
   const [initials, setInitials] = useState("U");
   const [warned, setWarned] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  // Hide mobile top bar on scroll down, show on scroll up
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+    const scrollEl = document.querySelector("main") as HTMLElement | null;
+    const target: HTMLElement | Window = scrollEl ?? window;
+
+    const getY = () =>
+      scrollEl ? scrollEl.scrollTop : window.scrollY;
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = getY();
+        const delta = y - lastY;
+        if (y < 10) {
+          setHidden(false);
+        } else if (delta > 6) {
+          setHidden(true);
+        } else if (delta < -6) {
+          setHidden(false);
+        }
+        lastY = y;
+        ticking = false;
+      });
+    };
+
+    target.addEventListener("scroll", onScroll, { passive: true });
+    return () => target.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
