@@ -54,17 +54,31 @@ const AdminLivrariaTab = () => {
     let capaUrl = form.capa_url;
     let ficheiroPath = form.ficheiro_path;
 
+    const sanitize = (name: string) =>
+      name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9._-]/g, "_")
+        .replace(/_+/g, "_")
+        .slice(-120);
+
     if (coverFile) {
-      const path = `cover-${Date.now()}-${coverFile.name}`;
-      const { error } = await supabase.storage.from("book-covers").upload(path, coverFile, { upsert: true });
+      const path = `cover-${Date.now()}-${sanitize(coverFile.name)}`;
+      const { error } = await supabase.storage.from("book-covers").upload(path, coverFile, {
+        upsert: true,
+        contentType: coverFile.type || "image/jpeg",
+      });
       if (error) { setSaving(false); return toast({ title: "Erro ao enviar capa", description: error.message, variant: "destructive" }); }
       capaUrl = supabase.storage.from("book-covers").getPublicUrl(path).data.publicUrl;
     }
 
     if (pdfFile) {
-      const path = `book-${Date.now()}-${pdfFile.name}`;
-      const { error } = await supabase.storage.from("book-files").upload(path, pdfFile, { upsert: true });
-      if (error) { setSaving(false); return toast({ title: "Erro ao enviar PDF", description: error.message, variant: "destructive" }); }
+      const path = `book-${Date.now()}-${sanitize(pdfFile.name)}`;
+      const { error } = await supabase.storage.from("book-files").upload(path, pdfFile, {
+        upsert: true,
+        contentType: pdfFile.type || "application/pdf",
+      });
+      if (error) { setSaving(false); return toast({ title: "Erro ao enviar PDF", description: `${error.message}${pdfFile.size > 50*1024*1024 ? ' (ficheiro maior que 50MB)' : ''}`, variant: "destructive" }); }
       ficheiroPath = path;
     }
 
