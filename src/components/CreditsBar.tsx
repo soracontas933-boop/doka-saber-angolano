@@ -16,6 +16,39 @@ const CreditsBar = () => {
   const navigate = useNavigate();
   const [initials, setInitials] = useState("U");
   const [warned, setWarned] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  // Hide mobile top bar on scroll down, show on scroll up
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+    const scrollEl = document.querySelector("main") as HTMLElement | null;
+    const target: HTMLElement | Window = scrollEl ?? window;
+
+    const getY = () =>
+      scrollEl ? scrollEl.scrollTop : window.scrollY;
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = getY();
+        const delta = y - lastY;
+        if (y < 10) {
+          setHidden(false);
+        } else if (delta > 6) {
+          setHidden(true);
+        } else if (delta < -6) {
+          setHidden(false);
+        }
+        lastY = y;
+        ticking = false;
+      });
+    };
+
+    target.addEventListener("scroll", onScroll, { passive: true });
+    return () => target.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -65,7 +98,7 @@ const CreditsBar = () => {
   return (
     <>
       {/* ===== MOBILE TOP BAR ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
+      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40 transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}>
         <div className="flex items-center justify-between px-4 py-3 gap-2 shadow-glass">
           <button
             onClick={() => navigate("/configuracoes")}
