@@ -217,7 +217,8 @@ REGRA #2 — IDIOMA: ${args.language === "pt-AO" ? "Português de Angola ('utili
 
 REGRA #3 — Tom executivo, cinematográfico, premium. ZERO meta-comentário ("neste slide", "vamos ver"). Frases directas e densas.
 
-REGRA #4 — DENSIDADE: ${DENSITY_HINT[args.density]}
+REGRA #4 — DENSIDADE OBRIGATÓRIA: ${DENSITY_HINT[args.density]}
+   ⚠ Esta regra é IMPERATIVA. Slides com texto abaixo do limiar serão rejeitados. Cada subtema do utilizador DEVE ser desenvolvido com profundidade proporcional à densidade pedida — não te limites a repetir o título do subtema, EXPLICA, contextualiza e dá exemplos concretos angolanos.
 
 CAMPOS DISPONÍVEIS POR SLIDE:
 - title (obrigatório, 3-7 palavras de impacto, vai aparecer GIGANTE)
