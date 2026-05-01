@@ -8,6 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, verticalListSortingStrategy, arrayMove,
+  useSortable, sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { Deck, Slide, SlideKind } from "@/types/presentation";
 import { LAYOUT_VARIANTS } from "@/lib/presentation/narrative";
 import { regenerateSingleSlide, type DensityLevel } from "@/lib/presentation/ai-deck";
@@ -17,6 +26,46 @@ const ALL_KINDS: SlideKind[] = [
   "timeline", "process", "comparison", "quote", "gallery", "dashboard",
   "case-study", "summary", "conclusion", "references", "closing", "cta",
 ];
+
+// ─── Item arrastável da lista de miniaturas ─────────────────────
+function SortableSlideItem({
+  slide, index, current, onClick,
+}: {
+  slide: Slide; index: number; current: number; onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: slide.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : "auto",
+  };
+  const active = index === current;
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      className={`text-xs px-2 py-1.5 rounded-md flex items-center gap-2 cursor-pointer ${
+        active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+      }`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+        className="touch-none cursor-grab active:cursor-grabbing opacity-50 hover:opacity-100"
+        aria-label="Arrastar slide"
+      >
+        <GripVertical className="h-3 w-3" />
+      </button>
+      <span className="opacity-60 w-5">{index + 1}.</span>
+      <span className="truncate flex-1">{slide.title || "—"}</span>
+      <span className="text-[9px] uppercase opacity-50">{slide.kind}</span>
+    </div>
+  );
+}
 
 interface Props {
   deck: Deck;
@@ -36,6 +85,25 @@ export function SlideEditor({
   const slide = deck.slides[current];
   const [regenHint, setRegenHint] = useState("");
   const [regenerating, setRegenerating] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIndex = deck.slides.findIndex(s => s.id === active.id);
+    const newIndex = deck.slides.findIndex(s => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const next = arrayMove(deck.slides, oldIndex, newIndex);
+    onUpdate(next);
+    // mantém o mesmo slide seleccionado (segue-o para a nova posição)
+    const currentId = slide?.id;
+    const followed = next.findIndex(s => s.id === currentId);
+    if (followed >= 0) onChange(followed);
+  };
 
   if (!slide) return null;
 
@@ -152,22 +220,23 @@ export function SlideEditor({
         )}
       </div>
 
-      {/* Slide list (compact) */}
-      <div className="shrink-0 border-b p-2 max-h-32 overflow-y-auto space-y-1">
-        {deck.slides.map((s, i) => (
-          <button
-            key={s.id}
-            onClick={() => onChange(i)}
-            className={`w-full text-left text-xs px-2 py-1.5 rounded-md flex items-center gap-2 ${
-              i === current ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-            }`}
-          >
-            <GripVertical className="h-3 w-3 opacity-40" />
-            <span className="opacity-60 w-5">{i + 1}.</span>
-            <span className="truncate flex-1">{s.title || "—"}</span>
-            <span className="text-[9px] uppercase opacity-50">{s.kind}</span>
-          </button>
-        ))}
+      {/* Slide list (drag-and-drop) */}
+      <div className="shrink-0 border-b p-2 max-h-40 overflow-y-auto">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={deck.slides.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-1">
+              {deck.slides.map((s, i) => (
+                <SortableSlideItem
+                  key={s.id}
+                  slide={s}
+                  index={i}
+                  current={current}
+                  onClick={() => onChange(i)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* Toolbar */}
