@@ -57,24 +57,42 @@ const CVPreview: React.FC<CVPreviewProps> = ({ data, template, themeId = "navy" 
     }
   };
 
+  // Measure inner content to scale wrapper height correctly (supports multi-page A4)
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [innerHeight, setInnerHeight] = useState(A4_HEIGHT);
+
+  useEffect(() => {
+    if (!innerRef.current) return;
+    const update = () => {
+      if (innerRef.current) {
+        setInnerHeight(Math.max(A4_HEIGHT, innerRef.current.scrollHeight));
+      }
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(innerRef.current);
+    return () => ro.disconnect();
+  }, [data, template, themeId]);
+
   return (
     <div
       ref={wrapperRef}
       className="cv-preview-wrapper w-full flex justify-center"
-      style={{ height: A4_HEIGHT * scale + 16 }}
+      style={{ height: innerHeight * scale + 16 }}
     >
       <div
+        ref={innerRef}
         className="bg-white shadow-xl"
         style={{
           width: A4_WIDTH,
-          height: A4_HEIGHT,
+          minHeight: A4_HEIGHT,
           transform: `scale(${scale})`,
           transformOrigin: "top center",
           fontFamily: "Arial, sans-serif",
           color: "#1a1a1a",
           fontSize: "11pt",
           lineHeight: 1.5,
-          overflow: "hidden",
+          overflow: "visible",
         }}
       >
         {renderTemplate()}

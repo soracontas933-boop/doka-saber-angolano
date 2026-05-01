@@ -51,11 +51,12 @@ export async function exportCVToPdf(data: CVData, template: CVTemplate) {
   // Clone with computed styles to preserve visual fidelity
   const cloned = deepCloneWithStyles(el);
 
-  // Remove preview transform scaling — render at true A4 size
+  // Remove preview transform scaling — render at true A4 width, allow multi-page height
   cloned.style.transform = "none";
   cloned.style.transformOrigin = "top left";
   cloned.style.width = "794px"; // A4 width at 96dpi
-  cloned.style.minHeight = "1123px"; // A4 height at 96dpi
+  cloned.style.minHeight = "1123px"; // at least 1 A4 page
+  cloned.style.height = "auto";
   cloned.style.overflow = "visible";
   cloned.style.position = "relative";
 
@@ -66,7 +67,9 @@ export async function exportCVToPdf(data: CVData, template: CVTemplate) {
     innerWrapper.style.transformOrigin = "top left";
     innerWrapper.style.width = "100%";
     innerWrapper.style.minHeight = "1123px";
+    innerWrapper.style.height = "auto";
     innerWrapper.style.overflow = "visible";
+    innerWrapper.style.boxShadow = "none";
   }
 
   const filename = `delle-cv-${data.nomeCompleto?.replace(/\s+/g, "-").toLowerCase() || "curriculo"}.pdf`;
