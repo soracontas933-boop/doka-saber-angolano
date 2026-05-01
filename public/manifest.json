@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#00D9FF",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "/doka-logo.png",
