@@ -138,6 +138,7 @@ const SettingsPage = () => {
       if (updErr) throw updErr;
 
       setProfile((p) => ({ ...p, avatar_url: publicUrl }));
+      window.dispatchEvent(new CustomEvent("profile:updated"));
       toast({ title: "Foto atualizada!", description: "A tua nova foto de perfil foi guardada." });
     } catch (err) {
       toast({
