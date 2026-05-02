@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, ChevronUp, Info, Lightbulb, BookOpen, Target, ExternalLink } from "lucide-react";
 import {
   MindMapData,
   MindNode,
@@ -222,10 +224,19 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
           const isCentral = node.parentId === null;
           const selected = selectedId === node.id;
           const isEditing = editingId === node.id;
+          const [isExpanded, setIsExpanded] = useState(false);
+          const hasDetails = !!(node.description || (node.metadata && Object.keys(node.metadata).length > 0));
 
           return (
-            <div
+            <motion.div
               key={node.id}
+              layout
+              initial={false}
+              animate={{
+                width: isExpanded ? Math.max(w, 320) : w,
+                height: isExpanded ? "auto" : h,
+                zIndex: isExpanded ? 50 : (selected ? 10 : isCentral ? 5 : 3),
+              }}
               onPointerDown={(e) => handlePointerDown(e, node)}
               onDoubleClick={(e) => {
                 e.stopPropagation();
@@ -237,80 +248,146 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
               }}
               style={{
                 position: "absolute",
-                left: node.x - w / 2,
-                top: node.y - h / 2,
-                width: w,
-                height: h,
+                left: node.x - (isExpanded ? Math.max(w, 320) : w) / 2,
+                top: node.y - (isExpanded ? 100 : h / 2),
                 cursor: readOnly ? "default" : "grab",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "8px 12px",
-                borderRadius: isCentral ? 22 : 14,
+                flexDirection: "column",
+                padding: "12px 16px",
+                borderRadius: isCentral ? 22 : 16,
                 background: isCentral
                   ? `linear-gradient(135deg, ${color}, ${shade(color, -30)})`
                   : "rgba(255,255,255,0.94)",
+                backdropFilter: "blur(10px)",
                 color: isCentral ? "#fff" : shade(color, -45),
                 border: isCentral
                   ? `3px solid rgba(255,255,255,0.7)`
                   : `2px solid ${color}`,
-                boxShadow: selected
-                  ? `0 0 0 3px ${color}, 0 12px 30px -8px ${color}66`
-                  : `0 8px 20px -6px ${color}55, 0 2px 6px rgba(0,0,0,0.06)`,
+                boxShadow: isExpanded 
+                  ? `0 20px 40px -10px ${color}44, 0 0 0 2px ${color}`
+                  : (selected
+                    ? `0 0 0 3px ${color}, 0 12px 30px -8px ${color}66`
+                    : `0 8px 20px -6px ${color}55, 0 2px 6px rgba(0,0,0,0.06)`),
                 fontFamily: data.fontFamily,
-                fontWeight: isCentral ? 800 : 700,
-                fontSize: (node.size === "large" ? 16 : node.size === "medium" ? 13 : 11) * fontScale,
-                textAlign: "center",
-                lineHeight: 1.2,
-                transition: "box-shadow 0.15s",
-                zIndex: selected ? 10 : isCentral ? 5 : 3,
-                overflow: "hidden",
+                transition: "box-shadow 0.2s",
+                overflow: isExpanded ? "visible" : "hidden",
                 wordBreak: "break-word",
+                minHeight: isExpanded ? "200px" : "auto",
               }}
             >
-              {isEditing ? (
-                <textarea
-                  autoFocus
-                  value={editingValue}
-                  onChange={(e) => setEditingValue(e.target.value)}
-                  onBlur={commitEditing}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      commitEditing();
-                    }
-                    if (e.key === "Escape") setEditingId(null);
-                  }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    resize: "none",
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    color: "inherit",
-                    fontFamily: "inherit",
-                    fontWeight: "inherit",
-                    fontSize: "inherit",
-                    textAlign: "center",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                />
-              ) : (
-                <span style={{ 
-                  pointerEvents: "none",
-                  display: "-webkit-box",
-                  WebkitLineClamp: node.size === "large" ? 4 : 3,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}>
-                  {node.label}
-                </span>
-              )}
-            </div>
+              <div className="flex flex-col w-full h-full relative">
+                {isEditing ? (
+                  <textarea
+                    autoFocus
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    onBlur={commitEditing}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        commitEditing();
+                      }
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    style={{
+                      width: "100%",
+                      height: isExpanded ? "100px" : "100%",
+                      resize: "none",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      color: "inherit",
+                      fontFamily: "inherit",
+                      fontWeight: 700,
+                      fontSize: (node.size === "large" ? 16 : node.size === "medium" ? 13 : 11) * fontScale,
+                      textAlign: "center",
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center flex-1">
+                    <span style={{ 
+                      fontWeight: 800,
+                      fontSize: (node.size === "large" ? 17 : node.size === "medium" ? 14 : 12) * fontScale,
+                      textAlign: "center",
+                      lineHeight: 1.2,
+                      display: "-webkit-box",
+                      WebkitLineClamp: isExpanded ? 10 : (node.size === "large" ? 4 : 3),
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}>
+                      {node.label}
+                    </span>
+                  </div>
+                )}
+
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-4 pt-4 border-t border-current/20 flex flex-col gap-3 text-left overflow-y-auto max-h-[300px] pr-2"
+                      style={{ fontSize: 12 * fontScale }}
+                    >
+                      {node.description && (
+                        <div className="flex gap-2">
+                          <Info className="w-4 h-4 flex-shrink-0 mt-0.5 opacity-70" />
+                          <p className="opacity-90">{node.description}</p>
+                        </div>
+                      )}
+                      {node.metadata?.definicao && (
+                        <div className="bg-current/5 p-2 rounded-lg flex gap-2">
+                          <BookOpen className="w-4 h-4 flex-shrink-0 mt-0.5 opacity-70" />
+                          <div>
+                            <span className="font-bold block mb-1 opacity-70">Definição</span>
+                            <span className="opacity-90">{node.metadata.definicao}</span>
+                          </div>
+                        </div>
+                      )}
+                      {node.metadata?.exemplo && (
+                        <div className="bg-current/5 p-2 rounded-lg flex gap-2 border-l-4 border-current/20">
+                          <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5 opacity-70" />
+                          <div>
+                            <span className="font-bold block mb-1 opacity-70">Exemplo</span>
+                            <span className="opacity-90">{node.metadata.exemplo}</span>
+                          </div>
+                        </div>
+                      )}
+                      {node.metadata?.importancia && (
+                        <div className="bg-current/5 p-2 rounded-lg flex gap-2">
+                          <Target className="w-4 h-4 flex-shrink-0 mt-0.5 opacity-70" />
+                          <div>
+                            <span className="font-bold block mb-1 opacity-70">Importância</span>
+                            <span className="opacity-90">{node.metadata.importancia}</span>
+                          </div>
+                        </div>
+                      )}
+                      {node.metadata?.fonte && (
+                        <div className="mt-2 text-[10px] opacity-60 flex items-center gap-1">
+                          <ExternalLink className="w-3 h-3" />
+                          Fonte: {node.metadata.fonte}
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {hasDetails && !readOnly && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsExpanded(!isExpanded);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white rounded-full p-1 shadow-md border border-current/20 hover:scale-110 transition-transform flex items-center justify-center"
+                    style={{ color: color, width: "24px", height: "24px" }}
+                  >
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                )}
+              </div>
+            </motion.div>
           );
         })}
       </div>

@@ -6,6 +6,16 @@
 export interface MindNode {
   id: string;
   label: string;
+  /** Conteúdo detalhado para expansão (opcional) */
+  description?: string;
+  /** Metadados para o sistema "Ver mais" */
+  metadata?: {
+    exemplo?: string;
+    definicao?: string;
+    importancia?: string;
+    aplicacao?: string;
+    fonte?: string;
+  };
   x: number;
   y: number;
   /** Cor principal do nó (hex). Quando undefined, herda da paleta. */
@@ -82,6 +92,8 @@ export function fromParsedMap(
     nodes.push({
       id: branchId,
       label: `${i + 1}. ${cleanLabel(b.label)}`,
+      description: b.description,
+      metadata: b.metadata,
       x: bx,
       y: by,
       parentId: centralId,

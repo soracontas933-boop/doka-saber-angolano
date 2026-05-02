@@ -286,27 +286,34 @@ export const prompts = {
     const base = `Conteúdo de origem (do caderno do estudante):\n"""\n${conteudo}\n"""\n\nDisciplina/nível: ${classe}. Estudante angolano. Português de Angola obrigatório.\n\nREGRAS ABSOLUTAS DE FORMATO:\n- NUNCA escrevas blocos JSON, código, chaves { } ou colchetes [ ] na resposta.\n- NUNCA uses os símbolos: • em sequência, "•[", "•{", aspas curvas estranhas.\n- USA EXCLUSIVAMENTE Markdown limpo (# título, ## secção, - item, **negrito**).\n- Não inventes nem repitas instruções; entrega só o conteúdo final.\n`;
     switch (tipo) {
          case "Mapa Mental":
-        return base + `\nGera um MAPA MENTAL hierárquico em Markdown estrito.
-REGRAS IMPORTANTES:
-1. Cada cartão deve ser MUITO RESUMIDO e CLARO (máximo 8-10 palavras por item).
-2. Use uma estrutura lógica de numeração para guiar o usuário (ex: 1. Ramo, 1.1 Sub-ramo).
-3. Se um ponto precisar de detalhamento, crie uma sub-ramificação em vez de um texto longo.
-4. O mapa deve ser visualmente organizado e fácil de seguir.
+        return base + `\nGera um MAPA MENTAL INTERATIVO e hierárquico.
+REGRAS DE CONTEÚDO (SISTEMA PREMIUM):
+1. TÍTULO DO CARTÃO: Muito curto (máximo 6 palavras).
+2. CONTEÚDO EXPANSÍVEL: Se o tópico for complexo, adicione detalhes extras entre parênteses após o título ou em uma nova linha começando com "Detalhes:".
+3. METADADOS ESPECIAIS: Use os prefixos abaixo para enriquecer o cartão interativo:
+   - "Exemplo: <texto>" para exemplos práticos.
+   - "Definição: <texto>" para conceitos técnicos.
+   - "Importância: <texto>" para relevância.
+   - "Aplicação: <texto>" para uso prático.
+4. NUMERAÇÃO: Use 1., 1.1, 1.2 para ordem lógica.
 
-Formato OBRIGATÓRIO:
+Formato OBRIGATÓRIO em Markdown:
 
-# <Tema Central curto>
+# <Tema Central>
 
-## 1. <Ramo 1>
-- 1.1 <subtópico 1>
-- 1.2 <subtópico 2>
-- 1.3 <subtópico 3>
+## 1. <Título Curto do Ramo>
+Detalhes: <Explicação detalhada para o "Ver mais">
+Exemplo: <Exemplo real angolano>
+Importância: <Por que estudar isto>
 
-## 2. <Ramo 2>
-- 2.1 <subtópico 1>
-- 2.2 <subtópico 2>
+- 1.1 <Título Curto do Sub-ramo>
+Detalhes: <Mais informações>
+Aplicação: <Como usar no dia-a-dia>
 
-Não incluas introdução, conclusão, JSON nem flashcards. Apenas a estrutura hierárquica numerada.`;
+## 2. <Próximo Ramo>
+...
+
+Priorize a clareza visual no título e a profundidade nos metadados.`;
       case "Flashcards":
         return base + `\nGera 12 FLASHCARDS de estudo. Formato OBRIGATÓRIO em Markdown (sem JSON):\n\n# Flashcards — <Tema>\n\n## 1\n**Frente:** <pergunta clara e curta>\n**Verso:** <resposta precisa, 1-3 frases>\n\n## 2\n**Frente:** ...\n**Verso:** ...\n\n(continua até 12). Não escrevas mais nada além disso.`;
       case "Linha do Tempo":

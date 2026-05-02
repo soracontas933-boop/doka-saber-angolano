@@ -32,16 +32,38 @@ export function sanitizeResumo(raw: string): string {
   return text.trim();
 }
 
-export interface MapaBranch { label: string; items: string[] }
+export interface MapaBranch { 
+  label: string; 
+  items: string[];
+  description?: string;
+  metadata?: Record<string, string>;
+}
 export interface MapaMental { central: string; branches: MapaBranch[] }
 
-/** Parseia # central + ## ramo \n - itens */
+/** Parseia # central + ## ramo \n - itens com suporte a metadados */
 export function parseMapaMental(raw: string): MapaMental {
   const text = sanitizeResumo(raw);
   const lines = text.split("\n");
   let central = "";
   const branches: MapaBranch[] = [];
   let current: MapaBranch | null = null;
+
+  const extractMetadata = (line: string, target: { description?: string, metadata?: Record<string, string> }) => {
+    const t = line.trim();
+    if (t.startsWith("Detalhes:")) {
+      target.description = t.replace(/^Detalhes:\s*/, "");
+      return true;
+    }
+    const prefixes = ["Exemplo", "Definição", "Importância", "Aplicação", "Fonte"];
+    for (const p of prefixes) {
+      if (t.startsWith(`${p}:`)) {
+        if (!target.metadata) target.metadata = {};
+        target.metadata[p.toLowerCase()] = t.replace(new RegExp(`^${p}:\\s*`), "");
+        return true;
+      }
+    }
+    return false;
+  };
 
   for (const line of lines) {
     const t = line.trim();
@@ -52,11 +74,16 @@ export function parseMapaMental(raw: string): MapaMental {
     }
     if (t.startsWith("## ")) {
       if (current) branches.push(current);
-      current = { label: t.replace(/^##\s*/, "").replace(/\*\*/g, ""), items: [] };
+      current = { label: t.replace(/^##\s*/, "").replace(/\*\*/g, ""), items: [], metadata: {} };
       continue;
     }
-    if (/^[-*•]\s/.test(t) && current) {
-      current.items.push(t.replace(/^[-*•]\s*/, "").replace(/\*\*/g, ""));
+    
+    if (current) {
+      if (extractMetadata(t, current)) continue;
+      
+      if (/^[-*•]\s/.test(t)) {
+        current.items.push(t.replace(/^[-*•]\s*/, "").replace(/\*\*/g, ""));
+      }
     }
   }
   if (current) branches.push(current);
