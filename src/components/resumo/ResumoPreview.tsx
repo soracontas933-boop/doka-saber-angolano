@@ -1,7 +1,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { FileDown, FileText, Copy, Type } from "lucide-react";
+import { FileDown, FileText, Copy, Type, Palette, LayoutGrid } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { exportResumoPDF, exportResumoWord, exportResumoVisualPDF } from "@/lib/resumo-export";
 import {
@@ -15,6 +16,7 @@ import MapaMentalVisual from "./visuals/MapaMentalVisual";
 import FlashcardsVisual from "./visuals/FlashcardsVisual";
 import LinhaTempoVisual from "./visuals/LinhaTempoVisual";
 import QuadroComparativoVisual from "./visuals/QuadroComparativoVisual";
+import TopicosVisual, { TopicosStyle, TopicoSection } from "./visuals/TopicosVisual";
 import A4Sheet from "./A4Sheet";
 
 interface ResumoPreviewProps {
@@ -23,70 +25,141 @@ interface ResumoPreviewProps {
   disciplina: string;
 }
 
-interface ParsedSection {
-  heading: string;
-  level: number;
-  items: string[];
+/**
+ * Limpa marcadores estranhos da IA (%%, ##, ***, ===, ___, etc.) preservando
+ * o conteúdo real e a hierarquia (# / ## / - / *).
+ */
+function cleanArtifacts(text: string): string {
+  return text
+    // Remove "%%" e "===" e "___"
+    .replace(/%%+/g, "")
+    .replace(/={3,}/g, "")
+    .replace(/_{3,}/g, "")
+    // Remove "***" decorativo (mas mantém **bold** intacto)
+    .replace(/(?<!\*)\*{3,}(?!\*)/g, "")
+    // Remove "##" soltos no meio das linhas (mantém ## no início para títulos)
+    .replace(/(?<!^)(?<!\n)#{2,}/g, "")
+    // Remove sequências tipo "##- " ou "## **"
+    .replace(/^#{2,}\s*[-*]\s*/gm, "## ")
+    // Remove caracteres de controle estranhos
+    .replace(/[•◦▪▫]{2,}/g, "")
+    .replace(/^\s*[-•*]\s*[-•*]\s*/gm, "- ")
+    .trim();
 }
 
-function parseResumoContent(text: string): { title: string; sections: ParsedSection[] } {
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+function parseResumoSections(text: string): { title: string; sections: TopicoSection[] } {
+  const lines = text.split("\n").map((l) => l.trim());
   let title = "";
-  const sections: ParsedSection[] = [];
-  let current: ParsedSection | null = null;
+  const sections: TopicoSection[] = [];
+  let current: TopicoSection | null = null;
 
-  for (const line of lines) {
-    if (line.startsWith("# ")) { title = line.replace(/^#\s*/, "").replace(/\*\*/g, ""); continue; }
-    if (line.startsWith("## ")) {
+  for (const raw of lines) {
+    if (!raw) continue;
+    const line = raw;
+
+    // Title: # Algo
+    if (/^#\s+/.test(line) && !title) {
+      title = line.replace(/^#\s+/, "").replace(/\*\*/g, "").trim();
+      continue;
+    }
+
+    // Section heading: ## Algo  ou  ### Algo  ou  **Algo**
+    if (/^#{2,3}\s+/.test(line)) {
       if (current) sections.push(current);
-      current = { heading: line.replace(/^##\s*/, "").replace(/\*\*/g, ""), level: 2, items: [] };
+      current = {
+        heading: line.replace(/^#{2,3}\s+/, "").replace(/\*\*/g, "").trim(),
+        items: [],
+      };
       continue;
     }
-    if (line.startsWith("### ")) {
+    if (/^\*\*[^*]+\*\*\s*:?$/.test(line)) {
       if (current) sections.push(current);
-      current = { heading: line.replace(/^###\s*/, "").replace(/\*\*/g, ""), level: 3, items: [] };
+      const heading = line.replace(/\*\*/g, "").replace(/:$/, "").trim();
+      if (!title) {
+        title = heading;
+        continue;
+      }
+      current = { heading, items: [] };
       continue;
     }
-    if (/^\*\*[^*]+\*\*$/.test(line)) {
-      if (current) sections.push(current);
-      const heading = line.replace(/\*\*/g, "");
-      if (!title) { title = heading; continue; }
-      current = { heading, level: 2, items: [] };
+
+    // Numbered heading: "1. Tema importante" (linha curta sem ponto final, considera heading)
+    const numMatch = line.match(/^(\d+)[.)]\s+(.+)$/);
+    if (numMatch && numMatch[2].length < 80 && !numMatch[2].endsWith(".") && !current) {
+      current = { heading: numMatch[2].replace(/\*\*/g, "").trim(), items: [] };
       continue;
     }
-    if (/^[-*•]\s/.test(line) || /^\d+[.)]\s/.test(line)) {
-      const item = line.replace(/^[-*•]\s*/, "").replace(/^\d+[.)]\s*/, "");
-      if (current) current.items.push(item);
-      else current = { heading: "", level: 0, items: [item] };
+
+    // Bullets / itens
+    if (/^[-*•]\s+/.test(line) || /^\d+[.)]\s+/.test(line)) {
+      const item = line
+        .replace(/^[-*•]\s+/, "")
+        .replace(/^\d+[.)]\s+/, "")
+        .trim();
+      if (!current) current = { heading: "Conteúdo", items: [] };
+      if (item) current.items.push(item);
       continue;
     }
-    if (current) current.items.push(line);
-    else current = { heading: "", level: 0, items: [line] };
+
+    // Texto solto → adicionado como item ao bloco atual
+    if (current) {
+      current.items.push(line);
+    } else {
+      current = { heading: title || "Introdução", items: [line] };
+    }
   }
   if (current) sections.push(current);
-  return { title, sections };
+
+  // Remove secções vazias
+  const filtered = sections.filter((s) => s.heading || s.items.length);
+  return { title: title || "Resumo", sections: filtered };
 }
 
-function renderInlineBold(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) =>
-    part.startsWith("**") && part.endsWith("**")
-      ? <strong key={i}>{part.replace(/\*\*/g, "")}</strong>
-      : <span key={i}>{part}</span>
-  );
-}
+const TIPOS_TEXTUAIS = ["Resumo por Tópicos", "Resumo Esquemático", "Resumo Narrativo", "Resumo com Mnemônicos"];
+
+const STYLE_OPTIONS: { value: TopicosStyle; label: string }[] = [
+  { value: "step-cards", label: "Step Cards" },
+  { value: "timeline-blocks", label: "Timeline Blocks" },
+  { value: "process-indicators", label: "Process Indicators" },
+  { value: "infographic-panels", label: "Infographic Panels" },
+  { value: "topic-containers", label: "Topic Containers" },
+  { value: "learning-modules", label: "Learning Modules" },
+  { value: "flow-cards", label: "Flow Cards" },
+  { value: "smart-content", label: "Smart Content" },
+  { value: "bento-cards", label: "Bento Cards" },
+  { value: "glassmorphism", label: "Glassmorphism" },
+  { value: "gradient-tiles", label: "Gradient Tiles" },
+  { value: "dashboard-widgets", label: "Dashboard Widgets" },
+  { value: "story-blocks", label: "Story Blocks" },
+  { value: "numbered-blocks", label: "Numbered Blocks" },
+  { value: "ribbon-labels", label: "Ribbon Labels" },
+  { value: "highlight-boxes", label: "Highlight Boxes" },
+  { value: "milestone-cards", label: "Milestone Cards" },
+];
+
+const PALETTE_OPTIONS = [
+  { value: "azul", label: "Azul" },
+  { value: "verde", label: "Verde" },
+  { value: "roxo", label: "Roxo" },
+  { value: "laranja", label: "Laranja" },
+  { value: "cinza", label: "Cinza" },
+] as const;
 
 const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, disciplina }) => {
-  const cleaned = sanitizeResumo(resultado);
-  const { title, sections } = parseResumoContent(cleaned);
+  const cleaned = React.useMemo(() => cleanArtifacts(sanitizeResumo(resultado)), [resultado]);
+  const { title, sections } = React.useMemo(() => parseResumoSections(cleaned), [cleaned]);
   const visualRef = React.useRef<HTMLDivElement>(null);
 
-  // Tamanho da letra: 1 (mais pequeno) → 50 (gigante). 25 = padrão (1.0×).
+  // Tamanho da letra: 1..50 → 0.55x..2.2x
   const [fontLevel, setFontLevel] = React.useState<number>(25);
-  // Mapeia 1..50 para multiplicador 0.55× .. 2.2×
   const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
-  // Para o A4 textual usamos pt como base 11pt
   const a4FontPt = Math.max(6, Math.round(11 * fontScale * 10) / 10);
+
+  // Estilo visual e paleta para resumos textuais
+  const [topicosStyle, setTopicosStyle] = React.useState<TopicosStyle>("step-cards");
+  const [palette, setPalette] = React.useState<typeof PALETTE_OPTIONS[number]["value"]>("azul");
+
+  const isTextual = TIPOS_TEXTUAIS.includes(tipoResumo);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(cleaned);
@@ -94,14 +167,12 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
   };
 
   const handleExportPDF = () => {
-    // Se houver visual rico (mapa mental, flashcards, etc.) exporta o visual real
     if (visualRef.current) {
       return exportResumoVisualPDF(visualRef.current, tipoResumo, disciplina, title || tipoResumo);
     }
     return exportResumoPDF(cleaned, tipoResumo, disciplina, title);
   };
 
-  // Decide o componente visual conforme o tipo — todos dentro de uma folha A4 real
   const renderVisual = () => {
     switch (tipoResumo) {
       case "Mapa Mental": {
@@ -134,6 +205,21 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
         return <QuadroComparativoVisual data={data} />;
       }
       default:
+        // Tipos textuais → renderiza com estilo escolhido em A4 portrait
+        if (isTextual && sections.length > 0) {
+          return (
+            <A4Sheet orientation="portrait">
+              <TopicosVisual
+                title={title}
+                disciplina={disciplina}
+                sections={sections}
+                style={topicosStyle}
+                fontScale={fontScale}
+                palette={palette}
+              />
+            </A4Sheet>
+          );
+        }
         return null;
     }
   };
@@ -157,24 +243,63 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
         </div>
       </div>
 
-      {/* Controlo de tamanho da letra (1–50) */}
-      <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border border-border/60">
-        <Type className="h-4 w-4 text-muted-foreground shrink-0" />
-        <div className="flex-1 min-w-[120px]">
-          <Slider
-            min={1}
-            max={50}
-            step={1}
-            value={[fontLevel]}
-            onValueChange={(v) => setFontLevel(v[0])}
-          />
+      {/* Controlos de personalização */}
+      <div className="space-y-3 p-3 rounded-xl bg-muted/40 border border-border/60">
+        {/* Tamanho da letra */}
+        <div className="flex items-center gap-3">
+          <Type className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="flex-1 min-w-[120px]">
+            <Slider
+              min={1}
+              max={50}
+              step={1}
+              value={[fontLevel]}
+              onValueChange={(v) => setFontLevel(v[0])}
+            />
+          </div>
+          <span className="text-xs font-semibold text-foreground tabular-nums w-20 text-right">
+            Letra {fontLevel}/50
+          </span>
         </div>
-        <span className="text-xs font-semibold text-foreground tabular-nums w-20 text-right">
-          Letra {fontLevel}/50
-        </span>
+
+        {/* Estilo visual + paleta (apenas para resumos textuais) */}
+        {isTextual && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select value={topicosStyle} onValueChange={(v) => setTopicosStyle(v as TopicosStyle)}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Estilo visual" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {STYLE_OPTIONS.map((s) => (
+                    <SelectItem key={s.value} value={s.value} className="text-xs">
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select value={palette} onValueChange={(v) => setPalette(v as any)}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Paleta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PALETTE_OPTIONS.map((p) => (
+                    <SelectItem key={p.value} value={p.value} className="text-xs">
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Componente visual quando aplicável */}
+      {/* Visual principal */}
       {visual && (
         <div ref={visualRef} className="bg-card border border-border rounded-2xl shadow-card overflow-hidden">
           <div className="px-5 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
@@ -194,75 +319,38 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
         </div>
       )}
 
-      {/* Render textual A4 — sempre, para fallback / leitura completa / exportação */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-border">
-        <div
-          className="resumo-a4-preview"
-          style={{
-            fontFamily: "'Times New Roman', serif",
-            color: "#000",
-            backgroundColor: "#fff",
-            padding: "48px 56px",
-            minHeight: visual ? "auto" : "700px",
-            fontSize: `${a4FontPt}pt`,
-            lineHeight: "1.7",
-            position: "relative",
-          }}
-        >
-          <div style={{ position: "absolute", top: 0, left: 0, width: "80px", height: "80px", borderTop: "4px solid #10b981", borderLeft: "4px solid #10b981" }} />
-          <div style={{ position: "absolute", bottom: 0, right: 0, width: "80px", height: "80px", borderBottom: "4px solid #10b981", borderRight: "4px solid #10b981" }} />
-
-          <div style={{ textAlign: "center", marginBottom: "28px" }}>
-            <h1 style={{ fontSize: `${(a4FontPt * 18) / 11}pt`, fontWeight: "bold", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "1px" }}>
-              {title || tipoResumo}
-            </h1>
-            {disciplina && (
-              <p style={{ fontSize: `${a4FontPt}pt`, color: "#444", marginBottom: "4px" }}>Disciplina: {disciplina}</p>
-            )}
-            <p style={{ fontSize: `${(a4FontPt * 10) / 11}pt`, color: "#666", fontStyle: "italic" }}>{tipoResumo}</p>
-            <div style={{ borderBottom: "2px solid #000", width: "100%", marginTop: "14px" }} />
-          </div>
-
-          {sections.length === 0 ? (
-            <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "16px", backgroundColor: "#fafafa" }}>
-              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "'Times New Roman', serif", fontSize: `${a4FontPt}pt` }}>
-                {cleaned}
-              </pre>
+      {/* Fallback textual A4 — só quando NÃO há visual rico */}
+      {!visual && (
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-border">
+          <div
+            className="resumo-a4-preview"
+            style={{
+              fontFamily: "'Times New Roman', serif",
+              color: "#000",
+              backgroundColor: "#fff",
+              padding: "48px 56px",
+              minHeight: "700px",
+              fontSize: `${a4FontPt}pt`,
+              lineHeight: "1.7",
+              position: "relative",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "28px" }}>
+              <h1 style={{ fontSize: `${(a4FontPt * 18) / 11}pt`, fontWeight: "bold", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                {title || tipoResumo}
+              </h1>
+              {disciplina && (
+                <p style={{ fontSize: `${a4FontPt}pt`, color: "#444", marginBottom: "4px" }}>Disciplina: {disciplina}</p>
+              )}
+              <p style={{ fontSize: `${(a4FontPt * 10) / 11}pt`, color: "#666", fontStyle: "italic" }}>{tipoResumo}</p>
+              <div style={{ borderBottom: "2px solid #000", width: "100%", marginTop: "14px" }} />
             </div>
-          ) : (
-            <div>
-              {sections.map((section, idx) => (
-                <div key={idx} style={{ marginBottom: "18px" }}>
-                  {section.heading && (
-                    <div style={{ marginBottom: "8px", paddingBottom: "4px", borderBottom: section.level === 2 ? "1px solid #ccc" : "none" }}>
-                      <h2 style={{
-                        fontSize: section.level === 2 ? `${(a4FontPt * 13) / 11}pt` : `${(a4FontPt * 12) / 11}pt`,
-                        fontWeight: "bold",
-                        color: section.level === 2 ? "#1a1a1a" : "#333",
-                        textTransform: section.level === 2 ? "uppercase" : "none",
-                        letterSpacing: section.level === 2 ? "0.5px" : "0",
-                        margin: 0,
-                      }}>
-                        {section.heading}
-                      </h2>
-                    </div>
-                  )}
-                  {section.items.map((item, ii) => (
-                    <div key={ii} style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "5px", paddingLeft: section.heading ? "12px" : "0", fontSize: `${a4FontPt}pt` }}>
-                      {section.heading && <span style={{ color: "#10b981", fontWeight: "bold", flexShrink: 0 }}>•</span>}
-                      <span style={{ textAlign: "justify" }}>{renderInlineBold(item)}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div style={{ borderTop: "1px solid #ccc", marginTop: "32px", paddingTop: "10px", textAlign: "center", fontSize: `${(a4FontPt * 9) / 11}pt`, color: "#888" }}>
-            Gerado por Delle — Plataforma de Estudo Inteligente
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "'Times New Roman', serif", fontSize: `${a4FontPt}pt` }}>
+              {cleaned}
+            </pre>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
