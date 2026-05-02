@@ -8,7 +8,7 @@ export interface Flashcard {
   verso: string;
 }
 
-export const FlashcardsVisual: React.FC<{ cards: Flashcard[] }> = ({ cards }) => {
+export const FlashcardsVisual: React.FC<{ cards: Flashcard[], fontScale?: number }> = ({ cards, fontScale = 1 }) => {
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
@@ -59,7 +59,7 @@ export const FlashcardsVisual: React.FC<{ cards: Flashcard[] }> = ({ cards }) =>
             }}
           >
             <div className="text-[10px] uppercase tracking-[0.2em] opacity-80 mb-3">Pergunta</div>
-            <div className="text-xl md:text-2xl font-bold leading-snug max-w-2xl">{card.frente}</div>
+            <div className="text-xl md:text-2xl font-bold leading-snug max-w-2xl" style={{ fontSize: `${24 * fontScale}px` }}>{card.frente}</div>
             <div className="absolute bottom-4 text-[10px] opacity-70 flex items-center gap-1.5">
               <RotateCw className="h-3 w-3" /> Toque para virar
             </div>
@@ -70,7 +70,7 @@ export const FlashcardsVisual: React.FC<{ cards: Flashcard[] }> = ({ cards }) =>
             style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
           >
             <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-semibold mb-3">Resposta</div>
-            <div className="text-base md:text-xl font-medium leading-relaxed text-foreground max-w-2xl">{card.verso}</div>
+            <div className="text-base md:text-xl font-medium leading-relaxed text-foreground max-w-2xl" style={{ fontSize: `${18 * fontScale}px` }}>{card.verso}</div>
             <div className="absolute bottom-4 text-[10px] text-muted-foreground flex items-center gap-1.5">
               <RotateCw className="h-3 w-3" /> Toque para virar
             </div>

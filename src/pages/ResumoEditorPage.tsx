@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import {
   sanitizeResumo,
@@ -56,6 +57,9 @@ const ResumoEditorPage: React.FC = () => {
   const [tipoResumo] = useState(initial.tipoResumo);
   const [palette, setPalette] = useState(PALETTE_PRESETS[0]);
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
+  const [fontLevel, setFontLevel] = useState(25);
+  const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
+  const fs = (px: number) => `${px * fontScale}px`;
   const visualRef = useRef<HTMLDivElement>(null);
 
   const cleaned = useMemo(() => sanitizeResumo(resultado), [resultado]);
@@ -75,7 +79,7 @@ const ResumoEditorPage: React.FC = () => {
         if (!data.branches.length) return null;
         return (
           <A4Sheet orientation="landscape" innerRef={visualRef}>
-            <MapaMentalVisual central={data.central} branches={data.branches} fillA4 />
+            <MapaMentalVisual central={data.central} branches={data.branches} fillA4 fontScale={fontScale} />
           </A4Sheet>
         );
       }
@@ -85,7 +89,7 @@ const ResumoEditorPage: React.FC = () => {
         return (
           <A4Sheet orientation="portrait" innerRef={visualRef}>
             <div style={{ padding: 28, height: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
-              <h2 style={{ textAlign: "center", fontFamily, fontSize: 22, fontWeight: 800, color: palette.primary, margin: 0 }}>
+              <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: 0 }}>
                 {finalTitle}
               </h2>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, flex: 1, overflow: "hidden" }}>
@@ -99,11 +103,11 @@ const ResumoEditorPage: React.FC = () => {
                     flexDirection: "column",
                     gap: 6,
                   }}>
-                    <div style={{ fontSize: 9, letterSpacing: 1.5, color: palette.primary, fontWeight: 700, textTransform: "uppercase" }}>
+                    <div style={{ fontSize: fs(9), letterSpacing: 1.5, color: palette.primary, fontWeight: 700, textTransform: "uppercase" }}>
                       Cartão {i + 1}
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "#0f172a", fontFamily }}>{c.frente}</div>
-                    <div style={{ borderTop: `1px dashed ${palette.primary}55`, paddingTop: 6, fontSize: 11, color: "#334155", fontFamily }}>
+                    <div style={{ fontWeight: 700, fontSize: fs(13), color: "#0f172a", fontFamily }}>{c.frente}</div>
+                    <div style={{ borderTop: `1px dashed ${palette.primary}55`, paddingTop: 6, fontSize: fs(11), color: "#334155", fontFamily }}>
                       {c.verso}
                     </div>
                   </div>
@@ -119,7 +123,7 @@ const ResumoEditorPage: React.FC = () => {
         return (
           <A4Sheet orientation="portrait" innerRef={visualRef}>
             <div style={{ padding: 32, height: "100%", overflow: "hidden" }}>
-              <h2 style={{ textAlign: "center", fontFamily, fontSize: 22, fontWeight: 800, color: palette.primary, margin: "0 0 18px" }}>
+              <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 18px" }}>
                 {finalTitle}
               </h2>
               <div style={{ position: "relative", paddingLeft: 36 }}>
@@ -128,9 +132,9 @@ const ResumoEditorPage: React.FC = () => {
                   <div key={i} style={{ position: "relative", marginBottom: 14 }}>
                     <div style={{ position: "absolute", left: -32, top: 4, width: 18, height: 18, borderRadius: "50%", background: palette.primary, border: "3px solid #fff", boxShadow: `0 0 0 2px ${palette.primary}55` }} />
                     <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 14px" }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: palette.primary, padding: "2px 8px", borderRadius: 999 }}>{e.data}</span>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: "#0f172a", fontFamily, marginTop: 4 }}>{e.titulo}</div>
-                      {e.descricao && <div style={{ fontSize: 11, color: "#475569", fontFamily, marginTop: 2 }}>{e.descricao}</div>}
+                      <span style={{ fontSize: fs(10), fontWeight: 700, color: "#fff", background: palette.primary, padding: "2px 8px", borderRadius: 999 }}>{e.data}</span>
+                      <div style={{ fontWeight: 700, fontSize: fs(13), color: "#0f172a", fontFamily, marginTop: 4 }}>{e.titulo}</div>
+                      {e.descricao && <div style={{ fontSize: fs(11), color: "#475569", fontFamily, marginTop: 2 }}>{e.descricao}</div>}
                     </div>
                   </div>
                 ))}
@@ -145,15 +149,15 @@ const ResumoEditorPage: React.FC = () => {
         return (
           <A4Sheet orientation="landscape" innerRef={visualRef}>
             <div style={{ padding: 28, height: "100%", display: "flex", flexDirection: "column" }}>
-              <h2 style={{ textAlign: "center", fontFamily, fontSize: 22, fontWeight: 800, color: palette.primary, margin: "0 0 14px" }}>
+              <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 14px" }}>
                 {finalTitle}
               </h2>
               <div style={{ flex: 1, overflow: "hidden", border: "1px solid #e2e8f0", borderRadius: 12 }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontFamily, fontSize: 12 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontFamily, fontSize: fs(12) }}>
                   <thead>
                     <tr>
                       {data.headers.map((h, i) => (
-                        <th key={i} style={{ padding: 10, textAlign: "left", color: "#fff", background: i === 0 ? "#0f172a" : palette.primary, fontSize: 12 }}>{h}</th>
+                        <th key={i} style={{ padding: 10, textAlign: "left", color: "#fff", background: i === 0 ? "#0f172a" : palette.primary, fontSize: fs(12) }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -227,6 +231,24 @@ const ResumoEditorPage: React.FC = () => {
             <div className="space-y-1.5">
               <Label className="text-xs">Disciplina</Label>
               <Input value={disciplina} onChange={(e) => setDisciplina(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Type className="h-3.5 w-3.5" /> Tamanho da Letra
+            </h3>
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1">
+                <Slider
+                  min={1}
+                  max={50}
+                  step={1}
+                  value={[fontLevel]}
+                  onValueChange={(v) => setFontLevel(v[0])}
+                />
+              </div>
+              <span className="text-xs font-bold w-12 text-right tabular-nums">{fontLevel}</span>
             </div>
           </div>
 

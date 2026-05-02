@@ -22,6 +22,7 @@ export interface MindMapData {
   palette: string[];
   fontFamily: string;
   background: "blueprint" | "white" | "dark" | "paper";
+  fontLevel?: number;
 }
 
 export const DEFAULT_PALETTE = [
@@ -89,12 +90,14 @@ export function fromParsedMap(
 
     // sub-itens distribuídos numa pequena coluna ao lado do ramo
     const isLeft = bx < cx;
-    b.items.slice(0, 6).forEach((item, j) => {
-      const offsetX = isLeft ? -160 : 160;
-      const offsetY = (j - (b.items.length - 1) / 2) * 38;
+    b.items.slice(0, 10).forEach((item, j) => {
+      const branchNumber = i + 1;
+      const subNumber = j + 1;
+      const offsetX = isLeft ? -180 : 180;
+      const offsetY = (j - (b.items.length - 1) / 2) * 44;
       nodes.push({
         id: makeId(),
-        label: item,
+        label: `${branchNumber}.${subNumber} ${item}`,
         x: bx + offsetX,
         y: by + offsetY,
         parentId: branchId,

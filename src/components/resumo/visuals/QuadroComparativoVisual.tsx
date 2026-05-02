@@ -9,12 +9,12 @@ const COL_COLORS = [
   "hsl(199 89% 48%)", "hsl(280 70% 55%)", "hsl(160 70% 42%)", "hsl(25 90% 55%)",
 ];
 
-export const QuadroComparativoVisual: React.FC<{ data: Comparativo }> = ({ data }) => {
+export const QuadroComparativoVisual: React.FC<{ data: Comparativo, fontScale?: number }> = ({ data, fontScale = 1 }) => {
   const { headers, rows } = data;
   return (
     <div className="bg-gradient-to-br from-background to-muted/20 p-4 md:p-8 rounded-2xl">
       <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" style={{ fontSize: `${14 * fontScale}px` }}>
           <thead>
             <tr>
               {headers.map((h, i) => (

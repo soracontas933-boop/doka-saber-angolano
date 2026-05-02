@@ -12,7 +12,7 @@ const COLORS = [
   "hsl(45 90% 50%)", "hsl(10 75% 55%)",
 ];
 
-export const LinhaTempoVisual: React.FC<{ events: TimelineEvent[] }> = ({ events }) => {
+export const LinhaTempoVisual: React.FC<{ events: TimelineEvent[], fontScale?: number }> = ({ events, fontScale = 1 }) => {
   return (
     <div className="bg-gradient-to-b from-background to-muted/20 p-6 md:p-10 rounded-2xl">
       <div className="relative pl-8 md:pl-12">
@@ -41,9 +41,9 @@ export const LinhaTempoVisual: React.FC<{ events: TimelineEvent[] }> = ({ events
                       {e.data}
                     </span>
                   </div>
-                  <h4 className="font-bold text-base md:text-lg text-foreground leading-snug mb-1">{e.titulo}</h4>
+                  <h4 className="font-bold text-base md:text-lg text-foreground leading-snug mb-1" style={{ fontSize: `${16 * fontScale}px` }}>{e.titulo}</h4>
                   {e.descricao && (
-                    <p className="text-sm text-muted-foreground leading-relaxed">{e.descricao}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed" style={{ fontSize: `${14 * fontScale}px` }}>{e.descricao}</p>
                   )}
                 </div>
               </div>

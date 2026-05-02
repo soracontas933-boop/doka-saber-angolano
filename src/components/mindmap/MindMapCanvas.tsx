@@ -49,6 +49,8 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const fontLevel = data.fontLevel || 25;
+  const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
   const dragRef = useRef<{
@@ -257,11 +259,13 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                   : `0 8px 20px -6px ${color}55, 0 2px 6px rgba(0,0,0,0.06)`,
                 fontFamily: data.fontFamily,
                 fontWeight: isCentral ? 800 : 700,
-                fontSize: node.size === "large" ? 16 : node.size === "medium" ? 13 : 11,
+                fontSize: (node.size === "large" ? 16 : node.size === "medium" ? 13 : 11) * fontScale,
                 textAlign: "center",
                 lineHeight: 1.2,
                 transition: "box-shadow 0.15s",
                 zIndex: selected ? 10 : isCentral ? 5 : 3,
+                overflow: "hidden",
+                wordBreak: "break-word",
               }}
             >
               {isEditing ? (
@@ -290,10 +294,21 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                     fontWeight: "inherit",
                     fontSize: "inherit",
                     textAlign: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 />
               ) : (
-                <span style={{ pointerEvents: "none" }}>{node.label}</span>
+                <span style={{ 
+                  pointerEvents: "none",
+                  display: "-webkit-box",
+                  WebkitLineClamp: node.size === "large" ? 3 : 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}>
+                  {node.label}
+                </span>
               )}
             </div>
           );

@@ -192,17 +192,17 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
       case "Flashcards": {
         const cards = parseFlashcards(cleaned);
         if (cards.length === 0) return null;
-        return <FlashcardsVisual cards={cards} />;
+        return <FlashcardsVisual cards={cards} fontScale={fontScale} />;
       }
       case "Linha do Tempo": {
         const events = parseLinhaTempo(cleaned);
         if (events.length === 0) return null;
-        return <LinhaTempoVisual events={events} />;
+        return <LinhaTempoVisual events={events} fontScale={fontScale} />;
       }
       case "Quadro Comparativo": {
         const data = parseQuadroComparativo(cleaned);
         if (!data) return null;
-        return <QuadroComparativoVisual data={data} />;
+        return <QuadroComparativoVisual data={data} fontScale={fontScale} />;
       }
       default:
         // Tipos textuais → renderiza com estilo escolhido em A4 portrait

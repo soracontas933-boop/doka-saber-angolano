@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Trash2, Sparkles, Plus, Palette as PaletteIcon, Type } from "lucide-react";
 import {
   MindMapData,
@@ -148,10 +149,28 @@ export const MindMapPropertiesPanel: React.FC<Props> = ({
       </div>
 
       {/* Estilo global */}
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-          <PaletteIcon className="h-3.5 w-3.5" /> Paleta global
-        </h3>
+          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Type className="h-3.5 w-3.5" /> Tamanho da Letra
+            </h3>
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1">
+                <Slider
+                  min={1}
+                  max={50}
+                  step={1}
+                  value={[data.fontLevel || 25]}
+                  onValueChange={(v) => onChange({ ...data, fontLevel: v[0] })}
+                />
+              </div>
+              <span className="text-xs font-bold w-12 text-right tabular-nums">{data.fontLevel || 25}</span>
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <PaletteIcon className="h-3.5 w-3.5" /> Paleta global
+            </h3>
         <div className="space-y-2">
           {PALETTE_PRESETS.map((p) => {
             const active = JSON.stringify(p.colors) === JSON.stringify(data.palette);
