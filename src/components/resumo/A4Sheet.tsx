@@ -97,6 +97,7 @@ const A4Sheet: React.FC<A4SheetProps> = ({
               <React.Fragment key={i}>
                 {i > 0 && (
                   <div 
+                    data-page-guide="true"
                     style={{ 
                       position: "absolute", 
                       top: i * H, 

@@ -110,6 +110,32 @@ export async function exportHtmlToPdf({
         el.style.maxWidth = "100%";
       }
     });
+    
+    // Ocultar elementos de guia de página (linhas de quebra de página) durante a exportação
+    const pageGuides = container.querySelectorAll('[data-page-guide="true"]');
+    pageGuides.forEach((guide) => {
+      (guide as HTMLElement).style.display = 'none';
+    });
+    
+    // Remover elementos duplicados de cabeçalho (Header) e outras duplicações
+    // Procura por divs com estilos de cabeçalho (text-align:center com border-bottom)
+    const allDivs = container.querySelectorAll('div');
+    const headerDivs: HTMLElement[] = [];
+    
+    allDivs.forEach((div) => {
+      const style = (div as HTMLElement).getAttribute('style') || '';
+      // Identifica divs que parecem ser cabeçalhos (text-align:center com border-bottom)
+      if (style.includes('text-align:center') && style.includes('border-bottom') && style.includes('margin-bottom:18px')) {
+        headerDivs.push(div as HTMLElement);
+      }
+    });
+    
+    // Se houver múltiplos cabeçalhos, oculta todos exceto o primeiro
+    if (headerDivs.length > 1) {
+      for (let i = 1; i < headerDivs.length; i++) {
+        headerDivs[i].style.display = 'none';
+      }
+    }
 
     // Wait for fonts and images
     await document.fonts.ready;
