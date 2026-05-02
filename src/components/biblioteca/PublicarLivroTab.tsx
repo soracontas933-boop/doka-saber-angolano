@@ -12,6 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Loader2, BookOpen, Eye, Download, TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Configurar o worker do PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const sanitize = (name: string) =>
   name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_").slice(-120);
@@ -49,6 +53,37 @@ const PublicarLivroTab = () => {
     setCoverFile(null); setPdfFile(null);
   };
 
+  const generateCoverFromPdf = async (file: File): Promise<File | null> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1.5 });
+      
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) return null;
+      
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      
+      await page.render({ canvasContext: context, viewport }).promise;
+      
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], "cover.jpg", { type: "image/jpeg" }));
+          } else {
+            resolve(null);
+          }
+        }, "image/jpeg", 0.8);
+      });
+    } catch (err) {
+      console.error("Erro ao gerar capa do PDF:", err);
+      return null;
+    }
+  };
+
   const submit = async () => {
     if (!user) return;
     if (!form.titulo || !form.autor || !pdfFile) {
@@ -59,10 +94,17 @@ const PublicarLivroTab = () => {
     }
     setSaving(true);
 
+    // Se não houver capa mas houver PDF novo, gerar capa do PDF
+    let finalCoverFile = coverFile;
+    if (!finalCoverFile && pdfFile) {
+      toast({ title: "Gerando capa a partir do PDF..." });
+      finalCoverFile = await generateCoverFromPdf(pdfFile);
+    }
+
     let capaUrl: string | null = null;
-    if (coverFile) {
-      const path = `${user.id}/cover-${Date.now()}-${sanitize(coverFile.name)}`;
-      const { error } = await supabase.storage.from("book-covers").upload(path, coverFile, { upsert: true, contentType: coverFile.type || "image/jpeg" });
+    if (finalCoverFile) {
+      const path = `${user.id}/cover-${Date.now()}-${sanitize(finalCoverFile.name)}`;
+      const { error } = await supabase.storage.from("book-covers").upload(path, finalCoverFile, { upsert: true, contentType: finalCoverFile.type || "image/jpeg" });
       if (error) { setSaving(false); return toast({ title: "Erro ao enviar capa", description: error.message, variant: "destructive" }); }
       capaUrl = supabase.storage.from("book-covers").getPublicUrl(path).data.publicUrl;
     }
@@ -233,123 +275,129 @@ const MetricasAutor = ({ books, userId }: { books: any[]; userId?: string }) => 
   const [chart, setChart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadMetrics = async () => {
     if (!userId) return;
-    const load = async () => {
-      const { data: ps } = await supabase
-        .from("book_author_payouts")
-        .select("*, books(titulo)")
-        .eq("author_id", userId)
-        .order("criado_em", { ascending: false });
-      setPayouts(ps || []);
+    setLoading(true);
+    const { data: po } = await supabase
+      .from("book_author_payouts")
+      .select("*, books(titulo)")
+      .eq("author_id", userId)
+      .order("criado_em", { ascending: false });
+    
+    setPayouts(po || []);
 
-      // Construir gráfico últimos 30 dias
-      const days: any[] = [];
-      for (let i = 29; i >= 0; i--) {
-        const d = startOfDay(subDays(new Date(), i));
-        days.push({ data: d, label: format(d, "dd/MM", { locale: pt }), vendas: 0, valor: 0 });
+    // Dados para o gráfico (últimos 30 dias)
+    const days = Array.from({ length: 30 }, (_, i) => {
+      const d = startOfDay(subDays(new Date(), i));
+      return {
+        date: d,
+        label: format(d, "dd/MM"),
+        vendas: 0,
+        valor: 0
+      };
+    }).reverse();
+
+    po?.forEach(p => {
+      const d = startOfDay(new Date(p.criado_em));
+      const entry = days.find(day => day.date.getTime() === d.getTime());
+      if (entry) {
+        entry.vendas += 1;
+        entry.valor += Number(p.valor);
       }
-      (ps || []).forEach((p: any) => {
-        const day = startOfDay(new Date(p.criado_em)).getTime();
-        const slot = days.find((d) => d.data.getTime() === day);
-        if (slot) {
-          slot.vendas += 1;
-          if (p.metodo === "kz") slot.valor += Number(p.valor || 0);
-        }
-      });
-      setChart(days);
-      setLoading(false);
-    };
-    load();
-  }, [userId]);
+    });
 
-  if (loading) return null;
+    setChart(days);
+    setLoading(false);
+  };
 
-  const totalKz = payouts.filter((p) => p.metodo === "kz").reduce((s, p) => s + Number(p.valor || 0), 0);
-  const totalCreditos = payouts.filter((p) => p.metodo === "creditos").reduce((s, p) => s + Number(p.valor || 0), 0);
-  const totalPendente = payouts.filter((p) => p.estado === "pendente" && p.metodo === "kz").reduce((s, p) => s + Number(p.valor || 0), 0);
+  useEffect(() => { loadMetrics(); }, [userId]);
+
+  const totalGeral = payouts.reduce((s, p) => s + Number(p.valor), 0);
+  const totalPendente = payouts.filter(p => p.estado === "pendente").reduce((s, p) => s + Number(p.valor), 0);
   const totalViews = books.reduce((s, b) => s + (b.visualizacoes || 0), 0);
   const totalDownloads = books.reduce((s, b) => s + (b.downloads || 0), 0);
-  const conversao = totalViews > 0 ? ((totalDownloads / totalViews) * 100).toFixed(1) : "0";
 
   return (
-    <div className="space-y-4 pt-6 border-t">
-      <h2 className="text-lg font-bold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Métricas e vendas</h2>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">Faturado total</p>
-          <p className="text-xl font-bold">{totalKz.toLocaleString()} Kz</p>
-          <p className="text-[10px] text-yellow-600">{totalPendente.toLocaleString()} Kz pendente</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">Créditos recebidos</p>
-          <p className="text-xl font-bold">{totalCreditos}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
+    <div className="space-y-6 pt-6 border-t">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <p className="text-xs text-muted-foreground">Total Ganho</p>
+          <p className="text-xl font-bold">{totalGeral.toLocaleString()} Kz</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs text-muted-foreground">Pendente</p>
+          <p className="text-xl font-bold text-primary">{totalPendente.toLocaleString()} Kz</p>
+        </Card>
+        <Card className="p-4">
           <p className="text-xs text-muted-foreground">Visualizações</p>
           <p className="text-xl font-bold">{totalViews}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">Conversão</p>
-          <p className="text-xl font-bold">{conversao}%</p>
-          <p className="text-[10px] text-muted-foreground">{totalDownloads} downloads</p>
-        </CardContent></Card>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs text-muted-foreground">Downloads</p>
+          <p className="text-xl font-bold">{totalDownloads}</p>
+        </Card>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Vendas (últimos 30 dias)</CardTitle></CardHeader>
-        <CardContent className="h-64">
+      <Card className="p-4">
+        <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-medium">Desempenho (30 dias)</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <div className="h-[200px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chart}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+              <XAxis dataKey="label" fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis fontSize={10} tickLine={false} axisLine={false} />
               <Tooltip />
-              <Line type="monotone" dataKey="vendas" stroke="hsl(var(--primary))" strokeWidth={2} />
+              <Line type="monotone" dataKey="valor" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
-        </CardContent>
+        </div>
       </Card>
 
-      {/* Faturamento por livro */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Faturamento por livro</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          {books.map((b) => {
-            const ps = payouts.filter((p) => p.book_id === b.id);
-            const kz = ps.filter((p) => p.metodo === "kz").reduce((s, p) => s + Number(p.valor || 0), 0);
-            const creds = ps.filter((p) => p.metodo === "creditos").reduce((s, p) => s + Number(p.valor || 0), 0);
-            return (
-              <div key={b.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                <span className="text-sm font-medium line-clamp-1">{b.titulo}</span>
-                <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{kz} Kz · {creds} créd · {ps.length} vendas</span>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Faturamento por livro */}
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Faturamento por livro</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {books.map((b) => {
+              const ps = payouts.filter((p) => p.book_id === b.id);
+              const total = ps.reduce((s, p) => s + Number(p.valor), 0);
+              if (total === 0) return null;
+              return (
+                <div key={b.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-10 bg-secondary rounded overflow-hidden flex-shrink-0">
+                      {b.capa_url && <img src={b.capa_url} className="w-full h-full object-cover" />}
+                    </div>
+                    <p className="text-sm font-medium line-clamp-1">{b.titulo}</p>
+                  </div>
+                  <p className="text-sm font-bold whitespace-nowrap">{total.toLocaleString()} Kz</p>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
 
-      {/* Compradores recentes */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Compradores recentes</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          {payouts.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">Ainda sem vendas.</p>
-          ) : payouts.slice(0, 10).map((p) => (
-            <div key={p.id} className="flex items-center justify-between py-2 border-b last:border-0">
-              <div>
-                <p className="text-sm font-medium line-clamp-1">{p.books?.titulo || "Livro"}</p>
-                <p className="text-[10px] text-muted-foreground">{format(new Date(p.criado_em), "dd MMM yyyy HH:mm", { locale: pt })}</p>
+        {/* Últimas vendas */}
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Últimas vendas</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {payouts.slice(0, 5).map((p) => (
+              <div key={p.id} className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium line-clamp-1">{p.books?.titulo || "Livro"}</p>
+                  <p className="text-[10px] text-muted-foreground">{format(new Date(p.criado_em), "dd 'de' MMMM, HH:mm", { locale: pt })}</p>
+                </div>
+                <Badge variant={p.estado === "pago" ? "default" : "secondary"} className="text-[10px]">
+                  {p.valor} Kz
+                </Badge>
               </div>
-              <div className="text-right">
-                <p className="text-xs font-semibold">{p.valor} {p.metodo === "kz" ? "Kz" : "créd"}</p>
-                <Badge variant="outline" className={p.estado === "pago" ? "bg-green-100 text-green-800 text-[9px]" : "bg-yellow-100 text-yellow-800 text-[9px]"}>{p.estado}</Badge>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

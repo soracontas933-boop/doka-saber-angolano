@@ -11,11 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Loader2, Trash2, Edit, Check, X, BookOpen } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Configurar o worker do PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const empty = {
   id: "", titulo: "", autor: "", descricao: "", capa_url: "", ficheiro_path: "",
   category_id: "", gratuito: true, preco_kz: 0, preco_creditos: 0,
   paginas: 0, idioma: "Português", classe: "", isbn: "", destaque: false, publicado: true,
+  estado_aprovacao: "aprovado"
 };
 
 const AdminLivrariaTab = () => {
@@ -52,6 +57,37 @@ const AdminLivrariaTab = () => {
   const openNew = () => { setForm(empty); setCoverFile(null); setPdfFile(null); setOpenBook(true); };
   const openEdit = (b: any) => { setForm({ ...b, category_id: b.category_id || "" }); setCoverFile(null); setPdfFile(null); setOpenBook(true); };
 
+  const generateCoverFromPdf = async (file: File): Promise<File | null> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1.5 });
+      
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) return null;
+      
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      
+      await page.render({ canvasContext: context, viewport }).promise;
+      
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], "cover.jpg", { type: "image/jpeg" }));
+          } else {
+            resolve(null);
+          }
+        }, "image/jpeg", 0.8);
+      });
+    } catch (err) {
+      console.error("Erro ao gerar capa do PDF:", err);
+      return null;
+    }
+  };
+
   const saveBook = async () => {
     if (!form.titulo || !form.autor) return toast({ title: "Título e autor obrigatórios", variant: "destructive" });
     if (!form.id && !pdfFile) return toast({ title: "Anexe o PDF do livro", variant: "destructive" });
@@ -68,11 +104,18 @@ const AdminLivrariaTab = () => {
         .replace(/_+/g, "_")
         .slice(-120);
 
-    if (coverFile) {
-      const path = `cover-${Date.now()}-${sanitize(coverFile.name)}`;
-      const { error } = await supabase.storage.from("book-covers").upload(path, coverFile, {
+    // Se não houver capa mas houver PDF novo, gerar capa do PDF
+    let finalCoverFile = coverFile;
+    if (!finalCoverFile && pdfFile && !form.capa_url) {
+      toast({ title: "Gerando capa a partir do PDF..." });
+      finalCoverFile = await generateCoverFromPdf(pdfFile);
+    }
+
+    if (finalCoverFile) {
+      const path = `cover-${Date.now()}-${sanitize(finalCoverFile.name)}`;
+      const { error } = await supabase.storage.from("book-covers").upload(path, finalCoverFile, {
         upsert: true,
-        contentType: coverFile.type || "image/jpeg",
+        contentType: finalCoverFile.type || "image/jpeg",
       });
       if (error) { setSaving(false); return toast({ title: "Erro ao enviar capa", description: error.message, variant: "destructive" }); }
       capaUrl = supabase.storage.from("book-covers").getPublicUrl(path).data.publicUrl;
@@ -97,6 +140,7 @@ const AdminLivrariaTab = () => {
       preco_creditos: form.gratuito ? 0 : Number(form.preco_creditos) || 0,
       paginas: Number(form.paginas) || null, idioma: form.idioma, classe: form.classe, isbn: form.isbn,
       destaque: form.destaque, publicado: form.publicado,
+      estado_aprovacao: form.estado_aprovacao || 'aprovado'
     };
 
     let error;
@@ -234,7 +278,7 @@ const AdminLivrariaTab = () => {
               <div className="space-y-2">
                 {requests.map((r) => (
                   <div key={r.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
+                    <div>
                       <p className="font-medium text-sm">{r.books?.titulo}</p>
                       <p className="text-xs text-muted-foreground">{r.email_confirmacao} • {r.valor} Kz • {new Date(r.criado_em).toLocaleString()}</p>
                       {r.ficheiro_url && <a href={r.ficheiro_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Ver comprovativo</a>}
