@@ -91,21 +91,39 @@ const A4Sheet: React.FC<A4SheetProps> = ({
         {children}
         
         {/* Linhas de guia de página para multiPage */}
-        {multiPage && innerHeight > H && (
+        {multiPage && (
           <div style={{ pointerEvents: "none", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-            {Array.from({ length: Math.floor(innerHeight / H) }).map((_, i) => (
-              <div 
-                key={i} 
-                style={{ 
-                  position: "absolute", 
-                  top: (i + 1) * H, 
-                  left: 0, 
-                  right: 0, 
-                  borderTop: "2px dashed #1E9DF1", 
-                  opacity: 0.3,
-                  zIndex: 50
-                }} 
-              />
+            {Array.from({ length: Math.ceil(innerHeight / H) }).map((_, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && (
+                  <div 
+                    style={{ 
+                      position: "absolute", 
+                      top: i * H, 
+                      left: 0, 
+                      right: 0, 
+                      borderTop: "2px dashed #1E9DF1", 
+                      opacity: 0.5,
+                      zIndex: 50,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }} 
+                  >
+                    <span style={{ 
+                      background: "#1E9DF1", 
+                      color: "#fff", 
+                      fontSize: "10px", 
+                      padding: "2px 8px", 
+                      borderRadius: "0 0 8px 8px",
+                      fontWeight: "bold",
+                      textTransform: "uppercase"
+                    }}>
+                      Início da Página {i + 1}
+                    </span>
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         )}

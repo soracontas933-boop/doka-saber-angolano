@@ -124,6 +124,12 @@ export async function exportHtmlToPdf({
 
     // Capture with html2canvas
     const html2canvas = (await import("html2canvas")).default;
+    
+    // Para garantir que o break-inside: avoid funcione, precisamos capturar o elemento de forma que o navegador respeite as quebras.
+    // No entanto, o html2canvas captura um snapshot estático. 
+    // A melhor abordagem para múltiplas páginas com html2canvas é capturar página por página se possível, 
+    // ou capturar o todo e fatiar inteligentemente.
+    
     const canvas = await html2canvas(container, {
       scale,
       useCORS: true,
@@ -136,6 +142,14 @@ export async function exportHtmlToPdf({
       scrollY: 0,
       windowWidth: contentWidth,
       windowHeight: contentHeight,
+      onclone: (clonedDoc) => {
+        // Garante que o elemento clonado tenha os estilos de quebra de página
+        const clonedContainer = clonedDoc.body.querySelector('[style*="left: -9999px"]') as HTMLElement;
+        if (clonedContainer) {
+          clonedContainer.style.position = "relative";
+          clonedContainer.style.left = "0";
+        }
+      }
     });
 
     if (canvas.width < 10 || canvas.height < 10) {
@@ -169,51 +183,78 @@ export async function exportHtmlToPdf({
       compress: true
     });
 
-    for (let page = 0; page < totalPages; page++) {
-      if (page > 0) {
+    // Lógica de fatiamento inteligente para evitar cortar elementos ao meio
+    let currentY = 0;
+    const totalHeight = canvas.height;
+    
+    while (currentY < totalHeight) {
+      if (currentY > 0) {
         pdf.addPage();
       }
 
-      const srcY = page * pageHeightPx;
-      // Garante que não tentamos desenhar além da altura do canvas original
-      const srcH = Math.min(pageHeightPx, Math.max(0, canvas.height - srcY));
+      // Tenta encontrar a melhor quebra de página
+      // Como estamos usando um canvas, não temos acesso direto aos elementos DOM aqui.
+      // No entanto, podemos analisar o canvas para encontrar linhas "vazias" (brancas) perto do limite da página.
       
-      if (srcH <= 0) continue;
+      let bestBreakY = currentY + pageHeightPx;
+      if (bestBreakY > totalHeight) bestBreakY = totalHeight;
+      
+      // Se não for a última página, tenta recuar um pouco para encontrar um espaço em branco
+      if (bestBreakY < totalHeight) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const scanRange = Math.min(100 * scale, pageHeightPx * 0.2); // Procura nos últimos 20% da página
+          const startScanY = bestBreakY - scanRange;
+          
+          for (let y = bestBreakY; y > startScanY; y -= 2 * scale) {
+            const imageData = ctx.getImageData(0, y, canvas.width, 1).data;
+            let isWhiteLine = true;
+            for (let i = 0; i < imageData.length; i += 4) {
+              // Se não for branco (ou quase branco)
+              if (imageData[i] < 250 || imageData[i+1] < 250 || imageData[i+2] < 250) {
+                isWhiteLine = false;
+                break;
+              }
+            }
+            if (isWhiteLine) {
+              bestBreakY = y;
+              break;
+            }
+          }
+        }
+      }
 
-      // Create a slice canvas for this page to avoid blank areas or distortions
+      const srcH = bestBreakY - currentY;
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width = canvas.width;
-      pageCanvas.height = pageHeightPx; // Mantém altura fixa da página para consistência
-      const ctx = pageCanvas.getContext("2d");
+      pageCanvas.height = pageHeightPx;
+      const pctx = pageCanvas.getContext("2d");
       
-      if (!ctx) continue;
+      if (pctx) {
+        pctx.fillStyle = "#ffffff";
+        pctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        pctx.drawImage(
+          canvas, 
+          0, currentY, 
+          canvas.width, srcH, 
+          0, 0, 
+          canvas.width, srcH
+        );
 
-      // Fundo branco obrigatório
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-      
-      // Desenha apenas a fatia correspondente à página atual
-      ctx.drawImage(
-        canvas, 
-        0, srcY, 
-        canvas.width, srcH, 
-        0, 0, 
-        canvas.width, srcH
-      );
+        const imgData = pageCanvas.toDataURL("image/jpeg", 0.95);
+        pdf.addImage(
+          imgData, 
+          "JPEG", 
+          mLeft, 
+          mTop, 
+          usableW, 
+          usableH, 
+          undefined, 
+          'FAST'
+        );
+      }
 
-      const imgData = pageCanvas.toDataURL("image/jpeg", 0.95); // JPEG 0.95 é excelente e menor que PNG
-      
-      // Adiciona a imagem à página PDF, ocupando a área útil
-      pdf.addImage(
-        imgData, 
-        "JPEG", 
-        mLeft, 
-        mTop, 
-        usableW, 
-        usableH, 
-        undefined, 
-        'FAST'
-      );
+      currentY = bestBreakY;
     }
 
     pdf.save(filename);

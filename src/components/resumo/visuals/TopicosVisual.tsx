@@ -155,6 +155,7 @@ const TopicosVisual: React.FC<Props> = ({
               background: "#fff",
               border: `1px solid ${C.soft}`,
               boxShadow: `0 4px 14px ${C.primary}15`,
+              breakInside: "avoid",
             }}
           >
             <div
@@ -184,7 +185,7 @@ const TopicosVisual: React.FC<Props> = ({
 
       case "timeline-blocks":
         return (
-          <div key={i} style={{ display: "flex", gap: 12, marginBottom: 14, position: "relative" }}>
+          <div key={i} style={{ display: "flex", gap: 12, marginBottom: 14, position: "relative", breakInside: "avoid" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <div
                 style={{
@@ -234,6 +235,7 @@ const TopicosVisual: React.FC<Props> = ({
               borderRadius: 10,
               background: "#fff",
               border: `2px dashed ${C.primary}`,
+              breakInside: "avoid",
             }}
           >
             <div
@@ -267,6 +269,7 @@ const TopicosVisual: React.FC<Props> = ({
               overflow: "hidden",
               background: "#fff",
               border: `1px solid ${C.soft}`,
+              breakInside: "avoid",
             }}
           >
             <div
@@ -300,6 +303,7 @@ const TopicosVisual: React.FC<Props> = ({
               background: "#fff",
               border: `1px solid #e5e7eb`,
               borderLeft: `6px solid ${C.primary}`,
+              breakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -333,6 +337,7 @@ const TopicosVisual: React.FC<Props> = ({
               padding: 14,
               background: C.soft,
               border: `1px solid ${C.accent}`,
+              breakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -817,6 +822,7 @@ const TopicosVisual: React.FC<Props> = ({
               border: `1px solid ${C.soft}`,
               position: "relative",
               overflow: "hidden",
+              breakInside: "avoid",
             }}
           >
             <div style={{ position: "absolute", right: -10, top: -10, fontSize: fs(40), fontWeight: 900, color: C.primary, opacity: 0.05 }}>
