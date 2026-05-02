@@ -142,9 +142,9 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="font-display font-semibold text-base">Resumo Gerado</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
           <Button size="sm" variant="outline" onClick={handleCopy}>
             <Copy className="h-4 w-4 mr-1" /> Copiar
           </Button>
@@ -155,6 +155,23 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
             <FileText className="h-4 w-4 mr-1" /> Word
           </Button>
         </div>
+      </div>
+
+      {/* Controlo de tamanho da letra (1–50) */}
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border border-border/60">
+        <Type className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="flex-1 min-w-[120px]">
+          <Slider
+            min={1}
+            max={50}
+            step={1}
+            value={[fontLevel]}
+            onValueChange={(v) => setFontLevel(v[0])}
+          />
+        </div>
+        <span className="text-xs font-semibold text-foreground tabular-nums w-20 text-right">
+          Letra {fontLevel}/50
+        </span>
       </div>
 
       {/* Componente visual quando aplicável */}
@@ -187,7 +204,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
             backgroundColor: "#fff",
             padding: "48px 56px",
             minHeight: visual ? "auto" : "700px",
-            fontSize: "11pt",
+            fontSize: `${a4FontPt}pt`,
             lineHeight: "1.7",
             position: "relative",
           }}
@@ -196,19 +213,19 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
           <div style={{ position: "absolute", bottom: 0, right: 0, width: "80px", height: "80px", borderBottom: "4px solid #10b981", borderRight: "4px solid #10b981" }} />
 
           <div style={{ textAlign: "center", marginBottom: "28px" }}>
-            <h1 style={{ fontSize: "18pt", fontWeight: "bold", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "1px" }}>
+            <h1 style={{ fontSize: `${(a4FontPt * 18) / 11}pt`, fontWeight: "bold", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "1px" }}>
               {title || tipoResumo}
             </h1>
             {disciplina && (
-              <p style={{ fontSize: "11pt", color: "#444", marginBottom: "4px" }}>Disciplina: {disciplina}</p>
+              <p style={{ fontSize: `${a4FontPt}pt`, color: "#444", marginBottom: "4px" }}>Disciplina: {disciplina}</p>
             )}
-            <p style={{ fontSize: "10pt", color: "#666", fontStyle: "italic" }}>{tipoResumo}</p>
+            <p style={{ fontSize: `${(a4FontPt * 10) / 11}pt`, color: "#666", fontStyle: "italic" }}>{tipoResumo}</p>
             <div style={{ borderBottom: "2px solid #000", width: "100%", marginTop: "14px" }} />
           </div>
 
           {sections.length === 0 ? (
             <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "16px", backgroundColor: "#fafafa" }}>
-              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "'Times New Roman', serif", fontSize: "11pt" }}>
+              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "'Times New Roman', serif", fontSize: `${a4FontPt}pt` }}>
                 {cleaned}
               </pre>
             </div>
@@ -219,7 +236,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
                   {section.heading && (
                     <div style={{ marginBottom: "8px", paddingBottom: "4px", borderBottom: section.level === 2 ? "1px solid #ccc" : "none" }}>
                       <h2 style={{
-                        fontSize: section.level === 2 ? "13pt" : "12pt",
+                        fontSize: section.level === 2 ? `${(a4FontPt * 13) / 11}pt` : `${(a4FontPt * 12) / 11}pt`,
                         fontWeight: "bold",
                         color: section.level === 2 ? "#1a1a1a" : "#333",
                         textTransform: section.level === 2 ? "uppercase" : "none",
@@ -231,7 +248,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
                     </div>
                   )}
                   {section.items.map((item, ii) => (
-                    <div key={ii} style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "5px", paddingLeft: section.heading ? "12px" : "0", fontSize: "11pt" }}>
+                    <div key={ii} style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "5px", paddingLeft: section.heading ? "12px" : "0", fontSize: `${a4FontPt}pt` }}>
                       {section.heading && <span style={{ color: "#10b981", fontWeight: "bold", flexShrink: 0 }}>•</span>}
                       <span style={{ textAlign: "justify" }}>{renderInlineBold(item)}</span>
                     </div>
@@ -241,7 +258,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
             </div>
           )}
 
-          <div style={{ borderTop: "1px solid #ccc", marginTop: "32px", paddingTop: "10px", textAlign: "center", fontSize: "9pt", color: "#888" }}>
+          <div style={{ borderTop: "1px solid #ccc", marginTop: "32px", paddingTop: "10px", textAlign: "center", fontSize: `${(a4FontPt * 9) / 11}pt`, color: "#888" }}>
             Gerado por Delle — Plataforma de Estudo Inteligente
           </div>
         </div>
