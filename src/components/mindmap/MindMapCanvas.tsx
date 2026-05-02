@@ -303,7 +303,7 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                 <span style={{ 
                   pointerEvents: "none",
                   display: "-webkit-box",
-                  WebkitLineClamp: node.size === "large" ? 3 : 2,
+                  WebkitLineClamp: node.size === "large" ? 4 : 3,
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",
                 }}>

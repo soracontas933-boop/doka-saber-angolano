@@ -78,9 +78,10 @@ export function fromParsedMap(
     const bx = cx + Math.cos(angle) * radiusX;
     const by = cy + Math.sin(angle) * radiusY;
     const branchId = makeId();
+    const cleanLabel = (text: string) => text.replace(/^\d+(\.\d+)*\s*[-.:]?\s*/, "").trim();
     nodes.push({
       id: branchId,
-      label: b.label,
+      label: `${i + 1}. ${cleanLabel(b.label)}`,
       x: bx,
       y: by,
       parentId: centralId,
@@ -90,14 +91,15 @@ export function fromParsedMap(
 
     // sub-itens distribuídos numa pequena coluna ao lado do ramo
     const isLeft = bx < cx;
-    b.items.slice(0, 10).forEach((item, j) => {
-      const branchNumber = i + 1;
+    const branchNumber = i + 1;
+
+    b.items.slice(0, 12).forEach((item, j) => {
       const subNumber = j + 1;
-      const offsetX = isLeft ? -180 : 180;
-      const offsetY = (j - (b.items.length - 1) / 2) * 44;
+      const offsetX = isLeft ? -200 : 200;
+      const offsetY = (j - (b.items.length - 1) / 2) * 55; // Mais espaço vertical
       nodes.push({
         id: makeId(),
-        label: `${branchNumber}.${subNumber} ${item}`,
+        label: `${branchNumber}.${subNumber} ${cleanLabel(item)}`,
         x: bx + offsetX,
         y: by + offsetY,
         parentId: branchId,

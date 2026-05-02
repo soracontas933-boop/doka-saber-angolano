@@ -289,7 +289,7 @@ export const MapaMentalVisual: React.FC<Props> = ({
                         wordBreak: "break-word",
                       }}
                     >
-                      {b.label}
+                      {b.label.replace(/^\d+(\.\d+)*\s*[-.:]?\s*/, "").trim()}
                     </div>
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export const MapaMentalVisual: React.FC<Props> = ({
                       >
                         {branchNumber}.{j + 1}
                       </span>
-                      <span style={{ flex: 1 }}>{it}</span>
+                      <span style={{ flex: 1 }}>{it.replace(/^\d+(\.\d+)*\s*[-.:]?\s*/, "").trim()}</span>
                     </li>
                   ))}
                 </ol>

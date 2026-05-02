@@ -285,8 +285,28 @@ export const prompts = {
   resumo: (conteudo: string, classe: string, tipo: string) => {
     const base = `Conteúdo de origem (do caderno do estudante):\n"""\n${conteudo}\n"""\n\nDisciplina/nível: ${classe}. Estudante angolano. Português de Angola obrigatório.\n\nREGRAS ABSOLUTAS DE FORMATO:\n- NUNCA escrevas blocos JSON, código, chaves { } ou colchetes [ ] na resposta.\n- NUNCA uses os símbolos: • em sequência, "•[", "•{", aspas curvas estranhas.\n- USA EXCLUSIVAMENTE Markdown limpo (# título, ## secção, - item, **negrito**).\n- Não inventes nem repitas instruções; entrega só o conteúdo final.\n`;
     switch (tipo) {
-      case "Mapa Mental":
-        return base + `\nGera um MAPA MENTAL hierárquico em Markdown estrito, com no mínimo 4 ramos principais e 3 a 5 subtópicos por ramo. Formato OBRIGATÓRIO:\n\n# <Tema Central curto>\n\n## <Ramo 1>\n- <subtópico 1>\n- <subtópico 2>\n- <subtópico 3>\n\n## <Ramo 2>\n- ...\n\nNão incluas introdução, conclusão, JSON nem flashcards. Apenas a estrutura hierárquica.`;
+         case "Mapa Mental":
+        return base + `\nGera um MAPA MENTAL hierárquico em Markdown estrito.
+REGRAS IMPORTANTES:
+1. Cada cartão deve ser MUITO RESUMIDO e CLARO (máximo 8-10 palavras por item).
+2. Use uma estrutura lógica de numeração para guiar o usuário (ex: 1. Ramo, 1.1 Sub-ramo).
+3. Se um ponto precisar de detalhamento, crie uma sub-ramificação em vez de um texto longo.
+4. O mapa deve ser visualmente organizado e fácil de seguir.
+
+Formato OBRIGATÓRIO:
+
+# <Tema Central curto>
+
+## 1. <Ramo 1>
+- 1.1 <subtópico 1>
+- 1.2 <subtópico 2>
+- 1.3 <subtópico 3>
+
+## 2. <Ramo 2>
+- 2.1 <subtópico 1>
+- 2.2 <subtópico 2>
+
+Não incluas introdução, conclusão, JSON nem flashcards. Apenas a estrutura hierárquica numerada.`;
       case "Flashcards":
         return base + `\nGera 12 FLASHCARDS de estudo. Formato OBRIGATÓRIO em Markdown (sem JSON):\n\n# Flashcards — <Tema>\n\n## 1\n**Frente:** <pergunta clara e curta>\n**Verso:** <resposta precisa, 1-3 frases>\n\n## 2\n**Frente:** ...\n**Verso:** ...\n\n(continua até 12). Não escrevas mais nada além disso.`;
       case "Linha do Tempo":
