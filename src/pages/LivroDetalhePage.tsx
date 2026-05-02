@@ -22,6 +22,8 @@ const LivroDetalhePage = () => {
   const [openManual, setOpenManual] = useState(false);
   const [comprovativo, setComprovativo] = useState<File | null>(null);
   const [emailConf, setEmailConf] = useState("");
+  const [authorPaymentMethods, setAuthorPaymentMethods] = useState<any[]>([]);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -73,6 +75,23 @@ const LivroDetalhePage = () => {
     }
     setOwned(true);
     toast({ title: "Compra concluída! Livro disponível na sua biblioteca." });
+  };
+
+  const loadAuthorPaymentMethods = async () => {
+    if (!book?.criado_por) return;
+    setLoadingPaymentMethods(true);
+    const { data, error } = await supabase
+      .from("book_payout_methods")
+      .select("*")
+      .eq("user_id", book.criado_por)
+      .order("preferido", { ascending: false })
+      .order("criado_em", { ascending: false });
+    setLoadingPaymentMethods(false);
+    if (error) {
+      console.error("Erro ao carregar métodos de pagamento:", error);
+      return;
+    }
+    setAuthorPaymentMethods(data || []);
   };
 
   const handleEnviarComprovativo = async () => {
@@ -160,14 +179,61 @@ const LivroDetalhePage = () => {
         </div>
       </div>
 
-      <Dialog open={openManual} onOpenChange={setOpenManual}>
-        <DialogContent>
+      <Dialog open={openManual} onOpenChange={(open) => {
+        setOpenManual(open);
+        if (open) loadAuthorPaymentMethods();
+      }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Enviar comprovativo de pagamento</DialogTitle>
             <DialogDescription>
-              Faça a transferência de <b>{book.preco_kz} Kz</b> e envie aqui o comprovativo. O livro será libertado na sua biblioteca após aprovação.
+              Faça a transferência de <b>{book.preco_kz} Kz</b> para uma das contas abaixo e envie o comprovativo. O livro será libertado na sua biblioteca após aprovação.
             </DialogDescription>
           </DialogHeader>
+          
+          {/* Coordenadas bancárias do autor */}
+          <div className="space-y-4">
+            {loadingPaymentMethods ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
+            ) : authorPaymentMethods.length === 0 ? (
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+                <p className="text-sm text-yellow-800">Nenhum método de pagamento configurado pelo autor.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-muted-foreground">Coordenadas para transferência:</p>
+                {authorPaymentMethods.map((method) => (
+                  <div key={method.id} className="rounded-lg border p-3 space-y-2">
+                    {method.tipo === "iban" ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-primary">IBAN - {method.banco || "Banco"}</span>
+                          {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
+                        </div>
+                        <div className="bg-muted rounded px-2 py-1.5">
+                          <p className="text-sm font-mono text-foreground select-all break-all">{method.iban}</p>
+                        </div>
+                        {method.titular && <p className="text-xs text-muted-foreground">Titular: {method.titular}</p>}
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-primary">Multicaixa Express</span>
+                          {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
+                        </div>
+                        <div className="bg-muted rounded px-2 py-1.5">
+                          <p className="text-sm font-mono text-foreground select-all">{method.telefone}</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
           <div className="space-y-3">
             <div>
               <label className="text-xs font-medium">Email para confirmação</label>
