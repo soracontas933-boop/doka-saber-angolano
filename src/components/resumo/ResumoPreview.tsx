@@ -135,6 +135,10 @@ const STYLE_OPTIONS: { value: TopicosStyle; label: string }[] = [
   { value: "ribbon-labels", label: "Ribbon Labels" },
   { value: "highlight-boxes", label: "Highlight Boxes" },
   { value: "milestone-cards", label: "Milestone Cards" },
+  { value: "bento-grid", label: "Bento Grid" },
+  { value: "glassmorphism-cards", label: "Glassmorphism" },
+  { value: "modern-timeline", label: "Modern Timeline" },
+  { value: "interactive-nodes", label: "Interactive Nodes" },
 ];
 
 const PALETTE_OPTIONS = [

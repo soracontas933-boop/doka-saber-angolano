@@ -17,7 +17,11 @@ export type TopicosStyle =
   | "numbered-blocks"
   | "ribbon-labels"
   | "highlight-boxes"
-  | "milestone-cards";
+  | "milestone-cards"
+  | "bento-grid"
+  | "glassmorphism-cards"
+  | "modern-timeline"
+  | "interactive-nodes";
 
 export interface TopicoSection {
   heading: string;
@@ -734,12 +738,120 @@ const TopicosVisual: React.FC<Props> = ({
           </div>
         );
 
+      case "bento-grid":
+        return (
+          <div
+            key={i}
+            style={{
+              padding: 14,
+              borderRadius: 16,
+              background: "#fff",
+              border: `1px solid ${C.soft}`,
+              boxShadow: `0 4px 12px ${C.primary}10`,
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <div style={{ width: 8, height: 24, borderRadius: 4, background: C.primary }} />
+              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{s.heading}</h3>
+            </div>
+            <div style={{ flex: 1 }}>
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            </div>
+          </div>
+        );
+
+      case "glassmorphism-cards":
+        return (
+          <div
+            key={i}
+            style={{
+              marginBottom: 14,
+              padding: 16,
+              borderRadius: 20,
+              background: "rgba(255, 255, 255, 0.7)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+            }}
+          >
+            <h3 style={{ margin: 0, marginBottom: 10, fontSize: fs(14), fontWeight: 800, color: C.deep, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: C.primary }}>✦</span> {s.heading}
+            </h3>
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+          </div>
+        );
+
+      case "modern-timeline":
+        return (
+          <div key={i} style={{ display: "flex", gap: 16, marginBottom: 16, position: "relative" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primary, border: `3px solid ${C.soft}`, zIndex: 2 }} />
+              <div style={{ flex: 1, width: 2, background: `linear-gradient(${C.primary}, ${C.soft})`, marginTop: 4 }} />
+            </div>
+            <div style={{ flex: 1, paddingBottom: 10 }}>
+              <div style={{ fontSize: fs(10), fontWeight: 800, color: C.primary, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+                Fase {n}
+              </div>
+              <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(14), fontWeight: 800, color: "#1e293b" }}>
+                {s.heading}
+              </h3>
+              <div style={{ background: "#fff", padding: 12, borderRadius: 12, border: `1px solid ${C.soft}` }}>
+                {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case "interactive-nodes":
+        return (
+          <div
+            key={i}
+            style={{
+              marginBottom: 14,
+              padding: 14,
+              borderRadius: 12,
+              background: `linear-gradient(to right, ${C.soft}, #fff)`,
+              border: `1px solid ${C.soft}`,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ position: "absolute", right: -10, top: -10, fontSize: fs(40), fontWeight: 900, color: C.primary, opacity: 0.05 }}>
+              {n}
+            </div>
+            <h3 style={{ margin: 0, marginBottom: 10, fontSize: fs(13), fontWeight: 800, color: C.deep, borderLeft: `4px solid ${C.primary}`, paddingLeft: 10 }}>
+              {s.heading}
+            </h3>
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+          </div>
+        );
+
       default:
         return null;
     }
   };
 
   // Bento usa grid de 2 colunas
+  if (style === "bento-grid") {
+    return (
+      <div style={{ padding: 24, background: "#f8fafc", minHeight: "100%" }}>
+        <Header />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: 12,
+          }}
+        >
+          {sections.map((s, i) => renderSection(s, i))}
+        </div>
+      </div>
+    );
+  }
+
   if (style === "bento-cards") {
     return (
       <div style={{ padding: 24, background: "#fafafa", minHeight: "100%" }}>

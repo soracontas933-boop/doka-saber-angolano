@@ -19,6 +19,7 @@ import MapaMentalVisual from "@/components/resumo/visuals/MapaMentalVisual";
 import FlashcardsVisual from "@/components/resumo/visuals/FlashcardsVisual";
 import LinhaTempoVisual from "@/components/resumo/visuals/LinhaTempoVisual";
 import QuadroComparativoVisual from "@/components/resumo/visuals/QuadroComparativoVisual";
+import TopicosVisual, { TopicosStyle, TopicoSection } from "@/components/resumo/visuals/TopicosVisual";
 import A4Sheet from "@/components/resumo/A4Sheet";
 import { exportResumoPDF, exportResumoVisualPDF, exportResumoWord } from "@/lib/resumo-export";
 
@@ -58,6 +59,7 @@ const ResumoEditorPage: React.FC = () => {
   const [palette, setPalette] = useState(PALETTE_PRESETS[0]);
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [fontLevel, setFontLevel] = useState(25);
+  const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("step-cards");
   const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
   const fs = (px: number) => `${px * fontScale}px`;
   const visualRef = useRef<HTMLDivElement>(null);
@@ -71,6 +73,40 @@ const ResumoEditorPage: React.FC = () => {
   }, [cleaned, tipoResumo]);
 
   const finalTitle = titulo || detectedTitle;
+
+  const parseResumoSections = (text: string): TopicoSection[] => {
+    const lines = text.split("\n").map((l) => l.trim());
+    const sections: TopicoSection[] = [];
+    let current: TopicoSection | null = null;
+
+    for (const line of lines) {
+      if (!line || line.startsWith("# ")) continue;
+
+      if (/^#{2,3}\s+/.test(line)) {
+        if (current) sections.push(current);
+        current = {
+          heading: line.replace(/^#{2,3}\s+/, "").replace(/\*\*/g, "").trim(),
+          items: [],
+        };
+        continue;
+      }
+
+      if (/^[-*•]\s+/.test(line) || /^\d+[.)]\s+/.test(line)) {
+        const item = line.replace(/^[-*•]\s+/, "").replace(/^\d+[.)]\s+/, "").trim();
+        if (!current) current = { heading: "Conteúdo", items: [] };
+        if (item) current.items.push(item);
+        continue;
+      }
+
+      if (current) {
+        current.items.push(line);
+      } else {
+        current = { heading: "Introdução", items: [line] };
+      }
+    }
+    if (current) sections.push(current);
+    return sections.filter((s) => s.heading || s.items.length);
+  };
 
   const renderVisual = () => {
     switch (tipoResumo) {
@@ -176,8 +212,22 @@ const ResumoEditorPage: React.FC = () => {
           </A4Sheet>
         );
       }
-      default:
-        return null;
+      default: {
+        const sections = parseResumoSections(cleaned);
+        if (!sections.length) return null;
+        return (
+          <A4Sheet orientation="portrait" innerRef={visualRef}>
+            <TopicosVisual
+              title={finalTitle}
+              disciplina={disciplina}
+              sections={sections}
+              style={topicosStyle}
+              fontScale={fontScale}
+              palette={palette.name.toLowerCase().includes("azul") ? "azul" : palette.name.toLowerCase().includes("esmeralda") ? "verde" : palette.name.toLowerCase().includes("coral") ? "laranja" : palette.name.toLowerCase().includes("violeta") ? "roxo" : "cinza"}
+            />
+          </A4Sheet>
+        );
+      }
     }
   };
 
@@ -250,6 +300,33 @@ const ResumoEditorPage: React.FC = () => {
               </div>
               <span className="text-xs font-bold w-12 text-right tabular-nums">{fontLevel}</span>
             </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Palette className="h-3.5 w-3.5" /> Estilo Visual
+            </h3>
+            <select
+              value={topicosStyle}
+              onChange={(e) => setTopicosStyle(e.target.value as TopicosStyle)}
+              className="w-full bg-background border border-input rounded-md h-9 px-2 text-xs"
+            >
+              <optgroup label="Mais usados">
+                <option value="step-cards">Step Cards</option>
+                <option value="modern-timeline">Timeline Blocks</option>
+                <option value="process-indicators">Process Indicators</option>
+                <option value="infographic-panels">Infographic Panels</option>
+                <option value="topic-containers">Topic Containers</option>
+                <option value="learning-modules">Learning Modules</option>
+                <option value="flow-cards">Flow Cards</option>
+              </optgroup>
+              <optgroup label="Estilos Premium">
+                <option value="bento-grid">Bento Grid</option>
+                <option value="glassmorphism-cards">Glassmorphism</option>
+                <option value="interactive-nodes">Interactive Nodes</option>
+                <option value="dashboard-widgets">Dashboard Widgets</option>
+              </optgroup>
+            </select>
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">

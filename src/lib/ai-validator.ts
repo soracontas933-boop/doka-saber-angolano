@@ -85,8 +85,12 @@ export function stripSymbolNoise(content: string): string {
   fixed = fixed.replace(/^={5,}$/gm, "");
   // 5+ asteriscos numa linha
   fixed = fixed.replace(/^\*{5,}$/gm, "---");
+  // 3+ percentagens
+  fixed = fixed.replace(/%{3,}/g, "");
   // Caracteres aleatórios repetidos numa linha (10+ do mesmo símbolo não-alfanumérico)
   fixed = fixed.replace(/([^\w\s])\1{9,}/g, "");
+  // Remove sequências de símbolos comuns que a IA usa como separadores
+  fixed = fixed.replace(/[#%*]{3,}/g, "");
   return fixed;
 }
 
