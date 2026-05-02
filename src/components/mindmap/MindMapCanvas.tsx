@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Info, Lightbulb, BookOpen, Target, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, Info, Lightbulb, BookOpen, Target, ExternalLink, Maximize2 } from "lucide-react";
 import {
   MindMapData,
   MindNode,
@@ -50,16 +50,29 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
   innerRef,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [responsiveScale, setResponsiveScale] = useState(1);
+  const zoomLevel = data.zoomLevel || 100;
+  const zoomScale = zoomLevel / 100;
+  
   const fontLevel = data.fontLevel || 25;
   const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  
   const dragRef = useRef<{
     id: string;
     offsetX: number;
     offsetY: number;
   } | null>(null);
+  
+  const resizeRef = useRef<{
+    id: string;
+    startW: number;
+    startH: number;
+    startX: number;
+    startY: number;
+  } | null>(null);
+
   const [, force] = useState(0);
 
   // Escala responsiva mantendo a folha A4 paisagem completa
@@ -67,7 +80,7 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     const update = () => {
       if (!wrapperRef.current) return;
       const w = wrapperRef.current.clientWidth;
-      setScale(Math.min(1, w / CANVAS_W));
+      setResponsiveScale(Math.min(1, w / CANVAS_W));
     };
     update();
     const ro = new ResizeObserver(update);
@@ -79,6 +92,8 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     };
   }, []);
 
+  const totalScale = responsiveScale * zoomScale;
+
   const updateNode = (id: string, patch: Partial<MindNode>) => {
     onChange({
       ...data,
@@ -86,11 +101,23 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     });
   };
 
-  /* ---------- Drag ---------- */
+  const clientToCanvas = (cx: number, cy: number) => {
+    const rect = wrapperRef.current!.getBoundingClientRect();
+    return { 
+      x: (cx - rect.left) / totalScale, 
+      y: (cy - rect.top) / totalScale 
+    };
+  };
+
+  const clamp = (v: number, min: number, max: number) =>
+    Math.min(max, Math.max(min, v));
+
+  /* ---------- Drag & Resize ---------- */
   const handlePointerDown = (e: React.PointerEvent, node: MindNode) => {
     if (readOnly || editingId) return;
     e.stopPropagation();
     onSelect(node.id);
+    
     const point = clientToCanvas(e.clientX, e.clientY);
     dragRef.current = {
       id: node.id,
@@ -100,36 +127,57 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     (e.target as Element).setPointerCapture(e.pointerId);
   };
 
+  const handleResizeDown = (e: React.PointerEvent, node: MindNode) => {
+    if (readOnly) return;
+    e.stopPropagation();
+    const { w, h } = nodeRadius(node.size);
+    const currentW = node.width || w;
+    const currentH = node.height || h;
+    
+    resizeRef.current = {
+      id: node.id,
+      startW: currentW,
+      startH: currentH,
+      startX: e.clientX,
+      startY: e.clientY,
+    };
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    const p = clientToCanvas(e.clientX, e.clientY);
-    const id = dragRef.current.id;
-    const nx = clamp(p.x - dragRef.current.offsetX, 40, CANVAS_W - 40);
-    const ny = clamp(p.y - dragRef.current.offsetY, 40, CANVAS_H - 40);
-    // mutação direta para fluidez, render via force update
-    const target = data.nodes.find((n) => n.id === id);
-    if (target) {
-      target.x = nx;
-      target.y = ny;
-      force((v) => v + 1);
+    if (dragRef.current) {
+      const p = clientToCanvas(e.clientX, e.clientY);
+      const id = dragRef.current.id;
+      const nx = clamp(p.x - dragRef.current.offsetX, 40, CANVAS_W - 40);
+      const ny = clamp(p.y - dragRef.current.offsetY, 40, CANVAS_H - 40);
+      
+      const target = data.nodes.find((n) => n.id === id);
+      if (target) {
+        target.x = nx;
+        target.y = ny;
+        force((v) => v + 1);
+      }
+    } else if (resizeRef.current) {
+      const { id, startW, startH, startX, startY } = resizeRef.current;
+      const dx = (e.clientX - startX) / totalScale;
+      const dy = (e.clientY - startY) / totalScale;
+      
+      const target = data.nodes.find((n) => n.id === id);
+      if (target) {
+        target.width = Math.max(100, startW + dx * 2);
+        target.height = Math.max(40, startH + dy * 2);
+        force((v) => v + 1);
+      }
     }
   };
 
   const handlePointerUp = () => {
-    if (dragRef.current) {
-      // commit final
+    if (dragRef.current || resizeRef.current) {
       onChange({ ...data, nodes: [...data.nodes] });
       dragRef.current = null;
+      resizeRef.current = null;
     }
   };
-
-  const clientToCanvas = (cx: number, cy: number) => {
-    const rect = wrapperRef.current!.getBoundingClientRect();
-    return { x: (cx - rect.left) / scale, y: (cy - rect.top) / scale };
-  };
-
-  const clamp = (v: number, min: number, max: number) =>
-    Math.min(max, Math.max(min, v));
 
   /* ---------- Edição inline ---------- */
   const startEditing = (node: MindNode) => {
@@ -144,18 +192,50 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     setEditingId(null);
   };
 
-  /* ---------- Helpers visuais ---------- */
-  const nodesById = new Map(data.nodes.map((n) => [n.id, n]));
+  /* ---------- Enumeração Lógica ---------- */
+  const nodeNumbers = useMemo(() => {
+    const numbers: Record<string, string> = {};
+    const centralNode = data.nodes.find(n => n.parentId === null);
+    if (!centralNode) return numbers;
+
+    const branches = data.nodes
+      .filter(n => n.parentId === centralNode.id)
+      .sort((a, b) => {
+        const angleA = Math.atan2(a.y - centralNode.y, a.x - centralNode.x);
+        const angleB = Math.atan2(b.y - centralNode.y, b.x - centralNode.x);
+        return angleA - angleB;
+      });
+
+    branches.forEach((branch, bIdx) => {
+      const bNum = (bIdx + 1).toString();
+      numbers[branch.id] = bNum;
+      
+      const children = data.nodes
+        .filter(n => n.parentId === branch.id)
+        .sort((a, b) => a.y - b.y);
+        
+      children.forEach((child, cIdx) => {
+        numbers[child.id] = `${bNum}.${cIdx + 1}`;
+      });
+    });
+
+    return numbers;
+  }, [data.nodes]);
+
+  const nodesById = useMemo(() => new Map(data.nodes.map((n) => [n.id, n])), [data.nodes]);
 
   return (
     <div
       ref={wrapperRef}
       style={{
         width: "100%",
-        height: CANVAS_H * scale,
+        height: CANVAS_H * totalScale,
         position: "relative",
         userSelect: "none",
         touchAction: "none",
+        overflow: "hidden",
+        borderRadius: "12px",
+        border: "1px solid rgba(0,0,0,0.1)",
       }}
     >
       <div
@@ -165,7 +245,7 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
           position: "relative",
           width: CANVAS_W,
           height: CANVAS_H,
-          transform: `scale(${scale})`,
+          transform: `scale(${totalScale})`,
           transformOrigin: "top left",
           ...BG_STYLES[data.background],
           boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
@@ -219,13 +299,17 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
 
         {/* Nós */}
         {data.nodes.map((node) => {
-          const { w, h } = nodeRadius(node.size);
+          const { w: defW, h: defH } = nodeRadius(node.size);
+          const w = node.width || defW;
+          const h = node.height || defH;
+          
           const color = getColorForNode(data, node);
           const isCentral = node.parentId === null;
           const selected = selectedId === node.id;
           const isEditing = editingId === node.id;
           const [isExpanded, setIsExpanded] = useState(false);
           const hasDetails = !!(node.description || (node.metadata && Object.keys(node.metadata).length > 0));
+          const nodeNum = nodeNumbers[node.id];
 
           return (
             <motion.div
@@ -257,7 +341,7 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                 borderRadius: isCentral ? 22 : 16,
                 background: isCentral
                   ? `linear-gradient(135deg, ${color}, ${shade(color, -30)})`
-                  : "rgba(255,255,255,0.94)",
+                  : "rgba(255,255,255,0.96)",
                 backdropFilter: "blur(10px)",
                 color: isCentral ? "#fff" : shade(color, -45),
                 border: isCentral
@@ -269,13 +353,27 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                     ? `0 0 0 3px ${color}, 0 12px 30px -8px ${color}66`
                     : `0 8px 20px -6px ${color}55, 0 2px 6px rgba(0,0,0,0.06)`),
                 fontFamily: data.fontFamily,
-                transition: "box-shadow 0.2s",
+                transition: "box-shadow 0.2s, border-color 0.2s",
                 overflow: isExpanded ? "visible" : "hidden",
                 wordBreak: "break-word",
                 minHeight: isExpanded ? "200px" : "auto",
               }}
             >
               <div className="flex flex-col w-full h-full relative">
+                {/* Enumeração */}
+                {nodeNum && !isCentral && (
+                  <div 
+                    className="absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm"
+                    style={{ 
+                      background: color, 
+                      color: "#fff",
+                      border: "1.5px solid #fff"
+                    }}
+                  >
+                    {nodeNum}
+                  </div>
+                )}
+
                 {isEditing ? (
                   <textarea
                     autoFocus
@@ -302,6 +400,9 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                       fontWeight: 700,
                       fontSize: (node.size === "large" ? 16 : node.size === "medium" ? 13 : 11) * fontScale,
                       textAlign: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
                     }}
                   />
                 ) : (
@@ -309,10 +410,11 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                     <span style={{ 
                       fontWeight: 800,
                       fontSize: (node.size === "large" ? 17 : node.size === "medium" ? 14 : 12) * fontScale,
-                      textAlign: "center",
                       lineHeight: 1.2,
+                      textAlign: "center",
+                      width: "100%",
                       display: "-webkit-box",
-                      WebkitLineClamp: isExpanded ? 10 : (node.size === "large" ? 4 : 3),
+                      WebkitLineClamp: isExpanded ? 20 : (node.size === "large" ? 4 : 3),
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
                     }}>
@@ -385,6 +487,17 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                   >
                     {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
+                )}
+
+                {/* Resize Handle */}
+                {!readOnly && selected && !isExpanded && (
+                  <div
+                    onPointerDown={(e) => handleResizeDown(e, node)}
+                    className="absolute -bottom-1 -right-1 w-4 h-4 cursor-nwse-resize flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
+                    style={{ color: color }}
+                  >
+                    <Maximize2 className="w-3 h-3 rotate-90" />
+                  </div>
                 )}
               </div>
             </motion.div>

@@ -22,13 +22,16 @@ export interface PdfExportOptions {
   containerWidth?: number;
   padding?: string;
   orientation?: "portrait" | "landscape";
+  format?: "a4" | "a3";
   scale?: number;
   margin?: number[];
 }
 
-// A4 dimensions in mm
-const A4_W_MM = 210;
-const A4_H_MM = 297;
+// Dimensions in mm
+const DIMENSIONS = {
+  a4: { w: 210, h: 297 },
+  a3: { w: 297, h: 420 },
+};
 
 async function waitForImages(root: HTMLElement) {
   const images = Array.from(root.querySelectorAll("img"));
@@ -53,7 +56,8 @@ export async function exportHtmlToPdf({
   containerWidth = 794,
   padding = "48px 56px",
   orientation = "portrait",
-  scale = 2,
+  format = "a4",
+  scale = 3, // Increased for higher resolution
   margin = [10, 10, 10, 10],
 }: PdfExportOptions) {
   showExportOverlay(overlayMessage);
@@ -66,10 +70,10 @@ export async function exportHtmlToPdf({
       return;
     }
 
-    // Create staging container — positioned off-screen but VISIBLE (not display:none)
+    // Create staging container — positioned off-screen but VISIBLE
     container = document.createElement("div");
     container.style.cssText = [
-      "font-family: 'Times New Roman', serif",
+      "font-family: 'SF Pro Display', 'Open Sans', system-ui, sans-serif",
       "font-size: 12pt",
       "line-height: 1.6",
       "color: #000",
@@ -91,21 +95,20 @@ export async function exportHtmlToPdf({
       container.appendChild(node);
     } else if (html && html.trim().length >= 10) {
       container.innerHTML = html;
-    } else {
-      const { toast } = await import("sonner");
-      toast.error("Sem conteúdo para exportar.");
-      return;
     }
 
     document.body.appendChild(container);
 
-    // Force overflow visible on all children & disable animations
-    const allChildren = container.querySelectorAll("*");
-    allChildren.forEach((child) => {
+    // Force styles for high-fidelity capture
+    const allElements = container.querySelectorAll("*");
+    allElements.forEach((child) => {
       const el = child as HTMLElement;
-      el.style.overflow = "visible";
       el.style.transition = "none";
       el.style.animation = "none";
+      // Ensure text doesn't overflow
+      if (el.tagName === "SPAN" || el.tagName === "P" || el.tagName === "DIV") {
+        el.style.maxWidth = "100%";
+      }
     });
 
     // Wait for fonts and images
@@ -114,18 +117,10 @@ export async function exportHtmlToPdf({
 
     // Multiple rAF + delay to ensure browser has painted
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-    await new Promise<void>((r) => setTimeout(r, 800));
+    await new Promise<void>((r) => setTimeout(r, 1000));
 
     const contentWidth = container.scrollWidth;
     const contentHeight = container.scrollHeight;
-
-    console.log("[PDF Helper] container size:", contentWidth, "x", contentHeight, "children:", container.childElementCount);
-
-    if (contentHeight < 5 || contentWidth < 5) {
-      const { toast } = await import("sonner");
-      toast.error("Sem conteúdo visível para exportar.");
-      return;
-    }
 
     // Capture with html2canvas
     const html2canvas = (await import("html2canvas")).default;
@@ -143,36 +138,33 @@ export async function exportHtmlToPdf({
       windowHeight: contentHeight,
     });
 
-    console.log("[PDF Helper] canvas size:", canvas.width, "x", canvas.height);
-
     if (canvas.width < 10 || canvas.height < 10) {
       const { toast } = await import("sonner");
       toast.error("Captura vazia — tente novamente.");
       return;
     }
 
-    // Build PDF with jsPDF — manual multi-page slicing
+    // Build PDF with jsPDF
     const { jsPDF } = await import("jspdf");
 
     const isLandscape = orientation === "landscape";
-    const pageW = isLandscape ? A4_H_MM : A4_W_MM;
-    const pageH = isLandscape ? A4_W_MM : A4_H_MM;
+    const dims = DIMENSIONS[format];
+    const pageW = isLandscape ? dims.h : dims.w;
+    const pageH = isLandscape ? dims.w : dims.h;
 
     const [mTop, mRight, mBottom, mLeft] = margin;
     const usableW = pageW - mLeft - mRight;
     const usableH = pageH - mTop - mBottom;
 
-    // Calculate how many pixels of the canvas fit per page
     const pxPerMm = canvas.width / usableW;
     const pageHeightPx = usableH * pxPerMm;
 
     const totalPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx));
-    console.log("[PDF Helper] pages:", totalPages, "pageHeightPx:", pageHeightPx);
 
     const pdf = new jsPDF({
       orientation: isLandscape ? "landscape" : "portrait",
       unit: "mm",
-      format: "a4",
+      format: format,
     });
 
     for (let page = 0; page < totalPages; page++) {
@@ -192,16 +184,16 @@ export async function exportHtmlToPdf({
       ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
       ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
 
-      const imgData = pageCanvas.toDataURL("image/jpeg", 0.95);
-      const imgH = (srcH / pxPerMm);
+      const imgData = pageCanvas.toDataURL("image/png", 1.0); // PNG for maximum quality
+      const destH = (srcH / pxPerMm);
 
-      pdf.addImage(imgData, "JPEG", mLeft, mTop, usableW, imgH);
+      pdf.addImage(imgData, "PNG", mLeft, mTop, usableW, destH, undefined, 'FAST');
     }
 
     pdf.save(filename);
 
     const { toast } = await import("sonner");
-    toast.success("Exportado com sucesso!");
+    toast.success("PDF gerado com sucesso!");
   } catch (err) {
     console.error("PDF export error:", err);
     const { toast } = await import("sonner");

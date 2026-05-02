@@ -251,8 +251,8 @@ export async function exportResumoVisualPDF(
     containerWidth: isWide ? 1180 : 794,
     padding: "0",
     orientation: isWide ? "landscape" : "portrait",
-    scale: 2,
-    margin: [8, 8, 8, 8],
+    scale: 3,
+    margin: [5, 5, 5, 5],
   });
 }
 

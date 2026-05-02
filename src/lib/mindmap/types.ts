@@ -22,6 +22,10 @@ export interface MindNode {
   color?: string;
   /** Tamanho do nó: small | medium | large */
   size: "small" | "medium" | "large";
+  /** Largura manual (opcional) */
+  width?: number;
+  /** Altura manual (opcional) */
+  height?: number;
   /** parent === null → nó central */
   parentId: string | null;
 }
@@ -33,6 +37,7 @@ export interface MindMapData {
   fontFamily: string;
   background: "blueprint" | "white" | "dark" | "paper";
   fontLevel?: number;
+  zoomLevel?: number;
 }
 
 export const DEFAULT_PALETTE = [

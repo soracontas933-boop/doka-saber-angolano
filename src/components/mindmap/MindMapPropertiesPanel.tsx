@@ -3,7 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Trash2, Sparkles, Plus, Palette as PaletteIcon, Type } from "lucide-react";
+import { 
+  Trash2, 
+  Sparkles, 
+  Plus, 
+  Palette as PaletteIcon, 
+  Type, 
+  Search, 
+  Layout, 
+  Maximize, 
+  Minimize,
+  RefreshCw,
+  Eye,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
 import {
   MindMapData,
   MindNode,
@@ -59,12 +73,25 @@ export const MindMapPropertiesPanel: React.FC<Props> = ({
     });
   };
 
+  const resetAllSizes = () => {
+    onChange({
+      ...data,
+      nodes: data.nodes.map(n => ({ ...n, width: undefined, height: undefined }))
+    });
+  };
+
+  const setAllExpanded = (expanded: boolean) => {
+    // Note: MindMapCanvas uses local state for isExpanded per node.
+    // To implement global expand/collapse, we would need to lift that state to MindNode.
+    // For now, we'll inform the user that auto-layout and content-fit are preferred.
+  };
+
   return (
     <div className="space-y-4">
       {/* Nó selecionado */}
       <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Nó selecionado
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <Layout className="h-3.5 w-3.5" /> Nó selecionado
         </h3>
 
         {!node ? (
@@ -82,12 +109,12 @@ export const MindMapPropertiesPanel: React.FC<Props> = ({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Tamanho</Label>
+              <Label className="text-xs">Tamanho Base</Label>
               <div className="flex gap-1">
                 {(["small", "medium", "large"] as const).map((s) => (
                   <button
                     key={s}
-                    onClick={() => updateNode({ size: s })}
+                    onClick={() => updateNode({ size: s, width: undefined, height: undefined })}
                     className={`flex-1 h-8 rounded-md border text-[11px] font-semibold transition-colors ${
                       node.size === s
                         ? "border-primary bg-primary/10 text-primary"
@@ -148,29 +175,71 @@ export const MindMapPropertiesPanel: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Estilo global */}
-          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Type className="h-3.5 w-3.5" /> Tamanho da Letra
-            </h3>
-            <div className="flex items-center gap-3 py-1">
-              <div className="flex-1">
-                <Slider
-                  min={1}
-                  max={50}
-                  step={1}
-                  value={[data.fontLevel || 25]}
-                  onValueChange={(v) => onChange({ ...data, fontLevel: v[0] })}
-                />
-              </div>
-              <span className="text-xs font-bold w-12 text-right tabular-nums">{data.fontLevel || 25}</span>
-            </div>
+      {/* Controles de Visualização */}
+      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <Search className="h-3.5 w-3.5" /> Zoom e Visualização
+        </h3>
+        
+        <div className="flex items-center gap-3 py-1">
+          <div className="flex-1">
+            <Slider
+              min={50}
+              max={200}
+              step={5}
+              value={[data.zoomLevel || 100]}
+              onValueChange={(v) => onChange({ ...data, zoomLevel: v[0] })}
+            />
           </div>
+          <span className="text-xs font-bold w-12 text-right tabular-nums">{data.zoomLevel || 100}%</span>
+        </div>
 
-          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <PaletteIcon className="h-3.5 w-3.5" /> Paleta global
-            </h3>
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="text-[11px] h-8"
+            onClick={() => onChange({ ...data, zoomLevel: 100 })}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" /> Reset Zoom
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="text-[11px] h-8"
+            onClick={resetAllSizes}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" /> Reset Cards
+          </Button>
+        </div>
+        <div className="text-[10px] text-muted-foreground bg-primary/5 p-2 rounded-lg border border-primary/10">
+          <p><strong>Dica:</strong> Arraste o canto inferior direito de qualquer card selecionado para redimensionar manualmente.</p>
+        </div>
+      </div>
+
+      {/* Estilo global */}
+      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <Type className="h-3.5 w-3.5" /> Tamanho da Letra
+        </h3>
+        <div className="flex items-center gap-3 py-1">
+          <div className="flex-1">
+            <Slider
+              min={1}
+              max={50}
+              step={1}
+              value={[data.fontLevel || 25]}
+              onValueChange={(v) => onChange({ ...data, fontLevel: v[0] })}
+            />
+          </div>
+          <span className="text-xs font-bold w-12 text-right tabular-nums">{data.fontLevel || 25}</span>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <PaletteIcon className="h-3.5 w-3.5" /> Paleta global
+        </h3>
         <div className="space-y-2">
           {PALETTE_PRESETS.map((p) => {
             const active = JSON.stringify(p.colors) === JSON.stringify(data.palette);
