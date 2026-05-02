@@ -114,7 +114,7 @@ const ResumoEditorPage: React.FC = () => {
         const data = parseMapaMental(cleaned);
         if (!data.branches.length) return null;
         return (
-          <A4Sheet orientation="landscape" innerRef={visualRef}>
+          <A4Sheet orientation="landscape" innerRef={visualRef} multiPage>
             <MapaMentalVisual central={data.central} branches={data.branches} fillA4 fontScale={fontScale} />
           </A4Sheet>
         );
@@ -123,8 +123,8 @@ const ResumoEditorPage: React.FC = () => {
         const cards = parseFlashcards(cleaned);
         if (!cards.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef}>
-            <div style={{ padding: 28, height: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
+          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage>
+            <div style={{ padding: 28, minHeight: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
               <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: 0 }}>
                 {finalTitle}
               </h2>
@@ -157,8 +157,8 @@ const ResumoEditorPage: React.FC = () => {
         const events = parseLinhaTempo(cleaned);
         if (!events.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef}>
-            <div style={{ padding: 32, height: "100%", overflow: "hidden" }}>
+          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage>
+            <div style={{ padding: 32, minHeight: "100%" }}>
               <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 18px" }}>
                 {finalTitle}
               </h2>
@@ -183,8 +183,8 @@ const ResumoEditorPage: React.FC = () => {
         const data = parseQuadroComparativo(cleaned);
         if (!data) return null;
         return (
-          <A4Sheet orientation="landscape" innerRef={visualRef}>
-            <div style={{ padding: 28, height: "100%", display: "flex", flexDirection: "column" }}>
+          <A4Sheet orientation="landscape" innerRef={visualRef} multiPage>
+            <div style={{ padding: 28, minHeight: "100%", display: "flex", flexDirection: "column" }}>
               <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 14px" }}>
                 {finalTitle}
               </h2>
@@ -216,7 +216,7 @@ const ResumoEditorPage: React.FC = () => {
         const sections = parseResumoSections(cleaned);
         if (!sections.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef}>
+          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage>
             <TopicosVisual
               title={finalTitle}
               disciplina={disciplina}
@@ -383,8 +383,8 @@ const ResumoEditorPage: React.FC = () => {
           {visual ? (
             visual
           ) : (
-            <A4Sheet orientation="portrait" innerRef={visualRef}>
-              <div style={{ padding: "48px 56px", fontFamily, color: "#000", height: "100%", overflow: "hidden" }}>
+            <A4Sheet orientation="portrait" innerRef={visualRef} multiPage>
+              <div style={{ padding: "48px 56px", fontFamily, color: "#000", minHeight: "100%" }}>
                 <h1 style={{ textAlign: "center", fontSize: 22, color: palette.primary, margin: "0 0 12px", fontWeight: 800 }}>
                   {finalTitle.toUpperCase()}
                 </h1>

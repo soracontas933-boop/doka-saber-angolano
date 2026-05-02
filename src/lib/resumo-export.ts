@@ -315,9 +315,18 @@ export async function exportResumoPDF(resultado: string, tipoResumo: string, dis
   // Footer
   html += `<div style="border-top:1px solid #ccc;margin-top:28px;padding-top:10px;text-align:center;font-size:9pt;color:#888;">Gerado por Delle — Plataforma de Estudo Inteligente</div>`;
 
+  // Criamos um elemento temporário para renderizar o HTML e usar a lógica de captura de elemento
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+  tempDiv.style.width = "794px";
+  tempDiv.style.padding = "48px 56px";
+  tempDiv.style.background = "#fff";
+  
   await exportHtmlToPdf({
-    html,
+    element: tempDiv,
     filename: `resumo-${disciplina || "geral"}.pdf`,
     overlayMessage: "A gerar ficheiro PDF...",
+    containerWidth: 794,
+    padding: "0", // Padding já está no tempDiv
   });
 }

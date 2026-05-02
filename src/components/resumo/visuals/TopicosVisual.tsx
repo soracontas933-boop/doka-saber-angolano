@@ -837,7 +837,7 @@ const TopicosVisual: React.FC<Props> = ({
   // Bento usa grid de 2 colunas
   if (style === "bento-grid") {
     return (
-      <div style={{ padding: 24, background: "#f8fafc", minHeight: "100%" }}>
+      <div style={{ padding: 24, background: "#f8fafc", minHeight: "100%", overflow: "visible" }}>
         <Header />
         <div
           style={{
@@ -854,7 +854,7 @@ const TopicosVisual: React.FC<Props> = ({
 
   if (style === "bento-cards") {
     return (
-      <div style={{ padding: 24, background: "#fafafa", minHeight: "100%" }}>
+      <div style={{ padding: 24, background: "#fafafa", minHeight: "100%", overflow: "visible" }}>
         <Header />
         <div
           style={{
@@ -870,7 +870,7 @@ const TopicosVisual: React.FC<Props> = ({
   }
 
   return (
-    <div style={{ padding: 24, background: "#fafafa", minHeight: "100%" }}>
+    <div style={{ padding: 24, background: "#fafafa", minHeight: "100%", overflow: "visible" }}>
       <Header />
       {sections.map((s, i) => renderSection(s, i))}
     </div>

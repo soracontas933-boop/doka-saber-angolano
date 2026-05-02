@@ -159,35 +159,61 @@ export async function exportHtmlToPdf({
     const pxPerMm = canvas.width / usableW;
     const pageHeightPx = usableH * pxPerMm;
 
+    // Calcula o número total de páginas com base na altura real do conteúdo
     const totalPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx));
 
     const pdf = new jsPDF({
       orientation: isLandscape ? "landscape" : "portrait",
       unit: "mm",
       format: format,
+      compress: true
     });
 
     for (let page = 0; page < totalPages; page++) {
-      if (page > 0) pdf.addPage();
+      if (page > 0) {
+        pdf.addPage();
+      }
 
       const srcY = page * pageHeightPx;
-      const srcH = Math.min(pageHeightPx, canvas.height - srcY);
+      // Garante que não tentamos desenhar além da altura do canvas original
+      const srcH = Math.min(pageHeightPx, Math.max(0, canvas.height - srcY));
+      
+      if (srcH <= 0) continue;
 
-      // Create a slice canvas for this page
+      // Create a slice canvas for this page to avoid blank areas or distortions
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width = canvas.width;
-      pageCanvas.height = srcH;
+      pageCanvas.height = pageHeightPx; // Mantém altura fixa da página para consistência
       const ctx = pageCanvas.getContext("2d");
+      
       if (!ctx) continue;
 
+      // Fundo branco obrigatório
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-      ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+      
+      // Desenha apenas a fatia correspondente à página atual
+      ctx.drawImage(
+        canvas, 
+        0, srcY, 
+        canvas.width, srcH, 
+        0, 0, 
+        canvas.width, srcH
+      );
 
-      const imgData = pageCanvas.toDataURL("image/png", 1.0); // PNG for maximum quality
-      const destH = (srcH / pxPerMm);
-
-      pdf.addImage(imgData, "PNG", mLeft, mTop, usableW, destH, undefined, 'FAST');
+      const imgData = pageCanvas.toDataURL("image/jpeg", 0.95); // JPEG 0.95 é excelente e menor que PNG
+      
+      // Adiciona a imagem à página PDF, ocupando a área útil
+      pdf.addImage(
+        imgData, 
+        "JPEG", 
+        mLeft, 
+        mTop, 
+        usableW, 
+        usableH, 
+        undefined, 
+        'FAST'
+      );
     }
 
     pdf.save(filename);

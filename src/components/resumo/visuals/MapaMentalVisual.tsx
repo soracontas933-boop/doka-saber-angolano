@@ -65,12 +65,12 @@ export const MapaMentalVisual: React.FC<Props> = ({
       style={{
         position: "relative",
         width: "100%",
-        height: fillA4 ? "100%" : "auto",
+        minHeight: fillA4 ? "100%" : "auto",
         background:
           "radial-gradient(ellipse at center, #f8fbff 0%, #eef4fb 50%, #e3ecf6 100%)",
         padding: fillA4 ? "0" : "24px",
         borderRadius: fillA4 ? "0" : "20px",
-        overflow: "hidden",
+        overflow: "visible",
       }}
     >
       <div

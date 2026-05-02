@@ -5,6 +5,8 @@ interface A4SheetProps {
   children: React.ReactNode;
   /** Ref para captura do conteúdo "real" (1:1) usado pelo PDF export. */
   innerRef?: React.RefObject<HTMLDivElement>;
+  /** Se true, a folha cresce verticalmente para acomodar todo o conteúdo sem cortar. */
+  multiPage?: boolean;
 }
 
 /**
@@ -16,9 +18,12 @@ const A4Sheet: React.FC<A4SheetProps> = ({
   orientation = "landscape",
   children,
   innerRef,
+  multiPage = false,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [innerHeight, setInnerHeight] = useState(0);
 
   const W = orientation === "landscape" ? 1123 : 794;
   const H = orientation === "landscape" ? 794 : 1123;
@@ -29,43 +34,81 @@ const A4Sheet: React.FC<A4SheetProps> = ({
       const containerW = wrapperRef.current.clientWidth;
       const newScale = Math.min(1, containerW / W);
       setScale(newScale);
+
+      if (multiPage && contentRef.current) {
+        // Mede a altura real do conteúdo para ajustar o wrapper
+        const realHeight = contentRef.current.scrollHeight;
+        // Garante que tenha pelo menos a altura de uma página A4
+        setInnerHeight(Math.max(H, realHeight));
+      } else {
+        setInnerHeight(H);
+      }
     };
+
     update();
     const ro = new ResizeObserver(update);
     if (wrapperRef.current) ro.observe(wrapperRef.current);
+    if (contentRef.current) ro.observe(contentRef.current);
+    
     window.addEventListener("resize", update);
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", update);
     };
-  }, [W]);
+  }, [W, H, multiPage]);
 
   return (
     <div
       ref={wrapperRef}
       style={{
         width: "100%",
-        height: H * scale,
+        height: innerHeight * scale,
         position: "relative",
         overflow: "hidden",
+        marginBottom: 20,
       }}
     >
       <div
-        ref={innerRef}
+        ref={(el) => {
+          // Atribui a ambas as refs
+          if (innerRef) (innerRef as any).current = el;
+          (contentRef as any).current = el;
+        }}
         data-a4-sheet
         data-orientation={orientation}
         style={{
           width: W,
-          height: H,
+          minHeight: H,
+          height: multiPage ? "auto" : H,
           background: "#ffffff",
           boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
           transform: `scale(${scale})`,
           transformOrigin: "top left",
-          overflow: "hidden",
+          overflow: multiPage ? "visible" : "hidden",
           position: "relative",
         }}
       >
         {children}
+        
+        {/* Linhas de guia de página para multiPage */}
+        {multiPage && innerHeight > H && (
+          <div style={{ pointerEvents: "none", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+            {Array.from({ length: Math.floor(innerHeight / H) }).map((_, i) => (
+              <div 
+                key={i} 
+                style={{ 
+                  position: "absolute", 
+                  top: (i + 1) * H, 
+                  left: 0, 
+                  right: 0, 
+                  borderTop: "2px dashed #1E9DF1", 
+                  opacity: 0.3,
+                  zIndex: 50
+                }} 
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
