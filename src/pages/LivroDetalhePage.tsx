@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import PDFViewer from "@/components/PDFViewer";
 
 const LivroDetalhePage = () => {
   const { id } = useParams();
@@ -24,6 +25,7 @@ const LivroDetalhePage = () => {
   const [emailConf, setEmailConf] = useState("");
   const [authorPaymentMethods, setAuthorPaymentMethods] = useState<any[]>([]);
   const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
+  const [readingBook, setReadingBook] = useState<{ url: string; title: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -111,11 +113,46 @@ const LivroDetalhePage = () => {
   };
 
   const handleDownload = async () => {
+    if (!book.ficheiro_path) return toast({ title: "Erro", description: "Caminho do ficheiro não encontrado", variant: "destructive" });
+    
     setProcessing(true);
-    const { data, error } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 300);
-    setProcessing(false);
-    if (error || !data?.signedUrl) return toast({ title: "Erro ao gerar download", variant: "destructive" });
-    window.open(data.signedUrl, "_blank");
+    try {
+      const { data, error } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 300);
+      if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
+      
+      const response = await fetch(data.signedUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${book.titulo}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast({ title: "Download iniciado!" });
+    } catch (err) {
+      toast({ title: "Erro ao gerar download", variant: "destructive" });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleRead = async () => {
+    if (!book.ficheiro_path) return toast({ title: "Erro", description: "Caminho do ficheiro não encontrado", variant: "destructive" });
+    
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 3600);
+      if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
+      
+      setReadingBook({ url: data.signedUrl, title: book.titulo });
+    } catch (err) {
+      toast({ title: "Erro ao abrir leitor", variant: "destructive" });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -154,10 +191,16 @@ const LivroDetalhePage = () => {
 
           <div className="flex flex-wrap gap-2">
             {owned ? (
-              <Button onClick={handleDownload} disabled={processing} size="lg" className="rounded-2xl gap-2">
-                {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                Baixar PDF
-              </Button>
+              <>
+                <Button onClick={handleRead} disabled={processing} size="lg" className="rounded-2xl gap-2">
+                  {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                  Ler agora
+                </Button>
+                <Button onClick={handleDownload} variant="outline" disabled={processing} size="lg" className="rounded-2xl gap-2">
+                  {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  Baixar PDF
+                </Button>
+              </>
             ) : book.gratuito ? (
               <Button onClick={handleObterGratis} disabled={processing} size="lg" className="rounded-2xl gap-2">
                 {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -252,6 +295,14 @@ const LivroDetalhePage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {readingBook && (
+        <PDFViewer 
+          url={readingBook.url} 
+          title={readingBook.title} 
+          onClose={() => setReadingBook(null)} 
+        />
+      )}
     </div>
   );
 };
