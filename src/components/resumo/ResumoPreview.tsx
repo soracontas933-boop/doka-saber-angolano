@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { FileDown, FileText, Copy } from "lucide-react";
+import { FileDown, FileText, Copy, Type } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { exportResumoPDF, exportResumoWord, exportResumoVisualPDF } from "@/lib/resumo-export";
 import {
@@ -80,6 +81,13 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
   const { title, sections } = parseResumoContent(cleaned);
   const visualRef = React.useRef<HTMLDivElement>(null);
 
+  // Tamanho da letra: 1 (mais pequeno) → 50 (gigante). 25 = padrão (1.0×).
+  const [fontLevel, setFontLevel] = React.useState<number>(25);
+  // Mapeia 1..50 para multiplicador 0.55× .. 2.2×
+  const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
+  // Para o A4 textual usamos pt como base 11pt
+  const a4FontPt = Math.max(6, Math.round(11 * fontScale * 10) / 10);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(cleaned);
     toast.success("Copiado!");
@@ -101,7 +109,12 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
         if (data.branches.length === 0) return null;
         return (
           <A4Sheet orientation="landscape">
-            <MapaMentalVisual central={data.central} branches={data.branches} fillA4 />
+            <MapaMentalVisual
+              central={data.central}
+              branches={data.branches}
+              fillA4
+              fontScale={fontScale}
+            />
           </A4Sheet>
         );
       }
