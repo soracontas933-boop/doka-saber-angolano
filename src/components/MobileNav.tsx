@@ -24,7 +24,7 @@ const MobileNav = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-background/80 backdrop-blur-xl border-t border-border/40">
-      <div className="px-4 py-3 flex-row flex items-center justify-center pt-px pb-[4px]">
+      <div className="px-4 py-3 flex-row pt-px pb-[4px] flex items-start justify-center text-justify font-mono">
         {visibleItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           
@@ -32,7 +32,7 @@ const MobileNav = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex flex-col items-center gap-1.5 px-2 py-1 transition-all duration-200 active:scale-90"
+              className="relative flex flex-col items-center gap-1.5 px-2 py-1 transition-all duration-200 active:scale-90 mr-[6px]"
             >
               <div className={`p-1 rounded-full transition-all duration-300 ${isActive ? 'bg-primary/10' : 'bg-transparent'}`}>
                 <item.icon
