@@ -222,7 +222,7 @@ const AuthPage = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Género *</Label>
+                        <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Género *</Label>
                         <Select value={genero} onValueChange={setGenero}>
                           <SelectTrigger className="h-12 rounded-xl border-border/60">
                             <SelectValue placeholder="Selecione" />
