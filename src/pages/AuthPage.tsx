@@ -169,7 +169,7 @@ const AuthPage = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="gap-2 rounded-full hover:bg-secondary" 
+            className="gap-2 rounded-full hover:bg-secondary px-0" 
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
