@@ -58,6 +58,7 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
   const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   
   const dragRef = useRef<{
     id: string;
