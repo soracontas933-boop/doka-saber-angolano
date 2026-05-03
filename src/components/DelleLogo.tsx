@@ -5,7 +5,7 @@ const DelleLogo = ({ size = 32, showText = true, footerLogo = false }: {size?: n
   const currentLogo = footerLogo ? "/src/assets/logo-footer.png" : logoImage;
   
   return (
-    <div className="flex items-center gap-2.5 bg-[#070808]/[0.01]">
+    <div className="bg-[#070808]/[0.01] flex items-center justify-start gap-0 pt-[20px]">
       <motion.div
         className="relative flex items-center justify-center overflow-hidden rounded-xl"
         style={{ width: size, height: size }}
@@ -19,7 +19,7 @@ const DelleLogo = ({ size = 32, showText = true, footerLogo = false }: {size?: n
         
       </motion.div>
       {showText &&
-      <span className="font-display font-bold tracking-tight mr-[30px] rounded-lg shadow text-black" style={{ fontSize: size * 0.65 }}>
+      <span className="font-display font-bold tracking-tight mr-[30px] rounded-lg shadow text-black text-xl" style={{ fontSize: size * 0.65 }}>
           Delle  
         </span>
       }

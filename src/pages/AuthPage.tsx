@@ -169,7 +169,7 @@ const AuthPage = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="gap-2 rounded-full hover:bg-secondary" 
+            className="gap-2 rounded-full hover:bg-secondary px-0" 
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -189,10 +189,10 @@ const AuthPage = () => {
             </div>
 
             <div className="space-y-3 mb-10 text-center md:text-left">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">
+              <h1 className="font-bold tracking-tight text-foreground text-2xl">
                 {isLogin ? "Bem-vindo de volta" : "Criar nova conta"}
               </h1>
-              <p className="text-lg text-muted-foreground font-medium">
+              <p className="text-muted-foreground font-medium text-sm">
                 {isLogin ? 
                   "Introduza as suas credenciais para aceder à sua conta" : 
                   "Registe-se para começar a usar a plataforma"}
@@ -209,7 +209,7 @@ const AuthPage = () => {
                     className="space-y-5 overflow-hidden"
                   >
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Nome completo *</Label>
+                      <Label htmlFor="name" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Nome completo *</Label>
                       <Input
                         id="name"
                         placeholder="O seu nome"
@@ -222,7 +222,7 @@ const AuthPage = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Género *</Label>
+                        <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Género *</Label>
                         <Select value={genero} onValueChange={setGenero}>
                           <SelectTrigger className="h-12 rounded-xl border-border/60">
                             <SelectValue placeholder="Selecione" />
@@ -236,7 +236,7 @@ const AuthPage = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="idade" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Idade</Label>
+                        <Label htmlFor="idade" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Idade</Label>
                         <Input
                           id="idade"
                           type="number"
@@ -251,7 +251,7 @@ const AuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="telefone" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Telefone</Label>
+                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone</Label>
                       <Input
                         id="telefone"
                         type="tel"
@@ -263,7 +263,7 @@ const AuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Função *</Label>
+                      <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Função *</Label>
                       <Select value={funcao} onValueChange={setFuncao}>
                         <SelectTrigger className="h-12 rounded-xl border-border/60">
                           <SelectValue placeholder="Selecione a sua função" />
@@ -280,7 +280,7 @@ const AuthPage = () => {
               </AnimatePresence>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Email *</Label>
+                <Label htmlFor="email" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -293,7 +293,7 @@ const AuthPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Palavra-passe *</Label>
+                <Label htmlFor="password" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Palavra-passe *</Label>
                 <Input
                   id="password"
                   type="password"
@@ -321,9 +321,9 @@ const AuthPage = () => {
                 className="text-base text-muted-foreground hover:text-[#3B82F6] transition-colors font-medium"
               >
                 {isLogin ? (
-                  <>Não tem conta? <span className="text-[#3B82F6] font-bold">Registe-se</span></>
+                  <>Não tem conta? <span className="text-[#3B82F6] font-bold text-base">Registe-se</span></>
                 ) : (
-                  <>Já tem conta? <span className="text-[#3B82F6] font-bold">Entre aqui</span></>
+                  <>Já tem conta? <span className="text-[#3B82F6] font-bold text-base">Entre aqui</span></>
                 )}
               </button>
             </div>
@@ -331,7 +331,7 @@ const AuthPage = () => {
         </div>
         
         <div className="p-8 text-center">
-          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest pb-0 pt-[80px]">
             © {new Date().getFullYear()} Delle. Todos os direitos reservados.
           </p>
         </div>
