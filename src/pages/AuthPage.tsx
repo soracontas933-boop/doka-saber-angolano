@@ -209,7 +209,7 @@ const AuthPage = () => {
                     className="space-y-5 overflow-hidden"
                   >
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Nome completo *</Label>
+                      <Label htmlFor="name" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Nome completo *</Label>
                       <Input
                         id="name"
                         placeholder="O seu nome"
