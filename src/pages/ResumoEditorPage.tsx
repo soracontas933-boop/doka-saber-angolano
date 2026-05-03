@@ -27,6 +27,7 @@ interface LocationState {
   resultado: string;
   tipoResumo: string;
   disciplina: string;
+  numPaginas?: number;
 }
 
 const PALETTE_PRESETS = [
@@ -56,6 +57,7 @@ const ResumoEditorPage: React.FC = () => {
   const [titulo, setTitulo] = useState("");
   const [disciplina, setDisciplina] = useState(initial.disciplina || "");
   const [tipoResumo] = useState(initial.tipoResumo);
+  const [numPaginas] = useState(initial.numPaginas || 1);
   const [palette, setPalette] = useState(PALETTE_PRESETS[0]);
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [fontLevel, setFontLevel] = useState(25);
@@ -114,7 +116,7 @@ const ResumoEditorPage: React.FC = () => {
         const data = parseMapaMental(cleaned);
         if (!data.branches.length) return null;
         return (
-          <A4Sheet orientation="landscape" innerRef={visualRef} multiPage>
+          <A4Sheet orientation="landscape" innerRef={visualRef} multiPage={numPaginas > 1}>
             <MapaMentalVisual central={data.central} branches={data.branches} fillA4 fontScale={fontScale} />
           </A4Sheet>
         );
@@ -123,7 +125,7 @@ const ResumoEditorPage: React.FC = () => {
         const cards = parseFlashcards(cleaned);
         if (!cards.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage>
+          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage={numPaginas > 1}>
             <div style={{ padding: 28, minHeight: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
               <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: 0 }}>
                 {finalTitle}
@@ -157,7 +159,7 @@ const ResumoEditorPage: React.FC = () => {
         const events = parseLinhaTempo(cleaned);
         if (!events.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage>
+          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage={numPaginas > 1}>
             <div style={{ padding: 32, minHeight: "100%" }}>
               <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 18px" }}>
                 {finalTitle}
@@ -183,7 +185,7 @@ const ResumoEditorPage: React.FC = () => {
         const data = parseQuadroComparativo(cleaned);
         if (!data) return null;
         return (
-          <A4Sheet orientation="landscape" innerRef={visualRef} multiPage>
+          <A4Sheet orientation="landscape" innerRef={visualRef} multiPage={numPaginas > 1}>
             <div style={{ padding: 28, minHeight: "100%", display: "flex", flexDirection: "column" }}>
               <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 14px" }}>
                 {finalTitle}
@@ -216,7 +218,7 @@ const ResumoEditorPage: React.FC = () => {
         const sections = parseResumoSections(cleaned);
         if (!sections.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage>
+          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage={numPaginas > 1}>
             <TopicosVisual
               title={finalTitle}
               disciplina={disciplina}
@@ -235,9 +237,9 @@ const ResumoEditorPage: React.FC = () => {
 
   const handleExportPDF = () => {
     if (visualRef.current) {
-      return exportResumoVisualPDF(visualRef.current, tipoResumo, disciplina, finalTitle);
+      return exportResumoVisualPDF(visualRef.current, tipoResumo, disciplina, finalTitle, numPaginas);
     }
-    return exportResumoPDF(cleaned, tipoResumo, disciplina, finalTitle);
+    return exportResumoPDF(cleaned, tipoResumo, disciplina, finalTitle, numPaginas);
   };
 
   const handleResetText = () => {

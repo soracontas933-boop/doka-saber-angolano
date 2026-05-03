@@ -201,7 +201,8 @@ export async function exportResumoVisualPDF(
   visualElement: HTMLElement,
   tipoResumo: string,
   disciplina: string,
-  title: string
+  title: string,
+  numPaginas: number = 1
 ) {
   const isWide = tipoResumo === "Mapa Mental";
   const filename = `resumo-${(disciplina || "geral").toLowerCase().replace(/\s+/g, "-")}-${tipoResumo
@@ -253,10 +254,11 @@ export async function exportResumoVisualPDF(
     orientation: isWide ? "landscape" : "portrait",
     scale: 3,
     margin: [5, 5, 5, 5],
+    maxPages: numPaginas,
   });
 }
 
-export async function exportResumoPDF(resultado: string, tipoResumo: string, disciplina: string, titleOverride?: string) {
+export async function exportResumoPDF(resultado: string, tipoResumo: string, disciplina: string, titleOverride?: string, numPaginas: number = 1) {
   const { title: parsedTitle, sections } = parseResumo(resultado);
   const title = titleOverride || parsedTitle || tipoResumo;
   const safeTitle = escapeHtml(title);
@@ -328,5 +330,6 @@ export async function exportResumoPDF(resultado: string, tipoResumo: string, dis
     overlayMessage: "A gerar ficheiro PDF...",
     containerWidth: 794,
     padding: "0", // Padding já está no tempDiv
+    maxPages: numPaginas,
   });
 }

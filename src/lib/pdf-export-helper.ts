@@ -25,6 +25,7 @@ export interface PdfExportOptions {
   format?: "a4" | "a3";
   scale?: number;
   margin?: number[];
+  maxPages?: number;
 }
 
 // Dimensions in mm
@@ -59,6 +60,7 @@ export async function exportHtmlToPdf({
   format = "a4",
   scale = 3, // Increased for higher resolution
   margin = [10, 10, 10, 10],
+  maxPages = 1,
 }: PdfExportOptions) {
   showExportOverlay(overlayMessage);
   let container: HTMLDivElement | null = null;
@@ -200,7 +202,15 @@ export async function exportHtmlToPdf({
     const pageHeightPx = usableH * pxPerMm;
 
     // Calcula o número total de páginas com base na altura real do conteúdo
-    const totalPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx));
+    // Mas respeita o limite máximo de páginas solicitado
+    const calculatedPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx));
+    const totalPages = Math.min(calculatedPages, maxPages);
+    
+    // Se o conteúdo é maior que o limite de páginas, redimensiona o canvas
+    let effectiveCanvasHeight = canvas.height;
+    if (calculatedPages > maxPages) {
+      effectiveCanvasHeight = pageHeightPx * maxPages;
+    }
 
     const pdf = new jsPDF({
       orientation: isLandscape ? "landscape" : "portrait",
@@ -211,7 +221,7 @@ export async function exportHtmlToPdf({
 
     // Lógica de fatiamento inteligente para evitar cortar elementos ao meio
     let currentY = 0;
-    const totalHeight = canvas.height;
+    const totalHeight = effectiveCanvasHeight;
     
     while (currentY < totalHeight) {
       if (currentY > 0) {
@@ -250,7 +260,7 @@ export async function exportHtmlToPdf({
         }
       }
 
-      const srcH = bestBreakY - currentY;
+      const srcH = Math.min(bestBreakY - currentY, canvas.height - currentY);
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width = canvas.width;
       pageCanvas.height = pageHeightPx;

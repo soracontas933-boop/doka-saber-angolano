@@ -167,7 +167,7 @@ const ResumoPage = () => {
 
       const targetRoute = tipoResumo === "Mapa Mental" ? "/resumo/mapa-mental" : "/resumo/editar";
       navigate(targetRoute, {
-        state: { resultado: revisado, tipoResumo, disciplina },
+        state: { resultado: revisado, tipoResumo, disciplina, numPaginas },
       });
     } catch (err) {
       console.error("Erro ao gerar resumo:", err);
