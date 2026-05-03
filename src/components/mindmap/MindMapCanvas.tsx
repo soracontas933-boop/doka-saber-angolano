@@ -308,7 +308,12 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
           const isCentral = node.parentId === null;
           const selected = selectedId === node.id;
           const isEditing = editingId === node.id;
-          const [isExpanded, setIsExpanded] = useState(false);
+          const isExpanded = expandedIds.has(node.id);
+          const setIsExpanded = (val: boolean) => setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (val) next.add(node.id); else next.delete(node.id);
+            return next;
+          });
           const hasDetails = !!(node.description || (node.metadata && Object.keys(node.metadata).length > 0));
           const nodeNum = nodeNumbers[node.id];
 
