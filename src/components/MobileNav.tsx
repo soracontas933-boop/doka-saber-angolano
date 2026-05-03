@@ -24,7 +24,7 @@ const MobileNav = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-background/80 backdrop-blur-xl border-t border-border/40">
-      <div className="px-4 py-3 flex-row flex items-center justify-center pt-px pb-[4px]">
+      <div className="px-4 py-3 flex-row pt-px pb-[4px] flex items-start justify-center text-justify font-mono">
         {visibleItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           
