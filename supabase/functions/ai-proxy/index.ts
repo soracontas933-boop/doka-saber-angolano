@@ -373,23 +373,10 @@ function buildInterleavedQueue(
 
 // ─── Language enforcement ────────────────────────────────────────
 
-const LANG_ENFORCEMENT = "\n\nIMPORTANT LANGUAGE RULE: You MUST respond EXCLUSIVELY in Portuguese (Angola variant). NEVER respond in English, French or any other language. Even if the user prompt is in English, your entire response must be in Portuguese de Angola. This rule overrides all other instructions.";
-
 function enforceLanguage(messages: any[]): any[] {
-  const enforced = [...messages];
-  const sysIdx = enforced.findIndex((m: any) => m.role === "system");
-  if (sysIdx >= 0) {
-    enforced[sysIdx] = {
-      ...enforced[sysIdx],
-      content: enforced[sysIdx].content + LANG_ENFORCEMENT,
-    };
-  } else {
-    enforced.unshift({
-      role: "system",
-      content: "Responde EXCLUSIVAMENTE em Português de Angola. NUNCA uses inglês ou outro idioma." + LANG_ENFORCEMENT,
-    });
-  }
-  return enforced;
+  // We no longer globally enforce Angola variant here. 
+  // Language/Context is now managed by the specific module prompts.
+  return messages;
 }
 
 // ─── Main handler ───────────────────────────────────────────────

@@ -209,7 +209,7 @@ export async function validateAndCorrectContent(
   // Passo 2: Detecção
   errors.push(...detectStrangeLanguage(currentContent));
   errors.push(...detectArtifacts(currentContent));
-  errors.push(...validateAngolanContext(currentContent, prompt));
+  // errors.push(...validateAngolanContext(currentContent, prompt)); // Removed to allow custom context
 
   // Passo 3: Re-geração se ficou demasiado curto após limpeza
   const tooShort = currentContent.trim().length < 300;

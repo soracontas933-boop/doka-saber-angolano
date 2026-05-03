@@ -4,7 +4,7 @@ import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { BookOpen, Upload, Camera, X, Image, Loader2, FileText, File } from "lucide-react";
+import { BookOpen, Upload, Camera, X, Image, Loader2, FileText, File, Globe, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +41,8 @@ const ResumoPage = () => {
   const [docFiles, setDocFiles] = useState<File[]>([]);
   const [tipoResumo, setTipoResumo] = useLocalStorage("doka_resumo_tipo", "Resumo por Tópicos");
   const [disciplina, setDisciplina] = useLocalStorage("doka_resumo_disciplina", "");
+  const [numPaginas, setNumPaginas] = useState(1);
+  const [contextoPais, setContextoPais] = useState("");
   const [fonte, setFonte] = useState<"upload" | "camera" | "documento">("upload");
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState("");
@@ -139,7 +141,8 @@ const ResumoPage = () => {
       }
 
       setEtapa("A gerar resumo inteligente...");
-      const prompt = prompts.resumo(combinedText, disciplina || "Geral", tipoResumo);
+      // @ts-ignore - We updated the signature but types might not be updated yet
+      const prompt = prompts.resumo(combinedText, disciplina || "Geral", tipoResumo, numPaginas, contextoPais);
       const resumo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt);
 
       setEtapa("A revisar conteúdo...");
@@ -147,7 +150,7 @@ const ResumoPage = () => {
       setResultado(revisado);
 
       setEtapa("A gerar ilustração...");
-      const imgUrl = generateImageUrl(imagePrompts.resumo(disciplina || "educação angolana"));
+      const imgUrl = generateImageUrl(imagePrompts.resumo(disciplina || "educação"));
       setImagemResumo(imgUrl);
 
       toast.success("Resumo gerado! A abrir o editor...");
@@ -158,9 +161,10 @@ const ResumoPage = () => {
         tipoResumo,
         disciplina,
         imagemResumo: imgUrl,
+        numPaginas,
+        contextoPais
       });
 
-      // Mapa Mental tem editor visual dedicado, restantes vão ao editor genérico
       const targetRoute = tipoResumo === "Mapa Mental" ? "/resumo/mapa-mental" : "/resumo/editar";
       navigate(targetRoute, {
         state: { resultado: revisado, tipoResumo, disciplina },
@@ -195,13 +199,15 @@ const ResumoPage = () => {
         className="space-y-6"
       >
         {/* Configurações */}
-        <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
+        <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-4">
           <h2 className="font-display font-semibold text-[10px] md:text-sm text-muted-foreground uppercase tracking-wider">
-            Configurações
+            Configurações do Resumo
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-1.5">
-              <Label className="text-foreground text-xs">Tipo de Resumo</Label>
+              <Label className="text-foreground text-xs flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5" /> Tipo de Resumo
+              </Label>
               <Select value={tipoResumo} onValueChange={setTipoResumo}>
                 <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -217,6 +223,30 @@ const ResumoPage = () => {
                   {disciplinas.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-xs flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5" /> Número de Páginas (1-30)
+              </Label>
+              <Input 
+                type="number" 
+                min={1} 
+                max={30} 
+                value={numPaginas} 
+                onChange={(e) => setNumPaginas(Number(e.target.value))}
+                className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-xs flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5" /> Contexto Geográfico (Opcional)
+              </Label>
+              <Input 
+                placeholder="Ex: Angola, Brasil, Portugal..." 
+                value={contextoPais} 
+                onChange={(e) => setContextoPais(e.target.value)}
+                className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"
+              />
             </div>
           </div>
         </div>
