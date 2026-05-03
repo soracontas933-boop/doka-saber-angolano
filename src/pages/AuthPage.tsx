@@ -331,7 +331,7 @@ const AuthPage = () => {
         </div>
         
         <div className="p-8 text-center">
-          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest pb-0 pt-[80px]">
             © {new Date().getFullYear()} Delle. Todos os direitos reservados.
           </p>
         </div>
