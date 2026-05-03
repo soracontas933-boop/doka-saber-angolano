@@ -280,7 +280,7 @@ const AuthPage = () => {
               </AnimatePresence>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Email *</Label>
+                <Label htmlFor="email" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Email *</Label>
                 <Input
                   id="email"
                   type="email"
