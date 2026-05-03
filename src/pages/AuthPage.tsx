@@ -189,10 +189,10 @@ const AuthPage = () => {
             </div>
 
             <div className="space-y-3 mb-10 text-center md:text-left">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">
+              <h1 className="font-bold tracking-tight text-foreground text-2xl">
                 {isLogin ? "Bem-vindo de volta" : "Criar nova conta"}
               </h1>
-              <p className="text-lg text-muted-foreground font-medium">
+              <p className="text-muted-foreground font-medium text-sm">
                 {isLogin ? 
                   "Introduza as suas credenciais para aceder à sua conta" : 
                   "Registe-se para começar a usar a plataforma"}
