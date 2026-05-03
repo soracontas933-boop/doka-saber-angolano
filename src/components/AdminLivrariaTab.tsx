@@ -12,9 +12,11 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Plus, Loader2, Trash2, Edit, Check, X, BookOpen } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import * as pdfjsLib from "pdfjs-dist";
+// @ts-ignore - importar worker como URL via Vite (evita falha de CDN)
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-// Configurar o worker do PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Configurar o worker do PDF.js usando bundle local (resolve o erro de CDN bloqueado)
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const empty = {
   id: "", titulo: "", autor: "", descricao: "", capa_url: "", ficheiro_path: "",
