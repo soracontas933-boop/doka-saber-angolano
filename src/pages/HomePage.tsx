@@ -249,9 +249,9 @@ const HomePage = () => {
       { name: "Maria Santos", school: "Universidade Agostinho Neto", text: "Finalmente uma ferramenta feita para Angola! Respeita as normas do INIDE e funciona perfeitamente.", avatar: "👩‍🎓" }
     ],
     pricing: [
-      { name: "Gratuito", price: "0 Kz", description: "Perfeito para começar", features: ["2 Trabalhos Escolares", "3 Resumos de Fotos", "3 Questionários", "Suporte por email"], popular: false },
+      { name: "Gratuito", price: "0 Kz", description: "Perfeito para começar", features: ["2+ Trabalhos Escolares", "3 Resumos de Fotos", "3 Questionários", "Suporte por email"], popular: false },
       { name: "Básico", price: "546 Kz", description: "Ideal para necessidades pontuais", features: ["3 Trabalhos Escolares", "4 Resumos de Fotos", "Questionários Ilimitados", "Suporte por email"], popular: false },
-      { name: "Intermédio", price: "1.250 Kz", description: "Para estudantes dedicados", features: ["5 Trabalhos Escolares", "7 Resumos de Fotos", "7 Questionários", "5 Planos de Aula", "2 TFC/Monografias", "300 Créditos totais"], popular: false },
+      { name: "Intermédio", price: "1.250 Kz", description: "Para estudantes dedicados", features: ["5 Trabalhos Escolares", "7 Resumos de Fotos", "7 Questionários", "5 Planos de Aula", "2+ TFC/Monografias", "300 Créditos totais"], popular: false },
       { name: "Profissional", price: "3.850 Kz", description: "Recomendado para o sucesso académico", features: ["10 Trabalhos Escolares", "16 Resumos de Fotos", "16 Questionários", "10 Planos de Aula", "8 TFC/Monografias", "500 Créditos totais"], popular: true },
       { name: "Premium", price: "7.500 Kz", description: "Acesso total e ilimitado", features: ["Tudo Ilimitado", "Trabalhos Escolares", "Resumos de Fotos", "Questionários", "Planos de Aula", "TFC/Monografias", "Suporte prioritário"], popular: false }
     ],
