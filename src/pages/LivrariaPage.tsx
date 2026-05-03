@@ -245,46 +245,6 @@ const LivrariaPage = () => {
           </div>
         ) : (
           <>
-            {/* CATEGORIES SHOWCASE */}
-            {isClean && categories.length > 0 && (
-              <section className="py-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl md:text-2xl font-bold">Explore por categoria</h2>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {categories.map((c, i) => {
-                    const count = countByCategory(c.id);
-                    const colors = [
-                      "from-blue-500 to-indigo-600",
-                      "from-purple-500 to-pink-600",
-                      "from-orange-500 to-red-600",
-                      "from-green-500 to-emerald-600",
-                      "from-yellow-500 to-amber-600",
-                      "from-cyan-500 to-blue-600",
-                    ];
-                    return (
-                      <button
-                        key={c.id}
-                        onClick={() => setActiveCat(c.id)}
-                        className={`group relative overflow-hidden rounded-2xl p-4 text-left bg-gradient-to-br ${colors[i % colors.length]} text-white shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all aspect-[4/3] flex flex-col justify-between`}
-                      >
-                        <BookOpen className="h-7 w-7 opacity-90" />
-                        <div>
-                          <div className="font-bold text-sm md:text-base leading-tight line-clamp-2">
-                            {c.nome}
-                          </div>
-                          <div className="text-xs opacity-80 mt-1">
-                            {count} {count === 1 ? "produto" : "produtos"}
-                          </div>
-                        </div>
-                        <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
             {/* DESTAQUES */}
             {isClean && destaques.length > 0 && (
               <section className="py-6">
