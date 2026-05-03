@@ -40,12 +40,18 @@ export const MapaMentalVisual: React.FC<Props> = ({
   const cy = H / 2;
 
   const total = branches.length;
-  // raios menores para garantir que cards de 260px ficam totalmente DENTRO da folha
-  const radiusX = fillA4 ? 320 : 340;
-  const radiusY = fillA4 ? 210 : 240;
+  
+  // MELHORIAS: Raios aumentados para melhor aproveitamento de espaço
+  // Antes: radiusX = 320/340, radiusY = 210/240
+  // Agora: radiusX = 380/420, radiusY = 260/300 (mais expansivo)
+  const radiusX = fillA4 ? 380 : 420;
+  const radiusY = fillA4 ? 260 : 300;
 
-  const CARD_W = 240;
-  const PAD = 18; // margem mínima da borda da folha
+  // MELHORIAS: Cards maiores para melhor legibilidade
+  // Antes: CARD_W = 240
+  // Agora: CARD_W = 280 (mais espaço para conteúdo)
+  const CARD_W = 280;
+  const PAD = 16; // margem mínima da borda da folha
 
   const positions = branches.map((_, i) => {
     const angle = (i / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
@@ -56,7 +62,7 @@ export const MapaMentalVisual: React.FC<Props> = ({
 
   // Ajusta tamanho dos sub-itens para caberem no card, conforme densidade
   const maxItems = Math.max(1, ...branches.map((b) => b.items.length));
-  const densityScale = maxItems > 8 ? 0.78 : maxItems > 6 ? 0.88 : 1;
+  const densityScale = maxItems > 10 ? 0.75 : maxItems > 8 ? 0.85 : maxItems > 6 ? 0.92 : 1;
   const fs = (px: number) => `${px * fontScale * densityScale}px`;
 
   return (
@@ -73,13 +79,14 @@ export const MapaMentalVisual: React.FC<Props> = ({
         overflow: "visible",
       }}
     >
+      {/* Camada de fundo com padrão decorativo */}
       <div
         aria-hidden
         style={{
           position: "absolute",
           inset: 0,
           backgroundImage:
-            "radial-gradient(circle at 20% 20%, rgba(30,157,241,0.08) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(168,85,247,0.08) 0%, transparent 40%)",
+            "radial-gradient(circle at 20% 20%, rgba(30,157,241,0.12) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(168,85,247,0.12) 0%, transparent 40%)",
           pointerEvents: "none",
         }}
       />
@@ -93,7 +100,7 @@ export const MapaMentalVisual: React.FC<Props> = ({
           maxWidth: "100%",
         }}
       >
-        {/* SVG conexões curvas */}
+        {/* SVG conexões curvas com melhor profundidade */}
         <svg
           width={W}
           height={H}
@@ -103,42 +110,67 @@ export const MapaMentalVisual: React.FC<Props> = ({
           <defs>
             {PALETTE.map((c, i) => (
               <linearGradient key={i} id={`grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#1E9DF1" stopOpacity="0.9" />
-                <stop offset="100%" stopColor={c.main} stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#1E9DF1" stopOpacity="0.95" />
+                <stop offset="100%" stopColor={c.main} stopOpacity="0.95" />
               </linearGradient>
             ))}
             <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feGaussianBlur stdDeviation="4" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
+            {/* Sombra mais profunda para as linhas */}
+            <filter id="deepShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feOffset in="blur" dx="0" dy="1" result="offset" />
+              <feComponentTransfer in="offset" result="offsetblur">
+                <feFuncA type="linear" slope="0.3" />
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode in="offsetblur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
 
+          {/* Linhas de conexão com profundidade aumentada */}
           {positions.map((p, i) => {
             const c = PALETTE[i % PALETTE.length];
             const mx = (cx + p.x) / 2;
-            const my = (cy + p.y) / 2 + (i % 2 === 0 ? -40 : 40);
+            const my = (cy + p.y) / 2 + (i % 2 === 0 ? -50 : 50);
             const path = `M ${cx} ${cy} Q ${mx} ${my} ${p.x} ${p.y}`;
             return (
               <g key={i}>
+                {/* Linha de sombra (mais espessa, atrás) */}
+                <path
+                  d={path}
+                  stroke={`${c.main}22`}
+                  strokeWidth={6}
+                  fill="none"
+                  strokeLinecap="round"
+                  opacity={0.6}
+                />
+                {/* Linha principal com gradiente */}
                 <path
                   d={path}
                   stroke={`url(#grad-${i % PALETTE.length})`}
-                  strokeWidth={3}
+                  strokeWidth={3.5}
                   fill="none"
                   strokeLinecap="round"
-                  filter="url(#softGlow)"
-                  opacity={0.85}
+                  filter="url(#deepShadow)"
+                  opacity={0.9}
                 />
-                <circle cx={p.x} cy={p.y} r={6} fill={c.main} opacity={0.9} />
+                {/* Ponto de conexão maior e mais visível */}
+                <circle cx={p.x} cy={p.y} r={8} fill={c.main} opacity={0.95} />
+                <circle cx={p.x} cy={p.y} r={5} fill="#fff" opacity={0.7} />
               </g>
             );
           })}
         </svg>
 
-        {/* Nó central */}
+        {/* Nó central com design premium */}
         <div
           style={{
             position: "absolute",
@@ -150,36 +182,39 @@ export const MapaMentalVisual: React.FC<Props> = ({
         >
           <div
             style={{
-              padding: "20px 30px",
-              borderRadius: "24px",
+              padding: "28px 40px",
+              borderRadius: "28px",
               background:
                 "linear-gradient(135deg, #1E9DF1 0%, #6366F1 50%, #A855F7 100%)",
               color: "#fff",
               boxShadow:
-                "0 20px 50px -10px rgba(30,157,241,0.55), 0 0 0 6px rgba(255,255,255,0.6), 0 0 0 8px rgba(30,157,241,0.25)",
+                "0 25px 60px -15px rgba(30,157,241,0.65), 0 0 0 8px rgba(255,255,255,0.7), 0 0 0 10px rgba(30,157,241,0.3), inset 0 1px 0 rgba(255,255,255,0.4)",
               textAlign: "center",
-              maxWidth: "280px",
-              minWidth: "180px",
+              maxWidth: "320px",
+              minWidth: "200px",
+              backdropFilter: "blur(10px)",
             }}
           >
             <div
               style={{
-                fontSize: fs(9),
-                letterSpacing: "3px",
+                fontSize: fs(10),
+                letterSpacing: "4px",
                 textTransform: "uppercase",
-                opacity: 0.85,
-                marginBottom: "6px",
-                fontWeight: 600,
+                opacity: 0.9,
+                marginBottom: "8px",
+                fontWeight: 700,
+                fontFamily: "'SF Pro Display', system-ui, sans-serif",
               }}
             >
-              ✦ Tema Central ✦
+              ✦ TEMA CENTRAL ✦
             </div>
             <div
               style={{
-                fontSize: fs(18),
-                fontWeight: 800,
-                lineHeight: 1.2,
+                fontSize: fs(22),
+                fontWeight: 900,
+                lineHeight: 1.25,
                 fontFamily: "'SF Pro Display', system-ui, sans-serif",
+                letterSpacing: "-0.5px",
               }}
             >
               {central}
@@ -187,7 +222,7 @@ export const MapaMentalVisual: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Cards dos ramos */}
+        {/* Cards dos ramos com design premium */}
         {branches.map((b, i) => {
           const c = PALETTE[i % PALETTE.length];
           const icon = ICONS[i % ICONS.length];
@@ -200,7 +235,7 @@ export const MapaMentalVisual: React.FC<Props> = ({
           if (cardLeft + CARD_W > W - PAD) cardLeft = W - PAD - CARD_W;
 
           // Limite vertical: estima altura e clampa
-          const estHeight = 70 + b.items.length * 22 * fontScale * densityScale;
+          const estHeight = 85 + b.items.length * 26 * fontScale * densityScale;
           let cardTop = p.y - estHeight / 2;
           if (cardTop < PAD) cardTop = PAD;
           if (cardTop + estHeight > H - PAD) cardTop = H - PAD - estHeight;
@@ -221,44 +256,61 @@ export const MapaMentalVisual: React.FC<Props> = ({
             >
               <div
                 style={{
-                  background: "rgba(255,255,255,0.92)",
-                  backdropFilter: "blur(10px)",
-                  WebkitBackdropFilter: "blur(10px)",
-                  border: `2px solid ${c.main}`,
-                  borderRadius: "16px",
-                  padding: "12px 14px",
-                  boxShadow: `0 12px 30px -8px ${c.glow}, 0 4px 10px rgba(0,0,0,0.06)`,
+                  background: "rgba(255,255,255,0.95)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: `2.5px solid ${c.main}`,
+                  borderRadius: "18px",
+                  padding: "14px 16px",
+                  boxShadow: `0 16px 40px -10px ${c.glow}, 0 8px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)`,
                   position: "relative",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "8px",
+                  gap: "10px",
                 }}
               >
-                {/* Header com ícone + número */}
+                {/* Gradiente de fundo sutil no card */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: `linear-gradient(135deg, ${c.soft} 0%, transparent 100%)`,
+                    pointerEvents: "none",
+                    borderRadius: "16px",
+                  }}
+                />
+
+                {/* Header com ícone + número (premium) */}
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
-                    paddingBottom: "8px",
-                    borderBottom: `1px dashed ${c.main}55`,
+                    gap: "12px",
+                    paddingBottom: "10px",
+                    borderBottom: `2px solid ${c.main}30`,
+                    position: "relative",
+                    zIndex: 1,
                   }}
                 >
                   <div
                     style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "10px",
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "12px",
                       background: `linear-gradient(135deg, ${c.main}, ${c.deep})`,
                       color: "#fff",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: fs(14),
-                      fontWeight: 800,
-                      boxShadow: `0 6px 14px -4px ${c.glow}`,
+                      fontSize: fs(18),
+                      fontWeight: 900,
+                      boxShadow: `0 8px 18px -6px ${c.glow}, inset 0 1px 0 rgba(255,255,255,0.3)`,
                       flexShrink: 0,
+                      fontFamily: "'SF Pro Display', system-ui, sans-serif",
                     }}
                   >
                     {branchNumber}
@@ -266,27 +318,29 @@ export const MapaMentalVisual: React.FC<Props> = ({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontSize: fs(8),
-                        letterSpacing: "1.5px",
+                        fontSize: fs(9),
+                        letterSpacing: "2px",
                         textTransform: "uppercase",
                         color: c.deep,
-                        opacity: 0.7,
-                        fontWeight: 700,
+                        opacity: 0.75,
+                        fontWeight: 800,
                         display: "flex",
                         alignItems: "center",
-                        gap: "4px",
+                        gap: "5px",
+                        fontFamily: "'SF Pro Display', system-ui, sans-serif",
                       }}
                     >
-                      <span>{icon}</span> Ramo {String(branchNumber).padStart(2, "0")}
+                      <span>{icon}</span> RAMO {String(branchNumber).padStart(2, "0")}
                     </div>
                     <div
                       style={{
-                        fontSize: fs(13),
-                        fontWeight: 800,
+                        fontSize: fs(14),
+                        fontWeight: 900,
                         color: c.deep,
-                        lineHeight: 1.2,
+                        lineHeight: 1.25,
                         fontFamily: "'SF Pro Display', system-ui, sans-serif",
                         wordBreak: "break-word",
+                        marginTop: "2px",
                       }}
                     >
                       {b.label.replace(/^\d+(\.\d+)*\s*[-.:]?\s*/, "").trim()}
@@ -294,33 +348,37 @@ export const MapaMentalVisual: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* Sub-ramos numerados (1.1, 1.2, ...) */}
-                <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {/* Sub-ramos numerados com melhor espaçamento (1.1, 1.2, ...) */}
+                <ol style={{ listStyle: "none", padding: 0, margin: 0, position: "relative", zIndex: 1 }}>
                   {b.items.map((it, j) => (
                     <li
                       key={j}
                       style={{
                         display: "flex",
                         alignItems: "flex-start",
-                        gap: "6px",
-                        padding: "4px 6px",
-                        marginBottom: "3px",
-                        borderRadius: "7px",
+                        gap: "8px",
+                        padding: "6px 8px",
+                        marginBottom: "4px",
+                        borderRadius: "8px",
                         background: c.soft,
-                        fontSize: fs(11),
+                        fontSize: fs(12),
+                        color: c.deep,
                         lineHeight: 1.35,
-                        color: "#1a1a1a",
+                        fontWeight: 500,
+                        fontFamily: "'SF Pro Display', system-ui, sans-serif",
                         wordBreak: "break-word",
+                        transition: "all 0.2s ease",
                       }}
                     >
                       <span
                         style={{
-                          fontSize: fs(10),
+                          fontSize: fs(11),
                           fontWeight: 800,
-                          color: c.deep,
-                          minWidth: "26px",
+                          color: c.main,
+                          minWidth: "30px",
                           flexShrink: 0,
                           fontVariantNumeric: "tabular-nums",
+                          fontFamily: "'SF Pro Display', system-ui, sans-serif",
                         }}
                       >
                         {branchNumber}.{j + 1}
@@ -339,10 +397,10 @@ export const MapaMentalVisual: React.FC<Props> = ({
       {!fillA4 && (
         <div
           style={{
-            marginTop: "16px",
+            marginTop: "20px",
             display: "flex",
             flexWrap: "wrap",
-            gap: "8px",
+            gap: "10px",
             justifyContent: "center",
             position: "relative",
           }}
@@ -355,23 +413,25 @@ export const MapaMentalVisual: React.FC<Props> = ({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "6px",
-                  padding: "4px 10px",
+                  gap: "8px",
+                  padding: "6px 12px",
                   borderRadius: "999px",
                   background: "#fff",
-                  border: `1px solid ${c.main}55`,
-                  fontSize: fs(10),
-                  fontWeight: 600,
+                  border: `1.5px solid ${c.main}`,
+                  fontSize: fs(11),
+                  fontWeight: 700,
                   color: c.deep,
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                  boxShadow: "0 3px 8px rgba(0,0,0,0.06)",
+                  fontFamily: "'SF Pro Display', system-ui, sans-serif",
                 }}
               >
                 <span
                   style={{
-                    width: "8px",
-                    height: "8px",
+                    width: "10px",
+                    height: "10px",
                     borderRadius: "50%",
                     background: c.main,
+                    boxShadow: `0 0 8px ${c.glow}`,
                   }}
                 />
                 {i + 1}. {b.label}

@@ -1,5 +1,6 @@
 /**
  * PDF export helper — manual html2canvas + jsPDF pipeline with multi-page support.
+ * MELHORIAS: Captura com qualidade superior, melhor controle de escala e resolução.
  */
 import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
 
@@ -145,21 +146,19 @@ export async function exportHtmlToPdf({
 
     // Multiple rAF + delay to ensure browser has painted
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-    await new Promise<void>((r) => setTimeout(r, 1000));
+    await new Promise<void>((r) => setTimeout(r, 1200));
 
     const contentWidth = container.scrollWidth;
     const contentHeight = container.scrollHeight;
 
-    // Capture with html2canvas
+    // Capture with html2canvas — MELHORIAS: Scale aumentada para qualidade superior
     const html2canvas = (await import("html2canvas")).default;
     
-    // Para garantir que o break-inside: avoid funcione, precisamos capturar o elemento de forma que o navegador respeite as quebras.
-    // No entanto, o html2canvas captura um snapshot estático. 
-    // A melhor abordagem para múltiplas páginas com html2canvas é capturar página por página se possível, 
-    // ou capturar o todo e fatiar inteligentemente.
+    // MELHORIAS: Usar scale 4 para mapas mentais (melhor qualidade), 3 para outros
+    const effectiveScale = filename.includes("mapa-mental") ? 4 : scale;
     
     const canvas = await html2canvas(container, {
-      scale,
+      scale: effectiveScale,
       useCORS: true,
       allowTaint: true,
       logging: false,
@@ -239,10 +238,10 @@ export async function exportHtmlToPdf({
       if (bestBreakY < totalHeight) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          const scanRange = Math.min(100 * scale, pageHeightPx * 0.2); // Procura nos últimos 20% da página
+          const scanRange = Math.min(100 * effectiveScale, pageHeightPx * 0.2); // Procura nos últimos 20% da página
           const startScanY = bestBreakY - scanRange;
           
-          for (let y = bestBreakY; y > startScanY; y -= 2 * scale) {
+          for (let y = bestBreakY; y > startScanY; y -= 2 * effectiveScale) {
             const imageData = ctx.getImageData(0, y, canvas.width, 1).data;
             let isWhiteLine = true;
             for (let i = 0; i < imageData.length; i += 4) {
@@ -277,10 +276,15 @@ export async function exportHtmlToPdf({
           canvas.width, srcH
         );
 
-        const imgData = pageCanvas.toDataURL("image/jpeg", 0.95);
+        // MELHORIAS: Usar PNG para mapas mentais (melhor qualidade), JPEG para outros
+        const isHighQuality = filename.includes("mapa-mental");
+        const imgData = isHighQuality 
+          ? pageCanvas.toDataURL("image/png")
+          : pageCanvas.toDataURL("image/jpeg", 0.98);
+        
         pdf.addImage(
           imgData, 
-          "JPEG", 
+          isHighQuality ? "PNG" : "JPEG", 
           mLeft, 
           mTop, 
           usableW, 

@@ -152,7 +152,9 @@ const PALETTE_OPTIONS = [
 const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, disciplina }) => {
   const cleaned = React.useMemo(() => cleanArtifacts(sanitizeResumo(resultado)), [resultado]);
   const { title, sections } = React.useMemo(() => parseResumoSections(cleaned), [cleaned]);
-  const visualRef = React.useRef<HTMLDivElement>(null);
+  
+  // CORREÇÃO: Usar innerRef para capturar o conteúdo A4 real 1:1, não o wrapper escalado
+  const a4InnerRef = React.useRef<HTMLDivElement>(null);
 
   // Tamanho da letra: 1..50 → 0.55x..2.2x
   const [fontLevel, setFontLevel] = React.useState<number>(25);
@@ -171,8 +173,9 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
   };
 
   const handleExportPDF = () => {
-    if (visualRef.current) {
-      return exportResumoVisualPDF(visualRef.current, tipoResumo, disciplina, title || tipoResumo);
+    // CORREÇÃO: Exportar o conteúdo A4 real (innerRef) em vez do wrapper escalado
+    if (a4InnerRef.current) {
+      return exportResumoVisualPDF(a4InnerRef.current, tipoResumo, disciplina, title || tipoResumo);
     }
     return exportResumoPDF(cleaned, tipoResumo, disciplina, title);
   };
@@ -183,7 +186,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
         const data = parseMapaMental(cleaned);
         if (data.branches.length === 0) return null;
         return (
-          <A4Sheet orientation="landscape">
+          <A4Sheet orientation="landscape" innerRef={a4InnerRef}>
             <MapaMentalVisual
               central={data.central}
               branches={data.branches}
@@ -212,7 +215,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
         // Tipos textuais → renderiza com estilo escolhido em A4 portrait
         if (isTextual && sections.length > 0) {
           return (
-            <A4Sheet orientation="portrait">
+            <A4Sheet orientation="portrait" innerRef={a4InnerRef}>
               <TopicosVisual
                 title={title}
                 disciplina={disciplina}
@@ -305,7 +308,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
 
       {/* Visual principal */}
       {visual && (
-        <div ref={visualRef} className="bg-card border border-border rounded-2xl shadow-card overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl shadow-card overflow-hidden">
           <div className="px-5 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
