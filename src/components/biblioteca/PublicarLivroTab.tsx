@@ -67,7 +67,7 @@ const PublicarLivroTab = () => {
       canvas.height = viewport.height;
       canvas.width = viewport.width;
       
-      await page.render({ canvasContext: context, viewport }).promise;
+      await page.render({ canvasContext: context, viewport, canvas }).promise;
       
       return new Promise((resolve) => {
         canvas.toBlob((blob) => {

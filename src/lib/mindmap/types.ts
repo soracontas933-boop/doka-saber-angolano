@@ -97,8 +97,6 @@ export function fromParsedMap(
     nodes.push({
       id: branchId,
       label: `${i + 1}. ${cleanLabel(b.label)}`,
-      description: b.description,
-      metadata: b.metadata,
       x: bx,
       y: by,
       parentId: centralId,
