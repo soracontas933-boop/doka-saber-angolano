@@ -251,7 +251,7 @@ const AuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="telefone" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Telefone</Label>
+                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone</Label>
                       <Input
                         id="telefone"
                         type="tel"
