@@ -149,7 +149,9 @@ const AdminLivrariaTab = () => {
     if (form.id) {
       ({ error } = await supabase.from("books").update(payload).eq("id", form.id));
     } else {
-      ({ error } = await supabase.from("books").insert(payload));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setSaving(false); return toast({ title: "Sessão expirada", variant: "destructive" }); }
+      ({ error } = await supabase.from("books").insert({ ...payload, criado_por: user.id }));
     }
     setSaving(false);
     if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
