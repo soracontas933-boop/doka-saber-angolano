@@ -263,7 +263,7 @@ const AuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Função *</Label>
+                      <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Função *</Label>
                       <Select value={funcao} onValueChange={setFuncao}>
                         <SelectTrigger className="h-12 rounded-xl border-border/60">
                           <SelectValue placeholder="Selecione a sua função" />
