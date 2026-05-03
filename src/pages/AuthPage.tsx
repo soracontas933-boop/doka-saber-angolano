@@ -321,9 +321,9 @@ const AuthPage = () => {
                 className="text-base text-muted-foreground hover:text-[#3B82F6] transition-colors font-medium"
               >
                 {isLogin ? (
-                  <>Não tem conta? <span className="text-[#3B82F6] font-bold">Registe-se</span></>
+                  <>Não tem conta? <span className="text-[#3B82F6] font-bold text-base">Registe-se</span></>
                 ) : (
-                  <>Já tem conta? <span className="text-[#3B82F6] font-bold">Entre aqui</span></>
+                  <>Já tem conta? <span className="text-[#3B82F6] font-bold text-base">Entre aqui</span></>
                 )}
               </button>
             </div>
