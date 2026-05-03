@@ -293,7 +293,7 @@ const AuthPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Palavra-passe *</Label>
+                <Label htmlFor="password" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Palavra-passe *</Label>
                 <Input
                   id="password"
                   type="password"
