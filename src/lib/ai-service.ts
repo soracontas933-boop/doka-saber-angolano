@@ -290,34 +290,42 @@ export const prompts = {
     const base = `Conteúdo de origem (do caderno do estudante):\n"""\n${conteudo}\n"""\n\nDisciplina/nível: ${classe}.\n\nREQUISITOS DE EXTENSÃO E CONTEXTO:\n- O resumo deve ter EXATAMENTE ${paginas} página(s) A4 de conteúdo denso e útil.\n- ${contextInfo}\n- Se o conteúdo original for longo (ex: um livro de 1000 páginas), deves ser extremamente inteligente para sintetizar os pontos mais críticos mantendo a fidelidade e profundidade necessária para o número de páginas solicitado.\n\nREGRAS ABSOLUTAS DE FORMATO:\n- NUNCA escrevas blocos JSON, código, chaves { } ou colchetes [ ] na resposta.\n- NUNCA uses os símbolos: • em sequência, "•[", "•{", aspas curvas estranhas.\n- USA EXCLUSIVAMENTE Markdown limpo (# título, ## secção, - item, **negrito**).\n- Não inventes nem repitas instruções; entrega só o conteúdo final.\n`;
     switch (tipo) {
          case "Mapa Mental":
-        return base + `\nGera um MAPA MENTAL INTERATIVO e hierárquico.
-REGRAS DE CONTEÚDO (SISTEMA PREMIUM):
-1. TÍTULO DO CARTÃO: Muito curto (máximo 6 palavras).
-2. CONTEÚDO EXPANSÍVEL: Se o tópico for complexo, adicione detalhes extras entre parênteses após o título ou em uma nova linha começando com "Detalhes:".
-3. METADADOS ESPECIAIS: Use os prefixos abaixo para enriquecer o cartão interativo:
-   - "Exemplo: <texto>" para exemplos práticos.
-   - "Definição: <texto>" para conceitos técnicos.
-   - "Importância: <texto>" para relevância.
-   - "Aplicação: <texto>" para uso prático.
-4. NUMERAÇÃO: Use 1., 1.1, 1.2 para ordem lógica.
+        return base + `\nGera um MAPA MENTAL hierárquico, RAMIFICADO, lógico e fácil de MEMORIZAR.
 
-Formato OBRIGATÓRIO em Markdown:
+OBJETIVO PEDAGÓGICO:
+O aluno deve, ao olhar para o mapa, captar instantaneamente: o TEMA → os SUBTEMAS → uma DEFINIÇÃO clara e curta de cada subtema → os ELEMENTOS/EXEMPLOS chave para fixar.
+
+REGRAS DE CONTEÚDO (CRÍTICAS):
+1. TÍTULO CENTRAL (#): nome do tema em 2-5 palavras.
+2. SUBTEMAS (##): 4 a 6 ramos principais. Cada ## deve ser um SUBTEMA curto (máx. 4 palavras), numerado (1., 2., 3.…).
+3. SUB-RAMIFICAÇÕES (- itens): cada subtema deve ter 3 a 5 itens. Cada item é UMA IDEIA-CHAVE no formato:
+   "<Conceito>: <definição curta de 4-10 palavras>"
+   ou
+   "<Conceito> — <elemento1, elemento2, elemento3>"
+   NUNCA frases longas, nunca parágrafos. Cada linha tem de caber numa "ficha de memória".
+4. LÓGICA: a ordem dos itens deve seguir uma progressão (do simples ao complexo, ou cronológica, ou causa→efeito).
+5. MEMORIZAÇÃO: usa termos concretos, exemplos angolanos quando útil, e palavras-gatilho fáceis de evocar.
+6. METADADOS OPCIONAIS por ramo (no máximo 2 por ramo, logo após o ##, antes dos itens):
+   - "Definição: <frase muito curta que define o subtema>"
+   - "Exemplo: <exemplo prático real>"
+7. PROIBIDO: textos longos, explicações académicas, "Detalhes:" gigantes, repetições, JSON, código.
+
+FORMATO OBRIGATÓRIO (Markdown puro):
 
 # <Tema Central>
 
-## 1. <Título Curto do Ramo>
-Detalhes: <Explicação detalhada para o "Ver mais">
-Exemplo: <Exemplo real angolano>
-Importância: <Por que estudar isto>
+## 1. <Subtema curto>
+Definição: <frase curta que explica o subtema>
+- <Conceito A>: <definição curta>
+- <Conceito B>: <definição curta>
+- <Conceito C> — <elem1, elem2, elem3>
 
-- 1.1 <Título Curto do Sub-ramo>
-Detalhes: <Mais informações>
-Aplicação: <Como usar no dia-a-dia>
+## 2. <Próximo Subtema>
+Definição: <frase curta>
+- ...
+- ...
 
-## 2. <Próximo Ramo>
-...
-
-Priorize a clareza visual no título e a profundidade nos metadados.`;
+Entrega APENAS este formato. Sem introdução, sem conclusão, sem texto fora da estrutura.`;
       case "Flashcards":
         return base + `\nGera 12 FLASHCARDS de estudo. Formato OBRIGATÓRIO em Markdown (sem JSON):\n\n# Flashcards — <Tema>\n\n## 1\n**Frente:** <pergunta clara e curta>\n**Verso:** <resposta precisa, 1-3 frases>\n\n## 2\n**Frente:** ...\n**Verso:** ...\n\n(continua até 12). Não escrevas mais nada além disso.`;
       case "Linha do Tempo":
