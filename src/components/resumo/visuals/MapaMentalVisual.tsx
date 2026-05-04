@@ -60,9 +60,17 @@ export const MapaMentalVisual: React.FC<Props> = ({
     return { x, y, angle };
   });
 
+  // Garante que o conteúdo de cada item NUNCA estoura o card.
+  // Trunca itens com mais de 12 palavras para 10 palavras + "…"
+  const trimItem = (s: string) => {
+    const clean = s.replace(/^\d+(\.\d+)*\s*[-.:]?\s*/, "").trim();
+    const words = clean.split(/\s+/);
+    return words.length > 12 ? words.slice(0, 10).join(" ") + "…" : clean;
+  };
+
   // Ajusta tamanho dos sub-itens para caberem no card, conforme densidade
   const maxItems = Math.max(1, ...branches.map((b) => b.items.length));
-  const densityScale = maxItems > 10 ? 0.75 : maxItems > 8 ? 0.85 : maxItems > 6 ? 0.92 : 1;
+  const densityScale = maxItems > 6 ? 0.78 : maxItems > 4 ? 0.88 : 1;
   const fs = (px: number) => `${px * fontScale * densityScale}px`;
 
   return (
@@ -383,7 +391,7 @@ export const MapaMentalVisual: React.FC<Props> = ({
                       >
                         {branchNumber}.{j + 1}
                       </span>
-                      <span style={{ flex: 1 }}>{it.replace(/^\d+(\.\d+)*\s*[-.:]?\s*/, "").trim()}</span>
+                      <span style={{ flex: 1 }}>{trimItem(it)}</span>
                     </li>
                   ))}
                 </ol>
