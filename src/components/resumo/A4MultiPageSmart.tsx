@@ -13,7 +13,7 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import {
   measureElementHeight,
   collectCardMetrics,
@@ -33,7 +33,8 @@ interface A4MultiPageSmartProps {
   /** Páginas extras adicionadas manualmente */
   extraPages?: number;
   onAddPage?: () => void;
-  /** Padding interno em px de cada página A4 */
+  onRemovePage?: () => void;
+  /** Padding interno em px de cada página A4. */
   padding?: number;
 }
 
@@ -44,6 +45,7 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
   allowAddPage = true,
   extraPages = 0,
   onAddPage,
+  onRemovePage,
   padding = 48,
 }) => {
   const W = orientation === "landscape" ? 1123 : 794;
@@ -196,9 +198,27 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
                         overflow: "visible",
                         pageBreakInside: "avoid",
                         breakInside: "avoid",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0,
                       }}
                     >
-                      {children}
+                      {pageLayout ? (
+                        pageLayout.cards.map((card, cardIdx) => (
+                          <div 
+                            key={cardIdx} 
+                            dangerouslySetInnerHTML={{ __html: card.outerHTML }} 
+                            style={{ 
+                              width: '100%',
+                              breakInside: 'avoid',
+                              pageBreakInside: 'avoid'
+                            }}
+                          />
+                        ))
+                      ) : (
+                        // Fallback se não houver layout (ex: página extra ou erro)
+                        i < pageCount ? children : null
+                      )}
                     </div>
                   </div>
                 )}
@@ -212,9 +232,24 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
                     fontSize: 10,
                     color: "#94a3b8",
                     fontFamily: "'SF Pro Display', system-ui, sans-serif",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8
                   }}
                 >
-                  Página {i + 1} de {totalPages}
+                  {isExtra && onRemovePage && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemovePage();
+                      }}
+                      className="p-1 hover:bg-red-50 hover:text-red-500 rounded transition-colors"
+                      title="Remover página extra"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                  <span>Página {i + 1} de {totalPages}</span>
                 </div>
               </div>
             </div>

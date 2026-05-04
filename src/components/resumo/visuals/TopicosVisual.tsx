@@ -146,6 +146,7 @@ const TopicosVisual: React.FC<Props> = ({
         return (
           <div
             key={i}
+            data-card
             style={{
               display: "flex",
               gap: 12,
@@ -186,7 +187,7 @@ const TopicosVisual: React.FC<Props> = ({
 
       case "timeline-blocks":
         return (
-          <div key={i} style={{ display: "flex", gap: 12, marginBottom: 14, position: "relative", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div key={i} data-card style={{ display: "flex", gap: 12, marginBottom: 14, position: "relative", breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <div
                 style={{
@@ -228,6 +229,7 @@ const TopicosVisual: React.FC<Props> = ({
         return (
           <div
             key={i}
+            data-card
             style={{
               display: "flex",
               gap: 10,
@@ -265,6 +267,7 @@ const TopicosVisual: React.FC<Props> = ({
         return (
           <div
             key={i}
+            data-card
             style={{
               marginBottom: 14,
               borderRadius: 14,
@@ -299,6 +302,7 @@ const TopicosVisual: React.FC<Props> = ({
         return (
           <div
             key={i}
+            data-card
             style={{
               marginBottom: 14,
               padding: 14,

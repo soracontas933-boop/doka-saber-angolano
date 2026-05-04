@@ -60,9 +60,18 @@ export async function exportMultiPagePdf({
 
     for (let i = 0; i < pages.length; i++) {
       if (i > 0) pdf.addPage();
-      const canvas = await captureToCanvas(pages[i], scale);
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
-      pdf.addImage(imgData, "JPEG", 0, 0, pageW, pageH, undefined, "FAST");
+      
+      // Força overflow visible antes da captura para garantir que nada seja cortado
+      const originalOverflow = pages[i].style.overflow;
+      pages[i].style.overflow = 'visible';
+      
+      try {
+        const canvas = await captureToCanvas(pages[i], scale);
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        pdf.addImage(imgData, "JPEG", 0, 0, pageW, pageH, undefined, "FAST");
+      } finally {
+        pages[i].style.overflow = originalOverflow;
+      }
     }
 
     pdf.save(filename);

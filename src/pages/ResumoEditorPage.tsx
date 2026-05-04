@@ -18,7 +18,7 @@ import {
 import MapaMentalVisual from "@/components/resumo/visuals/MapaMentalVisual";
 import TopicosVisual, { TopicosStyle, TopicoSection } from "@/components/resumo/visuals/TopicosVisual";
 import A4Sheet from "@/components/resumo/A4Sheet";
-import A4MultiPage from "@/components/resumo/A4MultiPage";
+import A4MultiPageSmart from "@/components/resumo/A4MultiPageSmart";
 import { exportResumoWord } from "@/lib/resumo-export";
 import { exportMultiPagePdf } from "@/lib/multi-page-pdf";
 import { setSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
@@ -104,6 +104,7 @@ const ResumoEditorPage: React.FC = () => {
   };
 
   const handleAddPage = () => setExtraPages((p) => p + 1);
+  const handleRemovePage = () => setExtraPages((p) => Math.max(0, p - 1));
 
   // Renderização do conteúdo (sem A4Sheet — A4MultiPage trata da paginação)
   const renderInner = () => {
@@ -393,17 +394,18 @@ const ResumoEditorPage: React.FC = () => {
                 </div>
               </A4Sheet>
             ) : (
-              <A4MultiPage
+              <A4MultiPageSmart
                 orientation={orientation}
                 extraPages={extraPages}
                 onAddPage={handleAddPage}
+                onRemovePage={handleRemovePage}
                 padding={48}
               >
                 <div style={{ fontFamily, color: "#000" }}>{inner}</div>
-              </A4MultiPage>
+              </A4MultiPageSmart>
             )
           ) : (
-            <A4MultiPage orientation="portrait" extraPages={extraPages} onAddPage={handleAddPage}>
+            <A4MultiPageSmart orientation="portrait" extraPages={extraPages} onAddPage={handleAddPage} onRemovePage={handleRemovePage}>
               <div style={{ fontFamily, color: "#000" }}>
                 <h1 style={{ textAlign: "center", fontSize: 22, color: palette.primary, margin: "0 0 12px", fontWeight: 800 }}>
                   {finalTitle.toUpperCase()}
@@ -412,7 +414,7 @@ const ResumoEditorPage: React.FC = () => {
                 <hr style={{ border: "none", borderTop: `2px solid ${palette.primary}`, margin: "12px 0 18px" }} />
                 <pre style={{ whiteSpace: "pre-wrap", fontFamily, fontSize: 12, lineHeight: 1.7 }}>{cleaned}</pre>
               </div>
-            </A4MultiPage>
+            </A4MultiPageSmart>
           )}
         </main>
       </div>
