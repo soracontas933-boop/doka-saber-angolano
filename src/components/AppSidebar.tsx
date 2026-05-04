@@ -31,7 +31,7 @@ import { useAdmin } from "@/hooks/use-admin";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { Badge } from "@/components/ui/badge";
 import DelleLogo from "./DelleLogo";
-import { useState } from "react";
+import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 
 interface NavItem {
   to: string;
@@ -71,7 +71,7 @@ const AppSidebar = () => {
   const navigate = useNavigate();
   const { isAdmin, hasPermission } = useAdmin();
   const { isFeatureEnabled } = useFeatureFlags();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useSidebarCollapsed();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
