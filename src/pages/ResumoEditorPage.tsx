@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, FileDown, FileText, Palette, Type, RotateCcw, Save } from "lucide-react";
@@ -16,12 +16,12 @@ import {
   parseQuadroComparativo,
 } from "@/lib/resumo-parsers";
 import MapaMentalVisual from "@/components/resumo/visuals/MapaMentalVisual";
-import FlashcardsVisual from "@/components/resumo/visuals/FlashcardsVisual";
-import LinhaTempoVisual from "@/components/resumo/visuals/LinhaTempoVisual";
-import QuadroComparativoVisual from "@/components/resumo/visuals/QuadroComparativoVisual";
 import TopicosVisual, { TopicosStyle, TopicoSection } from "@/components/resumo/visuals/TopicosVisual";
 import A4Sheet from "@/components/resumo/A4Sheet";
-import { exportResumoPDF, exportResumoVisualPDF, exportResumoWord } from "@/lib/resumo-export";
+import A4MultiPage from "@/components/resumo/A4MultiPage";
+import { exportResumoWord } from "@/lib/resumo-export";
+import { exportMultiPagePdf } from "@/lib/multi-page-pdf";
+import { setSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 
 interface LocationState {
   resultado: string;
@@ -53,22 +53,25 @@ const ResumoEditorPage: React.FC = () => {
     return <Navigate to="/resumo" replace />;
   }
 
+  // Fecha a sidebar automaticamente ao entrar no editor
+  useEffect(() => {
+    setSidebarCollapsed(true);
+  }, []);
+
   const [resultado, setResultado] = useState(sanitizeResumo(initial.resultado));
   const [titulo, setTitulo] = useState("");
   const [disciplina, setDisciplina] = useState(initial.disciplina || "");
   const [tipoResumo] = useState(initial.tipoResumo);
-  const [numPaginas] = useState(initial.numPaginas || 1);
   const [palette, setPalette] = useState(PALETTE_PRESETS[0]);
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [fontLevel, setFontLevel] = useState(25);
   const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("step-cards");
+  const [extraPages, setExtraPages] = useState(0);
   const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
   const fs = (px: number) => `${px * fontScale}px`;
-  const visualRef = useRef<HTMLDivElement>(null);
 
   const cleaned = useMemo(() => sanitizeResumo(resultado), [resultado]);
 
-  // Detecta título do conteúdo
   const detectedTitle = useMemo(() => {
     const m = cleaned.match(/^#\s+(.+)$/m);
     return m ? m[1].replace(/\*\*/g, "").trim() : tipoResumo;
@@ -80,166 +83,170 @@ const ResumoEditorPage: React.FC = () => {
     const lines = text.split("\n").map((l) => l.trim());
     const sections: TopicoSection[] = [];
     let current: TopicoSection | null = null;
-
     for (const line of lines) {
       if (!line || line.startsWith("# ")) continue;
-
       if (/^#{2,3}\s+/.test(line)) {
         if (current) sections.push(current);
-        current = {
-          heading: line.replace(/^#{2,3}\s+/, "").replace(/\*\*/g, "").trim(),
-          items: [],
-        };
+        current = { heading: line.replace(/^#{2,3}\s+/, "").replace(/\*\*/g, "").trim(), items: [] };
         continue;
       }
-
       if (/^[-*•]\s+/.test(line) || /^\d+[.)]\s+/.test(line)) {
         const item = line.replace(/^[-*•]\s+/, "").replace(/^\d+[.)]\s+/, "").trim();
         if (!current) current = { heading: "Conteúdo", items: [] };
         if (item) current.items.push(item);
         continue;
       }
-
-      if (current) {
-        current.items.push(line);
-      } else {
-        current = { heading: "Introdução", items: [line] };
-      }
+      if (current) current.items.push(line);
+      else current = { heading: "Introdução", items: [line] };
     }
     if (current) sections.push(current);
     return sections.filter((s) => s.heading || s.items.length);
   };
 
-  const renderVisual = () => {
+  const handleAddPage = () => setExtraPages((p) => p + 1);
+
+  // Renderização do conteúdo (sem A4Sheet — A4MultiPage trata da paginação)
+  const renderInner = () => {
     switch (tipoResumo) {
       case "Mapa Mental": {
         const data = parseMapaMental(cleaned);
         if (!data.branches.length) return null;
         return (
-          <A4Sheet orientation="landscape" innerRef={visualRef} multiPage={numPaginas > 1}>
-            <MapaMentalVisual central={data.central} branches={data.branches} fillA4 fontScale={fontScale} />
-          </A4Sheet>
+          <MapaMentalVisual
+            central={data.central}
+            branches={data.branches}
+            fillA4
+            fontScale={fontScale}
+          />
         );
       }
       case "Flashcards": {
         const cards = parseFlashcards(cleaned);
         if (!cards.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage={numPaginas > 1}>
-            <div style={{ padding: 28, minHeight: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
-              <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: 0 }}>
-                {finalTitle}
-              </h2>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, flex: 1, overflow: "hidden" }}>
-                {cards.slice(0, 8).map((c, i) => (
-                  <div key={i} style={{
+          <div style={{ fontFamily, color: "#0f172a" }}>
+            <h2 style={{ textAlign: "center", fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 16px" }}>
+              {finalTitle}
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              {cards.map((c, i) => (
+                <div
+                  key={i}
+                  style={{
                     border: `2px solid ${palette.primary}`,
                     borderRadius: 14,
-                    padding: 12,
+                    padding: 14,
                     background: `linear-gradient(135deg, ${palette.primary}11, ${palette.accent}11)`,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  }}>
-                    <div style={{ fontSize: fs(9), letterSpacing: 1.5, color: palette.primary, fontWeight: 700, textTransform: "uppercase" }}>
-                      Cartão {i + 1}
-                    </div>
-                    <div style={{ fontWeight: 700, fontSize: fs(13), color: "#0f172a", fontFamily }}>{c.frente}</div>
-                    <div style={{ borderTop: `1px dashed ${palette.primary}55`, paddingTop: 6, fontSize: fs(11), color: "#334155", fontFamily }}>
-                      {c.verso}
-                    </div>
+                    breakInside: "avoid",
+                  }}
+                >
+                  <div style={{ fontSize: fs(9), letterSpacing: 1.5, color: palette.primary, fontWeight: 700, textTransform: "uppercase", marginBottom: 6 }}>
+                    Cartão {i + 1}
                   </div>
-                ))}
-              </div>
+                  <div style={{ fontWeight: 700, fontSize: fs(13), marginBottom: 6 }}>{c.frente}</div>
+                  <div style={{ borderTop: `1px dashed ${palette.primary}55`, paddingTop: 6, fontSize: fs(11), color: "#334155" }}>
+                    {c.verso}
+                  </div>
+                </div>
+              ))}
             </div>
-          </A4Sheet>
+          </div>
         );
       }
       case "Linha do Tempo": {
         const events = parseLinhaTempo(cleaned);
         if (!events.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage={numPaginas > 1}>
-            <div style={{ padding: 32, minHeight: "100%" }}>
-              <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 18px" }}>
-                {finalTitle}
-              </h2>
-              <div style={{ position: "relative", paddingLeft: 36 }}>
-                <div style={{ position: "absolute", left: 12, top: 0, bottom: 0, width: 3, background: `linear-gradient(${palette.primary}, ${palette.accent})`, borderRadius: 4 }} />
-                {events.slice(0, 10).map((e, i) => (
-                  <div key={i} style={{ position: "relative", marginBottom: 14 }}>
-                    <div style={{ position: "absolute", left: -32, top: 4, width: 18, height: 18, borderRadius: "50%", background: palette.primary, border: "3px solid #fff", boxShadow: `0 0 0 2px ${palette.primary}55` }} />
-                    <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 14px" }}>
-                      <span style={{ fontSize: fs(10), fontWeight: 700, color: "#fff", background: palette.primary, padding: "2px 8px", borderRadius: 999 }}>{e.data}</span>
-                      <div style={{ fontWeight: 700, fontSize: fs(13), color: "#0f172a", fontFamily, marginTop: 4 }}>{e.titulo}</div>
-                      {e.descricao && <div style={{ fontSize: fs(11), color: "#475569", fontFamily, marginTop: 2 }}>{e.descricao}</div>}
-                    </div>
+          <div style={{ fontFamily, color: "#0f172a" }}>
+            <h2 style={{ textAlign: "center", fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 16px" }}>
+              {finalTitle}
+            </h2>
+            <div style={{ position: "relative", paddingLeft: 36 }}>
+              <div style={{ position: "absolute", left: 12, top: 0, bottom: 0, width: 3, background: `linear-gradient(${palette.primary}, ${palette.accent})`, borderRadius: 4 }} />
+              {events.map((e, i) => (
+                <div key={i} style={{ position: "relative", marginBottom: 14, breakInside: "avoid" }}>
+                  <div style={{ position: "absolute", left: -32, top: 4, width: 18, height: 18, borderRadius: "50%", background: palette.primary, border: "3px solid #fff", boxShadow: `0 0 0 2px ${palette.primary}55` }} />
+                  <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 14px" }}>
+                    <span style={{ fontSize: fs(10), fontWeight: 700, color: "#fff", background: palette.primary, padding: "2px 8px", borderRadius: 999 }}>{e.data}</span>
+                    <div style={{ fontWeight: 700, fontSize: fs(13), marginTop: 4 }}>{e.titulo}</div>
+                    {e.descricao && <div style={{ fontSize: fs(11), color: "#475569", marginTop: 2 }}>{e.descricao}</div>}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          </A4Sheet>
+          </div>
         );
       }
       case "Quadro Comparativo": {
         const data = parseQuadroComparativo(cleaned);
         if (!data) return null;
         return (
-          <A4Sheet orientation="landscape" innerRef={visualRef} multiPage={numPaginas > 1}>
-            <div style={{ padding: 28, minHeight: "100%", display: "flex", flexDirection: "column" }}>
-              <h2 style={{ textAlign: "center", fontFamily, fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 14px" }}>
-                {finalTitle}
-              </h2>
-              <div style={{ flex: 1, overflow: "hidden", border: "1px solid #e2e8f0", borderRadius: 12 }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontFamily, fontSize: fs(12) }}>
-                  <thead>
-                    <tr>
-                      {data.headers.map((h, i) => (
-                        <th key={i} style={{ padding: 10, textAlign: "left", color: "#fff", background: i === 0 ? "#0f172a" : palette.primary, fontSize: fs(12) }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.rows.map((row, ri) => (
-                      <tr key={ri} style={{ background: ri % 2 ? `${palette.primary}08` : "#fff" }}>
-                        {row.map((cell, ci) => (
-                          <td key={ci} style={{ padding: 10, borderTop: "1px solid #e2e8f0", verticalAlign: "top", fontWeight: ci === 0 ? 700 : 400, color: "#0f172a" }}>{cell}</td>
-                        ))}
-                      </tr>
+          <div style={{ fontFamily, color: "#0f172a" }}>
+            <h2 style={{ textAlign: "center", fontSize: fs(22), fontWeight: 800, color: palette.primary, margin: "0 0 14px" }}>
+              {finalTitle}
+            </h2>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs(12) }}>
+              <thead>
+                <tr>
+                  {data.headers.map((h, i) => (
+                    <th key={i} style={{ padding: 10, textAlign: "left", color: "#fff", background: i === 0 ? "#0f172a" : palette.primary }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows.map((row, ri) => (
+                  <tr key={ri} style={{ background: ri % 2 ? `${palette.primary}08` : "#fff" }}>
+                    {row.map((cell, ci) => (
+                      <td key={ci} style={{ padding: 10, borderTop: "1px solid #e2e8f0", verticalAlign: "top", fontWeight: ci === 0 ? 700 : 400 }}>{cell}</td>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </A4Sheet>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         );
       }
       default: {
         const sections = parseResumoSections(cleaned);
         if (!sections.length) return null;
         return (
-          <A4Sheet orientation="portrait" innerRef={visualRef} multiPage={numPaginas > 1}>
-            <TopicosVisual
-              title={finalTitle}
-              disciplina={disciplina}
-              sections={sections}
-              style={topicosStyle}
-              fontScale={fontScale}
-              palette={palette.name.toLowerCase().includes("azul") ? "azul" : palette.name.toLowerCase().includes("esmeralda") ? "verde" : palette.name.toLowerCase().includes("coral") ? "laranja" : palette.name.toLowerCase().includes("violeta") ? "roxo" : "cinza"}
-            />
-          </A4Sheet>
+          <TopicosVisual
+            title={finalTitle}
+            disciplina={disciplina}
+            sections={sections}
+            style={topicosStyle}
+            fontScale={fontScale}
+            palette={palette.name.toLowerCase().includes("azul") ? "azul" : palette.name.toLowerCase().includes("esmeralda") ? "verde" : palette.name.toLowerCase().includes("coral") ? "laranja" : palette.name.toLowerCase().includes("violeta") ? "roxo" : "cinza"}
+          />
         );
       }
     }
   };
 
-  const visual = renderVisual();
+  // Mapa Mental usa folha única em landscape (sem multi-página — é radial e cabe em 1 folha A4)
+  const isMapaMental = tipoResumo === "Mapa Mental";
+  const orientation: "portrait" | "landscape" = isMapaMental ? "landscape" : "portrait";
+  const inner = renderInner();
 
-  const handleExportPDF = () => {
-    if (visualRef.current) {
-      return exportResumoVisualPDF(visualRef.current, tipoResumo, disciplina, finalTitle, numPaginas);
+  // Capturar o(s) elemento(s) A4 vivo(s) e exportar
+  const handleExportPDF = async () => {
+    const pageEls = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-a4-page]")
+    );
+    if (!pageEls.length) {
+      toast.error("Nada para exportar.");
+      return;
     }
-    return exportResumoPDF(cleaned, tipoResumo, disciplina, finalTitle, numPaginas);
+    const filename = `resumo-${(disciplina || "geral")
+      .toLowerCase()
+      .replace(/\s+/g, "-")}-${tipoResumo.toLowerCase().replace(/\s+/g, "-")}.pdf`;
+    await exportMultiPagePdf({
+      pages: pageEls,
+      filename,
+      orientation,
+      scale: 3,
+      overlayMessage: "A gerar PDF...",
+    });
   };
 
   const handleResetText = () => {
@@ -270,7 +277,6 @@ const ResumoEditorPage: React.FC = () => {
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
-        {/* Painel de edição */}
         <aside className="space-y-4">
           <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -292,44 +298,40 @@ const ResumoEditorPage: React.FC = () => {
             </h3>
             <div className="flex items-center gap-3 py-1">
               <div className="flex-1">
-                <Slider
-                  min={1}
-                  max={50}
-                  step={1}
-                  value={[fontLevel]}
-                  onValueChange={(v) => setFontLevel(v[0])}
-                />
+                <Slider min={1} max={50} step={1} value={[fontLevel]} onValueChange={(v) => setFontLevel(v[0])} />
               </div>
               <span className="text-xs font-bold w-12 text-right tabular-nums">{fontLevel}</span>
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Palette className="h-3.5 w-3.5" /> Estilo Visual
-            </h3>
-            <select
-              value={topicosStyle}
-              onChange={(e) => setTopicosStyle(e.target.value as TopicosStyle)}
-              className="w-full bg-background border border-input rounded-md h-9 px-2 text-xs"
-            >
-              <optgroup label="Mais usados">
-                <option value="step-cards">Step Cards</option>
-                <option value="modern-timeline">Timeline Blocks</option>
-                <option value="process-indicators">Process Indicators</option>
-                <option value="infographic-panels">Infographic Panels</option>
-                <option value="topic-containers">Topic Containers</option>
-                <option value="learning-modules">Learning Modules</option>
-                <option value="flow-cards">Flow Cards</option>
-              </optgroup>
-              <optgroup label="Estilos Premium">
-                <option value="bento-grid">Bento Grid</option>
-                <option value="glassmorphism-cards">Glassmorphism</option>
-                <option value="interactive-nodes">Interactive Nodes</option>
-                <option value="dashboard-widgets">Dashboard Widgets</option>
-              </optgroup>
-            </select>
-          </div>
+          {!isMapaMental && (
+            <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                <Palette className="h-3.5 w-3.5" /> Estilo Visual
+              </h3>
+              <select
+                value={topicosStyle}
+                onChange={(e) => setTopicosStyle(e.target.value as TopicosStyle)}
+                className="w-full bg-background border border-input rounded-md h-9 px-2 text-xs"
+              >
+                <optgroup label="Mais usados">
+                  <option value="step-cards">Step Cards</option>
+                  <option value="modern-timeline">Timeline Blocks</option>
+                  <option value="process-indicators">Process Indicators</option>
+                  <option value="infographic-panels">Infographic Panels</option>
+                  <option value="topic-containers">Topic Containers</option>
+                  <option value="learning-modules">Learning Modules</option>
+                  <option value="flow-cards">Flow Cards</option>
+                </optgroup>
+                <optgroup label="Estilos Premium">
+                  <option value="bento-grid">Bento Grid</option>
+                  <option value="glassmorphism-cards">Glassmorphism</option>
+                  <option value="interactive-nodes">Interactive Nodes</option>
+                  <option value="dashboard-widgets">Dashboard Widgets</option>
+                </optgroup>
+              </select>
+            </div>
+          )}
 
           <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -377,16 +379,32 @@ const ResumoEditorPage: React.FC = () => {
           </div>
         </aside>
 
-        {/* Pré-visualização A4 */}
         <main className="space-y-3">
           <div className="text-[11px] text-muted-foreground flex items-center gap-2">
-            <Save className="h-3 w-3" /> Pré-visualização A4 — exporta exatamente como aparece aqui.
+            <Save className="h-3 w-3" /> Pré-visualização A4 — cada folha aqui = 1 página no PDF.
           </div>
-          {visual ? (
-            visual
+
+          {inner ? (
+            isMapaMental ? (
+              // Mapa mental: 1 folha landscape fixa
+              <A4Sheet orientation="landscape">
+                <div data-a4-page={1} data-a4-orientation="landscape" style={{ width: "100%", height: "100%" }}>
+                  {inner}
+                </div>
+              </A4Sheet>
+            ) : (
+              <A4MultiPage
+                orientation={orientation}
+                extraPages={extraPages}
+                onAddPage={handleAddPage}
+                padding={48}
+              >
+                <div style={{ fontFamily, color: "#000" }}>{inner}</div>
+              </A4MultiPage>
+            )
           ) : (
-            <A4Sheet orientation="portrait" innerRef={visualRef} multiPage>
-              <div style={{ padding: "48px 56px", fontFamily, color: "#000", minHeight: "100%" }}>
+            <A4MultiPage orientation="portrait" extraPages={extraPages} onAddPage={handleAddPage}>
+              <div style={{ fontFamily, color: "#000" }}>
                 <h1 style={{ textAlign: "center", fontSize: 22, color: palette.primary, margin: "0 0 12px", fontWeight: 800 }}>
                   {finalTitle.toUpperCase()}
                 </h1>
@@ -394,7 +412,7 @@ const ResumoEditorPage: React.FC = () => {
                 <hr style={{ border: "none", borderTop: `2px solid ${palette.primary}`, margin: "12px 0 18px" }} />
                 <pre style={{ whiteSpace: "pre-wrap", fontFamily, fontSize: 12, lineHeight: 1.7 }}>{cleaned}</pre>
               </div>
-            </A4Sheet>
+            </A4MultiPage>
           )}
         </main>
       </div>
