@@ -324,12 +324,39 @@ export async function exportResumoPDF(resultado: string, tipoResumo: string, dis
   tempDiv.style.padding = "48px 56px";
   tempDiv.style.background = "#fff";
   
-  await exportHtmlToPdf({
-    element: tempDiv,
-    filename: `resumo-${disciplina || "geral"}.pdf`,
-    overlayMessage: "A gerar ficheiro PDF...",
-    containerWidth: 794,
-    padding: "0", // Padding já está no tempDiv
-    maxPages: numPaginas,
-  });
+  // Adiciona estilos de impressão para garantir que nenhum card seja cortado
+  const style = document.createElement("style");
+  style.textContent = `
+    @media print {
+      div[style*="break-inside: avoid"],
+      div[style*="pageBreakInside: avoid"] {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .card,
+      [data-card],
+      div[style*="marginBottom: 14"],
+      div[style*="marginBottom: 12"] {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  try {
+    await exportHtmlToPdf({
+      element: tempDiv,
+      filename: `resumo-${disciplina || "geral"}.pdf`,
+      overlayMessage: "A gerar ficheiro PDF...",
+      containerWidth: 794,
+      padding: "0", // Padding já está no tempDiv
+      maxPages: numPaginas,
+    });
+  } finally {
+    // Remove o estilo adicionado
+    if (style.parentNode) {
+      style.parentNode.removeChild(style);
+    }
+  }
 }

@@ -156,6 +156,7 @@ const TopicosVisual: React.FC<Props> = ({
               border: `1px solid ${C.soft}`,
               boxShadow: `0 4px 14px ${C.primary}15`,
               breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div
@@ -185,7 +186,7 @@ const TopicosVisual: React.FC<Props> = ({
 
       case "timeline-blocks":
         return (
-          <div key={i} style={{ display: "flex", gap: 12, marginBottom: 14, position: "relative", breakInside: "avoid" }}>
+          <div key={i} style={{ display: "flex", gap: 12, marginBottom: 14, position: "relative", breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <div
                 style={{
@@ -236,6 +237,7 @@ const TopicosVisual: React.FC<Props> = ({
               background: "#fff",
               border: `2px dashed ${C.primary}`,
               breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div
@@ -270,6 +272,7 @@ const TopicosVisual: React.FC<Props> = ({
               background: "#fff",
               border: `1px solid ${C.soft}`,
               breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div
@@ -304,6 +307,7 @@ const TopicosVisual: React.FC<Props> = ({
               border: `1px solid #e5e7eb`,
               borderLeft: `6px solid ${C.primary}`,
               breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -338,6 +342,7 @@ const TopicosVisual: React.FC<Props> = ({
               background: C.soft,
               border: `1px solid ${C.accent}`,
               breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -363,7 +368,7 @@ const TopicosVisual: React.FC<Props> = ({
 
       case "flow-cards":
         return (
-          <div key={i} style={{ marginBottom: 14, display: "flex", alignItems: "stretch", gap: 0 }}>
+          <div key={i} style={{ marginBottom: 14, display: "flex", alignItems: "stretch", gap: 0, breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div
               style={{
                 background: C.primary,
@@ -407,6 +412,8 @@ const TopicosVisual: React.FC<Props> = ({
               background: "#fff",
               boxShadow: `0 2px 12px rgba(0,0,0,0.06)`,
               borderTop: `3px solid ${C.primary}`,
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
@@ -431,6 +438,8 @@ const TopicosVisual: React.FC<Props> = ({
               border: `1px solid ${C.soft}`,
               boxShadow: `0 4px 12px ${C.primary}10`,
               height: "100%",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div
@@ -465,6 +474,8 @@ const TopicosVisual: React.FC<Props> = ({
               background: `linear-gradient(135deg, ${C.primary}15, ${C.accent}25)`,
               border: `1px solid ${C.primary}30`,
               backdropFilter: "blur(8px)",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -501,6 +512,8 @@ const TopicosVisual: React.FC<Props> = ({
               borderRadius: 14,
               background: `linear-gradient(135deg, ${C.primary}, ${C.deep})`,
               color: "#fff",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -540,6 +553,8 @@ const TopicosVisual: React.FC<Props> = ({
               background: "#fff",
               border: `1px solid #e5e7eb`,
               overflow: "hidden",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div
@@ -587,6 +602,8 @@ const TopicosVisual: React.FC<Props> = ({
               borderTop: `1px solid #f3f4f6`,
               borderRight: `1px solid #f3f4f6`,
               borderBottom: `1px solid #f3f4f6`,
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
@@ -617,6 +634,8 @@ const TopicosVisual: React.FC<Props> = ({
               display: "flex",
               gap: 12,
               alignItems: "stretch",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div
@@ -641,7 +660,7 @@ const TopicosVisual: React.FC<Props> = ({
 
       case "ribbon-labels":
         return (
-          <div key={i} style={{ marginBottom: 14, position: "relative", paddingLeft: 0 }}>
+          <div key={i} style={{ marginBottom: 14, position: "relative", paddingLeft: 0, breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div
               style={{
                 display: "inline-block",
@@ -681,6 +700,8 @@ const TopicosVisual: React.FC<Props> = ({
               background: C.soft,
               border: `1px solid ${C.accent}`,
               position: "relative",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div
@@ -716,6 +737,8 @@ const TopicosVisual: React.FC<Props> = ({
               background: "#fff",
               boxShadow: `0 6px 20px ${C.primary}18`,
               borderTop: `4px solid ${C.primary}`,
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -756,6 +779,8 @@ const TopicosVisual: React.FC<Props> = ({
               display: "flex",
               flexDirection: "column",
               height: "100%",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -780,6 +805,8 @@ const TopicosVisual: React.FC<Props> = ({
               backdropFilter: "blur(10px)",
               border: "1px solid rgba(255, 255, 255, 0.3)",
               boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <h3 style={{ margin: 0, marginBottom: 10, fontSize: fs(14), fontWeight: 800, color: C.deep, display: "flex", alignItems: "center", gap: 8 }}>
@@ -791,7 +818,7 @@ const TopicosVisual: React.FC<Props> = ({
 
       case "modern-timeline":
         return (
-          <div key={i} style={{ display: "flex", gap: 16, marginBottom: 16, position: "relative" }}>
+          <div key={i} style={{ display: "flex", gap: 16, marginBottom: 16, position: "relative", breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primary, border: `3px solid ${C.soft}`, zIndex: 2 }} />
               <div style={{ flex: 1, width: 2, background: `linear-gradient(${C.primary}, ${C.soft})`, marginTop: 4 }} />
@@ -823,6 +850,7 @@ const TopicosVisual: React.FC<Props> = ({
               position: "relative",
               overflow: "hidden",
               breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
             <div style={{ position: "absolute", right: -10, top: -10, fontSize: fs(40), fontWeight: 900, color: C.primary, opacity: 0.05 }}>
@@ -842,31 +870,33 @@ const TopicosVisual: React.FC<Props> = ({
 
   // Bento usa grid de 2 colunas
   if (style === "bento-grid") {
-    return (
-      <div style={{ padding: 24, background: "#f8fafc", minHeight: "100%", overflow: "visible" }}>
-        <Header />
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: 12,
-          }}
-        >
-          {sections.map((s, i) => renderSection(s, i))}
-        </div>
+  return (
+    <div style={{ padding: 24, background: "#f8fafc", minHeight: "100%", overflow: "visible", pageBreakInside: "avoid" }}>
+      <Header />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: 12,
+          pageBreakInside: "avoid",
+        }}
+      >
+        {sections.map((s, i) => renderSection(s, i))}
       </div>
-    );
+    </div>
+  );
   }
 
   if (style === "bento-cards") {
     return (
-      <div style={{ padding: 24, background: "#fafafa", minHeight: "100%", overflow: "visible" }}>
+      <div style={{ padding: 24, background: "#fafafa", minHeight: "100%", overflow: "visible", pageBreakInside: "avoid" }}>
         <Header />
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(2, 1fr)",
             gap: 12,
+            pageBreakInside: "avoid",
           }}
         >
           {sections.map((s, i) => renderSection(s, i))}
@@ -876,7 +906,7 @@ const TopicosVisual: React.FC<Props> = ({
   }
 
   return (
-    <div style={{ padding: 24, background: "#fafafa", minHeight: "100%", overflow: "visible" }}>
+    <div style={{ padding: 24, background: "#fafafa", minHeight: "100%", overflow: "visible", pageBreakInside: "avoid" }}>
       <Header />
       {sections.map((s, i) => renderSection(s, i))}
     </div>

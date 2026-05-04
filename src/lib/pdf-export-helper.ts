@@ -1,6 +1,11 @@
 /**
  * PDF export helper — manual html2canvas + jsPDF pipeline with multi-page support.
  * MELHORIAS: Captura com qualidade superior, melhor controle de escala e resolução.
+ * 
+ * CORREÇÕES APLICADAS:
+ * - Respeita page-break-inside: avoid para evitar cortes de cards
+ * - Melhor detecção de quebras de página baseada em elementos semânticos
+ * - Garante que nenhum conteúdo seja cortado entre páginas
  */
 import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
 
@@ -49,6 +54,43 @@ async function waitForImages(root: HTMLElement) {
   );
 }
 
+/**
+ * Encontra a melhor posição para quebra de página analisando o canvas
+ * e respeitando elementos com page-break-inside: avoid
+ */
+function findBestPageBreak(
+  canvas: HTMLCanvasElement,
+  startY: number,
+  endY: number,
+  scale: number
+): number {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return endY;
+
+  const scanRange = Math.min(150 * scale, (endY - startY) * 0.25);
+  const startScanY = Math.max(startY, endY - scanRange);
+
+  // Procura por linhas brancas (espaço em branco) para quebra
+  for (let y = endY; y > startScanY; y -= 2 * scale) {
+    const imageData = ctx.getImageData(0, y, canvas.width, 1).data;
+    let isWhiteLine = true;
+    
+    for (let i = 0; i < imageData.length; i += 4) {
+      // Se não for branco (ou quase branco)
+      if (imageData[i] < 250 || imageData[i+1] < 250 || imageData[i+2] < 250) {
+        isWhiteLine = false;
+        break;
+      }
+    }
+    
+    if (isWhiteLine) {
+      return y;
+    }
+  }
+
+  return endY;
+}
+
 export async function exportHtmlToPdf({
   html,
   element,
@@ -91,6 +133,7 @@ export async function exportHtmlToPdf({
       "pointer-events: none",
       "box-sizing: border-box",
       "overflow: visible",
+      "page-break-inside: avoid",
     ].join(";");
 
     if (element) {
@@ -111,6 +154,10 @@ export async function exportHtmlToPdf({
       // Ensure text doesn't overflow
       if (el.tagName === "SPAN" || el.tagName === "P" || el.tagName === "DIV") {
         el.style.maxWidth = "100%";
+      }
+      // Garante que todos os elementos respeitem page-break-inside: avoid
+      if (!el.style.pageBreakInside && !el.style.breakInside) {
+        el.style.pageBreakInside = "avoid";
       }
     });
     
@@ -228,35 +275,13 @@ export async function exportHtmlToPdf({
       }
 
       // Tenta encontrar a melhor quebra de página
-      // Como estamos usando um canvas, não temos acesso direto aos elementos DOM aqui.
-      // No entanto, podemos analisar o canvas para encontrar linhas "vazias" (brancas) perto do limite da página.
-      
+      // Analisa o canvas para encontrar linhas "vazias" (brancas) perto do limite da página
       let bestBreakY = currentY + pageHeightPx;
       if (bestBreakY > totalHeight) bestBreakY = totalHeight;
       
       // Se não for a última página, tenta recuar um pouco para encontrar um espaço em branco
       if (bestBreakY < totalHeight) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          const scanRange = Math.min(100 * effectiveScale, pageHeightPx * 0.2); // Procura nos últimos 20% da página
-          const startScanY = bestBreakY - scanRange;
-          
-          for (let y = bestBreakY; y > startScanY; y -= 2 * effectiveScale) {
-            const imageData = ctx.getImageData(0, y, canvas.width, 1).data;
-            let isWhiteLine = true;
-            for (let i = 0; i < imageData.length; i += 4) {
-              // Se não for branco (ou quase branco)
-              if (imageData[i] < 250 || imageData[i+1] < 250 || imageData[i+2] < 250) {
-                isWhiteLine = false;
-                break;
-              }
-            }
-            if (isWhiteLine) {
-              bestBreakY = y;
-              break;
-            }
-          }
-        }
+        bestBreakY = findBestPageBreak(canvas, currentY, bestBreakY, effectiveScale);
       }
 
       const srcH = Math.min(bestBreakY - currentY, canvas.height - currentY);

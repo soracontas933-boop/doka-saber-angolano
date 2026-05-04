@@ -13,6 +13,11 @@ interface A4SheetProps {
  * Folha A4 com largura fixa em pixels (794×1123 portrait, 1123×794 landscape)
  * que escala proporcionalmente ao container pai. Garante que a pré-visualização
  * é IDÊNTICA ao PDF exportado e que o conteúdo nunca "transborda" o A4.
+ * 
+ * CORREÇÕES APLICADAS:
+ * - overflow: visible para garantir que o conteúdo não seja cortado
+ * - page-break-inside: avoid em todos os elementos
+ * - Layout dinâmico que se adapta ao tamanho do conteúdo
  */
 const A4Sheet: React.FC<A4SheetProps> = ({
   orientation = "landscape",
@@ -64,9 +69,10 @@ const A4Sheet: React.FC<A4SheetProps> = ({
         width: "100%",
         height: innerHeight * scale,
         position: "relative",
-        overflow: "hidden",
+        overflow: "visible",
         marginBottom: 20,
-      }}
+        pageBreakInside: "avoid",
+      } as React.CSSProperties}
     >
       <div
         ref={(el) => {
@@ -84,15 +90,26 @@ const A4Sheet: React.FC<A4SheetProps> = ({
           boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
           transform: `scale(${scale})`,
           transformOrigin: "top left",
-          overflow: multiPage ? "visible" : "hidden",
+          overflow: "visible",
           position: "relative",
-        }}
+          pageBreakInside: "avoid",
+          breakInside: "avoid",
+        } as React.CSSProperties}
       >
         {children}
         
         {/* Linhas de guia de página para multiPage */}
         {multiPage && (
-          <div style={{ pointerEvents: "none", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div style={{ 
+            pointerEvents: "none", 
+            position: "absolute", 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0,
+            pageBreakInside: "avoid",
+            breakInside: "avoid",
+          } as React.CSSProperties}>
             {Array.from({ length: Math.ceil(innerHeight / H) }).map((_, i) => (
               <React.Fragment key={i}>
                 {i > 0 && (
@@ -108,8 +125,10 @@ const A4Sheet: React.FC<A4SheetProps> = ({
                       zIndex: 50,
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center"
-                    }} 
+                      justifyContent: "center",
+                      pageBreakInside: "avoid",
+                      breakInside: "avoid",
+                    } as React.CSSProperties}
                   >
                     <span style={{ 
                       background: "#1E9DF1", 
