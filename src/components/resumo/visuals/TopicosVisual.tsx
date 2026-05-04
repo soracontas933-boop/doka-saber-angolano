@@ -268,7 +268,7 @@ const TopicosVisual: React.FC<Props> = ({
             style={{
               marginBottom: 14,
               borderRadius: 14,
-              overflow: "hidden",
+              overflow: "visible",
               background: "#fff",
               border: `1px solid ${C.soft}`,
               breakInside: "avoid",
@@ -552,7 +552,7 @@ const TopicosVisual: React.FC<Props> = ({
               borderRadius: 12,
               background: "#fff",
               border: `1px solid #e5e7eb`,
-              overflow: "hidden",
+              overflow: "visible",
               breakInside: "avoid",
               pageBreakInside: "avoid",
             }}
@@ -778,7 +778,7 @@ const TopicosVisual: React.FC<Props> = ({
               boxShadow: `0 4px 12px ${C.primary}10`,
               display: "flex",
               flexDirection: "column",
-              height: "100%",
+              height: "auto",
               breakInside: "avoid",
               pageBreakInside: "avoid",
             }}
@@ -848,7 +848,7 @@ const TopicosVisual: React.FC<Props> = ({
               background: `linear-gradient(to right, ${C.soft}, #fff)`,
               border: `1px solid ${C.soft}`,
               position: "relative",
-              overflow: "hidden",
+              overflow: "visible",
               breakInside: "avoid",
               pageBreakInside: "avoid",
             }}
@@ -871,7 +871,7 @@ const TopicosVisual: React.FC<Props> = ({
   // Bento usa grid de 2 colunas
   if (style === "bento-grid") {
   return (
-    <div style={{ padding: 24, background: "#f8fafc", minHeight: "100%", overflow: "visible", pageBreakInside: "avoid" }}>
+    <div style={{ padding: 24, background: "#f8fafc", minHeight: "auto", overflow: "visible", pageBreakInside: "avoid" }}>
       <Header />
       <div
         style={{
@@ -889,7 +889,7 @@ const TopicosVisual: React.FC<Props> = ({
 
   if (style === "bento-cards") {
     return (
-      <div style={{ padding: 24, background: "#fafafa", minHeight: "100%", overflow: "visible", pageBreakInside: "avoid" }}>
+      <div style={{ padding: 24, background: "#fafafa", minHeight: "auto", overflow: "visible", pageBreakInside: "avoid" }}>
         <Header />
         <div
           style={{
@@ -906,7 +906,7 @@ const TopicosVisual: React.FC<Props> = ({
   }
 
   return (
-    <div style={{ padding: 24, background: "#fafafa", minHeight: "100%", overflow: "visible", pageBreakInside: "avoid" }}>
+    <div style={{ padding: 24, background: "#fafafa", minHeight: "auto", overflow: "visible", pageBreakInside: "avoid" }}>
       <Header />
       {sections.map((s, i) => renderSection(s, i))}
     </div>
