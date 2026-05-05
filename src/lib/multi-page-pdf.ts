@@ -15,6 +15,20 @@ export interface MultiPagePdfOptions {
 
 const A4 = { w: 210, h: 297 };
 
+async function waitForImages(root: HTMLElement) {
+  const images = Array.from(root.querySelectorAll("img"));
+  await Promise.all(
+    images.map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          if (img.complete && img.naturalHeight > 0) return resolve();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+        })
+    )
+  );
+}
+
 async function captureToCanvas(el: HTMLElement, scale: number) {
   const html2canvas = (await import("html2canvas")).default;
   return html2canvas(el, {
@@ -60,17 +74,22 @@ export async function exportMultiPagePdf({
 
     for (let i = 0; i < pages.length; i++) {
       if (i > 0) pdf.addPage();
-      
-      // Força overflow visible antes da captura para garantir que nada seja cortado
-      const originalOverflow = pages[i].style.overflow;
-      pages[i].style.overflow = 'visible';
-      
+
+      const page = pages[i];
+      const originalTransform = page.style.transform;
+      const originalTransformOrigin = page.style.transformOrigin;
+
       try {
-        const canvas = await captureToCanvas(pages[i], scale);
+        await waitForImages(page);
+        page.style.transform = "none";
+        page.style.transformOrigin = "top left";
+
+        const canvas = await captureToCanvas(page, scale);
         const imgData = canvas.toDataURL("image/jpeg", 0.95);
         pdf.addImage(imgData, "JPEG", 0, 0, pageW, pageH, undefined, "FAST");
       } finally {
-        pages[i].style.overflow = originalOverflow;
+        page.style.transform = originalTransform;
+        page.style.transformOrigin = originalTransformOrigin;
       }
     }
 
