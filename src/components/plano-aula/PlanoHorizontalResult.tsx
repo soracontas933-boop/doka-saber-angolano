@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Copy, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { PlanoHorizontalData } from "./PlanoHorizontalForm";
 import { exportPlanoAulaPdf, exportPlanoAulaWord } from "@/lib/plano-aula-export";
 
@@ -23,6 +24,8 @@ interface Props {
 }
 
 const PlanoHorizontalResult: React.FC<Props> = ({ dados, fases }) => {
+  const { isFeatureEnabled } = useFeatureFlags();
+  const hidePdf = isFeatureEnabled("hide-pdf-plano-aula");
   const tableRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState<"pdf" | "word" | null>(null);
 
@@ -55,10 +58,12 @@ const PlanoHorizontalResult: React.FC<Props> = ({ dados, fases }) => {
         <Button size="sm" variant="outline" onClick={copyToClipboard}>
           <Copy className="h-4 w-4 mr-1" /> Copiar
         </Button>
-        <Button size="sm" variant="outline" onClick={handleExportPdf} disabled={!!exporting}>
-          {exporting === "pdf" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
-          PDF
-        </Button>
+        {!hidePdf && (
+          <Button size="sm" variant="outline" onClick={handleExportPdf} disabled={!!exporting}>
+            {exporting === "pdf" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+            PDF
+          </Button>
+        )}
         <Button size="sm" variant="outline" onClick={handleExportWord} disabled={!!exporting}>
           {exporting === "word" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
           Word

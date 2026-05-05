@@ -13,6 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { generateWithGroq, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { validarBibliografia } from "@/lib/referencias-reais";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
@@ -44,6 +45,8 @@ const tiposTrabalho = [
 type Fase = "formulario" | "estrutura" | "resultado";
 
 const TrabalhoPage = () => {
+  const { isFeatureEnabled } = useFeatureFlags();
+  const hidePdf = isFeatureEnabled("hide-pdf-trabalho");
   const { checkLimit, logUsage } = useUsageTracker();
   const { settings: trabalhoSettings, updateSettings: updateTrabalhoSettings, resetSettings: resetTrabalhoSettings } = useTrabalhoSettings();
   const [tema, setTema] = useLocalStorage("doka_trabalho_tema", "");
@@ -791,24 +794,26 @@ const TrabalhoPage = () => {
                 }}>
                   <FileDown className="h-3.5 w-3.5 mr-1" /> Word
                 </Button>
-                <Button size="sm" className="h-8 text-xs" onClick={async () => {
-                  try {
-                    const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
-                    const pages = Array.from(document.querySelectorAll("#trabalho-completo .pagina-a4")) as HTMLElement[];
-                    if (pages.length) {
-                      await exportMultiPagePdf({
-                        pages,
-                        filename: `${nomeArquivo}.pdf`,
-                        orientation: "portrait",
-                        overlayMessage: "A gerar PDF igual ao trabalho compilado...",
-                      });
-                    } else {
-                      await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
-                    }
-                  } catch { toast.error("Erro ao exportar PDF"); }
-                }}>
-                  <Download className="h-3.5 w-3.5 mr-1" /> PDF
-                </Button>
+                {!hidePdf && (
+                  <Button size="sm" className="h-8 text-xs" onClick={async () => {
+                    try {
+                      const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
+                      const pages = Array.from(document.querySelectorAll("#trabalho-completo .pagina-a4")) as HTMLElement[];
+                      if (pages.length) {
+                        await exportMultiPagePdf({
+                          pages,
+                          filename: `${nomeArquivo}.pdf`,
+                          orientation: "portrait",
+                          overlayMessage: "A gerar PDF igual ao trabalho compilado...",
+                        });
+                      } else {
+                        await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
+                      }
+                    } catch { toast.error("Erro ao exportar PDF"); }
+                  }}>
+                    <Download className="h-3.5 w-3.5 mr-1" /> PDF
+                  </Button>
+                )}
               </div>
             </div>
             {editMode && (

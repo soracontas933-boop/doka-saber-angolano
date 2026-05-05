@@ -4,6 +4,7 @@ import { FileDown, FileText, Copy, Type, Palette, LayoutGrid } from "lucide-reac
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { exportResumoPDF, exportResumoWord, exportResumoVisualPDF } from "@/lib/resumo-export";
 import {
   sanitizeResumo,
@@ -150,6 +151,8 @@ const PALETTE_OPTIONS = [
 ] as const;
 
 const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, disciplina }) => {
+  const { isFeatureEnabled } = useFeatureFlags();
+  const hidePdf = isFeatureEnabled("hide-pdf-resumo");
   const cleaned = React.useMemo(() => cleanArtifacts(sanitizeResumo(resultado)), [resultado]);
   const { title, sections } = React.useMemo(() => parseResumoSections(cleaned), [cleaned]);
   
@@ -241,9 +244,11 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
           <Button size="sm" variant="outline" onClick={handleCopy}>
             <Copy className="h-4 w-4 mr-1" /> Copiar
           </Button>
-          <Button size="sm" variant="outline" onClick={handleExportPDF}>
-            <FileDown className="h-4 w-4 mr-1" /> PDF
-          </Button>
+          {!hidePdf && (
+            <Button size="sm" variant="outline" onClick={handleExportPDF}>
+              <FileDown className="h-4 w-4 mr-1" /> PDF
+            </Button>
+          )}
           <Button size="sm" onClick={() => exportResumoWord(cleaned, tipoResumo, disciplina, title)}>
             <FileText className="h-4 w-4 mr-1" /> Word
           </Button>

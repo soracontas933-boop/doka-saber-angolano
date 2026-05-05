@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { FileDown, FileText, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { exportQuestionarioPDF, exportQuestionarioWord } from "@/lib/questionario-export";
 import { parseQuestionarioContent, isShortAnswerTipo, cleanOptionLabel } from "@/lib/questionario-parser";
 
@@ -12,6 +13,8 @@ interface QuestionarioPreviewProps {
 }
 
 const QuestionarioPreview: React.FC<QuestionarioPreviewProps> = ({ resultado, tipo, disciplina }) => {
+  const { isFeatureEnabled } = useFeatureFlags();
+  const hidePdf = isFeatureEnabled("hide-pdf-questionario");
   const { title, questions } = parseQuestionarioContent(resultado);
   const shortAnswer = isShortAnswerTipo(tipo);
 
@@ -36,9 +39,11 @@ const QuestionarioPreview: React.FC<QuestionarioPreviewProps> = ({ resultado, ti
           <Button size="sm" variant="outline" onClick={handleCopy}>
             <Copy className="h-4 w-4 mr-1" /> Copiar
           </Button>
-          <Button size="sm" variant="outline" onClick={handleExportPDF}>
-            <FileDown className="h-4 w-4 mr-1" /> PDF
-          </Button>
+          {!hidePdf && (
+            <Button size="sm" variant="outline" onClick={handleExportPDF}>
+              <FileDown className="h-4 w-4 mr-1" /> PDF
+            </Button>
+          )}
           <Button size="sm" onClick={handleExportWord}>
             <FileText className="h-4 w-4 mr-1" /> Word
           </Button>

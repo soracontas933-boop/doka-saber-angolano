@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +53,7 @@ const tipoConfig: Record<string, { label: string; icon: React.ElementType; gradi
 };
 
 const MeusProjetosPage = () => {
+  const { isFeatureEnabled } = useFeatureFlags();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("todos");
@@ -318,9 +320,11 @@ const MeusProjetosPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem onClick={() => handleDownload(project, 'pdf')} className="text-xs cursor-pointer">
-                            Baixar em PDF
-                          </DropdownMenuItem>
+                          {!isFeatureEnabled(`hide-pdf-${project.tipo}`) && (
+                            <DropdownMenuItem onClick={() => handleDownload(project, 'pdf')} className="text-xs cursor-pointer">
+                              Baixar em PDF
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleDownload(project, 'word')} className="text-xs cursor-pointer">
                             Baixar em Word
                           </DropdownMenuItem>
@@ -395,9 +399,11 @@ const MeusProjetosPage = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-xl">
-                      <DropdownMenuItem onClick={() => handleDownload(selectedProject, 'pdf')} className="cursor-pointer">
-                        Baixar em PDF
-                      </DropdownMenuItem>
+                      {!isFeatureEnabled(`hide-pdf-${selectedProject.tipo}`) && (
+                        <DropdownMenuItem onClick={() => handleDownload(selectedProject, 'pdf')} className="cursor-pointer">
+                          Baixar em PDF
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => handleDownload(selectedProject, 'word')} className="cursor-pointer">
                         Baixar em Word
                       </DropdownMenuItem>
@@ -420,9 +426,11 @@ const MeusProjetosPage = () => {
 
               <div className="p-4 border-t bg-muted/30 flex justify-center sm:hidden">
                 <div className="flex gap-2 w-full">
-                  <Button onClick={() => handleDownload(selectedProject, 'pdf')} variant="outline" className="flex-1 rounded-xl h-10 text-xs">
-                    PDF
-                  </Button>
+                  {!isFeatureEnabled(`hide-pdf-${selectedProject.tipo}`) && (
+                    <Button onClick={() => handleDownload(selectedProject, 'pdf')} variant="outline" className="flex-1 rounded-xl h-10 text-xs">
+                      PDF
+                    </Button>
+                  )}
                   <Button onClick={() => handleDownload(selectedProject, 'word')} variant="outline" className="flex-1 rounded-xl h-10 text-xs">
                     Word
                   </Button>
