@@ -805,7 +805,6 @@ const TrabalhoPage = () => {
                     } else {
                       await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
                     }
-                    toast.success("PDF exportado!");
                   } catch { toast.error("Erro ao exportar PDF"); }
                 }}>
                   <Download className="h-3.5 w-3.5 mr-1" /> PDF
