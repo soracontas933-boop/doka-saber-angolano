@@ -794,26 +794,7 @@ const TrabalhoPage = () => {
                 }}>
                   <FileDown className="h-3.5 w-3.5 mr-1" /> Word
                 </Button>
-                {!hidePdf && (
-                  <Button size="sm" className="h-8 text-xs" onClick={async () => {
-                    try {
-                      const nomeArquivo = tema.trim() ? tema.trim().substring(0, 50).replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").replace(/\s+/g, "_") : "trabalho_delle";
-                      const pages = Array.from(document.querySelectorAll("#trabalho-completo .pagina-a4")) as HTMLElement[];
-                      if (pages.length) {
-                        await exportMultiPagePdf({
-                          pages,
-                          filename: `${nomeArquivo}.pdf`,
-                          orientation: "portrait",
-                          overlayMessage: "A gerar PDF igual ao trabalho compilado...",
-                        });
-                      } else {
-                        await exportToPDF(resultadoCompilado, nomeArquivo, getCoverData());
-                      }
-                    } catch { toast.error("Erro ao exportar PDF"); }
-                  }}>
-                    <Download className="h-3.5 w-3.5 mr-1" /> PDF
-                  </Button>
-                )}
+
               </div>
             </div>
             {editMode && (

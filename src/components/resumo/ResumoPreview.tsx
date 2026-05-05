@@ -244,11 +244,7 @@ const ResumoPreview: React.FC<ResumoPreviewProps> = ({ resultado, tipoResumo, di
           <Button size="sm" variant="outline" onClick={handleCopy}>
             <Copy className="h-4 w-4 mr-1" /> Copiar
           </Button>
-          {!hidePdf && (
-            <Button size="sm" variant="outline" onClick={handleExportPDF}>
-              <FileDown className="h-4 w-4 mr-1" /> PDF
-            </Button>
-          )}
+
           <Button size="sm" onClick={() => exportResumoWord(cleaned, tipoResumo, disciplina, title)}>
             <FileText className="h-4 w-4 mr-1" /> Word
           </Button>

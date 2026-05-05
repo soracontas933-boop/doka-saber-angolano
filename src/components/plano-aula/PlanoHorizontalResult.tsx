@@ -58,12 +58,7 @@ const PlanoHorizontalResult: React.FC<Props> = ({ dados, fases }) => {
         <Button size="sm" variant="outline" onClick={copyToClipboard}>
           <Copy className="h-4 w-4 mr-1" /> Copiar
         </Button>
-        {!hidePdf && (
-          <Button size="sm" variant="outline" onClick={handleExportPdf} disabled={!!exporting}>
-            {exporting === "pdf" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
-            PDF
-          </Button>
-        )}
+
         <Button size="sm" variant="outline" onClick={handleExportWord} disabled={!!exporting}>
           {exporting === "word" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
           Word
