@@ -2,6 +2,7 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Bord
 import { saveAs } from "file-saver";
 import { showExportOverlay, hideExportOverlay } from "@/components/ExportOverlay";
 import { escapeHtml, exportHtmlToPdf } from "@/lib/pdf-export-helper";
+import { parseTrabalhoSections } from "@/lib/trabalho-parser";
 
 export interface CoverPageData {
   nomeEscola?: string;
@@ -517,11 +518,21 @@ export async function exportToPDF(content: string, filename: string, coverData?:
       coverHtml = cover;
     }
 
-    const bodyHtml = `
-      <div data-pdf-section style="padding:40px 50px;font-family:'Times New Roman',serif;font-size:12pt;line-height:1.65;color:#000;background:#fff;">
-        ${buildPdfBodyHtml(normalizedContent)}
-      </div>
-    `;
+    const sections = parseTrabalhoSections(content);
+    const bodyHtml = sections.length
+      ? sections.map((section) => `
+        <div data-pdf-section style="min-height:1050px;padding:40px 50px;font-family:'Times New Roman',serif;font-size:12pt;line-height:1.65;color:#000;background:#fff;page-break-after:always;break-inside:avoid;box-sizing:border-box;">
+          <h2 style="font-size:16pt;text-align:center;text-transform:uppercase;margin:0 0 6px;letter-spacing:1px;break-inside:avoid;">${escapeHtml(section.tipo === "indice" ? "ÍNDICE" : section.tipo === "introducao" ? "INTRODUÇÃO" : section.tipo === "conclusao" ? "CONCLUSÃO" : section.tipo === "bibliografia" ? "BIBLIOGRAFIA" : section.titulo)}</h2>
+          <div style="width:60%;height:2px;background:#000;margin:0 auto 20px;"></div>
+          ${buildPdfBodyHtml(section.conteudo)}
+          ${section.numero ? `<div style="position:absolute;right:50px;bottom:30px;font-size:10pt;color:#86868B;">${section.numero}</div>` : ""}
+        </div>
+      `).join("")
+      : `
+        <div data-pdf-section style="padding:40px 50px;font-family:'Times New Roman',serif;font-size:12pt;line-height:1.65;color:#000;background:#fff;">
+          ${buildPdfBodyHtml(normalizedContent)}
+        </div>
+      `;
 
     await exportHtmlToPdf({
       html: `${coverHtml}${bodyHtml}`,
@@ -529,6 +540,7 @@ export async function exportToPDF(content: string, filename: string, coverData?:
       overlayMessage: "A gerar ficheiro PDF...",
       containerWidth: 794,
       padding: "0",
+      maxPages: Math.max(1, (coverData ? 1 : 0) + (sections.length || Math.ceil(normalizedContent.length / 2200))),
     });
   } catch (err) {
     console.error("PDF export error:", err);
