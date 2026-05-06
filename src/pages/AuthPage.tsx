@@ -257,14 +257,14 @@ const AuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone</Label>
-                      <Input
+                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone *</Label>
+                      <PhoneInput
                         id="telefone"
-                        type="tel"
-                        placeholder="Ex: 923 456 789"
                         value={telefone}
-                        onChange={(e) => setTelefone(e.target.value)}
-                        className="h-12 rounded-xl border-border/60"
+                        onChange={(e164, valid) => {
+                          setTelefone(e164);
+                          setTelefoneValido(valid);
+                        }}
                       />
                     </div>
 
