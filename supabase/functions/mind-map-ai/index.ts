@@ -1,6 +1,7 @@
 // Gera sub-itens (sub-ramos) ou ramos completos para um nó de mapa mental.
 // Usa Lovable AI Gateway via tool calling para obter saída estruturada.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
