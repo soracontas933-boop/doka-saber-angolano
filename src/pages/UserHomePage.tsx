@@ -55,6 +55,9 @@ const tipoLabel: Record<string, string> = {
 const UserHomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const { isAdmin } = useAdmin();
+  const quickActions = quickActionsAll.filter((a) => isAdmin || isFeatureEnabled(a.featureKey));
   const { canInstall, install } = usePwaInstall();
   const [profile, setProfile] = useState<{ nome: string | null }>({ nome: null });
   const [plan, setPlan] = useState<{ plano: string; creditos_usados: number; creditos_totais: number; limite_trabalhos: number; limite_resumos: number; limite_questionarios: number; limite_planos_aula: number; limite_tfc: number } | null>(null);
