@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, ArrowLeft } from "lucide-react";
+import PhoneInput from "@/components/PhoneInput";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,6 +26,7 @@ const AuthPage = () => {
   const [genero, setGenero] = useState("");
   const [idade, setIdade] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [telefoneValido, setTelefoneValido] = useState(false);
   const [funcao, setFuncao] = useState("");
   const [loading, setLoading] = useState(false);
   const [loginImageUrl, setLoginImageUrl] = useState<string | null>(null);
@@ -78,6 +80,10 @@ const AuthPage = () => {
           toast.error("Preencha todos os campos obrigatórios.");
           return;
         }
+        if (!telefone || !telefoneValido) {
+          toast.error("Introduza um número de telefone válido.");
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
@@ -86,7 +92,7 @@ const AuthPage = () => {
               nome: name.trim(),
               genero,
               idade: idade ? parseInt(idade) : null,
-              telefone: telefone.trim() || null,
+              telefone: telefone || null,
               funcao
             },
             emailRedirectTo: window.location.origin
@@ -251,14 +257,14 @@ const AuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone</Label>
-                      <Input
+                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone *</Label>
+                      <PhoneInput
                         id="telefone"
-                        type="tel"
-                        placeholder="Ex: 923 456 789"
                         value={telefone}
-                        onChange={(e) => setTelefone(e.target.value)}
-                        className="h-12 rounded-xl border-border/60"
+                        onChange={(e164, valid) => {
+                          setTelefone(e164);
+                          setTelefoneValido(valid);
+                        }}
                       />
                     </div>
 
