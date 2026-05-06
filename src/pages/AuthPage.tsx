@@ -80,6 +80,10 @@ const AuthPage = () => {
           toast.error("Preencha todos os campos obrigatórios.");
           return;
         }
+        if (!telefone || !telefoneValido) {
+          toast.error("Introduza um número de telefone válido.");
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
