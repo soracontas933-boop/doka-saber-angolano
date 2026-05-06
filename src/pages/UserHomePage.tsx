@@ -19,19 +19,21 @@ import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { useAdmin } from "@/hooks/use-admin";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { GraduationCap } from "lucide-react";
 
-const quickActions = [
-  { to: "/trabalho", icon: WrapText, label: "Trabalhos" },
-  { to: "/resumo", icon: BookOpen, label: "Resumos" },
-  { to: "/questionario", icon: HelpCircle, label: "Questionários" },
-  { to: "/plano-aula", icon: ClipboardList, label: "Planos" },
-  { to: "/apresentacao", icon: Presentation, label: "Apresentações" },
-  { to: "/curriculo", icon: Search, label: "Currículo" },
-  { to: "/meus-projetos", icon: FolderOpen, label: "Projetos" },
+const quickActionsAll = [
+  { to: "/trabalho", icon: WrapText, label: "Trabalhos", featureKey: "trabalho" },
+  { to: "/resumo", icon: BookOpen, label: "Resumos", featureKey: "resumo" },
+  { to: "/questionario", icon: HelpCircle, label: "Questionários", featureKey: "questionario" },
+  { to: "/plano-aula", icon: ClipboardList, label: "Planos", featureKey: "plano-aula" },
+  { to: "/apresentacao", icon: Presentation, label: "Apresentações", featureKey: "apresentacao" },
+  { to: "/curriculo", icon: Search, label: "Currículo", featureKey: "curriculo" },
+  { to: "/meus-projetos", icon: FolderOpen, label: "Projetos", featureKey: "meus-projetos" },
 ];
 
 interface RecentProject {
