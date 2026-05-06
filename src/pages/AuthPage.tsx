@@ -92,7 +92,7 @@ const AuthPage = () => {
               nome: name.trim(),
               genero,
               idade: idade ? parseInt(idade) : null,
-              telefone: telefone.trim() || null,
+              telefone: telefone || null,
               funcao
             },
             emailRedirectTo: window.location.origin
