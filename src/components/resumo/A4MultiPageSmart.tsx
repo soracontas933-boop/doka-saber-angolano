@@ -1,44 +1,32 @@
 /**
- * A4MultiPageSmart — Paginação Inteligente
- * 
- * Renderiza conteúdo em múltiplas folhas A4 garantindo que:
- * - Nenhum card/bloco seja cortado entre páginas
- * - A pré-visualização seja idêntica ao PDF exportado
- * - Todos os elementos respeitem break-inside: avoid
- * - Não haja overflow: hidden ou alturas fixas
- * 
- * Estratégia: Mede a altura real de cada card, distribui em páginas
- * respeitando o limite de altura, e renderiza cada página separadamente.
+ * A4MultiPageSmart — Paginação Inteligente baseada em offsets reais.
+ *
+ * Estratégia (à prova de cortes e fiel ao PDF):
+ * 1. Renderiza o conteúdo UMA VEZ num nó oculto à largura A4.
+ * 2. Lê o offsetTop+offsetHeight dos "cards" (top-level children + [data-card]).
+ * 3. Calcula pontos de quebra: começa nova página SEMPRE no topo do
+ *    primeiro card que não cabe inteiro na página atual.
+ * 4. Renderiza N páginas — cada uma é uma janela A4 que mostra o mesmo
+ *    DOM "rolado" por marginTop negativo até pageOffsets[i].
+ *
+ * Resultado: preview = PDF (porque o exportador captura cada [data-a4-page]).
  */
-
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
-import {
-  measureElementHeight,
-  collectCardMetrics,
-  paginateCards,
-  applyPageBreakStyles,
-  type PageLayout,
-} from "@/lib/smart-pagination";
 
-interface A4MultiPageSmartProps {
+interface Props {
   orientation?: "portrait" | "landscape";
-  /** Conteúdo que será distribuído inteligentemente em páginas A4 */
   children: React.ReactNode;
-  /** Número mínimo de páginas */
   minPages?: number;
-  /** Permite adicionar páginas vazias manualmente */
   allowAddPage?: boolean;
-  /** Páginas extras adicionadas manualmente */
   extraPages?: number;
   onAddPage?: () => void;
   onRemovePage?: () => void;
-  /** Padding interno em px de cada página A4. */
   padding?: number;
 }
 
-const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
+const A4MultiPageSmart: React.FC<Props> = ({
   orientation = "portrait",
   children,
   minPages = 1,
@@ -54,54 +42,101 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [pages, setPages] = useState<PageLayout[]>([]);
-  const [pageCount, setPageCount] = useState(minPages);
+  // offset em px (no nó de medição) onde cada página começa
+  const [pageOffsets, setPageOffsets] = useState<number[]>([0]);
 
-  // Medição inteligente: calcula nº de páginas com base na altura real dos cards
+  // Cálculo de quebras inteligentes
   useLayoutEffect(() => {
-    const measure = async () => {
-      if (!measureRef.current) return;
-
-      try {
-        // Aguarda um frame para garantir que o conteúdo foi renderizado
-        await new Promise((r) => requestAnimationFrame(r));
-
-        // Coleta métricas de todos os cards
-        const cardMetrics = collectCardMetrics(measureRef.current);
-
-        if (cardMetrics.length === 0) {
-          // Se não encontrou cards, usa a altura total do conteúdo
-          const totalHeight = measureRef.current.scrollHeight;
-          const innerH = H - padding * 2;
-          const needed = Math.max(minPages, Math.ceil(totalHeight / innerH));
-          setPageCount(needed);
-          setPages([]);
-          return;
-        }
-
-        // Distribui cards em páginas
-        const innerH = H - padding * 2;
-        const layouts = paginateCards(cardMetrics, H, padding);
-        const needed = Math.max(minPages, layouts.length);
-
-        setPages(layouts);
-        setPageCount(needed);
-      } catch (error) {
-        console.error("Erro ao medir conteúdo:", error);
-        // Fallback: usa altura total
-        if (measureRef.current) {
-          const totalHeight = measureRef.current.scrollHeight;
-          const innerH = H - padding * 2;
-          const needed = Math.max(minPages, Math.ceil(totalHeight / innerH));
-          setPageCount(needed);
+    let raf1 = 0;
+    let raf2 = 0;
+    const compute = () => {
+      const root = measureRef.current;
+      if (!root) return;
+      const innerH = H - padding * 2;
+      // 1. Recolhe candidatos a "card" — preferimos elementos com [data-card],
+      //    senão usamos os filhos diretos do conteúdo (estratégia universal).
+      let cards: HTMLElement[] = Array.from(
+        root.querySelectorAll<HTMLElement>("[data-card]")
+      );
+      if (cards.length === 0) {
+        // Achata um nível: filhos diretos do primeiro nó "real"
+        const firstReal = root.firstElementChild as HTMLElement | null;
+        if (firstReal) {
+          cards = Array.from(firstReal.children).filter(
+            (c): c is HTMLElement => c instanceof HTMLElement
+          );
+          // Se houver wrappers internos (ex: <Header/> + secções), descer mais um nível
+          if (cards.length === 1 && cards[0].children.length > 1) {
+            cards = Array.from(cards[0].children).filter(
+              (c): c is HTMLElement => c instanceof HTMLElement
+            );
+          }
         }
       }
+
+      const totalH = root.scrollHeight;
+      if (cards.length === 0 || totalH <= innerH) {
+        const needed = Math.max(
+          minPages,
+          Math.max(1, Math.ceil(totalH / innerH))
+        );
+        const offsets = Array.from({ length: needed }, (_, i) => i * innerH);
+        setPageOffsets(offsets);
+        return;
+      }
+
+      // 2. Greedy: preenche página até que o próximo card não caiba
+      const offsets: number[] = [0];
+      let currentStart = 0;
+      for (const card of cards) {
+        const top = card.offsetTop;
+        const bottom = top + card.offsetHeight;
+        // Se o card já começa antes da página atual, ignora
+        if (bottom <= currentStart) continue;
+        // Se ultrapassa o limite da página atual → começa nova página no topo deste card
+        if (bottom - currentStart > innerH) {
+          // Card é maior que uma página inteira: quebra-se obrigatoriamente
+          // nele mesmo (não dá para evitar) — começa a página neste card.
+          if (top > currentStart) {
+            currentStart = top;
+            offsets.push(currentStart);
+          } else {
+            // Card maior que a página: avança "innerH" e segue
+            currentStart = currentStart + innerH;
+            offsets.push(currentStart);
+          }
+        }
+      }
+
+      // Garante que cobrimos até ao fim
+      while (offsets[offsets.length - 1] + innerH < totalH) {
+        offsets.push(offsets[offsets.length - 1] + innerH);
+      }
+
+      const needed = Math.max(minPages, offsets.length);
+      while (offsets.length < needed) {
+        offsets.push(offsets[offsets.length - 1] + innerH);
+      }
+      setPageOffsets(offsets);
     };
 
-    measure();
-    const ro = new ResizeObserver(() => measure());
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(compute);
+    });
+
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(compute);
+      });
+    });
     if (measureRef.current) ro.observe(measureRef.current);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      ro.disconnect();
+    };
   }, [children, H, padding, minPages]);
 
   // Escala responsiva
@@ -121,12 +156,13 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
     };
   }, [W]);
 
-  const totalPages = pageCount + extraPages;
+  const totalPages = pageOffsets.length + extraPages;
   const innerH = H - padding * 2;
+  const innerW = W - padding * 2;
 
   return (
     <div ref={wrapperRef} className="w-full">
-      {/* Nó "fonte" oculto — renderiza o conteúdo real apenas uma vez para medição */}
+      {/* Nó "fonte" oculto para medição (renderiza children uma vez à largura A4) */}
       <div
         ref={measureRef}
         aria-hidden
@@ -134,22 +170,18 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
           position: "absolute",
           left: -99999,
           top: 0,
-          width: W - padding * 2,
+          width: innerW,
           visibility: "hidden",
           pointerEvents: "none",
-          overflow: "visible",
-          height: "auto",
         }}
       >
         {children}
       </div>
 
-      {/* Páginas A4 visíveis */}
       <div className="flex flex-col items-center gap-5">
         {Array.from({ length: totalPages }).map((_, i) => {
-          const isExtra = i >= pageCount;
-          const pageLayout = pages[i];
-
+          const isExtra = i >= pageOffsets.length;
+          const offset = pageOffsets[i] ?? 0;
           return (
             <div
               key={i}
@@ -169,12 +201,8 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
                   boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
                   transform: `scale(${scale})`,
                   transformOrigin: "top left",
-                  overflow: "visible",
+                  overflow: "hidden",
                   position: "relative",
-                  pageBreakInside: "avoid",
-                  breakInside: "avoid",
-                  display: "flex",
-                  flexDirection: "column",
                 }}
               >
                 {!isExtra && (
@@ -183,47 +211,22 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
                       position: "absolute",
                       top: padding,
                       left: padding,
-                      right: padding,
-                      bottom: padding,
-                      overflow: "visible",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 0,
+                      width: innerW,
+                      height: innerH,
+                      overflow: "hidden",
                     }}
                   >
                     <div
                       style={{
-                        width: W - padding * 2,
-                        height: "auto",
-                        overflow: "visible",
-                        pageBreakInside: "avoid",
-                        breakInside: "avoid",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 0,
+                        marginTop: -offset,
+                        width: innerW,
                       }}
                     >
-                      {pageLayout ? (
-                        pageLayout.cards.map((card, cardIdx) => (
-                          <div 
-                            key={cardIdx} 
-                            dangerouslySetInnerHTML={{ __html: card.outerHTML }} 
-                            style={{ 
-                              width: '100%',
-                              breakInside: 'avoid',
-                              pageBreakInside: 'avoid'
-                            }}
-                          />
-                        ))
-                      ) : (
-                        // Fallback se não houver layout (ex: página extra ou erro)
-                        i < pageCount ? children : null
-                      )}
+                      {children}
                     </div>
                   </div>
                 )}
 
-                {/* Número da página */}
                 <div
                   style={{
                     position: "absolute",
@@ -234,11 +237,11 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
                     fontFamily: "'SF Pro Display', system-ui, sans-serif",
                     display: "flex",
                     alignItems: "center",
-                    gap: 8
+                    gap: 8,
                   }}
                 >
                   {isExtra && onRemovePage && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onRemovePage();
@@ -249,7 +252,9 @@ const A4MultiPageSmart: React.FC<A4MultiPageSmartProps> = ({
                       <Trash2 className="h-3 w-3" />
                     </button>
                   )}
-                  <span>Página {i + 1} de {totalPages}</span>
+                  <span>
+                    Página {i + 1} de {totalPages}
+                  </span>
                 </div>
               </div>
             </div>

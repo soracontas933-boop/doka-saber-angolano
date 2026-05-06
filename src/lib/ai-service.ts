@@ -336,7 +336,28 @@ Entrega APENAS este formato. Sem introdução, sem conclusão, sem texto extra.`
       case "Resumo com Mnemônicos":
         return base + `\nGera um RESUMO com TÉCNICAS DE MEMORIZAÇÃO. Formato:\n\n# <Tema>\n\n## Síntese\n- <ideia 1>\n- <ideia 2>\n- <ideia 3>\n\n## Mnemónicos\n- **<Acrónimo ou frase>:** <o que ajuda a lembrar>\n- ...\n\n## Truques de memorização\n- <história curta ou associação>\n- ...\n\nMínimo 5 mnemónicos. Sem JSON.`;
       default: // Resumo por Tópicos
-        return base + `\nGera um RESUMO POR TÓPICOS claro e didáctico. Formato:\n\n# <Tema>\n\n## <Secção 1>\n- <ponto chave>\n- <ponto chave>\n\n## <Secção 2>\n- ...\n\n4 a 6 secções, 3 a 6 tópicos cada. Negrito **assim** nos termos importantes. Sem JSON, sem flashcards, sem mapa mental.`;
+        return base + `\nGera um RESUMO POR TÓPICOS claro, didáctico e ZERO REPETIÇÕES.
+
+REGRAS DE QUALIDADE (CRÍTICAS):
+- PROIBIDO repetir a mesma ideia em secções diferentes (mesmo com palavras trocadas).
+- PROIBIDO recapitular no fim o que já foi dito (sem "Em suma", "Concluindo" repetindo tudo).
+- Cada tópico deve trazer informação NOVA e específica, com termos técnicos corretos.
+- Cada item começa com **palavra-chave em negrito**, seguida de explicação curta (máx. 22 palavras).
+- Densidade ajustada ao número de páginas (${paginas}): mais páginas = mais secções E mais profundidade, NUNCA repetição.
+- ${paginas <= 1 ? "1 página → 4 secções, 3-4 tópicos cada." : paginas <= 3 ? `${paginas} páginas → ${4 * paginas} a ${5 * paginas} secções no total, 4-5 tópicos cada.` : `${paginas} páginas → distribui o conteúdo de forma orgânica, sem encher de espaço em branco e sem repetir.`}
+
+FORMATO OBRIGATÓRIO (Markdown puro):
+
+# <Tema>
+
+## <Secção 1 — título curto e específico>
+- **<conceito>**: <explicação concreta com factos/dados>
+- **<conceito>**: <explicação>
+
+## <Secção 2>
+- ...
+
+Sem JSON, sem introdução fora do conteúdo, sem repetições.`;
     }
   },
 
