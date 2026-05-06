@@ -26,6 +26,7 @@ const AuthPage = () => {
   const [genero, setGenero] = useState("");
   const [idade, setIdade] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [telefoneValido, setTelefoneValido] = useState(false);
   const [funcao, setFuncao] = useState("");
   const [loading, setLoading] = useState(false);
   const [loginImageUrl, setLoginImageUrl] = useState<string | null>(null);
