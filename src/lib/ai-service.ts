@@ -353,8 +353,8 @@ REGRAS DE QUALIDADE (CRÍTICAS):
 - PROIBIDO recapitular no fim o que já foi dito (sem "Em suma", "Concluindo" repetindo tudo).
 - Cada tópico deve trazer informação NOVA e específica, com termos técnicos corretos.
 - Cada item começa com **palavra-chave em negrito**, seguida de explicação curta (máx. 22 palavras).
-- Densidade ajustada ao número de páginas (${paginas}): mais páginas = mais secções E mais profundidade, NUNCA repetição.
-- ${paginas <= 1 ? "1 página → 4 secções, 3-4 tópicos cada." : paginas <= 3 ? `${paginas} páginas → ${4 * paginas} a ${5 * paginas} secções no total, 4-5 tópicos cada.` : `${paginas} páginas → distribui o conteúdo de forma orgânica, sem encher de espaço em branco e sem repetir.`}
+- Estrutura obrigatória: ${seccoesTotal} secções, cada uma com ${topicosPorSeccao} tópicos (total ≈ ${seccoesTotal * topicosPorSeccao} tópicos).
+- Total de palavras entre ${palavrasMin} e ${palavrasMax} (alvo ${palavrasAlvo}) — distribui equilibradamente.
 
 FORMATO OBRIGATÓRIO (Markdown puro):
 
