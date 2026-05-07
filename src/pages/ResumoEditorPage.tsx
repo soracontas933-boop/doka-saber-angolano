@@ -85,7 +85,7 @@ const ResumoEditorPage: React.FC = () => {
     const adjusted = Math.max(8, Math.round(fontLevel * Math.sqrt(ratio)));
     return adjusted;
   }, [contentPages, targetPages, fontLevel]);
-  const fontScale = 0.55 + (autoFontLevel - 1) * ((2.2 - 0.55) / 49);
+  const fontScale = (0.55 + (autoFontLevel - 1) * ((2.2 - 0.55) / 49)) * densityFactor[density];
   const fs = (px: number) => `${px * fontScale}px`;
 
   const cleaned = useMemo(() => sanitizeResumo(resultado), [resultado]);
