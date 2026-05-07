@@ -118,7 +118,9 @@ const A4MultiPageSmart: React.FC<Props> = ({
         offsets.push(offsets[offsets.length - 1] + innerH);
       }
 
-      const needed = Math.max(minPages, offsets.length);
+      const contentPages = offsets.length;
+      onContentPagesChange?.(contentPages);
+      const needed = Math.max(minPages, contentPages);
       while (offsets.length < needed) {
         offsets.push(offsets[offsets.length - 1] + innerH);
       }
@@ -142,7 +144,7 @@ const A4MultiPageSmart: React.FC<Props> = ({
       cancelAnimationFrame(raf2);
       ro.disconnect();
     };
-  }, [children, H, padding, minPages]);
+  }, [children, H, padding, minPages, onContentPagesChange]);
 
   // Escala responsiva
   useEffect(() => {
