@@ -19,10 +19,14 @@ interface Props {
   orientation?: "portrait" | "landscape";
   children: React.ReactNode;
   minPages?: number;
+  /** Páginas alvo escolhidas pelo utilizador. */
+  targetPages?: number;
   allowAddPage?: boolean;
   extraPages?: number;
   onAddPage?: () => void;
   onRemovePage?: () => void;
+  /** Reportado quando muda o nº real de páginas de conteúdo. */
+  onContentPagesChange?: (n: number) => void;
   padding?: number;
 }
 
@@ -30,10 +34,12 @@ const A4MultiPageSmart: React.FC<Props> = ({
   orientation = "portrait",
   children,
   minPages = 1,
+  targetPages,
   allowAddPage = true,
   extraPages = 0,
   onAddPage,
   onRemovePage,
+  onContentPagesChange,
   padding = 48,
 }) => {
   const W = orientation === "landscape" ? 1123 : 794;
@@ -42,7 +48,6 @@ const A4MultiPageSmart: React.FC<Props> = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  // offset em px (no nó de medição) onde cada página começa
   const [pageOffsets, setPageOffsets] = useState<number[]>([0]);
 
   // Cálculo de quebras inteligentes
