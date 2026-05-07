@@ -397,6 +397,10 @@ const ResumoEditorPage: React.FC = () => {
         <main className="space-y-3">
           <div className="text-[11px] text-muted-foreground flex items-center gap-2">
             <Save className="h-3 w-3" /> Pré-visualização A4 — cada folha aqui = 1 página no PDF.
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              Alvo: {targetPages} • Conteúdo: {contentPages}
+              {contentPages > targetPages && " (letra reduzida automaticamente)"}
+            </span>
           </div>
 
           {inner ? (
