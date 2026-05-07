@@ -67,6 +67,10 @@ const ResumoEditorPage: React.FC = () => {
   const [fontLevel, setFontLevel] = useState(25);
   const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("step-cards");
   const [extraPages, setExtraPages] = useState(0);
+  // Densidade manual: leve = mais espaço/menos por folha, normal = equilibrado, agressivo = comprime
+  type Density = "leve" | "normal" | "agressivo";
+  const [density, setDensity] = useState<Density>("normal");
+  const densityFactor: Record<Density, number> = { leve: 1.18, normal: 1, agressivo: 0.78 };
   // Páginas alvo definidas pelo utilizador na tela anterior
   const targetPages = Math.max(1, initial.numPaginas || 1);
   // Páginas reais geradas pelo conteúdo (reportadas pelo A4MultiPageSmart)
@@ -81,7 +85,7 @@ const ResumoEditorPage: React.FC = () => {
     const adjusted = Math.max(8, Math.round(fontLevel * Math.sqrt(ratio)));
     return adjusted;
   }, [contentPages, targetPages, fontLevel]);
-  const fontScale = 0.55 + (autoFontLevel - 1) * ((2.2 - 0.55) / 49);
+  const fontScale = (0.55 + (autoFontLevel - 1) * ((2.2 - 0.55) / 49)) * densityFactor[density];
   const fs = (px: number) => `${px * fontScale}px`;
 
   const cleaned = useMemo(() => sanitizeResumo(resultado), [resultado]);
@@ -319,6 +323,30 @@ const ResumoEditorPage: React.FC = () => {
             </div>
           </div>
 
+          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Type className="h-3.5 w-3.5" /> Densidade do Conteúdo
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {(["leve", "normal", "agressivo"] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDensity(d)}
+                  className={`text-xs py-2 rounded-lg border transition-all capitalize ${
+                    density === d
+                      ? "border-primary bg-primary/10 text-primary font-semibold"
+                      : "border-border bg-background hover:bg-muted"
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Leve = mais respiração; Agressivo = mais conteúdo por folha.
+            </p>
+          </div>
+
           {!isMapaMental && (
             <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -385,8 +413,9 @@ const ResumoEditorPage: React.FC = () => {
             <Textarea
               value={resultado}
               onChange={(e) => setResultado(e.target.value)}
-              rows={14}
-              className="font-mono text-[11px] leading-relaxed"
+              rows={20}
+              className="font-mono text-[12px] leading-relaxed min-h-[420px] resize-y"
+              spellCheck
             />
             <p className="text-[10px] text-muted-foreground">
               Edita o markdown gerado pela IA. As alterações aparecem na pré-visualização A4.
