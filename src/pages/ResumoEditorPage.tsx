@@ -67,6 +67,10 @@ const ResumoEditorPage: React.FC = () => {
   const [fontLevel, setFontLevel] = useState(25);
   const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("step-cards");
   const [extraPages, setExtraPages] = useState(0);
+  // Densidade manual: leve = mais espaço/menos por folha, normal = equilibrado, agressivo = comprime
+  type Density = "leve" | "normal" | "agressivo";
+  const [density, setDensity] = useState<Density>("normal");
+  const densityFactor: Record<Density, number> = { leve: 1.18, normal: 1, agressivo: 0.78 };
   // Páginas alvo definidas pelo utilizador na tela anterior
   const targetPages = Math.max(1, initial.numPaginas || 1);
   // Páginas reais geradas pelo conteúdo (reportadas pelo A4MultiPageSmart)
