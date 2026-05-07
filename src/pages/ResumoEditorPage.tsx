@@ -413,8 +413,9 @@ const ResumoEditorPage: React.FC = () => {
             <Textarea
               value={resultado}
               onChange={(e) => setResultado(e.target.value)}
-              rows={14}
-              className="font-mono text-[11px] leading-relaxed"
+              rows={20}
+              className="font-mono text-[12px] leading-relaxed min-h-[420px] resize-y"
+              spellCheck
             />
             <p className="text-[10px] text-muted-foreground">
               Edita o markdown gerado pela IA. As alterações aparecem na pré-visualização A4.
