@@ -67,7 +67,21 @@ const ResumoEditorPage: React.FC = () => {
   const [fontLevel, setFontLevel] = useState(25);
   const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("step-cards");
   const [extraPages, setExtraPages] = useState(0);
-  const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
+  // Páginas alvo definidas pelo utilizador na tela anterior
+  const targetPages = Math.max(1, initial.numPaginas || 1);
+  // Páginas reais geradas pelo conteúdo (reportadas pelo A4MultiPageSmart)
+  const [contentPages, setContentPages] = useState(targetPages);
+  // Auto-ajuste do tamanho de letra: se o conteúdo gerar MAIS páginas que o alvo,
+  // diminui o tamanho de letra automaticamente para caber. Se gerar menos, mantém
+  // (folhas vazias serão preenchidas pelo targetFill no A4MultiPageSmart).
+  const autoFontLevel = React.useMemo(() => {
+    if (contentPages <= targetPages) return fontLevel;
+    // razão de excesso (ex: 5 páginas em 3 alvo = 1.67) → reduz fontLevel proporcional
+    const ratio = targetPages / contentPages;
+    const adjusted = Math.max(8, Math.round(fontLevel * Math.sqrt(ratio)));
+    return adjusted;
+  }, [contentPages, targetPages, fontLevel]);
+  const fontScale = 0.55 + (autoFontLevel - 1) * ((2.2 - 0.55) / 49);
   const fs = (px: number) => `${px * fontScale}px`;
 
   const cleaned = useMemo(() => sanitizeResumo(resultado), [resultado]);
