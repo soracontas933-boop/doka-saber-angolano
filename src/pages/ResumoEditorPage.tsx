@@ -414,12 +414,21 @@ const ResumoEditorPage: React.FC = () => {
                 onAddPage={handleAddPage}
                 onRemovePage={handleRemovePage}
                 padding={48}
+                targetPages={targetPages}
+                onContentPagesChange={setContentPages}
               >
                 <div style={{ fontFamily, color: "#000" }}>{inner}</div>
               </A4MultiPageSmart>
             )
           ) : (
-            <A4MultiPageSmart orientation="portrait" extraPages={extraPages} onAddPage={handleAddPage} onRemovePage={handleRemovePage}>
+            <A4MultiPageSmart
+              orientation="portrait"
+              extraPages={extraPages}
+              onAddPage={handleAddPage}
+              onRemovePage={handleRemovePage}
+              targetPages={targetPages}
+              onContentPagesChange={setContentPages}
+            >
               <div style={{ fontFamily, color: "#000" }}>
                 <h1 style={{ textAlign: "center", fontSize: 22, color: palette.primary, margin: "0 0 12px", fontWeight: 800 }}>
                   {finalTitle.toUpperCase()}
