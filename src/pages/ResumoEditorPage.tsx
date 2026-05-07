@@ -323,6 +323,30 @@ const ResumoEditorPage: React.FC = () => {
             </div>
           </div>
 
+          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Type className="h-3.5 w-3.5" /> Densidade do Conteúdo
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {(["leve", "normal", "agressivo"] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDensity(d)}
+                  className={`text-xs py-2 rounded-lg border transition-all capitalize ${
+                    density === d
+                      ? "border-primary bg-primary/10 text-primary font-semibold"
+                      : "border-border bg-background hover:bg-muted"
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Leve = mais respiração; Agressivo = mais conteúdo por folha.
+            </p>
+          </div>
+
           {!isMapaMental && (
             <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
