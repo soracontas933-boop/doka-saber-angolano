@@ -163,7 +163,8 @@ const A4MultiPageSmart: React.FC<Props> = ({
     };
   }, [W]);
 
-  const totalPages = pageOffsets.length + extraPages;
+  const targetFill = targetPages ? Math.max(0, targetPages - pageOffsets.length) : 0;
+  const totalPages = pageOffsets.length + targetFill + extraPages;
   const innerH = H - padding * 2;
   const innerW = W - padding * 2;
 
