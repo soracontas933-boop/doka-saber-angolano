@@ -67,7 +67,21 @@ const ResumoEditorPage: React.FC = () => {
   const [fontLevel, setFontLevel] = useState(25);
   const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("step-cards");
   const [extraPages, setExtraPages] = useState(0);
-  const fontScale = 0.55 + (fontLevel - 1) * ((2.2 - 0.55) / 49);
+  // Páginas alvo definidas pelo utilizador na tela anterior
+  const targetPages = Math.max(1, initial.numPaginas || 1);
+  // Páginas reais geradas pelo conteúdo (reportadas pelo A4MultiPageSmart)
+  const [contentPages, setContentPages] = useState(targetPages);
+  // Auto-ajuste do tamanho de letra: se o conteúdo gerar MAIS páginas que o alvo,
+  // diminui o tamanho de letra automaticamente para caber. Se gerar menos, mantém
+  // (folhas vazias serão preenchidas pelo targetFill no A4MultiPageSmart).
+  const autoFontLevel = React.useMemo(() => {
+    if (contentPages <= targetPages) return fontLevel;
+    // razão de excesso (ex: 5 páginas em 3 alvo = 1.67) → reduz fontLevel proporcional
+    const ratio = targetPages / contentPages;
+    const adjusted = Math.max(8, Math.round(fontLevel * Math.sqrt(ratio)));
+    return adjusted;
+  }, [contentPages, targetPages, fontLevel]);
+  const fontScale = 0.55 + (autoFontLevel - 1) * ((2.2 - 0.55) / 49);
   const fs = (px: number) => `${px * fontScale}px`;
 
   const cleaned = useMemo(() => sanitizeResumo(resultado), [resultado]);
@@ -383,6 +397,10 @@ const ResumoEditorPage: React.FC = () => {
         <main className="space-y-3">
           <div className="text-[11px] text-muted-foreground flex items-center gap-2">
             <Save className="h-3 w-3" /> Pré-visualização A4 — cada folha aqui = 1 página no PDF.
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              Alvo: {targetPages} • Conteúdo: {contentPages}
+              {contentPages > targetPages && " (letra reduzida automaticamente)"}
+            </span>
           </div>
 
           {inner ? (
@@ -400,12 +418,21 @@ const ResumoEditorPage: React.FC = () => {
                 onAddPage={handleAddPage}
                 onRemovePage={handleRemovePage}
                 padding={48}
+                targetPages={targetPages}
+                onContentPagesChange={setContentPages}
               >
                 <div style={{ fontFamily, color: "#000" }}>{inner}</div>
               </A4MultiPageSmart>
             )
           ) : (
-            <A4MultiPageSmart orientation="portrait" extraPages={extraPages} onAddPage={handleAddPage} onRemovePage={handleRemovePage}>
+            <A4MultiPageSmart
+              orientation="portrait"
+              extraPages={extraPages}
+              onAddPage={handleAddPage}
+              onRemovePage={handleRemovePage}
+              targetPages={targetPages}
+              onContentPagesChange={setContentPages}
+            >
               <div style={{ fontFamily, color: "#000" }}>
                 <h1 style={{ textAlign: "center", fontSize: 22, color: palette.primary, margin: "0 0 12px", fontWeight: 800 }}>
                   {finalTitle.toUpperCase()}

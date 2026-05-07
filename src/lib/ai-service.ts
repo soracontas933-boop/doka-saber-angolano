@@ -286,8 +286,18 @@ export const prompts = {
     const contextInfo = contexto 
       ? `O resumo deve ser contextualizado na realidade de: ${contexto}.` 
       : "O resumo deve ser genérico e sem um contexto geográfico específico.";
-    
-    const base = `Conteúdo de origem (do caderno do estudante):\n"""\n${conteudo}\n"""\n\nDisciplina/nível: ${classe}.\n\nREQUISITOS DE EXTENSÃO E CONTEXTO:\n- O resumo deve ter EXATAMENTE ${paginas} página(s) A4 de conteúdo denso e útil.\n- ${contextInfo}\n- Se o conteúdo original for longo (ex: um livro de 1000 páginas), deves ser extremamente inteligente para sintetizar os pontos mais críticos mantendo a fidelidade e profundidade necessária para o número de páginas solicitado.\n\nREGRAS ABSOLUTAS DE FORMATO:\n- NUNCA escrevas blocos JSON, código, chaves { } ou colchetes [ ] na resposta.\n- NUNCA uses os símbolos: • em sequência, "•[", "•{", aspas curvas estranhas.\n- USA EXCLUSIVAMENTE Markdown limpo (# título, ## secção, - item, **negrito**).\n- Não inventes nem repitas instruções; entrega só o conteúdo final.\n`;
+
+    // Métricas de densidade calibradas para A4 com layout em cards
+    // (~ 260 palavras úteis por página A4 quando há cards/secções com cabeçalhos)
+    const palavrasAlvo = paginas * 260;
+    const palavrasMin = Math.round(palavrasAlvo * 0.9);
+    const palavrasMax = Math.round(palavrasAlvo * 1.1);
+    // Secções e tópicos por página (regra de densidade)
+    const seccoesPorPagina = 4; // sweet spot visual
+    const seccoesTotal = Math.max(3, paginas * seccoesPorPagina);
+    const topicosPorSeccao = paginas <= 1 ? 3 : paginas <= 3 ? 4 : 5;
+
+    const base = `Conteúdo de origem (do caderno do estudante):\n"""\n${conteudo}\n"""\n\nDisciplina/nível: ${classe}.\n\nREQUISITOS DE EXTENSÃO E DENSIDADE (CRÍTICOS — afectam directamente o layout das ${paginas} página(s) A4):\n- Total de palavras úteis: entre ${palavrasMin} e ${palavrasMax} (alvo ${palavrasAlvo}).\n- Densidade recomendada: ${seccoesTotal} secções no total (~${seccoesPorPagina} por página), com ${topicosPorSeccao} tópicos por secção.\n- ${contextInfo}\n- Mais páginas = mais profundidade e mais factos NOVOS, NUNCA repetição nem enchimento.\n- Se o conteúdo original for longo (ex: um livro de 1000 páginas), sintetiza os pontos mais críticos mantendo fidelidade adequada ao número de páginas solicitado.\n\nREGRAS ABSOLUTAS DE FORMATO:\n- NUNCA escrevas blocos JSON, código, chaves { } ou colchetes [ ] na resposta.\n- NUNCA uses os símbolos: • em sequência, "•[", "•{", aspas curvas estranhas.\n- USA EXCLUSIVAMENTE Markdown limpo (# título, ## secção, - item, **negrito**).\n- Cada item de lista DEVE ser uma frase autocontida de no máximo 22 palavras (para caber numa linha de card).\n- Não inventes nem repitas instruções; entrega só o conteúdo final.\n`;
     switch (tipo) {
          case "Mapa Mental":
         return base + `\nGera um MAPA MENTAL ULTRA-CONCISO, ramificado e fácil de MEMORIZAR num relance.
@@ -343,8 +353,8 @@ REGRAS DE QUALIDADE (CRÍTICAS):
 - PROIBIDO recapitular no fim o que já foi dito (sem "Em suma", "Concluindo" repetindo tudo).
 - Cada tópico deve trazer informação NOVA e específica, com termos técnicos corretos.
 - Cada item começa com **palavra-chave em negrito**, seguida de explicação curta (máx. 22 palavras).
-- Densidade ajustada ao número de páginas (${paginas}): mais páginas = mais secções E mais profundidade, NUNCA repetição.
-- ${paginas <= 1 ? "1 página → 4 secções, 3-4 tópicos cada." : paginas <= 3 ? `${paginas} páginas → ${4 * paginas} a ${5 * paginas} secções no total, 4-5 tópicos cada.` : `${paginas} páginas → distribui o conteúdo de forma orgânica, sem encher de espaço em branco e sem repetir.`}
+- Estrutura obrigatória: ${seccoesTotal} secções, cada uma com ${topicosPorSeccao} tópicos (total ≈ ${seccoesTotal * topicosPorSeccao} tópicos).
+- Total de palavras entre ${palavrasMin} e ${palavrasMax} (alvo ${palavrasAlvo}) — distribui equilibradamente.
 
 FORMATO OBRIGATÓRIO (Markdown puro):
 
