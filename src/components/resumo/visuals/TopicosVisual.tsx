@@ -206,7 +206,12 @@ const TopicosVisual: React.FC<Props> = ({
           letterSpacing: 0.5,
         }}
       >
-        {title}
+        <EditableText
+          text={title}
+          editable={editable && !!onTitleChange}
+          onCommit={(v) => onTitleChange?.(v)}
+        />
+
       </h1>
       {disciplina && (
         <div
