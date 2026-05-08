@@ -375,6 +375,9 @@ const ResumoEditorPage: React.FC = () => {
                 onChange={(e) => setTopicosStyle(e.target.value as TopicosStyle)}
                 className="w-full bg-background border border-input rounded-md h-9 px-2 text-xs"
               >
+                <optgroup label="Recomendado (A4 Limpo)">
+                  <option value="clean-a4">Clean A4 — Padrão</option>
+                </optgroup>
                 <optgroup label="Mais usados">
                   <option value="step-cards">Step Cards</option>
                   <option value="modern-timeline">Timeline Blocks</option>
