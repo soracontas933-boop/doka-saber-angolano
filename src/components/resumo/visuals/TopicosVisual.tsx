@@ -267,9 +267,9 @@ const TopicosVisual: React.FC<Props> = ({
             </div>
             <div style={{ flex: 1 }}>
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -307,9 +307,9 @@ const TopicosVisual: React.FC<Props> = ({
               }}
             >
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -345,9 +345,9 @@ const TopicosVisual: React.FC<Props> = ({
             </div>
             <div style={{ flex: 1 }}>
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -379,10 +379,10 @@ const TopicosVisual: React.FC<Props> = ({
             >
               <span style={{ fontWeight: 900, fontSize: fs(14) }}>{n}</span>
               <span style={{ width: 1, height: 16, background: "#ffffff66" }} />
-              <h3 style={{ margin: 0, fontSize: fs(12), fontWeight: 700 }}>{s.heading}</h3>
+              <h3 style={{ margin: 0, fontSize: fs(12), fontWeight: 700 }}>{H(s.heading, i)}</h3>
             </div>
             <div style={{ padding: 12 }}>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -417,10 +417,10 @@ const TopicosVisual: React.FC<Props> = ({
                 Tópico {n}
               </span>
               <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: "#111827" }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -440,7 +440,7 @@ const TopicosVisual: React.FC<Props> = ({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
               <span
                 style={{
@@ -455,7 +455,7 @@ const TopicosVisual: React.FC<Props> = ({
                 Módulo {n}
               </span>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -487,9 +487,9 @@ const TopicosVisual: React.FC<Props> = ({
               }}
             >
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -512,10 +512,10 @@ const TopicosVisual: React.FC<Props> = ({
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
               <span style={{ color: C.primary, fontWeight: 900, fontSize: fs(14) }}>§ {n}</span>
               <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: "#111827" }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -550,9 +550,9 @@ const TopicosVisual: React.FC<Props> = ({
               {String(n).padStart(2, "0")}
             </div>
             <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(12), fontWeight: 800, color: C.deep }}>
-              {s.heading}
+              {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -589,9 +589,9 @@ const TopicosVisual: React.FC<Props> = ({
               >
                 {n}
               </div>
-              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{s.heading}</h3>
+              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{H(s.heading, i)}</h3>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -621,7 +621,7 @@ const TopicosVisual: React.FC<Props> = ({
               >
                 {n}
               </span>
-              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800 }}>{s.heading}</h3>
+              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800 }}>{H(s.heading, i)}</h3>
             </div>
             {s.items.map((it, j) => (
               <div key={j} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
@@ -661,7 +661,7 @@ const TopicosVisual: React.FC<Props> = ({
               }}
             >
               <h3 style={{ margin: 0, fontSize: fs(12), fontWeight: 800, color: "#111827" }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
               <span
                 style={{
@@ -677,7 +677,7 @@ const TopicosVisual: React.FC<Props> = ({
               </span>
             </div>
             <div style={{ padding: 12 }}>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -712,9 +712,9 @@ const TopicosVisual: React.FC<Props> = ({
               </span>
             </div>
             <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(14), fontWeight: 800, color: C.deep, fontFamily: "Georgia, serif" }}>
-              {s.heading}
+              {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -744,9 +744,9 @@ const TopicosVisual: React.FC<Props> = ({
             </div>
             <div style={{ flex: 1, paddingTop: 4 }}>
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep, borderBottom: `1px solid ${C.soft}`, paddingBottom: 6 }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -767,7 +767,7 @@ const TopicosVisual: React.FC<Props> = ({
                 paddingRight: 22,
               }}
             >
-              {n}. {s.heading}
+              {n}. {H(s.heading, i)}
             </div>
             <div
               style={{
@@ -777,7 +777,7 @@ const TopicosVisual: React.FC<Props> = ({
                 borderRadius: "0 12px 12px 12px",
               }}
             >
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -813,9 +813,9 @@ const TopicosVisual: React.FC<Props> = ({
               {n}
             </div>
             <h3 style={{ margin: "4px 0 8px 0", fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-              {s.heading}
+              {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -836,7 +836,7 @@ const TopicosVisual: React.FC<Props> = ({
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
               <div
                 style={{
@@ -855,7 +855,7 @@ const TopicosVisual: React.FC<Props> = ({
                 {n}
               </div>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -878,10 +878,10 @@ const TopicosVisual: React.FC<Props> = ({
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <div style={{ width: 8, height: 24, borderRadius: 4, background: C.primary }} />
-              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{s.heading}</h3>
+              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{H(s.heading, i)}</h3>
             </div>
             <div style={{ flex: 1 }}>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -903,9 +903,9 @@ const TopicosVisual: React.FC<Props> = ({
             }}
           >
             <h3 style={{ margin: 0, marginBottom: 10, fontSize: fs(14), fontWeight: 800, color: C.deep, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ color: C.primary }}>✦</span> {s.heading}
+              <span style={{ color: C.primary }}>✦</span> {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -921,10 +921,10 @@ const TopicosVisual: React.FC<Props> = ({
                 Fase {n}
               </div>
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(14), fontWeight: 800, color: "#1e293b" }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
               <div style={{ background: "#fff", padding: 12, borderRadius: 12, border: `1px solid ${C.soft}` }}>
-                {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+                {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
               </div>
             </div>
           </div>
@@ -950,9 +950,9 @@ const TopicosVisual: React.FC<Props> = ({
               {n}
             </div>
             <h3 style={{ margin: 0, marginBottom: 10, fontSize: fs(13), fontWeight: 800, color: C.deep, borderLeft: `4px solid ${C.primary}`, paddingLeft: 10 }}>
-              {s.heading}
+              {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
