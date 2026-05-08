@@ -228,6 +228,21 @@ const ResumoEditorPage: React.FC = () => {
       default: {
         const sections = parseResumoSections(cleaned);
         if (!sections.length) return null;
+        const handleSectionsChange = (next: TopicoSection[]) => {
+          // Reconstrói markdown preservando título global
+          const titleLine = `# ${finalTitle}`;
+          const body = next
+            .map((s) => `## ${s.heading}\n${s.items.map((it) => `- ${it}`).join("\n")}`)
+            .join("\n\n");
+          setResultado(`${titleLine}\n\n${body}`);
+        };
+        const handleTitleChange = (newTitle: string) => {
+          setTitulo(newTitle);
+          // Atualiza também o markdown se já houver linha de título
+          if (/^#\s+/m.test(cleaned)) {
+            setResultado(cleaned.replace(/^#\s+.+$/m, `# ${newTitle}`));
+          }
+        };
         return (
           <TopicosVisual
             title={finalTitle}
@@ -236,6 +251,9 @@ const ResumoEditorPage: React.FC = () => {
             style={topicosStyle}
             fontScale={fontScale}
             palette={palette.name.toLowerCase().includes("azul") ? "azul" : palette.name.toLowerCase().includes("esmeralda") ? "verde" : palette.name.toLowerCase().includes("coral") ? "laranja" : palette.name.toLowerCase().includes("violeta") ? "roxo" : "cinza"}
+            editable
+            onChange={handleSectionsChange}
+            onTitleChange={handleTitleChange}
           />
         );
       }
@@ -424,11 +442,14 @@ const ResumoEditorPage: React.FC = () => {
         </aside>
 
         <main className="space-y-3">
-          <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+          <div className="text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
             <Save className="h-3 w-3" /> Pré-visualização A4 — cada folha aqui = 1 página no PDF.
             <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
               Alvo: {targetPages} • Conteúdo: {contentPages}
               {contentPages > targetPages && " (letra reduzida automaticamente)"}
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium">
+              ✎ Clica em qualquer título ou parágrafo da folha para editar
             </span>
           </div>
 

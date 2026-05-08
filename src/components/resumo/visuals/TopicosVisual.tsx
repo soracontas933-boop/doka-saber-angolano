@@ -36,7 +36,63 @@ interface Props {
   fontScale?: number;
   /** Pré-definida palette */
   palette?: "azul" | "verde" | "roxo" | "laranja" | "cinza";
+  /** Quando true, headings e itens podem ser editados inline na folha A4. */
+  editable?: boolean;
+  /** Callback chamado no blur de cada edição com a estrutura atualizada. */
+  onChange?: (sections: TopicoSection[]) => void;
+  /** Callback quando o título é editado inline. */
+  onTitleChange?: (newTitle: string) => void;
 }
+
+/** Componente de texto editável inline — aplica contentEditable apenas se editable=true. */
+const EditableText: React.FC<{
+  text: string;
+  editable: boolean;
+  multiline?: boolean;
+  onCommit: (newText: string) => void;
+  style?: React.CSSProperties;
+  as?: "span" | "div";
+}> = ({ text, editable, multiline, onCommit, style, as = "span" }) => {
+  const ref = React.useRef<HTMLElement>(null);
+  React.useEffect(() => {
+    if (ref.current && ref.current.textContent !== text) {
+      ref.current.textContent = text;
+    }
+  }, [text]);
+  const Tag = as as any;
+  return (
+    <Tag
+      ref={ref as any}
+      contentEditable={editable}
+      suppressContentEditableWarning
+      spellCheck={editable}
+      onBlur={(e: React.FocusEvent<HTMLElement>) => {
+        const v = (e.currentTarget.textContent || "").replace(/\s+/g, " ").trim();
+        if (v !== text) onCommit(v);
+      }}
+      onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+        if (!editable) return;
+        if (!multiline && e.key === "Enter") {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement).blur();
+        }
+      }}
+      style={{
+        outline: editable ? "none" : undefined,
+        cursor: editable ? "text" : undefined,
+        borderRadius: editable ? 4 : undefined,
+        transition: "background-color 120ms",
+        ...style,
+      }}
+      onFocus={editable ? (e: any) => (e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.10)") : undefined}
+      onMouseEnter={editable ? (e: any) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.05)"; } : undefined}
+      onMouseLeave={editable ? (e: any) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
+      onBlurCapture={editable ? (e: any) => (e.currentTarget.style.backgroundColor = "transparent") : undefined}
+    >
+      {text}
+    </Tag>
+  );
+};
 
 const PALETTES = {
   azul: { primary: "#1E9DF1", soft: "#E6F4FE", deep: "#0B5A91", accent: "#7BC4F4" },
@@ -53,12 +109,32 @@ const TopicosVisual: React.FC<Props> = ({
   style,
   fontScale = 1,
   palette = "azul",
+  editable = false,
+  onChange,
+  onTitleChange,
 }) => {
   const C = PALETTES[palette];
   const fs = (n: number) => `${n * fontScale}px`;
 
-  // Render do conteúdo de um item, suportando sub-items (linhas iniciadas por "  -" ou "→")
-  const renderItem = (raw: string, idx: number, total: number, sectionN: number) => {
+  // Helpers para emitir alterações preservando o array de sections
+  const updateSection = (sectionIdx: number, partial: Partial<TopicoSection>) => {
+    if (!onChange) return;
+    const next = sections.map((s, i) => (i === sectionIdx ? { ...s, ...partial } : s));
+    onChange(next);
+  };
+  const updateItem = (sectionIdx: number, itemIdx: number, newText: string) => {
+    if (!onChange) return;
+    const next = sections.map((s, i) => {
+      if (i !== sectionIdx) return s;
+      const items = s.items.slice();
+      items[itemIdx] = newText;
+      return { ...s, items };
+    });
+    onChange(next);
+  };
+
+  // Render do conteúdo de um item, suportando edição inline
+  const renderItem = (raw: string, idx: number, total: number, sectionN: number, sectionIdx: number = 0) => {
     const text = raw.replace(/\*\*/g, "");
     return (
       <div
@@ -82,20 +158,33 @@ const TopicosVisual: React.FC<Props> = ({
         >
           {sectionN}.{idx + 1}
         </span>
-        <span
+        <EditableText
+          text={text}
+          editable={editable}
+          multiline
+          onCommit={(v) => updateItem(sectionIdx, idx, v)}
           style={{
             fontSize: fs(11),
             color: "#1f2937",
             lineHeight: 1.55,
             textAlign: "justify",
             flex: 1,
+            display: "block",
           }}
-        >
-          {text}
-        </span>
+        />
       </div>
     );
   };
+
+  // Helper para tornar headings editáveis em qualquer variante (preserva o estilo do <h3>/<span> existente)
+  const H = (text: string, sectionIdx: number, extraStyle?: React.CSSProperties) => (
+    <EditableText
+      text={text}
+      editable={editable}
+      onCommit={(v) => updateSection(sectionIdx, { heading: v })}
+      style={extraStyle}
+    />
+  );
 
   // ╭─── Header comum ──────────────────────────╮
   const Header = () => (
@@ -117,7 +206,12 @@ const TopicosVisual: React.FC<Props> = ({
           letterSpacing: 0.5,
         }}
       >
-        {title}
+        <EditableText
+          text={title}
+          editable={editable && !!onTitleChange}
+          onCommit={(v) => onTitleChange?.(v)}
+        />
+
       </h1>
       {disciplina && (
         <div
@@ -178,9 +272,9 @@ const TopicosVisual: React.FC<Props> = ({
             </div>
             <div style={{ flex: 1 }}>
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -218,9 +312,9 @@ const TopicosVisual: React.FC<Props> = ({
               }}
             >
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -256,9 +350,9 @@ const TopicosVisual: React.FC<Props> = ({
             </div>
             <div style={{ flex: 1 }}>
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -290,10 +384,10 @@ const TopicosVisual: React.FC<Props> = ({
             >
               <span style={{ fontWeight: 900, fontSize: fs(14) }}>{n}</span>
               <span style={{ width: 1, height: 16, background: "#ffffff66" }} />
-              <h3 style={{ margin: 0, fontSize: fs(12), fontWeight: 700 }}>{s.heading}</h3>
+              <h3 style={{ margin: 0, fontSize: fs(12), fontWeight: 700 }}>{H(s.heading, i)}</h3>
             </div>
             <div style={{ padding: 12 }}>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -328,10 +422,10 @@ const TopicosVisual: React.FC<Props> = ({
                 Tópico {n}
               </span>
               <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: "#111827" }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -351,7 +445,7 @@ const TopicosVisual: React.FC<Props> = ({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
               <span
                 style={{
@@ -366,7 +460,7 @@ const TopicosVisual: React.FC<Props> = ({
                 Módulo {n}
               </span>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -398,9 +492,9 @@ const TopicosVisual: React.FC<Props> = ({
               }}
             >
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -423,10 +517,10 @@ const TopicosVisual: React.FC<Props> = ({
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
               <span style={{ color: C.primary, fontWeight: 900, fontSize: fs(14) }}>§ {n}</span>
               <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: "#111827" }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -461,9 +555,9 @@ const TopicosVisual: React.FC<Props> = ({
               {String(n).padStart(2, "0")}
             </div>
             <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(12), fontWeight: 800, color: C.deep }}>
-              {s.heading}
+              {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -500,9 +594,9 @@ const TopicosVisual: React.FC<Props> = ({
               >
                 {n}
               </div>
-              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{s.heading}</h3>
+              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{H(s.heading, i)}</h3>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -532,7 +626,7 @@ const TopicosVisual: React.FC<Props> = ({
               >
                 {n}
               </span>
-              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800 }}>{s.heading}</h3>
+              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800 }}>{H(s.heading, i)}</h3>
             </div>
             {s.items.map((it, j) => (
               <div key={j} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
@@ -572,7 +666,7 @@ const TopicosVisual: React.FC<Props> = ({
               }}
             >
               <h3 style={{ margin: 0, fontSize: fs(12), fontWeight: 800, color: "#111827" }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
               <span
                 style={{
@@ -588,7 +682,7 @@ const TopicosVisual: React.FC<Props> = ({
               </span>
             </div>
             <div style={{ padding: 12 }}>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -623,9 +717,9 @@ const TopicosVisual: React.FC<Props> = ({
               </span>
             </div>
             <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(14), fontWeight: 800, color: C.deep, fontFamily: "Georgia, serif" }}>
-              {s.heading}
+              {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -655,9 +749,9 @@ const TopicosVisual: React.FC<Props> = ({
             </div>
             <div style={{ flex: 1, paddingTop: 4 }}>
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(13), fontWeight: 800, color: C.deep, borderBottom: `1px solid ${C.soft}`, paddingBottom: 6 }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -678,7 +772,7 @@ const TopicosVisual: React.FC<Props> = ({
                 paddingRight: 22,
               }}
             >
-              {n}. {s.heading}
+              {n}. {H(s.heading, i)}
             </div>
             <div
               style={{
@@ -688,7 +782,7 @@ const TopicosVisual: React.FC<Props> = ({
                 borderRadius: "0 12px 12px 12px",
               }}
             >
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -724,9 +818,9 @@ const TopicosVisual: React.FC<Props> = ({
               {n}
             </div>
             <h3 style={{ margin: "4px 0 8px 0", fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-              {s.heading}
+              {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -747,7 +841,7 @@ const TopicosVisual: React.FC<Props> = ({
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
               <div
                 style={{
@@ -766,7 +860,7 @@ const TopicosVisual: React.FC<Props> = ({
                 {n}
               </div>
             </div>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -789,10 +883,10 @@ const TopicosVisual: React.FC<Props> = ({
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <div style={{ width: 8, height: 24, borderRadius: 4, background: C.primary }} />
-              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{s.heading}</h3>
+              <h3 style={{ margin: 0, fontSize: fs(13), fontWeight: 800, color: C.deep }}>{H(s.heading, i)}</h3>
             </div>
             <div style={{ flex: 1 }}>
-              {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+              {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
             </div>
           </div>
         );
@@ -814,9 +908,9 @@ const TopicosVisual: React.FC<Props> = ({
             }}
           >
             <h3 style={{ margin: 0, marginBottom: 10, fontSize: fs(14), fontWeight: 800, color: C.deep, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ color: C.primary }}>✦</span> {s.heading}
+              <span style={{ color: C.primary }}>✦</span> {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
@@ -832,10 +926,10 @@ const TopicosVisual: React.FC<Props> = ({
                 Fase {n}
               </div>
               <h3 style={{ margin: 0, marginBottom: 8, fontSize: fs(14), fontWeight: 800, color: "#1e293b" }}>
-                {s.heading}
+                {H(s.heading, i)}
               </h3>
               <div style={{ background: "#fff", padding: 12, borderRadius: 12, border: `1px solid ${C.soft}` }}>
-                {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+                {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
               </div>
             </div>
           </div>
@@ -861,9 +955,9 @@ const TopicosVisual: React.FC<Props> = ({
               {n}
             </div>
             <h3 style={{ margin: 0, marginBottom: 10, fontSize: fs(13), fontWeight: 800, color: C.deep, borderLeft: `4px solid ${C.primary}`, paddingLeft: 10 }}>
-              {s.heading}
+              {H(s.heading, i)}
             </h3>
-            {s.items.map((it, j) => renderItem(it, j, s.items.length, n))}
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
           </div>
         );
 
