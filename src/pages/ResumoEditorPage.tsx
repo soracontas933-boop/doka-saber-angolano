@@ -65,7 +65,7 @@ const ResumoEditorPage: React.FC = () => {
   const [palette, setPalette] = useState(PALETTE_PRESETS[0]);
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [fontLevel, setFontLevel] = useState(25);
-  const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("step-cards");
+  const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("clean-a4");
   const [extraPages, setExtraPages] = useState(0);
   // Densidade manual: leve = mais espaço/menos por folha, normal = equilibrado, agressivo = comprime
   type Density = "leve" | "normal" | "agressivo";
