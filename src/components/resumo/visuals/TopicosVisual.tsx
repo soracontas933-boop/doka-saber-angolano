@@ -109,12 +109,32 @@ const TopicosVisual: React.FC<Props> = ({
   style,
   fontScale = 1,
   palette = "azul",
+  editable = false,
+  onChange,
+  onTitleChange,
 }) => {
   const C = PALETTES[palette];
   const fs = (n: number) => `${n * fontScale}px`;
 
-  // Render do conteúdo de um item, suportando sub-items (linhas iniciadas por "  -" ou "→")
-  const renderItem = (raw: string, idx: number, total: number, sectionN: number) => {
+  // Helpers para emitir alterações preservando o array de sections
+  const updateSection = (sectionIdx: number, partial: Partial<TopicoSection>) => {
+    if (!onChange) return;
+    const next = sections.map((s, i) => (i === sectionIdx ? { ...s, ...partial } : s));
+    onChange(next);
+  };
+  const updateItem = (sectionIdx: number, itemIdx: number, newText: string) => {
+    if (!onChange) return;
+    const next = sections.map((s, i) => {
+      if (i !== sectionIdx) return s;
+      const items = s.items.slice();
+      items[itemIdx] = newText;
+      return { ...s, items };
+    });
+    onChange(next);
+  };
+
+  // Render do conteúdo de um item, suportando edição inline
+  const renderItem = (raw: string, idx: number, total: number, sectionN: number, sectionIdx: number = 0) => {
     const text = raw.replace(/\*\*/g, "");
     return (
       <div
@@ -138,20 +158,33 @@ const TopicosVisual: React.FC<Props> = ({
         >
           {sectionN}.{idx + 1}
         </span>
-        <span
+        <EditableText
+          text={text}
+          editable={editable}
+          multiline
+          onCommit={(v) => updateItem(sectionIdx, idx, v)}
           style={{
             fontSize: fs(11),
             color: "#1f2937",
             lineHeight: 1.55,
             textAlign: "justify",
             flex: 1,
+            display: "block",
           }}
-        >
-          {text}
-        </span>
+        />
       </div>
     );
   };
+
+  // Helper para tornar headings editáveis em qualquer variante (preserva o estilo do <h3>/<span> existente)
+  const H = (text: string, sectionIdx: number, extraStyle?: React.CSSProperties) => (
+    <EditableText
+      text={text}
+      editable={editable}
+      onCommit={(v) => updateSection(sectionIdx, { heading: v })}
+      style={extraStyle}
+    />
+  );
 
   // ╭─── Header comum ──────────────────────────╮
   const Header = () => (
