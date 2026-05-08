@@ -228,6 +228,21 @@ const ResumoEditorPage: React.FC = () => {
       default: {
         const sections = parseResumoSections(cleaned);
         if (!sections.length) return null;
+        const handleSectionsChange = (next: TopicoSection[]) => {
+          // Reconstrói markdown preservando título global
+          const titleLine = `# ${finalTitle}`;
+          const body = next
+            .map((s) => `## ${s.heading}\n${s.items.map((it) => `- ${it}`).join("\n")}`)
+            .join("\n\n");
+          setResultado(`${titleLine}\n\n${body}`);
+        };
+        const handleTitleChange = (newTitle: string) => {
+          setTitulo(newTitle);
+          // Atualiza também o markdown se já houver linha de título
+          if (/^#\s+/m.test(cleaned)) {
+            setResultado(cleaned.replace(/^#\s+.+$/m, `# ${newTitle}`));
+          }
+        };
         return (
           <TopicosVisual
             title={finalTitle}
@@ -236,6 +251,9 @@ const ResumoEditorPage: React.FC = () => {
             style={topicosStyle}
             fontScale={fontScale}
             palette={palette.name.toLowerCase().includes("azul") ? "azul" : palette.name.toLowerCase().includes("esmeralda") ? "verde" : palette.name.toLowerCase().includes("coral") ? "laranja" : palette.name.toLowerCase().includes("violeta") ? "roxo" : "cinza"}
+            editable
+            onChange={handleSectionsChange}
+            onTitleChange={handleTitleChange}
           />
         );
       }
