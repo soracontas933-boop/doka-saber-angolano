@@ -1037,6 +1037,15 @@ const TopicosVisual: React.FC<Props> = ({
     );
   }
 
+  if (style === "clean-a4") {
+    return (
+      <div style={{ padding: "16px 20px", background: "#ffffff", minHeight: "auto", overflow: "visible", pageBreakInside: "avoid" }}>
+        <Header />
+        {sections.map((s, i) => renderSection(s, i))}
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: 24, background: "#fafafa", minHeight: "auto", overflow: "visible", pageBreakInside: "avoid" }}>
       <Header />
