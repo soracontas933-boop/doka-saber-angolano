@@ -65,7 +65,7 @@ const ResumoEditorPage: React.FC = () => {
   const [palette, setPalette] = useState(PALETTE_PRESETS[0]);
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [fontLevel, setFontLevel] = useState(25);
-  const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("step-cards");
+  const [topicosStyle, setTopicosStyle] = useState<TopicosStyle>("clean-a4");
   const [extraPages, setExtraPages] = useState(0);
   // Densidade manual: leve = mais espaço/menos por folha, normal = equilibrado, agressivo = comprime
   type Density = "leve" | "normal" | "agressivo";
@@ -375,6 +375,9 @@ const ResumoEditorPage: React.FC = () => {
                 onChange={(e) => setTopicosStyle(e.target.value as TopicosStyle)}
                 className="w-full bg-background border border-input rounded-md h-9 px-2 text-xs"
               >
+                <optgroup label="Recomendado (A4 Limpo)">
+                  <option value="clean-a4">Clean A4 — Padrão</option>
+                </optgroup>
                 <optgroup label="Mais usados">
                   <option value="step-cards">Step Cards</option>
                   <option value="modern-timeline">Timeline Blocks</option>

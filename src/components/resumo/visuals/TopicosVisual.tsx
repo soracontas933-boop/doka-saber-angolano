@@ -1,6 +1,7 @@
 import React from "react";
 
 export type TopicosStyle =
+  | "clean-a4"
   | "step-cards"
   | "timeline-blocks"
   | "process-indicators"
@@ -236,6 +237,39 @@ const TopicosVisual: React.FC<Props> = ({
   const renderSection = (s: TopicoSection, i: number) => {
     const n = i + 1;
     switch (style) {
+      case "clean-a4":
+        return (
+          <div
+            key={i}
+            data-card
+            style={{
+              marginBottom: 18,
+              paddingBottom: 14,
+              borderBottom: i < sections.length - 1 ? "1px solid #e2e8f0" : "none",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
+              <span
+                style={{
+                  fontSize: fs(12),
+                  fontWeight: 800,
+                  color: C.primary,
+                  minWidth: 28,
+                  lineHeight: 1.3,
+                }}
+              >
+                {n}.
+              </span>
+              <h3 style={{ margin: 0, fontSize: fs(14), fontWeight: 700, color: "#0f172a", flex: 1, lineHeight: 1.35 }}>
+                {H(s.heading, i)}
+              </h3>
+            </div>
+            {s.items.map((it, j) => renderItem(it, j, s.items.length, n, i))}
+          </div>
+        );
+
       case "step-cards":
         return (
           <div
@@ -999,6 +1033,15 @@ const TopicosVisual: React.FC<Props> = ({
         >
           {sections.map((s, i) => renderSection(s, i))}
         </div>
+      </div>
+    );
+  }
+
+  if (style === "clean-a4") {
+    return (
+      <div style={{ padding: "16px 20px", background: "#ffffff", minHeight: "auto", overflow: "visible", pageBreakInside: "avoid" }}>
+        <Header />
+        {sections.map((s, i) => renderSection(s, i))}
       </div>
     );
   }
