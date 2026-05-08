@@ -1,6 +1,7 @@
 import React from "react";
 
 export type TopicosStyle =
+  | "clean-a4"
   | "step-cards"
   | "timeline-blocks"
   | "process-indicators"
