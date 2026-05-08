@@ -36,7 +36,63 @@ interface Props {
   fontScale?: number;
   /** Pré-definida palette */
   palette?: "azul" | "verde" | "roxo" | "laranja" | "cinza";
+  /** Quando true, headings e itens podem ser editados inline na folha A4. */
+  editable?: boolean;
+  /** Callback chamado no blur de cada edição com a estrutura atualizada. */
+  onChange?: (sections: TopicoSection[]) => void;
+  /** Callback quando o título é editado inline. */
+  onTitleChange?: (newTitle: string) => void;
 }
+
+/** Componente de texto editável inline — aplica contentEditable apenas se editable=true. */
+const EditableText: React.FC<{
+  text: string;
+  editable: boolean;
+  multiline?: boolean;
+  onCommit: (newText: string) => void;
+  style?: React.CSSProperties;
+  as?: "span" | "div";
+}> = ({ text, editable, multiline, onCommit, style, as = "span" }) => {
+  const ref = React.useRef<HTMLElement>(null);
+  React.useEffect(() => {
+    if (ref.current && ref.current.textContent !== text) {
+      ref.current.textContent = text;
+    }
+  }, [text]);
+  const Tag = as as any;
+  return (
+    <Tag
+      ref={ref as any}
+      contentEditable={editable}
+      suppressContentEditableWarning
+      spellCheck={editable}
+      onBlur={(e: React.FocusEvent<HTMLElement>) => {
+        const v = (e.currentTarget.textContent || "").replace(/\s+/g, " ").trim();
+        if (v !== text) onCommit(v);
+      }}
+      onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+        if (!editable) return;
+        if (!multiline && e.key === "Enter") {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement).blur();
+        }
+      }}
+      style={{
+        outline: editable ? "none" : undefined,
+        cursor: editable ? "text" : undefined,
+        borderRadius: editable ? 4 : undefined,
+        transition: "background-color 120ms",
+        ...style,
+      }}
+      onFocus={editable ? (e: any) => (e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.10)") : undefined}
+      onMouseEnter={editable ? (e: any) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.05)"; } : undefined}
+      onMouseLeave={editable ? (e: any) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
+      onBlurCapture={editable ? (e: any) => (e.currentTarget.style.backgroundColor = "transparent") : undefined}
+    >
+      {text}
+    </Tag>
+  );
+};
 
 const PALETTES = {
   azul: { primary: "#1E9DF1", soft: "#E6F4FE", deep: "#0B5A91", accent: "#7BC4F4" },
