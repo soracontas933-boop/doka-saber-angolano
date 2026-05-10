@@ -266,6 +266,7 @@ const ResumoEditorPage: React.FC = () => {
             editable
             onChange={handleSectionsChange}
             onTitleChange={handleTitleChange}
+            highlight={{ enabled: highlightOn, style: highlightStyle, color: highlightColor }}
           />
         );
       }
