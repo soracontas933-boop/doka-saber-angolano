@@ -29,6 +29,14 @@ export interface TopicoSection {
   items: string[];
 }
 
+export type HighlightStyle = "marker" | "bold" | "underline";
+export interface HighlightConfig {
+  enabled: boolean;
+  style?: HighlightStyle;
+  /** Cor base em hex (ex.: "#FACC15") */
+  color?: string;
+}
+
 interface Props {
   title: string;
   disciplina?: string;
@@ -43,7 +51,68 @@ interface Props {
   onChange?: (sections: TopicoSection[]) => void;
   /** Callback quando o título é editado inline. */
   onTitleChange?: (newTitle: string) => void;
+  /** Destaque automático de termos-chave */
+  highlight?: HighlightConfig;
 }
+
+/** Escapa HTML para inserção segura em innerHTML. */
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Mistura cor com branco para usar como background de marca-texto. */
+const hexToRgba = (hex: string, alpha: number) => {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+/**
+ * Detecta termos-chave e devolve HTML com spans destacados.
+ * Padrões:
+ *  - **texto** (negrito markdown gerado pela IA)
+ *  - Anos (1500–2099)
+ *  - Percentagens / números com unidades (%, kg, km, ºC, $, €)
+ *  - Acrónimos em MAIÚSCULAS (2–6 letras)
+ *  - Datas DD/MM/AAAA
+ */
+const buildHighlightedHTML = (raw: string, cfg: HighlightConfig): string => {
+  const color = cfg.color || "#FACC15";
+  const styleAttr =
+    cfg.style === "bold"
+      ? `color:${color};font-weight:800;`
+      : cfg.style === "underline"
+        ? `color:inherit;border-bottom:2px solid ${color};padding-bottom:1px;`
+        : `background:${hexToRgba(color, 0.45)};border-radius:3px;padding:0 3px;color:#0f172a;`;
+
+  // Tokeniza preservando ordem: primeiro **bold**, depois regex genéricos.
+  const parts: { text: string; mark: boolean }[] = [];
+  const boldRe = /\*\*(.+?)\*\*/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = boldRe.exec(raw)) !== null) {
+    if (m.index > last) parts.push({ text: raw.slice(last, m.index), mark: false });
+    parts.push({ text: m[1], mark: true });
+    last = m.index + m[0].length;
+  }
+  if (last < raw.length) parts.push({ text: raw.slice(last), mark: false });
+
+  const genericRe =
+    /\b(?:\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}|\d+(?:[.,]\d+)?\s?(?:%|kg|km|m|cm|mm|ºC|°C|€|\$|USD|AOA|Kz))\b|\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,6}\b/g;
+
+  const wrap = (text: string) =>
+    `<span style="${styleAttr}">${escapeHtml(text)}</span>`;
+
+  return parts
+    .map((p) => {
+      if (p.mark) return wrap(p.text);
+      // aplica regex genérico só em pedaços não-bold
+      return p.text.replace(genericRe, (mm) => wrap(mm));
+    })
+    .join("")
+    .replace(/\n/g, "<br/>");
+};
 
 /** Componente de texto editável inline — aplica contentEditable apenas se editable=true. */
 const EditableText: React.FC<{
