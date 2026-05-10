@@ -114,7 +114,9 @@ const buildHighlightedHTML = (raw: string, cfg: HighlightConfig): string => {
     .replace(/\n/g, "<br/>");
 };
 
-/** Componente de texto editável inline — aplica contentEditable apenas se editable=true. */
+/** Componente de texto editável inline — aplica contentEditable apenas se editable=true.
+ *  Suporta `html` opcional: quando definido e o elemento NÃO está em foco, renderiza via
+ *  innerHTML (permitindo destaques). Ao focar, troca para texto plano para edição limpa. */
 const EditableText: React.FC<{
   text: string;
   editable: boolean;
@@ -122,13 +124,22 @@ const EditableText: React.FC<{
   onCommit: (newText: string) => void;
   style?: React.CSSProperties;
   as?: "span" | "div";
-}> = ({ text, editable, multiline, onCommit, style, as = "span" }) => {
+  html?: string;
+}> = ({ text, editable, multiline, onCommit, style, as = "span", html }) => {
   const ref = React.useRef<HTMLElement>(null);
+  const focusedRef = React.useRef(false);
+
   React.useEffect(() => {
-    if (ref.current && ref.current.textContent !== text) {
-      ref.current.textContent = text;
+    const el = ref.current;
+    if (!el) return;
+    if (focusedRef.current) return; // não interromper edição
+    if (html != null) {
+      if (el.innerHTML !== html) el.innerHTML = html;
+    } else if (el.textContent !== text) {
+      el.textContent = text;
     }
-  }, [text]);
+  }, [text, html]);
+
   const Tag = as as any;
   return (
     <Tag
@@ -136,9 +147,21 @@ const EditableText: React.FC<{
       contentEditable={editable}
       suppressContentEditableWarning
       spellCheck={editable}
+      onFocus={(e: any) => {
+        focusedRef.current = true;
+        if (html != null) e.currentTarget.textContent = text; // edição em texto plano
+        if (editable) e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.10)";
+      }}
       onBlur={(e: React.FocusEvent<HTMLElement>) => {
+        focusedRef.current = false;
         const v = (e.currentTarget.textContent || "").replace(/\s+/g, " ").trim();
-        if (v !== text) onCommit(v);
+        if (editable) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+        if (v !== text) {
+          onCommit(v);
+        } else if (html != null) {
+          // restaurar versão destacada
+          (e.currentTarget as HTMLElement).innerHTML = html;
+        }
       }}
       onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
         if (!editable) return;
@@ -154,12 +177,10 @@ const EditableText: React.FC<{
         transition: "background-color 120ms",
         ...style,
       }}
-      onFocus={editable ? (e: any) => (e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.10)") : undefined}
       onMouseEnter={editable ? (e: any) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.05)"; } : undefined}
       onMouseLeave={editable ? (e: any) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
-      onBlurCapture={editable ? (e: any) => (e.currentTarget.style.backgroundColor = "transparent") : undefined}
     >
-      {text}
+      {html == null ? text : null}
     </Tag>
   );
 };
