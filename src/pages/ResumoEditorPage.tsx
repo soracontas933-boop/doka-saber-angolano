@@ -433,7 +433,7 @@ const ResumoEditorPage: React.FC = () => {
               )}
             </div>
           )}
-
+          {!isMapaMental && (
             <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Palette className="h-3.5 w-3.5" /> Estilo Visual
@@ -464,6 +464,7 @@ const ResumoEditorPage: React.FC = () => {
               </select>
             </div>
           )}
+
 
           <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
