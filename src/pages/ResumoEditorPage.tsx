@@ -380,6 +380,61 @@ const ResumoEditorPage: React.FC = () => {
 
           {!isMapaMental && (
             <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Palette className="h-3.5 w-3.5" /> Destacar termos-chave
+                </h3>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={highlightOn}
+                  onClick={() => setHighlightOn((v) => !v)}
+                  className={`relative h-5 w-9 rounded-full transition-colors ${highlightOn ? "bg-primary" : "bg-muted"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${highlightOn ? "translate-x-4" : "translate-x-0.5"}`}
+                  />
+                </button>
+              </div>
+              {highlightOn && (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["marker", "bold", "underline"] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setHighlightStyle(s)}
+                        className={`text-[11px] py-1.5 rounded-lg border transition-all ${
+                          highlightStyle === s
+                            ? "border-primary bg-primary/10 text-primary font-semibold"
+                            : "border-border bg-background hover:bg-muted"
+                        }`}
+                      >
+                        {s === "marker" ? "Marca-texto" : s === "bold" ? "Negrito" : "Sublinhado"}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {HIGHLIGHT_COLORS.map((c) => (
+                      <button
+                        key={c.value}
+                        onClick={() => setHighlightColor(c.value)}
+                        title={c.name}
+                        className={`h-7 w-7 rounded-full border-2 transition-all ${
+                          highlightColor === c.value ? "border-foreground scale-110" : "border-transparent"
+                        }`}
+                        style={{ background: c.value }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Destaca automaticamente termos em <b>**negrito**</b>, anos, percentagens, datas e siglas.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+
+            <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Palette className="h-3.5 w-3.5" /> Estilo Visual
               </h3>
