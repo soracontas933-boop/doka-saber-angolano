@@ -203,9 +203,15 @@ const TopicosVisual: React.FC<Props> = ({
   editable = false,
   onChange,
   onTitleChange,
+  highlight,
 }) => {
   const C = PALETTES[palette];
   const fs = (n: number) => `${n * fontScale}px`;
+  const hl: HighlightConfig = {
+    enabled: !!highlight?.enabled,
+    style: highlight?.style || "marker",
+    color: highlight?.color || "#FACC15",
+  };
 
   // Helpers para emitir alterações preservando o array de sections
   const updateSection = (sectionIdx: number, partial: Partial<TopicoSection>) => {
@@ -227,6 +233,7 @@ const TopicosVisual: React.FC<Props> = ({
   // Render do conteúdo de um item, suportando edição inline
   const renderItem = (raw: string, idx: number, total: number, sectionN: number, sectionIdx: number = 0) => {
     const text = raw.replace(/\*\*/g, "");
+    const html = hl.enabled ? buildHighlightedHTML(raw, hl) : undefined;
     return (
       <div
         key={idx}
@@ -251,6 +258,7 @@ const TopicosVisual: React.FC<Props> = ({
         </span>
         <EditableText
           text={text}
+          html={html}
           editable={editable}
           multiline
           onCommit={(v) => updateItem(sectionIdx, idx, v)}
@@ -271,6 +279,7 @@ const TopicosVisual: React.FC<Props> = ({
   const H = (text: string, sectionIdx: number, extraStyle?: React.CSSProperties) => (
     <EditableText
       text={text}
+      html={hl.enabled ? buildHighlightedHTML(text, hl) : undefined}
       editable={editable}
       onCommit={(v) => updateSection(sectionIdx, { heading: v })}
       style={extraStyle}
