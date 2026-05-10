@@ -29,6 +29,14 @@ export interface TopicoSection {
   items: string[];
 }
 
+export type HighlightStyle = "marker" | "bold" | "underline";
+export interface HighlightConfig {
+  enabled: boolean;
+  style?: HighlightStyle;
+  /** Cor base em hex (ex.: "#FACC15") */
+  color?: string;
+}
+
 interface Props {
   title: string;
   disciplina?: string;
@@ -43,9 +51,72 @@ interface Props {
   onChange?: (sections: TopicoSection[]) => void;
   /** Callback quando o título é editado inline. */
   onTitleChange?: (newTitle: string) => void;
+  /** Destaque automático de termos-chave */
+  highlight?: HighlightConfig;
 }
 
-/** Componente de texto editável inline — aplica contentEditable apenas se editable=true. */
+/** Escapa HTML para inserção segura em innerHTML. */
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Mistura cor com branco para usar como background de marca-texto. */
+const hexToRgba = (hex: string, alpha: number) => {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+/**
+ * Detecta termos-chave e devolve HTML com spans destacados.
+ * Padrões:
+ *  - **texto** (negrito markdown gerado pela IA)
+ *  - Anos (1500–2099)
+ *  - Percentagens / números com unidades (%, kg, km, ºC, $, €)
+ *  - Acrónimos em MAIÚSCULAS (2–6 letras)
+ *  - Datas DD/MM/AAAA
+ */
+const buildHighlightedHTML = (raw: string, cfg: HighlightConfig): string => {
+  const color = cfg.color || "#FACC15";
+  const styleAttr =
+    cfg.style === "bold"
+      ? `color:${color};font-weight:800;`
+      : cfg.style === "underline"
+        ? `color:inherit;border-bottom:2px solid ${color};padding-bottom:1px;`
+        : `background:${hexToRgba(color, 0.45)};border-radius:3px;padding:0 3px;color:#0f172a;`;
+
+  // Tokeniza preservando ordem: primeiro **bold**, depois regex genéricos.
+  const parts: { text: string; mark: boolean }[] = [];
+  const boldRe = /\*\*(.+?)\*\*/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = boldRe.exec(raw)) !== null) {
+    if (m.index > last) parts.push({ text: raw.slice(last, m.index), mark: false });
+    parts.push({ text: m[1], mark: true });
+    last = m.index + m[0].length;
+  }
+  if (last < raw.length) parts.push({ text: raw.slice(last), mark: false });
+
+  const genericRe =
+    /\b(?:\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}|\d+(?:[.,]\d+)?\s?(?:%|kg|km|m|cm|mm|ºC|°C|€|\$|USD|AOA|Kz))\b|\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,6}\b/g;
+
+  const wrap = (text: string) =>
+    `<span style="${styleAttr}">${escapeHtml(text)}</span>`;
+
+  return parts
+    .map((p) => {
+      if (p.mark) return wrap(p.text);
+      // aplica regex genérico só em pedaços não-bold
+      return p.text.replace(genericRe, (mm) => wrap(mm));
+    })
+    .join("")
+    .replace(/\n/g, "<br/>");
+};
+
+/** Componente de texto editável inline — aplica contentEditable apenas se editable=true.
+ *  Suporta `html` opcional: quando definido e o elemento NÃO está em foco, renderiza via
+ *  innerHTML (permitindo destaques). Ao focar, troca para texto plano para edição limpa. */
 const EditableText: React.FC<{
   text: string;
   editable: boolean;
@@ -53,13 +124,22 @@ const EditableText: React.FC<{
   onCommit: (newText: string) => void;
   style?: React.CSSProperties;
   as?: "span" | "div";
-}> = ({ text, editable, multiline, onCommit, style, as = "span" }) => {
+  html?: string;
+}> = ({ text, editable, multiline, onCommit, style, as = "span", html }) => {
   const ref = React.useRef<HTMLElement>(null);
+  const focusedRef = React.useRef(false);
+
   React.useEffect(() => {
-    if (ref.current && ref.current.textContent !== text) {
-      ref.current.textContent = text;
+    const el = ref.current;
+    if (!el) return;
+    if (focusedRef.current) return; // não interromper edição
+    if (html != null) {
+      if (el.innerHTML !== html) el.innerHTML = html;
+    } else if (el.textContent !== text) {
+      el.textContent = text;
     }
-  }, [text]);
+  }, [text, html]);
+
   const Tag = as as any;
   return (
     <Tag
@@ -67,9 +147,21 @@ const EditableText: React.FC<{
       contentEditable={editable}
       suppressContentEditableWarning
       spellCheck={editable}
+      onFocus={(e: any) => {
+        focusedRef.current = true;
+        if (html != null) e.currentTarget.textContent = text; // edição em texto plano
+        if (editable) e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.10)";
+      }}
       onBlur={(e: React.FocusEvent<HTMLElement>) => {
+        focusedRef.current = false;
         const v = (e.currentTarget.textContent || "").replace(/\s+/g, " ").trim();
-        if (v !== text) onCommit(v);
+        if (editable) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+        if (v !== text) {
+          onCommit(v);
+        } else if (html != null) {
+          // restaurar versão destacada
+          (e.currentTarget as HTMLElement).innerHTML = html;
+        }
       }}
       onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
         if (!editable) return;
@@ -85,12 +177,10 @@ const EditableText: React.FC<{
         transition: "background-color 120ms",
         ...style,
       }}
-      onFocus={editable ? (e: any) => (e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.10)") : undefined}
       onMouseEnter={editable ? (e: any) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.backgroundColor = "rgba(30,157,241,0.05)"; } : undefined}
       onMouseLeave={editable ? (e: any) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
-      onBlurCapture={editable ? (e: any) => (e.currentTarget.style.backgroundColor = "transparent") : undefined}
     >
-      {text}
+      {html == null ? text : null}
     </Tag>
   );
 };
@@ -113,9 +203,15 @@ const TopicosVisual: React.FC<Props> = ({
   editable = false,
   onChange,
   onTitleChange,
+  highlight,
 }) => {
   const C = PALETTES[palette];
   const fs = (n: number) => `${n * fontScale}px`;
+  const hl: HighlightConfig = {
+    enabled: !!highlight?.enabled,
+    style: highlight?.style || "marker",
+    color: highlight?.color || "#FACC15",
+  };
 
   // Helpers para emitir alterações preservando o array de sections
   const updateSection = (sectionIdx: number, partial: Partial<TopicoSection>) => {
@@ -137,6 +233,7 @@ const TopicosVisual: React.FC<Props> = ({
   // Render do conteúdo de um item, suportando edição inline
   const renderItem = (raw: string, idx: number, total: number, sectionN: number, sectionIdx: number = 0) => {
     const text = raw.replace(/\*\*/g, "");
+    const html = hl.enabled ? buildHighlightedHTML(raw, hl) : undefined;
     return (
       <div
         key={idx}
@@ -161,6 +258,7 @@ const TopicosVisual: React.FC<Props> = ({
         </span>
         <EditableText
           text={text}
+          html={html}
           editable={editable}
           multiline
           onCommit={(v) => updateItem(sectionIdx, idx, v)}
@@ -181,6 +279,7 @@ const TopicosVisual: React.FC<Props> = ({
   const H = (text: string, sectionIdx: number, extraStyle?: React.CSSProperties) => (
     <EditableText
       text={text}
+      html={hl.enabled ? buildHighlightedHTML(text, hl) : undefined}
       editable={editable}
       onCommit={(v) => updateSection(sectionIdx, { heading: v })}
       style={extraStyle}
