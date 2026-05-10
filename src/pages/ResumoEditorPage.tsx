@@ -71,6 +71,18 @@ const ResumoEditorPage: React.FC = () => {
   type Density = "leve" | "normal" | "agressivo";
   const [density, setDensity] = useState<Density>("normal");
   const densityFactor: Record<Density, number> = { leve: 1.18, normal: 1, agressivo: 0.78 };
+  // Destaque automático de termos-chave
+  type HLStyle = "marker" | "bold" | "underline";
+  const HIGHLIGHT_COLORS = [
+    { name: "Amarelo", value: "#FACC15" },
+    { name: "Verde", value: "#86EFAC" },
+    { name: "Azul", value: "#7DD3FC" },
+    { name: "Rosa", value: "#F9A8D4" },
+    { name: "Laranja", value: "#FDBA74" },
+  ];
+  const [highlightOn, setHighlightOn] = useState(false);
+  const [highlightStyle, setHighlightStyle] = useState<HLStyle>("marker");
+  const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0].value);
   // Páginas alvo definidas pelo utilizador na tela anterior
   const targetPages = Math.max(1, initial.numPaginas || 1);
   // Páginas reais geradas pelo conteúdo (reportadas pelo A4MultiPageSmart)
