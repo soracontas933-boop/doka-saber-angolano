@@ -82,18 +82,71 @@ const LivroDetalhePage = () => {
   const loadAuthorPaymentMethods = async () => {
     if (!book?.criado_por) return;
     setLoadingPaymentMethods(true);
-    const { data, error } = await supabase
-      .from("book_payout_methods")
-      .select("*")
-      .eq("user_id", book.criado_por)
-      .order("preferido", { ascending: false })
-      .order("criado_em", { ascending: false });
-    setLoadingPaymentMethods(false);
-    if (error) {
-      console.error("Erro ao carregar métodos de pagamento:", error);
-      return;
+
+    try {
+      // Verificar se o livro foi criado pelo admin usando RPC
+      const { data: isAdmin, error: rpcError } = await supabase.rpc("is_admin_or_master", { _user_id: book.criado_por });
+      
+      if (isAdmin) {
+        // Se o autor é admin, buscar as configurações de pagamento globais
+        const { data, error } = await supabase
+          .from("payment_settings")
+          .select("chave, valor");
+        
+        if (error) {
+          console.error("Erro ao carregar configurações de pagamento:", error);
+          setLoadingPaymentMethods(false);
+          return;
+        }
+        
+        // Converter as configurações em formato compatível com book_payout_methods
+        const settingsMap: Record<string, string> = {};
+        (data || []).forEach((d: any) => { settingsMap[d.chave] = d.valor; });
+        
+        const adminMethods = [];
+        
+        if (settingsMap["iban"]) {
+          adminMethods.push({
+            id: "admin-iban",
+            tipo: "iban",
+            iban: settingsMap["iban"],
+            banco: settingsMap["iban_banco"],
+            titular: settingsMap["iban_titular"],
+            preferido: true,
+          });
+        }
+        
+        if (settingsMap["multicaixa_numero"]) {
+          adminMethods.push({
+            id: "admin-multicaixa",
+            tipo: "multicaixa",
+            telefone: settingsMap["multicaixa_numero"],
+            preferido: !settingsMap["iban"],
+          });
+        }
+        
+        setAuthorPaymentMethods(adminMethods);
+      } else {
+        // Se o autor não é admin, buscar os métodos de pagamento do autor
+        const { data, error } = await supabase
+          .from("book_payout_methods")
+          .select("*")
+          .eq("user_id", book.criado_por)
+          .order("preferido", { ascending: false })
+          .order("criado_em", { ascending: false });
+        
+        if (error) {
+          console.error("Erro ao carregar métodos de pagamento:", error);
+          setLoadingPaymentMethods(false);
+          return;
+        }
+        setAuthorPaymentMethods(data || []);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar métodos de pagamento:", err);
+    } finally {
+      setLoadingPaymentMethods(false);
     }
-    setAuthorPaymentMethods(data || []);
   };
 
   const handleEnviarComprovativo = async () => {
