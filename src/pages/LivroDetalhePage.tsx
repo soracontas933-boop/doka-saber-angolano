@@ -105,22 +105,24 @@ const LivroDetalhePage = () => {
         
         const adminMethods = [];
         
-        if (settingsMap["iban"]) {
+        // Sempre adicionar IBAN se a chave existir (mesmo que vazio)
+        if (settingsMap.hasOwnProperty("iban")) {
           adminMethods.push({
             id: "admin-iban",
             tipo: "iban",
-            iban: settingsMap["iban"],
-            banco: settingsMap["iban_banco"],
-            titular: settingsMap["iban_titular"],
+            iban: settingsMap["iban"] || "",
+            banco: settingsMap["iban_banco"] || "",
+            titular: settingsMap["iban_titular"] || "",
             preferido: true,
           });
         }
         
-        if (settingsMap["multicaixa_numero"]) {
+        // Sempre adicionar Multicaixa se a chave existir (mesmo que vazio)
+        if (settingsMap.hasOwnProperty("multicaixa_numero")) {
           adminMethods.push({
             id: "admin-multicaixa",
             tipo: "multicaixa",
-            telefone: settingsMap["multicaixa_numero"],
+            telefone: settingsMap["multicaixa_numero"] || "",
             preferido: !settingsMap["iban"],
           });
         }
@@ -309,9 +311,9 @@ const LivroDetalhePage = () => {
                           {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
                         </div>
                         <div className="bg-muted rounded px-2 py-1.5">
-                          <p className="text-sm font-mono text-foreground select-all break-all">{method.iban}</p>
+                          <p className="text-sm font-mono text-foreground select-all break-all">{method.iban || "—"}</p>
                         </div>
-                        {method.titular && <p className="text-xs text-muted-foreground">Titular: {method.titular}</p>}
+                        <p className="text-xs text-muted-foreground">Titular: {method.titular || "—"}</p>
                       </>
                     ) : (
                       <>
@@ -320,7 +322,7 @@ const LivroDetalhePage = () => {
                           {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
                         </div>
                         <div className="bg-muted rounded px-2 py-1.5">
-                          <p className="text-sm font-mono text-foreground select-all">{method.telefone}</p>
+                          <p className="text-sm font-mono text-foreground select-all">{method.telefone || "—"}</p>
                         </div>
                       </>
                     )}
