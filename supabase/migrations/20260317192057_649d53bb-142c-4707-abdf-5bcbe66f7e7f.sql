@@ -25,7 +25,7 @@ CREATE POLICY "Admin can insert payment settings"
 
 -- Seed defaults
 INSERT INTO public.payment_settings (chave, valor) VALUES
-  ('iban', 'AO06 0000 0000 0000 0000 0000 0'),
+  ('iban', '005500008915805510176'),
   ('iban_banco', 'Banco X Angola'),
   ('iban_titular', 'Doka Educação Lda'),
-  ('multicaixa_numero', '923 000 000');
+  ('multicaixa_numero', '926143927');
