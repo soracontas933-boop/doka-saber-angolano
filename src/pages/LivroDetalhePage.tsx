@@ -235,7 +235,7 @@ const LivroDetalhePage = () => {
     </div>
   );
 
-  const shareUrl = `${window.location.origin}/book/${book.slug || book.id}`;
+  const shareUrl = `${window.location.origin}/book/${book.id}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shareUrl);
