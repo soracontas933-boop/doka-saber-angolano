@@ -9,8 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, BookOpen, Eye, Download, TrendingUp } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Loader2, BookOpen, Eye, Download, TrendingUp, Share2, Copy, MessageCircle, Facebook, Instagram } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import * as pdfjsLib from "pdfjs-dist";
 // @ts-ignore
@@ -182,6 +182,53 @@ const PublicarLivroTab = () => {
                   </div>
                   {b.estado_aprovacao === "rejeitado" && b.motivo_rejeicao && (
                     <p className="text-[10px] text-red-600 mt-1 line-clamp-2">{b.motivo_rejeicao}</p>
+                  )}
+                  
+                  {b.estado_aprovacao === "aprovado" && (
+                    <div className="pt-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline" className="w-full h-8 gap-1.5 text-[10px] font-bold uppercase tracking-wider" title="Gerar Link">
+                            <Share2 className="h-3.5 w-3.5" /> Gerar Link Público
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Partilhar Livro: {b.titulo}</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex items-center space-x-2">
+                            <div className="grid flex-1 gap-2">
+                              <Input
+                                defaultValue={`${window.location.origin}/book/${b.slug || b.id}`}
+                                readOnly
+                                className="h-9"
+                              />
+                            </div>
+                            <Button type="submit" size="sm" className="px-3" onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.slug || b.id}`);
+                              toast({ title: "Link copiado!" });
+                            }}>
+                              <span className="sr-only">Copiar</span>
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex justify-center gap-4 py-4">
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Confira este livro: ' + b.titulo + ' ' + window.location.origin + '/book/' + (b.slug || b.id))}`, "_blank")}>
+                              <MessageCircle className="h-5 w-5 text-green-500" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/book/' + (b.slug || b.id))}`, "_blank")}>
+                              <Facebook className="h-5 w-5 text-blue-600" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.slug || b.id}`);
+                              toast({ title: "Link copiado!", description: "O Instagram não permite partilha direta via web. O link foi copiado para você colar lá." });
+                            }}>
+                              <Instagram className="h-5 w-5 text-pink-600" />
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   )}
                 </div>
               </div>
