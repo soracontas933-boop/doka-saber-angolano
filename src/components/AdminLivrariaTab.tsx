@@ -243,16 +243,25 @@ const AdminLivrariaTab = () => {
                     </div>
                   </div>
                   <p className="text-xs font-medium mt-1 line-clamp-2">{b.titulo}</p>
-                    <div className="flex gap-1 mt-1">
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEdit(b)} title="Editar"><Edit className="h-3 w-3" /></Button>
+                    <div className="flex flex-col gap-1 mt-2">
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" className="flex-1 h-8 px-2 border border-input" onClick={() => openEdit(b)} title="Editar">
+                          <Edit className="h-3.5 w-3.5 mr-1" /> Editar
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-8 px-2 text-red-600 border border-input" onClick={() => deleteBook(b.id)} title="Apagar">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                       
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button size="sm" variant="ghost" className="h-7 px-2" title="Gerar Link"><Share2 className="h-3 w-3" /></Button>
+                          <Button size="sm" variant="outline" className="w-full h-8 gap-1.5 text-[10px] font-bold uppercase tracking-wider" title="Gerar Link">
+                            <Share2 className="h-3.5 w-3.5" /> Gerar Link Público
+                          </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md">
                           <DialogHeader>
-                            <DialogTitle>Partilhar Livro</DialogTitle>
+                            <DialogTitle>Partilhar Livro: {b.titulo}</DialogTitle>
                           </DialogHeader>
                           <div className="flex items-center space-x-2">
                             <div className="grid flex-1 gap-2">
@@ -286,8 +295,6 @@ const AdminLivrariaTab = () => {
                           </div>
                         </DialogContent>
                       </Dialog>
-
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600" onClick={() => deleteBook(b.id)} title="Apagar"><Trash2 className="h-3 w-3" /></Button>
                     </div>
                 </div>
               ))}
