@@ -354,7 +354,7 @@ const SectionHeader = ({
 );
 
 const BookCardLarge = ({ book, owned }: { book: Book; owned: boolean }) => (
-  <Link to={`/livraria/${book.id}`} className="group block">
+  <Link to={`/book/${book.id}`} className="group block">
     <Card className="overflow-hidden border-0 shadow-apple-card hover:shadow-apple-card-hover transition-all hover:-translate-y-1 rounded-2xl">
       <div className="relative aspect-[16/10] bg-gradient-to-br from-primary/20 to-blue-400/20 overflow-hidden">
         {book.capa_url ? (
@@ -417,7 +417,7 @@ const BookCard = ({
   rank?: number;
 }) => {
   return (
-    <Link to={`/livraria/${book.id}`} className="group block">
+    <Link to={`/book/${book.id}`} className="group block">
       <div className="relative bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-apple-card group-hover:shadow-apple-card-hover transition-all group-hover:-translate-y-1">
         {book.capa_url ? (
           <img

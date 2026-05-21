@@ -199,13 +199,13 @@ const PublicarLivroTab = () => {
                           <div className="flex items-center space-x-2">
                             <div className="grid flex-1 gap-2">
                               <Input
-                                defaultValue={`${window.location.origin}/book/${b.slug || b.id}`}
+                                defaultValue={`${window.location.origin}/book/${b.id}`}
                                 readOnly
                                 className="h-9"
                               />
                             </div>
                             <Button type="submit" size="sm" className="px-3" onClick={() => {
-                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.slug || b.id}`);
+                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.id}`);
                               toast({ title: "Link copiado!" });
                             }}>
                               <span className="sr-only">Copiar</span>
@@ -213,14 +213,14 @@ const PublicarLivroTab = () => {
                             </Button>
                           </div>
                           <div className="flex justify-center gap-4 py-4">
-                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Confira este livro: ' + b.titulo + ' ' + window.location.origin + '/book/' + (b.slug || b.id))}`, "_blank")}>
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Confira este livro: ' + b.titulo + ' ' + window.location.origin + '/book/' + b.id)}`, "_blank")}>
                               <MessageCircle className="h-5 w-5 text-green-500" />
                             </Button>
-                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/book/' + (b.slug || b.id))}`, "_blank")}>
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/book/' + b.id)}`, "_blank")}>
                               <Facebook className="h-5 w-5 text-blue-600" />
                             </Button>
                             <Button variant="outline" size="icon" className="rounded-full" onClick={() => {
-                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.slug || b.id}`);
+                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.id}`);
                               toast({ title: "Link copiado!", description: "O Instagram não permite partilha direta via web. O link foi copiado para você colar lá." });
                             }}>
                               <Instagram className="h-5 w-5 text-pink-600" />
