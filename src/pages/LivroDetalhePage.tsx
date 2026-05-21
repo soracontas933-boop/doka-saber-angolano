@@ -397,14 +397,7 @@ const LivroDetalhePage = () => {
                     <Coins className="h-4 w-4" /> Pagar com {book.preco_creditos} créditos
                   </Button>
                 )}
-                <Button onClick={() => {
-                  if (!user) {
-                    setAuthDialogMessage("Crie uma conta ou faça login para enviar um comprovativo de pagamento.");
-                    setShowAuthDialog(true);
-                  } else {
-                    setOpenManual(true);
-                  }
-                }} variant="outline" size="lg" className="rounded-2xl gap-2">
+                <Button onClick={() => setOpenManual(true)} variant="outline" size="lg" className="rounded-2xl gap-2">
                   <Upload className="h-4 w-4" /> Pagar {book.preco_kz} Kz (comprovativo)
                 </Button>
               </>
