@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import PDFViewer from "@/components/PDFViewer";
+import AuthRequiredDialog from "@/components/AuthRequiredDialog";
 
 const LivroDetalhePage = () => {
   const { id, slug } = useParams();
@@ -27,6 +28,8 @@ const LivroDetalhePage = () => {
   const [authorPaymentMethods, setAuthorPaymentMethods] = useState<any[]>([]);
   const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
   const [readingBook, setReadingBook] = useState<{ url: string; title: string } | null>(null);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [authDialogMessage, setAuthDialogMessage] = useState("Você precisa criar uma conta ou fazer login para usar esta funcionalidade.");
 
   useEffect(() => {
     const load = async () => {
@@ -59,7 +62,11 @@ const LivroDetalhePage = () => {
   }, [id, slug]);
 
   const handleObterGratis = async () => {
-    if (!user) return navigate("/auth");
+    if (!user) {
+      setAuthDialogMessage("Crie uma conta ou faça login para obter este livro gratuitamente.");
+      setShowAuthDialog(true);
+      return;
+    }
     setProcessing(true);
     const { data, error } = await supabase.rpc("comprar_livro_com_creditos", { p_book_id: id });
     setProcessing(false);
@@ -73,7 +80,11 @@ const LivroDetalhePage = () => {
   };
 
   const handleComprarCreditos = async () => {
-    if (!user) return navigate("/auth");
+    if (!user) {
+      setAuthDialogMessage("Crie uma conta ou faça login para comprar este livro com créditos.");
+      setShowAuthDialog(true);
+      return;
+    }
     if (!confirm(`Confirmar compra de "${book.titulo}" por ${book.preco_creditos} créditos?`)) return;
     setProcessing(true);
     const { data, error } = await supabase.rpc("comprar_livro_com_creditos", { p_book_id: id });
@@ -161,6 +172,11 @@ const LivroDetalhePage = () => {
   };
 
   const handleEnviarComprovativo = async () => {
+    if (!user) {
+      setAuthDialogMessage("Crie uma conta ou faça login para enviar um comprovativo de pagamento.");
+      setShowAuthDialog(true);
+      return;
+    }
     if (!comprovativo || !emailConf) return toast({ title: "Preencha todos os campos", variant: "destructive" });
     setProcessing(true);
     const path = `${user.id}/${id}-${Date.now()}-${comprovativo.name}`;
@@ -177,6 +193,11 @@ const LivroDetalhePage = () => {
   };
 
   const handleDownload = async () => {
+    if (!user) {
+      setAuthDialogMessage("Crie uma conta ou faça login para baixar este livro.");
+      setShowAuthDialog(true);
+      return;
+    }
     if (!book.ficheiro_path) return toast({ title: "Erro", description: "Caminho do ficheiro não encontrado", variant: "destructive" });
     
     setProcessing(true);
@@ -204,6 +225,11 @@ const LivroDetalhePage = () => {
   };
 
   const handleRead = async () => {
+    if (!user) {
+      setAuthDialogMessage("Crie uma conta ou faça login para ler este livro.");
+      setShowAuthDialog(true);
+      return;
+    }
     if (!book.ficheiro_path) return toast({ title: "Erro", description: "Caminho do ficheiro não encontrado", variant: "destructive" });
     
     setProcessing(true);
@@ -371,7 +397,14 @@ const LivroDetalhePage = () => {
                     <Coins className="h-4 w-4" /> Pagar com {book.preco_creditos} créditos
                   </Button>
                 )}
-                <Button onClick={() => setOpenManual(true)} variant="outline" size="lg" className="rounded-2xl gap-2">
+                <Button onClick={() => {
+                  if (!user) {
+                    setAuthDialogMessage("Crie uma conta ou faça login para enviar um comprovativo de pagamento.");
+                    setShowAuthDialog(true);
+                  } else {
+                    setOpenManual(true);
+                  }
+                }} variant="outline" size="lg" className="rounded-2xl gap-2">
                   <Upload className="h-4 w-4" /> Pagar {book.preco_kz} Kz (comprovativo)
                 </Button>
               </>
@@ -461,6 +494,13 @@ const LivroDetalhePage = () => {
           onClose={() => setReadingBook(null)} 
         />
       )}
+
+      <AuthRequiredDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        title="Autenticação Necessária"
+        description={authDialogMessage}
+      />
     </div>
   );
 };
