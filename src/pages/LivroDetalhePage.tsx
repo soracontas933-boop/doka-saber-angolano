@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload, Eye } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload, Eye, Share2, Copy, Facebook, Instagram, MessageCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import PDFViewer from "@/components/PDFViewer";
 
 const LivroDetalhePage = () => {
-  const { id } = useParams();
+  const { id, slug } = useParams();
   const navigate = useNavigate();
   const [book, setBook] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,15 @@ const LivroDetalhePage = () => {
       setUser(user);
       if (user) setEmailConf(user.email || "");
 
-      const { data: b } = await supabase.from("books").select("*, book_categories(nome)").eq("id", id).maybeSingle();
+      let query = supabase.from("books").select("*, book_categories(nome)");
+      
+      if (id) {
+        query = query.eq("id", id);
+      } else if (slug) {
+        query = query.eq("slug", slug);
+      }
+
+      const { data: b } = await query.maybeSingle();
       setBook(b);
 
       if (b) {
@@ -47,7 +56,7 @@ const LivroDetalhePage = () => {
       setLoading(false);
     };
     load();
-  }, [id]);
+  }, [id, slug]);
 
   const handleObterGratis = async () => {
     if (!user) return navigate("/auth");
@@ -211,10 +220,64 @@ const LivroDetalhePage = () => {
   };
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
-  if (!book) return <div className="text-center py-20">Livro não encontrado.</div>;
+  if (!book) return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
+      <div className="bg-secondary p-6 rounded-full mb-4">
+        <BookOpen className="h-12 w-12 text-muted-foreground" />
+      </div>
+      <h1 className="text-2xl font-bold mb-2">Livro não encontrado</h1>
+      <p className="text-muted-foreground mb-6 max-w-md">
+        O link que você acessou pode estar incorreto ou o livro foi removido da nossa livraria.
+      </p>
+      <Button asChild>
+        <Link to="/livraria">Ir para a Livraria</Link>
+      </Button>
+    </div>
+  );
+
+  const shareUrl = `${window.location.origin}/book/${book.slug || book.id}`;
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareUrl);
+    toast({ title: "Link copiado!", description: "O link do livro foi copiado para a sua área de transferência." });
+  };
+
+  const shareSocial = (platform: string) => {
+    const text = `Confira este livro: ${book.titulo} na Delle Livraria`;
+    let url = "";
+    
+    switch (platform) {
+      case "whatsapp":
+        url = `https://wa.me/?text=${encodeURIComponent(text + " " + shareUrl)}`;
+        break;
+      case "facebook":
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        break;
+      case "instagram":
+        // Instagram doesn't have a direct share URL for web, so we copy and inform
+        copyToClipboard();
+        toast({ title: "Link copiado!", description: "O Instagram não permite partilha direta via web. O link foi copiado para você colar lá." });
+        return;
+    }
+    
+    if (url) window.open(url, "_blank");
+  };
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl pb-24 md:pb-6">
+      <Helmet>
+        <title>{book.titulo} | Delle Livraria</title>
+        <meta name="description" content={book.descricao || `Livro ${book.titulo} por ${book.autor}`} />
+        <meta property="og:title" content={book.titulo} />
+        <meta property="og:description" content={book.descricao || `Livro ${book.titulo} por ${book.autor}`} />
+        <meta property="og:image" content={book.capa_url || "/placeholder.svg"} />
+        <meta property="og:url" content={shareUrl} />
+        <meta property="og:type" content="book" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={book.titulo} />
+        <meta name="twitter:description" content={book.descricao || `Livro ${book.titulo} por ${book.autor}`} />
+        <meta name="twitter:image" content={book.capa_url || "/placeholder.svg"} />
+      </Helmet>
       <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4 gap-2">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Button>
@@ -245,6 +308,46 @@ const LivroDetalhePage = () => {
           <Card><CardContent className="p-4 text-sm whitespace-pre-wrap">{book.descricao || "Sem descrição."}</CardContent></Card>
 
           <div className="flex flex-wrap gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="lg" className="rounded-2xl gap-2">
+                  <Share2 className="h-4 w-4" /> Gerar Link / Partilhar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Partilhar Livro</DialogTitle>
+                  <DialogDescription>
+                    Qualquer pessoa com este link poderá ver os detalhes do livro e comprá-lo.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center space-x-2">
+                  <div className="grid flex-1 gap-2">
+                    <Input
+                      defaultValue={shareUrl}
+                      readOnly
+                      className="h-9"
+                    />
+                  </div>
+                  <Button type="submit" size="sm" className="px-3" onClick={copyToClipboard}>
+                    <span className="sr-only">Copiar</span>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex justify-center gap-4 py-4">
+                  <Button variant="outline" size="icon" className="rounded-full" onClick={() => shareSocial("whatsapp")}>
+                    <MessageCircle className="h-5 w-5 text-green-500" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="rounded-full" onClick={() => shareSocial("facebook")}>
+                    <Facebook className="h-5 w-5 text-blue-600" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="rounded-full" onClick={() => shareSocial("instagram")}>
+                    <Instagram className="h-5 w-5 text-pink-600" />
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {owned ? (
               <>
                 <Button onClick={handleRead} disabled={processing} size="lg" className="rounded-2xl gap-2">

@@ -385,6 +385,7 @@ export type Database = {
           preco_creditos: number
           preco_kz: number
           publicado: boolean
+          slug: string | null
           submetido_em: string | null
           titulo: string
           visualizacoes: number
@@ -413,6 +414,7 @@ export type Database = {
           preco_creditos?: number
           preco_kz?: number
           publicado?: boolean
+          slug?: string | null
           submetido_em?: string | null
           titulo: string
           visualizacoes?: number
@@ -441,6 +443,7 @@ export type Database = {
           preco_creditos?: number
           preco_kz?: number
           publicado?: boolean
+          slug?: string | null
           submetido_em?: string | null
           titulo?: string
           visualizacoes?: number

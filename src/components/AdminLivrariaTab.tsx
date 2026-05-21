@@ -8,8 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, Trash2, Edit, Check, X, BookOpen } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Loader2, Trash2, Edit, Check, X, BookOpen, Share2, Copy, MessageCircle, Facebook, Instagram } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import * as pdfjsLib from "pdfjs-dist";
 // @ts-ignore - importar worker como URL via Vite (evita falha de CDN)
@@ -243,10 +243,52 @@ const AdminLivrariaTab = () => {
                     </div>
                   </div>
                   <p className="text-xs font-medium mt-1 line-clamp-2">{b.titulo}</p>
-                  <div className="flex gap-1 mt-1">
-                    <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEdit(b)}><Edit className="h-3 w-3" /></Button>
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600" onClick={() => deleteBook(b.id)}><Trash2 className="h-3 w-3" /></Button>
-                  </div>
+                    <div className="flex gap-1 mt-1">
+                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEdit(b)} title="Editar"><Edit className="h-3 w-3" /></Button>
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="h-7 px-2" title="Gerar Link"><Share2 className="h-3 w-3" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Partilhar Livro</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex items-center space-x-2">
+                            <div className="grid flex-1 gap-2">
+                              <Input
+                                defaultValue={`${window.location.origin}/book/${b.slug || b.id}`}
+                                readOnly
+                                className="h-9"
+                              />
+                            </div>
+                            <Button type="submit" size="sm" className="px-3" onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.slug || b.id}`);
+                              toast({ title: "Link copiado!" });
+                            }}>
+                              <span className="sr-only">Copiar</span>
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex justify-center gap-4 py-4">
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Confira este livro: ' + b.titulo + ' ' + window.location.origin + '/book/' + (b.slug || b.id))}`, "_blank")}>
+                              <MessageCircle className="h-5 w-5 text-green-500" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/book/' + (b.slug || b.id))}`, "_blank")}>
+                              <Facebook className="h-5 w-5 text-blue-600" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.slug || b.id}`);
+                              toast({ title: "Link copiado!", description: "O Instagram não permite partilha direta via web. O link foi copiado para você colar lá." });
+                            }}>
+                              <Instagram className="h-5 w-5 text-pink-600" />
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600" onClick={() => deleteBook(b.id)} title="Apagar"><Trash2 className="h-3 w-3" /></Button>
+                    </div>
                 </div>
               ))}
             </div>
