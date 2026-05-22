@@ -39,13 +39,16 @@ const AdminButtonCoversTab = () => {
   useEffect(() => { fetchCovers(); }, []);
 
   const handleUpload = async (buttonKey: string, file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast({ title: "Apenas imagens são permitidas", variant: "destructive" });
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isImage && !isVideo) {
+      toast({ title: "Apenas imagens ou vídeos são permitidos", variant: "destructive" });
       return;
     }
 
     setUploading(buttonKey);
-    const ext = file.name.split(".").pop() || "jpg";
+    const ext = file.name.split(".").pop() || (isImage ? "jpg" : "mp4");
     const filePath = `${buttonKey}-${Date.now()}.${ext}`;
 
     // Upload to storage
@@ -73,7 +76,7 @@ const AdminButtonCoversTab = () => {
         .insert({ button_key: buttonKey, image_url: imageUrl, label: BUTTON_KEYS.find(b => b.key === buttonKey)?.label });
     }
 
-    toast({ title: "Imagem atualizada!" });
+    toast({ title: isVideo ? "Vídeo atualizado!" : "Imagem atualizada!" });
     setUploading(null);
     fetchCovers();
   };
@@ -135,22 +138,33 @@ const AdminButtonCoversTab = () => {
 
                   {cover ? (
                     <div className="relative w-full h-24 rounded-lg overflow-hidden bg-muted">
-                      <img
-                        src={cover.image_url}
-                        alt={label}
-                        className="w-full h-full object-cover"
-                      />
+                      {cover.image_url.match(/\.(mp4|webm|ogg|mov)$|video/i) ? (
+                        <video
+                          src={cover.image_url}
+                          className="w-full h-full object-cover"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={cover.image_url}
+                          alt={label}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                     </div>
                   ) : (
                     <div className="w-full h-24 rounded-lg bg-muted/50 border-2 border-dashed border-border flex items-center justify-center">
-                      <p className="text-xs text-muted-foreground">Sem imagem</p>
+                      <p className="text-xs text-muted-foreground">Sem média</p>
                     </div>
                   )}
 
                   <label className="cursor-pointer">
                     <Input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,video/*"
                       className="hidden"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
@@ -165,7 +179,7 @@ const AdminButtonCoversTab = () => {
                       ) : (
                         <Upload className="h-4 w-4" />
                       )}
-                      {cover ? "Trocar Imagem" : "Enviar Imagem"}
+                      {cover ? "Trocar Média" : "Enviar Média"}
                     </div>
                   </label>
                 </div>
