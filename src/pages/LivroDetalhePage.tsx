@@ -102,26 +102,49 @@ const LivroDetalhePage = () => {
   const loadAuthorPaymentMethods = async () => {
     setLoadingPaymentMethods(true);
     try {
-      // Usar as coordenadas bancárias fixas solicitadas pelo usuário
-      const adminMethods = [
-        {
-          id: "fixed-iban",
+      // Buscar os métodos de pagamento configurados nas assinaturas (payment_settings)
+      const { data: paymentSettings } = await (supabase.from("payment_settings") as any)
+        .select("chave, valor");
+      
+      if (!paymentSettings || paymentSettings.length === 0) {
+        setAuthorPaymentMethods([]);
+        return;
+      }
+      
+      // Converter payment_settings para formato de métodos
+      const settingsMap: Record<string, string> = {};
+      paymentSettings.forEach((s: any) => {
+        settingsMap[s.chave] = s.valor;
+      });
+      
+      const methods = [];
+      
+      // Adicionar IBAN se configurado
+      if (settingsMap.iban) {
+        methods.push({
+          id: "payment-iban",
           tipo: "iban",
-          iban: "005500008915805510176",
-          banco: "BAI",
-          titular: "Doka Saber Angolano",
+          iban: settingsMap.iban,
+          banco: settingsMap.iban_banco || "Banco",
+          titular: settingsMap.iban_titular || "—",
           preferido: true,
-        },
-        {
-          id: "fixed-multicaixa",
+        });
+      }
+      
+      // Adicionar Multicaixa se configurado
+      if (settingsMap.multicaixa_numero) {
+        methods.push({
+          id: "payment-multicaixa",
           tipo: "multicaixa",
-          telefone: "926143927",
+          telefone: settingsMap.multicaixa_numero,
           preferido: false,
-        }
-      ];
-      setAuthorPaymentMethods(adminMethods);
+        });
+      }
+      
+      setAuthorPaymentMethods(methods);
     } catch (err) {
       console.error("Erro ao carregar métodos de pagamento:", err);
+      setAuthorPaymentMethods([]);
     } finally {
       setLoadingPaymentMethods(false);
     }
