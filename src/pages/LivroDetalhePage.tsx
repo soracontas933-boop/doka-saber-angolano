@@ -38,15 +38,21 @@ const LivroDetalhePage = () => {
       setUser(user);
       if (user) setEmailConf(user.email || "");
 
-      let query = supabase.from("books").select("*, book_categories(nome)");
+      let b = null;
       
-      if (id) {
-        query = query.eq("id", id);
-      } else if (slug) {
-        query = query.eq("slug", slug);
+      // Tentar buscar por ID primeiro (se parecer um UUID)
+      if (id && id.length > 20) {
+        const { data: bookById } = await supabase.from("books").select("*, book_categories(nome)").eq("id", id).maybeSingle();
+        if (bookById) b = bookById;
       }
-
-      const { data: b } = await query.maybeSingle();
+      
+      // Se não encontrou por ID, tentar por slug
+      if (!b && (slug || (id && id.length <= 20))) {
+        const searchSlug = slug || id;
+        const { data: bookBySlug } = await supabase.from("books").select("*, book_categories(nome)").eq("slug", searchSlug).maybeSingle();
+        if (bookBySlug) b = bookBySlug;
+      }
+      
       setBook(b);
 
       if (b) {

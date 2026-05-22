@@ -53,6 +53,7 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
             <Route path="/book/:id" element={<LivroDetalhePage />} />
+            <Route path="/book/:slug" element={<LivroDetalhePage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
