@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload, Eye, Share2, Copy, Facebook, Instagram, MessageCircle } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload, Eye, Share2, Copy, Facebook, Instagram, MessageCircle, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger,
@@ -30,6 +30,7 @@ const LivroDetalhePage = () => {
   const [readingBook, setReadingBook] = useState<{ url: string; title: string } | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [authDialogMessage, setAuthDialogMessage] = useState("Você precisa criar uma conta ou fazer login para usar esta funcionalidade.");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -97,6 +98,31 @@ const LivroDetalhePage = () => {
     }
     setOwned(true);
     toast({ title: "Compra concluída! Livro disponível na sua biblioteca." });
+  };
+
+  const copyToClipboardPayment = async (text: string, id: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
+      setCopiedId(id);
+      toast({ title: "Copiado!", description: "Dados copiados para a área de transferência." });
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Erro ao copiar:", err);
+      toast({ title: "Erro ao copiar", description: "Não foi possível copiar automaticamente.", variant: "destructive" });
+    }
   };
 
   const loadAuthorPaymentMethods = async () => {
@@ -466,9 +492,23 @@ const LivroDetalhePage = () => {
                   <div key={method.id} className="rounded-lg border p-3 space-y-2">
                     {method.tipo === "iban" ? (
                       <>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-primary">IBAN - {method.banco || "Banco"}</span>
-                          {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-primary">IBAN - {method.banco || "Banco"}</span>
+                            {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={() => copyToClipboardPayment(method.iban || "", method.id)}
+                          >
+                            {copiedId === method.id ? (
+                              <Check className="h-3.5 w-3.5 text-green-600" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
                         </div>
                         <div className="bg-muted rounded px-2 py-1.5">
                           <p className="text-sm font-mono text-foreground select-all break-all">{method.iban || "—"}</p>
@@ -477,9 +517,23 @@ const LivroDetalhePage = () => {
                       </>
                     ) : (
                       <>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-primary">Multicaixa Express</span>
-                          {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-primary">Multicaixa Express</span>
+                            {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={() => copyToClipboardPayment(method.telefone || "", method.id)}
+                          >
+                            {copiedId === method.id ? (
+                              <Check className="h-3.5 w-3.5 text-green-600" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
                         </div>
                         <div className="bg-muted rounded px-2 py-1.5">
                           <p className="text-sm font-mono text-foreground select-all">{method.telefone || "—"}</p>
