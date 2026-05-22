@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload, Eye, Share2, Copy, Facebook, Instagram, MessageCircle, Check } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload, Eye, Share2, Copy, Facebook, Instagram, MessageCircle, Check, Building2, Smartphone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger,
@@ -129,8 +129,14 @@ const LivroDetalhePage = () => {
     setLoadingPaymentMethods(true);
     try {
       // Buscar os métodos de pagamento configurados nas assinaturas (payment_settings)
-      const { data: paymentSettings } = await (supabase.from("payment_settings") as any)
+      const { data: paymentSettings, error } = await (supabase.from("payment_settings") as any)
         .select("chave, valor");
+      
+      if (error) {
+        console.error("Erro ao buscar payment_settings:", error);
+        setAuthorPaymentMethods([]);
+        return;
+      }
       
       if (!paymentSettings || paymentSettings.length === 0) {
         setAuthorPaymentMethods([]);
@@ -494,6 +500,7 @@ const LivroDetalhePage = () => {
                       <>
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-primary" />
                             <span className="text-xs font-semibold text-primary">IBAN - {method.banco || "Banco"}</span>
                             {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
                           </div>
@@ -519,6 +526,7 @@ const LivroDetalhePage = () => {
                       <>
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
+                            <Smartphone className="h-4 w-4 text-primary" />
                             <span className="text-xs font-semibold text-primary">Multicaixa Express</span>
                             {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
                           </div>
