@@ -283,24 +283,71 @@ const AdminLivrariaTab = () => {
                                 className="h-9"
                               />
                             </div>
-                            <Button type="submit" size="sm" className="px-3" onClick={() => {
-                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.slug || b.id}`);
-                              toast({ title: "Link copiado!" });
+                            <Button type="submit" size="sm" className="px-3" onClick={async () => {
+                              const shareUrl = `${window.location.origin}/book/${b.slug || b.id}`;
+                              try {
+                                if (navigator.clipboard && window.isSecureContext) {
+                                  await navigator.clipboard.writeText(shareUrl);
+                                } else {
+                                  const textArea = document.createElement("textarea");
+                                  textArea.value = shareUrl;
+                                  textArea.style.position = "fixed";
+                                  textArea.style.left = "-9999px";
+                                  textArea.style.top = "0";
+                                  document.body.appendChild(textArea);
+                                  textArea.focus();
+                                  textArea.select();
+                                  document.execCommand("copy");
+                                  textArea.remove();
+                                }
+                                toast({ title: "Link copiado!" });
+                              } catch (err) {
+                                toast({ title: "Erro ao copiar", variant: "destructive" });
+                              }
                             }}>
                               <span className="sr-only">Copiar</span>
                               <Copy className="h-4 w-4" />
                             </Button>
                           </div>
                           <div className="flex justify-center gap-4 py-4">
+                            {navigator.share && (
+                              <Button variant="outline" size="icon" className="rounded-full" onClick={() => {
+                                navigator.share({
+                                  title: b.titulo,
+                                  text: `Confira este livro: ${b.titulo}`,
+                                  url: `${window.location.origin}/book/${b.slug || b.id}`
+                                }).catch(() => {});
+                              }}>
+                                <Share2 className="h-5 w-5 text-primary" />
+                              </Button>
+                            )}
                             <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Confira este livro: ' + b.titulo + ' ' + window.location.origin + '/book/' + (b.slug || b.id))}`, "_blank")}>
                               <MessageCircle className="h-5 w-5 text-green-500" />
                             </Button>
                             <Button variant="outline" size="icon" className="rounded-full" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/book/' + (b.slug || b.id))}`, "_blank")}>
                               <Facebook className="h-5 w-5 text-blue-600" />
                             </Button>
-                            <Button variant="outline" size="icon" className="rounded-full" onClick={() => {
-                              navigator.clipboard.writeText(`${window.location.origin}/book/${b.slug || b.id}`);
-                              toast({ title: "Link copiado!", description: "O Instagram não permite partilha direta via web. O link foi copiado para você colar lá." });
+                            <Button variant="outline" size="icon" className="rounded-full" onClick={async () => {
+                              const shareUrl = `${window.location.origin}/book/${b.slug || b.id}`;
+                              try {
+                                if (navigator.clipboard && window.isSecureContext) {
+                                  await navigator.clipboard.writeText(shareUrl);
+                                } else {
+                                  const textArea = document.createElement("textarea");
+                                  textArea.value = shareUrl;
+                                  textArea.style.position = "fixed";
+                                  textArea.style.left = "-9999px";
+                                  textArea.style.top = "0";
+                                  document.body.appendChild(textArea);
+                                  textArea.focus();
+                                  textArea.select();
+                                  document.execCommand("copy");
+                                  textArea.remove();
+                                }
+                                toast({ title: "Link copiado!", description: "O Instagram não permite partilha direta via web. O link foi copiado para você colar lá." });
+                              } catch (err) {
+                                toast({ title: "Erro ao copiar", variant: "destructive" });
+                              }
                             }}>
                               <Instagram className="h-5 w-5 text-pink-600" />
                             </Button>

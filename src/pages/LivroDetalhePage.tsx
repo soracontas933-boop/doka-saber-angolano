@@ -100,70 +100,26 @@ const LivroDetalhePage = () => {
   };
 
   const loadAuthorPaymentMethods = async () => {
-    if (!book?.criado_por) return;
     setLoadingPaymentMethods(true);
-
     try {
-      // Verificar se o livro foi criado pelo admin usando RPC
-      const { data: isAdmin, error: rpcError } = await supabase.rpc("is_admin_or_master", { _user_id: book.criado_por });
-      
-      if (isAdmin) {
-        // Se o autor é admin, buscar as configurações de pagamento globais
-        const { data, error } = await supabase
-          .from("payment_settings")
-          .select("chave, valor");
-        
-        if (error) {
-          console.error("Erro ao carregar configurações de pagamento:", error);
-          setLoadingPaymentMethods(false);
-          return;
+      // Usar as coordenadas bancárias fixas solicitadas pelo usuário
+      const adminMethods = [
+        {
+          id: "fixed-iban",
+          tipo: "iban",
+          iban: "005500008915805510176",
+          banco: "BAI",
+          titular: "Doka Saber Angolano",
+          preferido: true,
+        },
+        {
+          id: "fixed-multicaixa",
+          tipo: "multicaixa",
+          telefone: "926143927",
+          preferido: false,
         }
-        
-        // Converter as configurações em formato compatível com book_payout_methods
-        const settingsMap: Record<string, string> = {};
-        (data || []).forEach((d: any) => { settingsMap[d.chave] = d.valor; });
-        
-        const adminMethods = [];
-        
-        // Sempre adicionar IBAN se a chave existir (mesmo que vazio)
-        if (settingsMap.hasOwnProperty("iban")) {
-          adminMethods.push({
-            id: "admin-iban",
-            tipo: "iban",
-            iban: settingsMap["iban"] || "",
-            banco: settingsMap["iban_banco"] || "",
-            titular: settingsMap["iban_titular"] || "",
-            preferido: true,
-          });
-        }
-        
-        // Sempre adicionar Multicaixa se a chave existir (mesmo que vazio)
-        if (settingsMap.hasOwnProperty("multicaixa_numero")) {
-          adminMethods.push({
-            id: "admin-multicaixa",
-            tipo: "multicaixa",
-            telefone: settingsMap["multicaixa_numero"] || "",
-            preferido: !settingsMap["iban"],
-          });
-        }
-        
-        setAuthorPaymentMethods(adminMethods);
-      } else {
-        // Se o autor não é admin, buscar os métodos de pagamento do autor
-        const { data, error } = await supabase
-          .from("book_payout_methods")
-          .select("*")
-          .eq("user_id", book.criado_por)
-          .order("preferido", { ascending: false })
-          .order("criado_em", { ascending: false });
-        
-        if (error) {
-          console.error("Erro ao carregar métodos de pagamento:", error);
-          setLoadingPaymentMethods(false);
-          return;
-        }
-        setAuthorPaymentMethods(data || []);
-      }
+      ];
+      setAuthorPaymentMethods(adminMethods);
     } catch (err) {
       console.error("Erro ao carregar métodos de pagamento:", err);
     } finally {
@@ -172,24 +128,35 @@ const LivroDetalhePage = () => {
   };
 
   const handleEnviarComprovativo = async () => {
-    if (!user) {
-      setAuthDialogMessage("Crie uma conta ou faça login para enviar um comprovativo de pagamento.");
-      setShowAuthDialog(true);
-      return;
-    }
     if (!comprovativo || !emailConf) return toast({ title: "Preencha todos os campos", variant: "destructive" });
     setProcessing(true);
-    const path = `${user.id}/${id}-${Date.now()}-${comprovativo.name}`;
-    const { error: upErr } = await supabase.storage.from("book-receipts").upload(path, comprovativo);
-    if (upErr) { setProcessing(false); return toast({ title: "Erro ao enviar", description: upErr.message, variant: "destructive" }); }
-    const { data: { publicUrl } } = supabase.storage.from("book-receipts").getPublicUrl(path);
-    const { error } = await supabase.from("book_purchase_requests").insert({
-      user_id: user.id, book_id: id, email_confirmacao: emailConf, ficheiro_url: publicUrl, valor: book.preco_kz,
-    });
-    setProcessing(false);
-    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
-    toast({ title: "Pedido enviado", description: "Aguarde a aprovação do admin (até 24h)." });
-    setOpenManual(false);
+    
+    try {
+      const fileName = `${id}-${Date.now()}-${comprovativo.name}`;
+      const path = user ? `${user.id}/${fileName}` : `guest/${fileName}`;
+      
+      const { error: upErr } = await supabase.storage.from("book-receipts").upload(path, comprovativo);
+      if (upErr) throw upErr;
+      
+      const { data: { publicUrl } } = supabase.storage.from("book-receipts").getPublicUrl(path);
+      
+      const { error } = await (supabase.from("book_purchase_requests") as any).insert({
+        user_id: user?.id || null, 
+        book_id: id, 
+        email_confirmacao: emailConf, 
+        ficheiro_url: publicUrl, 
+        valor: book.preco_kz,
+      });
+      
+      if (error) throw error;
+      
+      toast({ title: "Pedido enviado", description: "Aguarde a aprovação do admin (até 24h). O link do livro será enviado para o seu email." });
+      setOpenManual(false);
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar", description: err.message || "Ocorreu um erro inesperado", variant: "destructive" });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleDownload = async () => {
@@ -263,15 +230,49 @@ const LivroDetalhePage = () => {
 
   const shareUrl = `${window.location.origin}/book/${book.id}`;
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(shareUrl);
-    toast({ title: "Link copiado!", description: "O link do livro foi copiado para a sua área de transferência." });
+  const copyToClipboard = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = shareUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
+      toast({ title: "Link copiado!", description: "O link do livro foi copiado para a sua área de transferência." });
+    } catch (err) {
+      console.error("Erro ao copiar link:", err);
+      toast({ title: "Erro ao copiar", description: "Não foi possível copiar o link automaticamente.", variant: "destructive" });
+    }
   };
 
-  const shareSocial = (platform: string) => {
+  const shareSocial = async (platform: string) => {
     const text = `Confira este livro: ${book.titulo} na Delle Livraria`;
     let url = "";
     
+    // Web Share API for mobile/modern browsers
+    if (platform === "native" && navigator.share) {
+      try {
+        await navigator.share({
+          title: book.titulo,
+          text: text,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          console.error("Erro ao partilhar:", err);
+        }
+      }
+    }
+
     switch (platform) {
       case "whatsapp":
         url = `https://wa.me/?text=${encodeURIComponent(text + " " + shareUrl)}`;
@@ -280,13 +281,15 @@ const LivroDetalhePage = () => {
         url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
         break;
       case "instagram":
-        // Instagram doesn't have a direct share URL for web, so we copy and inform
-        copyToClipboard();
+        await copyToClipboard();
         toast({ title: "Link copiado!", description: "O Instagram não permite partilha direta via web. O link foi copiado para você colar lá." });
         return;
     }
     
-    if (url) window.open(url, "_blank");
+    if (url) {
+      const newWindow = window.open(url, "_blank", "noopener,noreferrer");
+      if (newWindow) newWindow.opener = null;
+    }
   };
 
   return (
@@ -360,7 +363,12 @@ const LivroDetalhePage = () => {
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex justify-center gap-4 py-4">
+                  <div className="flex justify-center gap-4 py-4">
+                  {navigator.share && (
+                    <Button variant="outline" size="icon" className="rounded-full" onClick={() => shareSocial("native")}>
+                      <Share2 className="h-5 w-5 text-primary" />
+                    </Button>
+                  )}
                   <Button variant="outline" size="icon" className="rounded-full" onClick={() => shareSocial("whatsapp")}>
                     <MessageCircle className="h-5 w-5 text-green-500" />
                   </Button>

@@ -69,10 +69,10 @@ const AdminPaymentsTab = () => {
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
   const [editingSettings, setEditingSettings] = useState(false);
-  const [iban, setIban] = useState("");
-  const [ibanBanco, setIbanBanco] = useState("");
-  const [ibanTitular, setIbanTitular] = useState("");
-  const [multicaixaNumero, setMulticaixaNumero] = useState("");
+  const [iban, setIban] = useState("005500008915805510176");
+  const [ibanBanco, setIbanBanco] = useState("BAI");
+  const [ibanTitular, setIbanTitular] = useState("Doka Saber Angolano");
+  const [multicaixaNumero, setMulticaixaNumero] = useState("926143927");
 
   // Payment links state (automatic payments)
   const [editingLinks, setEditingLinks] = useState(false);
