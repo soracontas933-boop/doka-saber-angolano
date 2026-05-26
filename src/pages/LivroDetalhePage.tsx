@@ -282,20 +282,37 @@ const LivroDetalhePage = () => {
   };
 
   const handleRead = async () => {
-    if (!user) {
+    // Se for gratuito ou se o usuário já possui, permitir leitura
+    if (!book.gratuito && !owned && !user) {
       setAuthDialogMessage("Crie uma conta ou faça login para ler este livro.");
       setShowAuthDialog(true);
       return;
     }
+
+    if (!book.gratuito && !owned && user) {
+      toast({ title: "Acesso negado", description: "Você precisa adquirir este livro para ler.", variant: "destructive" });
+      return;
+    }
+
     if (!book.ficheiro_path) return toast({ title: "Erro", description: "Caminho do ficheiro não encontrado", variant: "destructive" });
     
     setProcessing(true);
     try {
-      const { data, error } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 3600);
-      if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
+      // Usar a RPC para obter a URL assinada, que ignora as restrições de RLS para livros públicos/gratuitos
+      const { data, error } = await supabase.rpc("get_book_read_url", { p_book_id: book.id });
       
-      setReadingBook({ url: data.signedUrl, title: book.titulo });
+      if (error || !data) {
+        // Fallback para o método tradicional se a RPC falhar ou não existir
+        const { data: signData, error: signError } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 3600);
+        if (signError || !signData?.signedUrl) throw signError || new Error("URL não gerada");
+        setReadingBook({ url: signData.signedUrl, title: book.titulo });
+      } else {
+        // Se a RPC retornou apenas o path, gerar a URL pública (já que a nova policy permite)
+        const publicUrl = supabase.storage.from("book-files").getPublicUrl(data).data.publicUrl;
+        setReadingBook({ url: publicUrl, title: book.titulo });
+      }
     } catch (err) {
+      console.error("Erro ao abrir leitor:", err);
       toast({ title: "Erro ao abrir leitor", variant: "destructive" });
     } finally {
       setProcessing(false);
@@ -318,7 +335,7 @@ const LivroDetalhePage = () => {
     </div>
   );
 
-  const shareUrl = `${window.location.origin}/book/${book.id}`;
+  const shareUrl = `${window.location.origin}/book/${book.slug ? `slug/${book.slug}` : book.id}`;
 
   const copyToClipboard = async () => {
     try {

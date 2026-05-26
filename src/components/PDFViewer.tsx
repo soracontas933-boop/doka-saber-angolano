@@ -3,8 +3,11 @@ import * as pdfjsLib from "pdfjs-dist";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, X } from "lucide-react";
 
-// Configurar o worker do PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// @ts-ignore
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+// Configurar o worker do PDF.js usando bundle local (evita bloqueios de CDN e melhora compatibilidade)
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 interface PDFViewerProps {
   url: string;
@@ -47,7 +50,12 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
       
       try {
         const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale });
+        
+        // Ajustar escala para dispositivos móveis
+        const isMobile = window.innerWidth < 768;
+        const currentScale = isMobile ? (window.innerWidth - 40) / page.getViewport({ scale: 1 }).width : scale;
+        
+        const viewport = page.getViewport({ scale: currentScale });
         const canvas = canvasRef.current!;
         const context = canvas.getContext("2d");
 

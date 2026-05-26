@@ -266,13 +266,13 @@ const AdminLivrariaTab = () => {
                           <div className="flex items-center space-x-2">
                             <div className="grid flex-1 gap-2">
                               <Input
-                                defaultValue={`${window.location.origin}/book/${b.slug || b.id}`}
+                                defaultValue={`${window.location.origin}/book/${b.slug ? `slug/${b.slug}` : b.id}`}
                                 readOnly
                                 className="h-9"
                               />
                             </div>
                             <Button type="submit" size="sm" className="px-3" onClick={async () => {
-                              const shareUrl = `${window.location.origin}/book/${b.slug || b.id}`;
+                              const shareUrl = `${window.location.origin}/book/${b.slug ? `slug/${b.slug}` : b.id}`;
                               try {
                                 if (navigator.clipboard && window.isSecureContext) {
                                   await navigator.clipboard.writeText(shareUrl);

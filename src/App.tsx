@@ -52,8 +52,9 @@ const App = () => (
             <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
-            {/* CORRIGIDO: Rota pública de livro agora usa :id em vez de :slug */}
+            {/* CORRIGIDO: Rota pública de livro agora aceita tanto :id quanto :slug */}
             <Route path="/book/:id" element={<LivroDetalhePage />} />
+            <Route path="/book/slug/:slug" element={<LivroDetalhePage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
