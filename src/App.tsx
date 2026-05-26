@@ -52,8 +52,8 @@ const App = () => (
             <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
+            {/* CORRIGIDO: Rota pública de livro agora usa :id em vez de :slug */}
             <Route path="/book/:id" element={<LivroDetalhePage />} />
-            <Route path="/book/:slug" element={<LivroDetalhePage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -77,6 +77,7 @@ const App = () => (
                 <Route path="/curriculo" element={<CurriculoPage />} />
                 <Route path="/apresentacao" element={<ApresentacaoPage />} />
                 <Route path="/livraria" element={<LivrariaPage />} />
+                <Route path="/livraria/:id" element={<LivroDetalhePage />} />
 
                 <Route path="/minha-biblioteca" element={<MinhaBibliotecaPage />} />
                 <Route path="/faturamento" element={<FaturamentoPage />} />
