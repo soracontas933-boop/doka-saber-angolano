@@ -133,24 +133,6 @@ const AdminLivrariaTab = () => {
       ficheiroPath = path;
     }
 
-    // Função para gerar slug a partir do título
-    const generateSlug = (title: string): string => {
-      let slug = title
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")  // Remove acentos
-        .replace(/[^a-z0-9]+/g, "-")      // Substitui caracteres especiais por hífens
-        .replace(/^-+|-+$/g, "")           // Remove hífens no início e fim
-        .slice(0, 100);                    // Limita a 100 caracteres
-      
-      // Se vazio, usar timestamp como fallback
-      if (!slug) {
-        slug = 'livro-' + Date.now();
-      }
-      
-      return slug;
-    };
-
     const payload: any = {
       titulo: form.titulo, autor: form.autor, descricao: form.descricao,
       capa_url: capaUrl, ficheiro_path: ficheiroPath,
@@ -161,7 +143,6 @@ const AdminLivrariaTab = () => {
       paginas: Number(form.paginas) || null, idioma: form.idioma, classe: form.classe, isbn: form.isbn,
       destaque: form.destaque, publicado: form.publicado,
       estado_aprovacao: form.estado_aprovacao || 'aprovado',
-      slug: generateSlug(form.titulo),
     };
 
     let error;
