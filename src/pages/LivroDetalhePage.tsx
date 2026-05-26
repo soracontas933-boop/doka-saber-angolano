@@ -31,6 +31,7 @@ const LivroDetalhePage = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [authDialogMessage, setAuthDialogMessage] = useState("Você precisa criar uma conta ou fazer login para usar esta funcionalidade.");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [adminPaymentLink, setAdminPaymentLink] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -62,6 +63,9 @@ const LivroDetalhePage = () => {
         }
         await supabase.from("books").update({ visualizacoes: (b.visualizacoes || 0) + 1 }).eq("id", b.id);
         await supabase.from("book_views").insert({ book_id: b.id, user_id: user?.id || null });
+        
+        // Carregar links de pagamento se for admin
+        loadAuthorPaymentMethods();
       }
       setLoading(false);
     };
@@ -161,6 +165,17 @@ const LivroDetalhePage = () => {
           paymentSettings.forEach((s: any) => {
             settingsMap[s.chave] = s.valor;
           });
+          
+          // Definir o link de pagamento padrão (usando o link do plano profissional como padrão para livros)
+          if (settingsMap.link_profissional) {
+            setAdminPaymentLink(settingsMap.link_profissional);
+          } else if (settingsMap.link_intermedio) {
+            setAdminPaymentLink(settingsMap.link_intermedio);
+          } else if (settingsMap.link_basico) {
+            setAdminPaymentLink(settingsMap.link_basico);
+          } else if (settingsMap.link_premium) {
+            setAdminPaymentLink(settingsMap.link_premium);
+          }
           
           const methods = [];
           if (settingsMap.iban) {
@@ -480,8 +495,22 @@ const LivroDetalhePage = () => {
                     <Coins className="h-4 w-4" /> Pagar com {book.preco_creditos} créditos
                   </Button>
                 )}
-                <Button onClick={() => setOpenManual(true)} variant="outline" size="lg" className="rounded-2xl gap-2">
-                  <Upload className="h-4 w-4" /> Pagar {book.preco_kz} Kz (comprovativo)
+                {adminPaymentLink ? (
+                  <Button 
+                    onClick={() => window.open(adminPaymentLink, "_blank")} 
+                    size="lg" 
+                    className="rounded-2xl gap-2 bg-primary hover:bg-primary/90"
+                  >
+                    <Smartphone className="h-4 w-4" /> Pagar {book.preco_kz} Kz (Automático)
+                  </Button>
+                ) : null}
+                <Button 
+                  onClick={() => setOpenManual(true)} 
+                  variant="outline" 
+                  size="lg" 
+                  className="rounded-2xl gap-2"
+                >
+                  <Upload className="h-4 w-4" /> Pagar {book.preco_kz} Kz (Comprovativo)
                 </Button>
               </>
             )}
@@ -489,10 +518,7 @@ const LivroDetalhePage = () => {
         </div>
       </div>
 
-      <Dialog open={openManual} onOpenChange={(open) => {
-        setOpenManual(open);
-        if (open) loadAuthorPaymentMethods();
-      }}>
+      <Dialog open={openManual} onOpenChange={setOpenManual}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Enviar comprovativo de pagamento</DialogTitle>
