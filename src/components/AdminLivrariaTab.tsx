@@ -135,13 +135,20 @@ const AdminLivrariaTab = () => {
 
     // Função para gerar slug a partir do título
     const generateSlug = (title: string): string => {
-      return title
+      let slug = title
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")  // Remove acentos
         .replace(/[^a-z0-9]+/g, "-")      // Substitui caracteres especiais por hífens
         .replace(/^-+|-+$/g, "")           // Remove hífens no início e fim
         .slice(0, 100);                    // Limita a 100 caracteres
+      
+      // Se vazio, usar timestamp como fallback
+      if (!slug) {
+        slug = 'livro-' + Date.now();
+      }
+      
+      return slug;
     };
 
     const payload: any = {
