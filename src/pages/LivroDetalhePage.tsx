@@ -627,6 +627,61 @@ const LivroDetalhePage = () => {
         />
       )}
 
+      {/* Livros Sugeridos */}
+      {relatedBooks.length > 0 && (
+        <div className="mt-16 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold tracking-tight">Sugestões para você</h2>
+            <Button variant="ghost" asChild className="text-primary hover:text-primary/80">
+              <Link to="/livraria">Ver todos</Link>
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {relatedBooks.map((b) => (
+              <Link key={b.id} to={`/book/${b.id}`} className="group block" onClick={() => window.scrollTo(0, 0)}>
+                <div className="relative bg-secondary rounded-xl overflow-hidden aspect-[2/3] shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
+                  {b.capa_url ? (
+                    <img
+                      src={b.capa_url}
+                      alt={b.titulo}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-blue-400/20">
+                      <BookOpen className="h-8 w-8 text-primary/60" />
+                    </div>
+                  )}
+
+                  <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                    <div className="flex items-center justify-between gap-1">
+                      {b.gratuito ? (
+                        <Badge className="bg-green-500 text-white border-0 text-[9px] font-bold h-4 px-1">
+                          GRÁTIS
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-white text-primary border-0 text-[9px] font-bold h-4 px-1">
+                          {b.preco_kz.toLocaleString()} Kz
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <h3 className="font-semibold text-foreground line-clamp-1 text-xs leading-tight">
+                    {b.titulo}
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                    {b.autor}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <AuthRequiredDialog
         open={showAuthDialog}
         onOpenChange={setShowAuthDialog}
