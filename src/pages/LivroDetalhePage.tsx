@@ -132,54 +132,68 @@ const LivroDetalhePage = () => {
   };
 
   const loadAuthorPaymentMethods = async () => {
+    if (!book) return;
     setLoadingPaymentMethods(true);
     try {
-      // Buscar os métodos de pagamento configurados nas assinaturas (payment_settings)
-      const { data: paymentSettings, error } = await (supabase.from("payment_settings") as any)
-        .select("chave, valor");
+      // 1. Verificar se o autor do livro é um administrador
+      // Primeiro verificamos na tabela admin_roles
+      const { data: adminRole } = await supabase
+        .from("admin_roles")
+        .select("id")
+        .eq("user_id", book.criado_por)
+        .maybeSingle();
+
+      // Também verificamos se o autor é um dos masters (emails fixos no sistema)
+      // Como não podemos ver o email de outros usuários via client SDK por segurança,
+      // confiamos que se ele for master, ele terá uma entrada em admin_roles ou
+      // usaremos uma lógica baseada no fato de que admins costumam ser os criadores padrão.
       
-      if (error) {
-        console.error("Erro ao buscar payment_settings:", error);
-        setAuthorPaymentMethods([]);
-        return;
+      const isAuthorAdmin = !!adminRole;
+
+      // 2. Se for admin, buscar das configurações globais (payment_settings)
+      // Se não for admin, buscar dos métodos específicos do autor (book_payout_methods)
+      
+      if (isAuthorAdmin || !book.criado_por) { // Se não tiver criado_por, assumimos que é do sistema (admin)
+        const { data: paymentSettings } = await (supabase.from("payment_settings") as any).select("chave, valor");
+        
+        if (paymentSettings && paymentSettings.length > 0) {
+          const settingsMap: Record<string, string> = {};
+          paymentSettings.forEach((s: any) => {
+            settingsMap[s.chave] = s.valor;
+          });
+          
+          const methods = [];
+          if (settingsMap.iban) {
+            methods.push({
+              id: "payment-iban",
+              tipo: "iban",
+              iban: settingsMap.iban,
+              banco: settingsMap.iban_banco || "Banco",
+              titular: settingsMap.iban_titular || "—",
+              preferido: true,
+            });
+          }
+          if (settingsMap.multicaixa_numero) {
+            methods.push({
+              id: "payment-multicaixa",
+              tipo: "multicaixa",
+              telefone: settingsMap.multicaixa_numero,
+              preferido: false,
+            });
+          }
+          setAuthorPaymentMethods(methods);
+          return;
+        }
       }
-      
-      if (!paymentSettings || paymentSettings.length === 0) {
-        setAuthorPaymentMethods([]);
-        return;
-      }
-      
-      // Converter payment_settings para formato de métodos
-      const settingsMap: Record<string, string> = {};
-      paymentSettings.forEach((s: any) => {
-        settingsMap[s.chave] = s.valor;
-      });
-      
-      const methods = [];
-      
-      // Adicionar IBAN se configurado
-      if (settingsMap.iban) {
-        methods.push({
-          id: "payment-iban",
-          tipo: "iban",
-          iban: settingsMap.iban,
-          banco: settingsMap.iban_banco || "Banco",
-          titular: settingsMap.iban_titular || "—",
-          preferido: true,
-        });
-      }
-      
-      // Adicionar Multicaixa se configurado
-      if (settingsMap.multicaixa_numero) {
-        methods.push({
-          id: "payment-multicaixa",
-          tipo: "multicaixa",
-          telefone: settingsMap.multicaixa_numero,
-          preferido: false,
-        });
-      }
-      
-      setAuthorPaymentMethods(methods);
+
+      // Fallback ou se não for admin: buscar métodos específicos do autor
+      const { data: authorMethods } = await supabase
+        .from("book_payout_methods")
+        .select("*")
+        .eq("user_id", book.criado_por)
+        .order("preferido", { ascending: false });
+
+      setAuthorPaymentMethods(authorMethods || []);
     } catch (err) {
       console.error("Erro ao carregar métodos de pagamento:", err);
       setAuthorPaymentMethods([]);
