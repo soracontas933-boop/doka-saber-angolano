@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Upload, Eye } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+
 import PDFViewer from "@/components/PDFViewer";
+import BookPaymentDialog from "@/components/BookPaymentDialog";
 
 const LivroDetalhePage = () => {
   const { id } = useParams();
@@ -20,18 +18,14 @@ const LivroDetalhePage = () => {
   const [owned, setOwned] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [openManual, setOpenManual] = useState(false);
-  const [comprovativo, setComprovativo] = useState<File | null>(null);
-  const [emailConf, setEmailConf] = useState("");
-  const [authorPaymentMethods, setAuthorPaymentMethods] = useState<any[]>([]);
-  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
+
   const [readingBook, setReadingBook] = useState<{ url: string; title: string } | null>(null);
+  const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      if (user) setEmailConf(user.email || "");
 
       const { data: b } = await supabase.from("books").select("*, book_categories(nome)").eq("id", id).maybeSingle();
       setBook(b);
@@ -79,38 +73,9 @@ const LivroDetalhePage = () => {
     toast({ title: "Compra concluída! Livro disponível na sua biblioteca." });
   };
 
-  const loadAuthorPaymentMethods = async () => {
-    if (!book?.criado_por) return;
-    setLoadingPaymentMethods(true);
-    const { data, error } = await supabase
-      .from("book_payout_methods")
-      .select("*")
-      .eq("user_id", book.criado_por)
-      .order("preferido", { ascending: false })
-      .order("criado_em", { ascending: false });
-    setLoadingPaymentMethods(false);
-    if (error) {
-      console.error("Erro ao carregar métodos de pagamento:", error);
-      return;
-    }
-    setAuthorPaymentMethods(data || []);
-  };
 
-  const handleEnviarComprovativo = async () => {
-    if (!comprovativo || !emailConf) return toast({ title: "Preencha todos os campos", variant: "destructive" });
-    setProcessing(true);
-    const path = `${user.id}/${id}-${Date.now()}-${comprovativo.name}`;
-    const { error: upErr } = await supabase.storage.from("book-receipts").upload(path, comprovativo);
-    if (upErr) { setProcessing(false); return toast({ title: "Erro ao enviar", description: upErr.message, variant: "destructive" }); }
-    const { data: { publicUrl } } = supabase.storage.from("book-receipts").getPublicUrl(path);
-    const { error } = await supabase.from("book_purchase_requests").insert({
-      user_id: user.id, book_id: id, email_confirmacao: emailConf, ficheiro_url: publicUrl, valor: book.preco_kz,
-    });
-    setProcessing(false);
-    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
-    toast({ title: "Pedido enviado", description: "Aguarde a aprovação do admin (até 24h)." });
-    setOpenManual(false);
-  };
+
+
 
   const handleDownload = async () => {
     if (!book.ficheiro_path) return toast({ title: "Erro", description: "Caminho do ficheiro não encontrado", variant: "destructive" });
@@ -213,8 +178,8 @@ const LivroDetalhePage = () => {
                     <Coins className="h-4 w-4" /> Pagar com {book.preco_creditos} créditos
                   </Button>
                 )}
-                <Button onClick={() => setOpenManual(true)} variant="outline" size="lg" className="rounded-2xl gap-2">
-                  <Upload className="h-4 w-4" /> Pagar {book.preco_kz} Kz (comprovativo)
+                <Button onClick={() => setOpenPaymentDialog(true)} variant="outline" size="lg" className="rounded-2xl gap-2">
+                  <FileText className="h-4 w-4" /> Pagar {book.preco_kz} Kz (comprovativo)
                 </Button>
               </>
             )}
@@ -222,79 +187,12 @@ const LivroDetalhePage = () => {
         </div>
       </div>
 
-      <Dialog open={openManual} onOpenChange={(open) => {
-        setOpenManual(open);
-        if (open) loadAuthorPaymentMethods();
-      }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Enviar comprovativo de pagamento</DialogTitle>
-            <DialogDescription>
-              Faça a transferência de <b>{book.preco_kz} Kz</b> para uma das contas abaixo e envie o comprovativo. O livro será libertado na sua biblioteca após aprovação.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {/* Coordenadas bancárias do autor */}
-          <div className="space-y-4">
-            {loadingPaymentMethods ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              </div>
-            ) : authorPaymentMethods.length === 0 ? (
-              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
-                <p className="text-sm text-yellow-800">Nenhum método de pagamento configurado pelo autor.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-xs font-medium text-muted-foreground">Coordenadas para transferência:</p>
-                {authorPaymentMethods.map((method) => (
-                  <div key={method.id} className="rounded-lg border p-3 space-y-2">
-                    {method.tipo === "iban" ? (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-primary">IBAN - {method.banco || "Banco"}</span>
-                          {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
-                        </div>
-                        <div className="bg-muted rounded px-2 py-1.5">
-                          <p className="text-sm font-mono text-foreground select-all break-all">{method.iban}</p>
-                        </div>
-                        {method.titular && <p className="text-xs text-muted-foreground">Titular: {method.titular}</p>}
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-primary">Multicaixa Express</span>
-                          {method.preferido && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Preferido</span>}
-                        </div>
-                        <div className="bg-muted rounded px-2 py-1.5">
-                          <p className="text-sm font-mono text-foreground select-all">{method.telefone}</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs font-medium">Email para confirmação</label>
-              <Input value={emailConf} onChange={(e) => setEmailConf(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs font-medium">Comprovativo (imagem ou PDF)</label>
-              <Input type="file" accept="image/*,application/pdf" onChange={(e) => setComprovativo(e.target.files?.[0] || null)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpenManual(false)}>Cancelar</Button>
-            <Button onClick={handleEnviarComprovativo} disabled={processing}>
-              {processing && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Enviar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BookPaymentDialog
+        open={openPaymentDialog}
+        onOpenChange={setOpenPaymentDialog}
+        book={book}
+        user={user}
+      />
 
       {readingBook && (
         <PDFViewer 
