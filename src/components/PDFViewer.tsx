@@ -23,6 +23,29 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
   const [scale, setScale] = useState(1.5);
   const [loading, setLoading] = useState(true);
   const [rendering, setRendering] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Detectar mudanças de orientação e redimensionamento
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    const handleOrientationChange = () => {
+      // Aguardar a mudança de orientação ser concluída
+      setTimeout(() => {
+        setWindowWidth(window.innerWidth);
+      }, 100);
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleOrientationChange);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleOrientationChange);
+    };
+  }, []);
 
   useEffect(() => {
     const loadPdf = async () => {
@@ -59,11 +82,17 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
         const canvas = canvasRef.current!;
         const context = canvas.getContext("2d");
 
+        if (!context) {
+          console.error("Erro: não foi possível obter contexto 2D do canvas");
+          setRendering(false);
+          return;
+        }
+
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
         const renderContext = {
-          canvasContext: context!,
+          canvasContext: context,
           viewport: viewport,
         };
 
@@ -76,14 +105,14 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
     };
 
     renderPage();
-  }, [pdf, pageNum, scale]);
+  }, [pdf, pageNum, scale, windowWidth]);
 
   const changePage = (offset: number) => {
     setPageNum((prev) => Math.min(Math.max(1, prev + offset), numPages));
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+    <div className="fixed inset-0 z-[100] bg-background flex flex-col md:pb-0 pb-20">
       {/* Header */}
       <div className="h-14 border-b flex items-center justify-between px-4 bg-card shrink-0">
         <div className="flex items-center gap-3 overflow-hidden">
@@ -94,45 +123,59 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="h-8 w-8">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setScale(s => Math.max(0.5, s - 0.2))} 
+            className="h-8 w-8"
+            disabled={window.innerWidth < 768}
+          >
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <span className="text-xs min-w-[40px] text-center">{Math.round(scale * 100)}%</span>
-          <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(3, s + 0.2))} className="h-8 w-8">
+          <span className="text-xs min-w-[40px] text-center hidden md:inline">
+            {Math.round(scale * 100)}%
+          </span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setScale(s => Math.min(3, s + 0.2))} 
+            className="h-8 w-8"
+            disabled={window.innerWidth < 768}
+          >
             <ZoomIn className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto bg-muted/30 p-4 flex justify-center items-start">
+      <div className="flex-1 overflow-auto bg-muted/30 p-2 md:p-4 flex justify-center items-start">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Carregando livro...</p>
           </div>
         ) : (
-          <div className="shadow-2xl bg-white">
-            <canvas ref={canvasRef} />
+          <div className="shadow-2xl bg-white max-w-full">
+            <canvas ref={canvasRef} className="max-w-full h-auto" />
           </div>
         )}
       </div>
 
       {/* Footer / Controls */}
       {!loading && (
-        <div className="h-14 border-t flex items-center justify-center gap-4 px-4 bg-card shrink-0">
+        <div className="h-14 border-t flex items-center justify-center gap-2 md:gap-4 px-4 bg-card shrink-0 flex-wrap">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => changePage(-1)} 
             disabled={pageNum <= 1 || rendering}
-            className="rounded-xl"
+            className="rounded-xl text-xs md:text-sm"
           >
             <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
           </Button>
           
-          <span className="text-sm font-medium">
-            Página {pageNum} de {numPages}
+          <span className="text-xs md:text-sm font-medium whitespace-nowrap">
+            {pageNum}/{numPages}
           </span>
 
           <Button 
@@ -140,7 +183,7 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
             size="sm" 
             onClick={() => changePage(1)} 
             disabled={pageNum >= numPages || rendering}
-            className="rounded-xl"
+            className="rounded-xl text-xs md:text-sm"
           >
             Próxima <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
