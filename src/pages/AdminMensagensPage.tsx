@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { MessageSquare, Send, Loader2, Search, User, ArrowLeft, Plus, Headphones } from "lucide-react";
+import { MessageSquare, Send, Loader2, Search, User, ArrowLeft, Plus, Headphones, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
+import { fetchAdminUsers } from "@/lib/admin-api";
 
 interface Conversation {
   id: string;
@@ -65,6 +66,7 @@ const AdminMensagensPage = () => {
   const [showNewChat, setShowNewChat] = useState(false);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [userSearch, setUserSearch] = useState("");
+  const [userSearching, setUserSearching] = useState(false);
   const [newChatSubject, setNewChatSubject] = useState("");
   const [newChatMessage, setNewChatMessage] = useState("");
   const [creatingSending, setCreatingSending] = useState(false);
@@ -90,17 +92,6 @@ const AdminMensagensPage = () => {
     if (!isAdmin) return;
     setLoading(true);
 
-    const { data: { session } } = await supabase.auth.getSession();
-    let emailMap: Record<string, string> = {};
-    if (session) {
-      try {
-        const res = await supabase.functions.invoke("admin-users", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        if (res.data?.emailMap) emailMap = res.data.emailMap;
-      } catch {}
-    }
-
     const [msgsRes, profilesRes] = await Promise.all([
       (supabase.from("support_messages") as any)
         .select("*")
@@ -115,16 +106,13 @@ const AdminMensagensPage = () => {
     const convos: Conversation[] = (msgsRes.data ?? []).map((m: any) => ({
       ...m,
       user_nome: nameMap[m.user_id] || "Desconhecido",
-      user_email: emailMap[m.user_id] || "",
     }));
 
     setConversations(convos);
     setLoading(false);
 
-    // Update selectedUserGroup if it exists (keep it in sync)
     setSelectedUserGroup(prev => {
       if (!prev) {
-        // Auto-select from URL param on first load
         const convoId = searchParams.get("conversa");
         if (convoId) {
           const target = convos.find(c => c.id === convoId);
@@ -144,7 +132,6 @@ const AdminMensagensPage = () => {
         }
         return null;
       }
-      // Update the existing selected group with fresh data
       const userConvos = convos.filter(c => c.user_id === prev.user_id);
       if (userConvos.length === 0) return prev;
       return {
@@ -160,7 +147,6 @@ const AdminMensagensPage = () => {
 
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
 
-  // Realtime for new conversations
   useEffect(() => {
     const channel = supabase
       .channel("admin-support-convos")
@@ -171,7 +157,6 @@ const AdminMensagensPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [fetchConversations]);
 
-  // Fetch all chat messages for a user (across all their conversations)
   const fetchUserMessages = useCallback(async (userGroup: UserGroup) => {
     setChatLoading(true);
     const convoIds = userGroup.conversations.map(c => c.id);
@@ -182,7 +167,6 @@ const AdminMensagensPage = () => {
 
     const dbMessages = (data ?? []) as ChatMsg[];
 
-    // Fallback: include initial support_messages.mensagem when it was never copied to chat_messages
     const initialMessages: ChatMsg[] = userGroup.conversations
       .filter((convo) => {
         const initialContent = (convo.mensagem || "").trim();
@@ -217,7 +201,6 @@ const AdminMensagensPage = () => {
     }
   }, [selectedUserGroup, fetchUserMessages]);
 
-  // Realtime for chat messages (listen to all convos of selected user)
   useEffect(() => {
     if (!selectedUserGroup) return;
     const channels = selectedUserGroup.conversations.map(c =>
@@ -287,31 +270,32 @@ const AdminMensagensPage = () => {
     setSending(false);
   };
 
-  // New conversation
-  const fetchUsers = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+  const handleUserSearch = async (query: string) => {
+    setUserSearch(query);
+    if (query.length < 3) {
+      setUsers([]);
+      return;
+    }
+    setUserSearching(true);
     try {
-      const res = await supabase.functions.invoke("admin-users", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      if (res.data?.users) {
-        const mapped = (res.data.users as any[]).map(u => ({
-          id: u.id,
-          nome: u.nome || "Sem nome",
-          email: u.email || "",
-          telefone: u.telefone || "",
-        }));
-        setUsers(mapped);
-      }
-    } catch {}
+      const res = await fetchAdminUsers(1, 10, query);
+      setUsers(res.users.map(u => ({
+        id: u.id,
+        nome: u.nome || "Sem nome",
+        email: u.email,
+        telefone: u.telefone
+      })));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUserSearching(false);
+    }
   };
 
   const handleStartConversation = async (userId: string) => {
     if (!newChatSubject.trim() || !newChatMessage.trim() || !adminId) return;
     setCreatingSending(true);
 
-    // Create the conversation
     const { data: convo, error } = await (supabase.from("support_messages") as any)
       .insert({
         user_id: userId,
@@ -323,14 +307,12 @@ const AdminMensagensPage = () => {
       .single();
 
     if (!error && convo) {
-      // Add admin's first message to chat_messages
       await (supabase.from("chat_messages") as any).insert({
         conversation_id: convo.id,
         sender_id: adminId,
         content: newChatMessage.trim(),
       });
 
-      // Notify user
       await (supabase.from("notifications") as any).insert({
         user_id: userId,
         titulo: "Nova mensagem do suporte",
@@ -369,23 +351,12 @@ const AdminMensagensPage = () => {
     return new Date(msgs[index].created_at).toDateString() !== new Date(msgs[index - 1].created_at).toDateString();
   };
 
-  const formatConvoTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    if (date.toDateString() === today.toDateString()) {
-      return date.toLocaleTimeString("pt-AO", { hour: "2-digit", minute: "2-digit" });
-    }
-    return date.toLocaleDateString("pt-AO", { day: "2-digit", month: "short" });
-  };
-
-  // Group conversations by user
   const userGroups: UserGroup[] = (() => {
     const grouped: Record<string, Conversation[]> = {};
     const filtered = conversations.filter(c =>
       !searchQuery || 
       c.assunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.user_nome || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.user_email || "").toLowerCase().includes(searchQuery.toLowerCase())
+      (c.user_nome || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
     filtered.forEach(c => {
       if (!grouped[c.user_id]) grouped[c.user_id] = [];
@@ -394,20 +365,12 @@ const AdminMensagensPage = () => {
     return Object.entries(grouped).map(([uid, convos]) => ({
       user_id: uid,
       user_nome: convos[0].user_nome || "Desconhecido",
-      user_email: convos[0].user_email || "",
+      user_email: "", // Not available in the simple group
       conversations: convos,
       latest_update: convos[0].atualizado_em,
       has_open: convos.some(c => c.estado === "aberto"),
     })).sort((a, b) => new Date(b.latest_update).getTime() - new Date(a.latest_update).getTime());
   })();
-
-  const filteredUsers = users.filter(u => {
-    if (!userSearch) return true;
-    const q = userSearch.toLowerCase();
-    return u.nome.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.telefone.toLowerCase().includes(q);
-  });
 
   if (isLoadingAdmin || !isAdmin) {
     return (
@@ -418,240 +381,260 @@ const AdminMensagensPage = () => {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3rem)] overflow-hidden rounded-xl border border-border bg-card">
-      {/* Left: Conversation List */}
-      <div className={`${mobileShowChat ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 lg:w-96 border-r border-border`}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            <h1 className="text-sm font-bold text-foreground">Mensagens</h1>
-            {conversations.filter(c => c.estado === "aberto").length > 0 && (
-              <Badge className="bg-destructive/15 text-destructive text-[10px] px-1.5">
-                {conversations.filter(c => c.estado === "aberto").length}
-              </Badge>
-            )}
-          </div>
-          <Dialog open={showNewChat} onOpenChange={(open) => {
-            setShowNewChat(open);
-            if (open) fetchUsers();
-          }}>
-            <DialogTrigger asChild>
-              <Button size="icon" variant="ghost" className="h-8 w-8">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nova Conversa</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <Input
-                  placeholder="Pesquisar por nome, email ou telefone..."
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                />
-                <ScrollArea className="h-40 border rounded-lg">
-                  {filteredUsers.map(u => (
-                    <button
-                      key={u.id}
-                      className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-0"
-                      onClick={() => setUserSearch(u.email)}
-                    >
-                      <p className="text-sm font-medium text-foreground">{u.nome}</p>
-                      <p className="text-xs text-muted-foreground">{u.email}{u.telefone ? ` · ${u.telefone}` : ""}</p>
-                    </button>
-                  ))}
-                </ScrollArea>
-                <Input
-                  placeholder="Assunto..."
-                  value={newChatSubject}
-                  onChange={(e) => setNewChatSubject(e.target.value)}
-                />
-                <Input
-                  placeholder="Mensagem inicial..."
-                  value={newChatMessage}
-                  onChange={(e) => setNewChatMessage(e.target.value)}
-                />
-                <Button
-                  className="w-full"
-                  disabled={creatingSending || !newChatSubject.trim() || !newChatMessage.trim()}
-                  onClick={() => {
-                    const target = users.find(u => u.email === userSearch);
-                    if (target) handleStartConversation(target.id);
-                    else toast({ title: "Seleccione um utilizador", variant: "destructive" });
-                  }}
-                >
-                  {creatingSending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                  Iniciar Conversa
+    <div className="flex h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-hidden bg-background">
+      {/* Sidebar - User Groups List */}
+      <div className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-border bg-card ${mobileShowChat ? "hidden md:flex" : "flex"}`}>
+        <div className="p-4 border-b border-border space-y-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <Headphones className="h-5 w-5 text-primary" />
+              Suporte
+            </h1>
+            <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
+              <DialogTrigger asChild>
+                <Button size="icon" variant="ghost" className="rounded-full" onClick={fetchUsers}>
+                  <Plus className="h-5 w-5" />
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Search */}
-        <div className="px-3 py-2 border-b border-border">
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Nova Conversa</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Procurar utilizador..."
+                      value={userSearch}
+                      onChange={(e) => handleUserSearch(e.target.value)}
+                      className="pl-9"
+                    />
+                    {userSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                  </div>
+                  {users.length > 0 && (
+                    <ScrollArea className="h-40 border rounded-md">
+                      {users.map(u => (
+                        <button
+                          key={u.id}
+                          onClick={() => { setUserSearch(u.nome + " (" + u.email + ")"); setUsers([]); handleStartConversation(u.id); }}
+                          className="w-full text-left px-3 py-2 hover:bg-muted text-sm border-b last:border-0"
+                        >
+                          <p className="font-medium">{u.nome}</p>
+                          <p className="text-xs text-muted-foreground">{u.email}</p>
+                        </button>
+                      ))}
+                    </ScrollArea>
+                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Assunto</label>
+                    <Input
+                      placeholder="Ex: Atualização de Plano"
+                      value={newChatSubject}
+                      onChange={(e) => setNewChatSubject(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Mensagem Inicial</label>
+                    <Input
+                      placeholder="Escreva a sua mensagem..."
+                      value={newChatMessage}
+                      onChange={(e) => setNewChatMessage(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Pesquisar conversas..."
+              placeholder="Procurar conversas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-8 text-xs bg-muted/50 border-none"
+              className="pl-9 bg-muted/50 border-none h-10"
             />
           </div>
         </div>
 
-        {/* Conversations */}
         <ScrollArea className="flex-1">
           {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
+            <div className="p-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : userGroups.length === 0 ? (
-            <div className="px-4 py-10 text-center text-xs text-muted-foreground">
-              Nenhuma conversa encontrada
-            </div>
+            <div className="p-8 text-center text-muted-foreground">Nenhuma conversa encontrada.</div>
           ) : (
-            userGroups.map(group => (
-              <button
-                key={group.user_id}
-                onClick={() => handleSelectUser(group)}
-                className={`w-full text-left flex items-start gap-3 px-4 py-3 border-b border-border/50 transition-colors hover:bg-muted/50 ${
-                  selectedUserGroup?.user_id === group.user_id ? "bg-primary/5" : ""
-                }`}
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 shrink-0 mt-0.5">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <p className="text-sm font-medium text-foreground truncate">{group.user_nome}</p>
-                    <span className="text-[10px] text-muted-foreground shrink-0">{formatConvoTime(group.latest_update)}</span>
+            <div className="divide-y divide-border/50">
+              {userGroups.map((group) => (
+                <button
+                  key={group.user_id}
+                  onClick={() => handleSelectUser(group)}
+                  className={`w-full text-left p-4 transition-colors hover:bg-muted/50 relative ${
+                    selectedUserGroup?.user_id === group.user_id ? "bg-primary/5" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <h3 className="font-semibold text-sm truncate">{group.user_nome}</h3>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatTime(group.latest_update)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate mb-1">
+                        {group.conversations[0].assunto}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        {group.has_open && (
+                          <Badge className="bg-emerald-500/10 text-emerald-600 border-none text-[10px] h-4 px-1.5">Aberto</Badge>
+                        )}
+                        <Badge variant="outline" className="text-[10px] h-4 px-1.5">{group.conversations.length} {group.conversations.length === 1 ? "conversa" : "conversas"}</Badge>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {group.conversations.length} conversa{group.conversations.length > 1 ? "s" : ""} · {group.conversations[0]?.assunto}
-                  </p>
-                  <div className="flex items-center justify-between gap-1 mt-0.5">
-                    <p className="text-xs text-muted-foreground truncate">{group.user_email}</p>
-                    {group.has_open && (
-                      <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold px-1 shrink-0">!</span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))
+                  {selectedUserGroup?.user_id === group.user_id && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
           )}
         </ScrollArea>
       </div>
 
-      {/* Right: Chat Area */}
-      <div className={`${!mobileShowChat ? "hidden md:flex" : "flex"} flex-col flex-1`}>
+      {/* Chat Area */}
+      <div className={`flex-1 flex flex-col bg-muted/20 ${!mobileShowChat ? "hidden md:flex" : "flex"}`}>
         {selectedUserGroup ? (
           <>
             {/* Chat Header */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-primary/5 shrink-0">
-              <button
-                className="md:hidden p-1 rounded hover:bg-muted"
-                onClick={() => { setMobileShowChat(false); setSelectedUserGroup(null); setSelectedConvo(null); }}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
-                <User className="h-5 w-5 text-primary" />
+            <div className="p-4 bg-card border-b border-border flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  onClick={() => setMobileShowChat(false)}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-sm">{selectedUserGroup.user_nome}</h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">{selectedUserGroup.user_id}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-foreground">{selectedUserGroup.user_nome}</p>
-                <p className="text-xs text-muted-foreground truncate">{selectedUserGroup.user_email}</p>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={selectedConvo?.id}
+                  onValueChange={(id) => {
+                    const c = selectedUserGroup.conversations.find(x => x.id === id);
+                    if (c) setSelectedConvo(c);
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-xs min-w-[150px] bg-muted/50 border-none">
+                    <SelectValue placeholder="Escolher conversa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedUserGroup.conversations.map(c => (
+                      <SelectItem key={c.id} value={c.id} className="text-xs">
+                        {c.assunto} ({c.estado})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              {selectedUserGroup.has_open && (
-                <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300">Aberto</Badge>
-              )}
             </div>
 
-            {/* Messages */}
-            <div
-              className="flex-1 overflow-y-auto px-3 py-4 space-y-1"
-              style={{
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-              }}
-            >
-              {chatLoading ? (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : chatMessages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                  <p className="text-xs text-muted-foreground">Nenhuma mensagem ainda. Envie a primeira!</p>
-                </div>
-              ) : (
-                <AnimatePresence initial={false}>
-                  {chatMessages.map((msg, index) => {
-                    const isAdmin = msg.sender_id === adminId;
-                    const prevMsg = index > 0 ? chatMessages[index - 1] : null;
-                    const sameSenderAsPrev = prevMsg && prevMsg.sender_id === msg.sender_id && !shouldShowDateSeparator(chatMessages, index);
+            {/* Messages Area */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-6 max-w-4xl mx-auto">
+                {chatLoading ? (
+                  <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                ) : chatMessages.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground text-sm">Nenhuma mensagem nesta conversa.</div>
+                ) : (
+                  chatMessages.map((msg, i) => {
+                    const isAdminMsg = msg.sender_id === adminId;
                     return (
                       <div key={msg.id}>
-                        {shouldShowDateSeparator(chatMessages, index) && (
-                          <div className="flex justify-center my-3">
-                            <span className="text-[10px] bg-card/80 backdrop-blur-sm text-muted-foreground px-3 py-1 rounded-full shadow-sm border border-border/50">
+                        {shouldShowDateSeparator(chatMessages, i) && (
+                          <div className="flex justify-center my-4">
+                            <span className="text-[10px] bg-muted px-2 py-1 rounded-full text-muted-foreground uppercase tracking-wider font-medium">
                               {formatDateSeparator(msg.created_at)}
                             </span>
                           </div>
                         )}
-                        <motion.div
-                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ duration: 0.2 }}
-                          className={`flex ${sameSenderAsPrev ? "mb-0.5" : "mb-1.5"} ${isAdmin ? "justify-end" : "justify-start"}`}
-                        >
-                          <div className={`relative max-w-[80%] sm:max-w-[70%] px-3 py-2 rounded-2xl shadow-sm ${
-                            isAdmin
-                              ? "bg-primary text-primary-foreground rounded-br-md"
-                              : "bg-card text-card-foreground border border-border/50 rounded-bl-md"
-                          }`}>
-                            {!isAdmin && !sameSenderAsPrev && (
-                              <p className="text-[10px] font-bold text-primary mb-0.5">{selectedUserGroup?.user_nome}</p>
-                            )}
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
-                            <p className={`text-[10px] mt-1 text-right ${isAdmin ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                              {formatTime(msg.created_at)}
-                              {isAdmin && <span className="ml-1">✓✓</span>}
-                            </p>
+                        <div className={`flex ${isAdminMsg ? "justify-end" : "justify-start"} group`}>
+                          <div className={`max-w-[85%] md:max-w-[70%] space-y-1`}>
+                            <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
+                              isAdminMsg 
+                                ? "bg-primary text-primary-foreground rounded-tr-none" 
+                                : "bg-card border border-border rounded-tl-none"
+                            }`}>
+                              <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                            </div>
+                            <div className={`flex items-center gap-2 px-1 ${isAdminMsg ? "justify-end" : "justify-start"}`}>
+                              <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                                {formatTime(msg.created_at)}
+                              </span>
+                            </div>
                           </div>
-                        </motion.div>
+                        </div>
                       </div>
                     );
-                  })}
-                </AnimatePresence>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
 
-            {/* Input */}
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2 px-3 py-2.5 bg-card border-t border-border shrink-0">
-              <Input
-                placeholder="Digite uma mensagem..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 rounded-full bg-muted/50 border-none text-sm h-10 px-4"
-                disabled={sending}
-              />
-              <Button type="submit" size="icon" disabled={sending || !newMessage.trim()} className="rounded-full h-10 w-10 shrink-0">
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
-            </form>
+            {/* Input Area */}
+            <div className="p-4 bg-card border-t border-border shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+              <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex items-end gap-2">
+                <div className="flex-1 bg-muted/50 rounded-2xl px-4 py-2 flex items-end min-h-[44px]">
+                  <textarea
+                    className="w-full bg-transparent border-none focus:ring-0 text-sm py-1.5 resize-none max-h-32"
+                    placeholder="Escreva a sua resposta..."
+                    rows={1}
+                    value={newMessage}
+                    onChange={(e) => {
+                      setNewMessage(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e);
+                      }
+                    }}
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  size="icon" 
+                  className="rounded-full h-11 w-11 shrink-0 shadow-md"
+                  disabled={!newMessage.trim() || sending}
+                >
+                  {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                </Button>
+              </form>
+            </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center px-6">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Headphones className="h-10 w-10 text-primary/40" />
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 text-center space-y-4">
+            <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+              <MessageSquare className="h-10 w-10" />
             </div>
-            <p className="text-sm font-medium text-foreground mb-1">Mensagens de Suporte</p>
-            <p className="text-xs text-muted-foreground max-w-xs">
-              Seleccione uma conversa ou inicie uma nova para comunicar com os utilizadores.
-            </p>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Seleccione uma conversa</h2>
+              <p className="text-sm max-w-xs mx-auto">Escolha um utilizador na lista lateral para ver o histórico de mensagens e responder ao suporte.</p>
+            </div>
           </div>
         )}
       </div>

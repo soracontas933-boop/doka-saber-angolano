@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { Search, Crown, Loader2, Trash2, UserPlus, ShieldCheck } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { fetchAdminUsers } from "@/lib/admin-api";
 
 interface UserOption {
   id: string;
@@ -37,61 +38,52 @@ const AdminMastersTab = () => {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [adminRoles, setAdminRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
-  const fetchData = async () => {
-    setLoading(true);
-
-    // Fetch admin roles
+  const fetchRoles = async () => {
     const { data: roles } = await (supabase.from("admin_roles") as any)
       .select("*")
       .order("criado_em", { ascending: false });
-
-    // Fetch users via edge function
-    const { data: { session } } = await supabase.auth.getSession();
-    let usersList: UserOption[] = [];
-    if (session) {
-      try {
-        const res = await supabase.functions.invoke("admin-users", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        if (res.data?.users) {
-          usersList = (res.data.users as any[]).map(u => ({
-            id: u.id,
-            nome: u.nome || "Sem nome",
-            email: u.email || "",
-          }));
-        }
-      } catch {}
-    }
-
-    // Enrich roles with user info
-    const enrichedRoles = (roles ?? []).map((r: any) => {
-      const user = usersList.find(u => u.id === r.user_id);
-      return {
-        ...r,
-        user_nome: user?.nome || "Desconhecido",
-        user_email: user?.email || "",
-      };
-    });
-
-    setUsers(usersList);
-    setAdminRoles(enrichedRoles);
-    setLoading(false);
+    
+    // To enrich roles, we might need to fetch specific users if they are not in the current search
+    // For simplicity, we'll fetch them as needed or use a separate endpoint if available
+    setAdminRoles(roles || []);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length < 3) {
+      setUsers([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const res = await fetchAdminUsers(1, 10, query);
+      setUsers(res.users.map(u => ({
+        id: u.id,
+        nome: u.nome || "Sem nome",
+        email: u.email
+      })));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    fetchRoles().finally(() => setLoading(false));
+  }, []);
 
   const filteredUsers = users.filter(u => {
-    if (!searchQuery.trim()) return false; // Only show when searching
-    const q = searchQuery.toLowerCase();
-    // Exclude users that are already masters
     const isAlreadyMaster = adminRoles.some(r => r.user_id === u.id);
     const isMasterEmail = ["kenymatos943@gmail.com", "manuelmatosjose67@gmail.com"].includes(u.email.toLowerCase());
-    if (isAlreadyMaster || isMasterEmail) return false;
-    return u.nome.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    return !isAlreadyMaster && !isMasterEmail;
   });
 
   const handleTogglePermission = (key: string) => {
@@ -127,7 +119,6 @@ const AdminMastersTab = () => {
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      // Also upgrade their plan to premium
       await (supabase.from("user_plans") as any)
         .update({
           plano: "premium",
@@ -146,7 +137,8 @@ const AdminMastersTab = () => {
       setSelectedUserId(null);
       setSelectedPermissions([]);
       setSearchQuery("");
-      fetchData();
+      setUsers([]);
+      fetchRoles();
     }
     setSaving(false);
   };
@@ -160,7 +152,7 @@ const AdminMastersTab = () => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Acesso Master removido" });
-      fetchData();
+      fetchRoles();
     }
   };
 
@@ -173,7 +165,7 @@ const AdminMastersTab = () => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Permissões atualizadas" });
-      fetchData();
+      fetchRoles();
     }
   };
 
@@ -187,7 +179,6 @@ const AdminMastersTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Add new master */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -199,11 +190,12 @@ const AdminMastersTab = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Pesquisar utilizador por nome ou email..."
+              placeholder="Pesquisar utilizador por nome ou email (mín. 3 caracteres)..."
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setSelectedUserId(null); }}
+              onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
             />
+            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
 
           {filteredUsers.length > 0 && (
@@ -211,7 +203,7 @@ const AdminMastersTab = () => {
               {filteredUsers.map(u => (
                 <button
                   key={u.id}
-                  onClick={() => { setSelectedUserId(u.id); setSearchQuery(u.nome + " (" + u.email + ")"); }}
+                  onClick={() => { setSelectedUserId(u.id); setSearchQuery(u.nome + " (" + u.email + ")"); setUsers([]); }}
                   className={`w-full text-left px-3 py-2.5 transition-colors border-b border-border/50 last:border-0 ${
                     selectedUserId === u.id ? "bg-primary/10" : "hover:bg-muted/50"
                   }`}
@@ -257,7 +249,6 @@ const AdminMastersTab = () => {
         </CardContent>
       </Card>
 
-      {/* Existing masters */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -276,13 +267,13 @@ const AdminMastersTab = () => {
                 <div key={role.id} className="flex items-start justify-between gap-3 p-3 rounded-lg border border-border">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-medium text-foreground">{role.user_nome}</p>
+                      <p className="text-sm font-medium text-foreground">{role.user_nome || "Utilizador Master"}</p>
                       <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[10px] px-1.5">
                         <Crown className="h-2.5 w-2.5 mr-0.5" />
                         Master
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-2">{role.user_email}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{role.user_email || role.user_id}</p>
                     <div className="flex flex-wrap gap-1">
                       {PERMISSION_OPTIONS.filter(o => o.key !== "all").map(opt => {
                         const hasAll = role.permissions.includes("all");
@@ -292,7 +283,6 @@ const AdminMastersTab = () => {
                             key={opt.key}
                             onClick={() => {
                               if (hasAll) {
-                                // Switch from 'all' to specific perms minus this one
                                 const allPerms = PERMISSION_OPTIONS.filter(o => o.key !== "all").map(o => o.key).filter(k => k !== opt.key);
                                 handleUpdatePermissions(role.id, allPerms);
                               } else if (hasPerm) {

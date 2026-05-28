@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { fetchAdminUsers } from "@/lib/admin-api";
 
 interface GlobalFlag {
   feature_key: string;
@@ -77,11 +78,8 @@ const AdminFeaturesTab = () => {
     if (!q) return;
     setSearching(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "search", query: q },
-      });
-      if (error) throw error;
-      const list: UserRow[] = (data?.users || []).map((u: any) => ({
+      const res = await fetchAdminUsers(1, 10, q);
+      const list: UserRow[] = (res.users || []).map((u: any) => ({
         id: u.id,
         email: u.email,
         nome: u.nome,
@@ -89,18 +87,8 @@ const AdminFeaturesTab = () => {
       setUsers(list);
       if (list.length === 0) toast.info("Nenhum utilizador encontrado");
     } catch (e: any) {
-      // Fallback: pesquisa por nome em profiles
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, nome")
-        .ilike("nome", `%${q}%`)
-        .limit(20);
-      const list: UserRow[] = (data || []).map((p: any) => ({
-        id: p.id,
-        nome: p.nome,
-      }));
-      setUsers(list);
-      if (list.length === 0) toast.error("Não foi possível pesquisar utilizadores");
+      console.error(e);
+      toast.error("Erro ao pesquisar utilizadores");
     } finally {
       setSearching(false);
     }

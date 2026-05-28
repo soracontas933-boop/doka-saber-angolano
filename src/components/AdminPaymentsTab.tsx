@@ -24,6 +24,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield, ShoppingCart } from "lucide-react";
+import { fetchAdminUsers } from "@/lib/admin-api";
 
 interface PaymentRequest {
   id: string;
@@ -95,7 +96,6 @@ const AdminPaymentsTab = () => {
   const fetchPayments = useCallback(async () => {
     setLoading(true);
 
-    // Fetch payments
     const { data: paymentsData } = await (supabase.from("payment_requests") as any)
       .select("*")
       .order("criado_em", { ascending: false });
@@ -105,29 +105,30 @@ const AdminPaymentsTab = () => {
       return;
     }
 
-    // Fetch user names from profiles
     const userIds = [...new Set(paymentsData.map((p: any) => p.user_id))];
-    const { data: profiles } = await (supabase.from("profiles") as any)
-      .select("id, nome")
-      .in("id", userIds);
-
-    // Fetch emails via edge function
+    
+    // Fetch profiles and emails for these specific users
     let emailMap: Record<string, string> = {};
+    let nameMap: Record<string, string> = {};
+    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const res = await supabase.functions.invoke("admin-users", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        if (res.data?.emailMap) emailMap = res.data.emailMap;
-      }
-    } catch {}
-
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.nome]));
+      const res = await fetchAdminUsers(1, 100, "", userIds.join(","));
+      res.users.forEach(u => {
+        emailMap[u.id] = u.email;
+        nameMap[u.id] = u.nome;
+      });
+    } catch (err) {
+      console.error(err);
+      // Fallback to profiles table if function fails
+      const { data: profiles } = await (supabase.from("profiles") as any)
+        .select("id, nome")
+        .in("id", userIds);
+      profiles?.forEach((p: any) => { nameMap[p.id] = p.nome; });
+    }
 
     const enriched: PaymentRequest[] = paymentsData.map((p: any) => ({
       ...p,
-      user_nome: profileMap.get(p.user_id) || "Sem nome",
+      user_nome: nameMap[p.user_id] || "Sem nome",
       user_email: emailMap[p.user_id] || p.email_confirmacao,
     }));
 
@@ -136,7 +137,6 @@ const AdminPaymentsTab = () => {
   }, []);
 
   const fetchActiveCheckouts = useCallback(async () => {
-    // Count checkout sessions created in the last 30 minutes with status 'active'
     const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { count } = await (supabase.from("checkout_sessions") as any)
       .select("*", { count: "exact", head: true })
@@ -150,7 +150,6 @@ const AdminPaymentsTab = () => {
     fetchSettings();
     fetchActiveCheckouts();
 
-    // Realtime subscription for checkout sessions
     const channel = supabase
       .channel("checkout-sessions-admin")
       .on(
@@ -186,7 +185,6 @@ const AdminPaymentsTab = () => {
     setProcessing(payment.id);
     try {
       if (action === "aprovar") {
-        // 1. Update payment status
         await (supabase.from("payment_requests") as any)
           .update({
             estado: "aprovado",
@@ -194,7 +192,6 @@ const AdminPaymentsTab = () => {
           })
           .eq("id", payment.id);
 
-        // 2. Update user plan with new limits
         const planKey = payment.plano as PlanKey;
         const config = PLAN_CONFIGS[planKey];
         if (config) {
@@ -211,12 +208,11 @@ const AdminPaymentsTab = () => {
               suporte_prioritario: config.suporte_prioritario,
               pago_em: new Date().toISOString(),
               atualizado_em: new Date().toISOString(),
-              periodo_inicio: new Date().toISOString(), // Reset billing period
+              periodo_inicio: new Date().toISOString(),
             })
             .eq("user_id", payment.user_id);
         }
 
-        // 3. Send notification to user
         await (supabase.from("notifications") as any).insert({
           user_id: payment.user_id,
           titulo: "Plano Activado! 🎉",
@@ -224,7 +220,6 @@ const AdminPaymentsTab = () => {
           tipo: "sucesso",
         });
 
-        // 4. Register billing record (revenue)
         const planPrice = config ? config.preco : payment.valor;
         await (supabase.from("billing_records") as any).insert({
           tipo: "entrada",
@@ -237,7 +232,6 @@ const AdminPaymentsTab = () => {
 
         toast({ title: "Pagamento aprovado e plano actualizado!" });
       } else {
-        // Reject
         await (supabase.from("payment_requests") as any)
           .update({
             estado: "rejeitado",
@@ -245,7 +239,6 @@ const AdminPaymentsTab = () => {
           })
           .eq("id", payment.id);
 
-        // Notify user
         await (supabase.from("notifications") as any).insert({
           user_id: payment.user_id,
           titulo: "Pagamento não aprovado",
@@ -326,7 +319,6 @@ const AdminPaymentsTab = () => {
     setSavingLinks(true);
     const linkKeys = ["link_basico", "link_intermedio", "link_profissional", "link_premium"];
     for (const key of linkKeys) {
-      // Try update first, if no row exists, insert
       const { data } = await (supabase.from("payment_settings") as any)
         .update({ valor: paymentLinks[key] || "", atualizado_em: new Date().toISOString() })
         .eq("chave", key)
@@ -396,215 +388,168 @@ const AdminPaymentsTab = () => {
               </div>
               <div className="space-y-2">
                 <Label className="text-xs flex items-center gap-1"><Smartphone className="h-3 w-3" /> Multicaixa Express</Label>
-                <Input value={multicaixaNumero} onChange={(e) => setMulticaixaNumero(e.target.value)} placeholder="923 ..." />
+                <Input value={multicaixaNumero} onChange={(e) => setMulticaixaNumero(e.target.value)} placeholder="9..." />
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-muted-foreground mb-0.5">IBAN - {ibanBanco}</p>
-                <p className="font-mono font-medium text-foreground">{iban}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Titular: {ibanTitular}</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-semibold">IBAN</p>
+                <p className="text-sm font-medium truncate">{iban || "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1"><Smartphone className="h-3 w-3" /> Multicaixa Express</p>
-                <p className="font-mono font-medium text-foreground">{multicaixaNumero}</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-semibold">Banco</p>
+                <p className="text-sm font-medium">{ibanBanco || "—"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase font-semibold">Titular</p>
+                <p className="text-sm font-medium truncate">{ibanTitular || "—"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase font-semibold">Express</p>
+                <p className="text-sm font-medium">{multicaixaNumero || "—"}</p>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Payment Links Card (Automatic Payments) */}
+      {/* Automatic Payment Links Card */}
       <Card className="border-primary/20">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Link2 className="h-4 w-4 text-primary" />
             Links de Pagamento Automático
           </CardTitle>
-          {!editingLinks ? (
-            <Button variant="outline" size="sm" onClick={() => setEditingLinks(true)} className="gap-1">
-              <Pencil className="h-3.5 w-3.5" />
-              Editar
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => { setEditingLinks(false); fetchSettings(); }}>
-                Cancelar
-              </Button>
-              <Button size="sm" onClick={handleSaveLinks} disabled={savingLinks} className="gap-1">
-                <Save className="h-3.5 w-3.5" />
-                {savingLinks ? "Salvando..." : "Salvar"}
-              </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{activeCheckouts} Activos</span>
             </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {settingsLoading ? (
-            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
-          ) : editingLinks ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {(["basico", "intermedio", "profissional", "premium"] as const).map((plan) => (
-                <div key={plan} className="space-y-2">
-                  <Label className="text-xs">{PLAN_LABELS[plan]}</Label>
-                  <Input
-                    value={paymentLinks[`link_${plan}`] || ""}
-                    onChange={(e) => setPaymentLinks(prev => ({ ...prev, [`link_${plan}`]: e.target.value }))}
-                    placeholder="https://..."
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              {(["basico", "intermedio", "profissional", "premium"] as const).map((plan) => (
-                <div key={plan}>
-                  <p className="text-xs text-muted-foreground mb-0.5">{PLAN_LABELS[plan]}</p>
-                  {paymentLinks[`link_${plan}`] ? (
-                    <a href={paymentLinks[`link_${plan}`]} target="_blank" rel="noopener noreferrer" className="text-primary text-xs font-medium truncate block hover:underline">
-                      {paymentLinks[`link_${plan}`]}
-                    </a>
-                  ) : (
-                    <p className="text-xs text-muted-foreground/50 italic">Não configurado</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Webhook Configuration Card */}
-      <Card className="border-primary/20">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Webhook className="h-4 w-4 text-primary" />
-            Webhook de Pagamento
-          </CardTitle>
-          {!editingWebhook ? (
-            <Button variant="outline" size="sm" onClick={() => setEditingWebhook(true)} className="gap-1">
-              <Pencil className="h-3.5 w-3.5" />
-              Editar
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => { setEditingWebhook(false); fetchSettings(); }}>
-                Cancelar
+            {!editingLinks ? (
+              <Button variant="outline" size="sm" onClick={() => setEditingLinks(true)} className="gap-1">
+                <Pencil className="h-3.5 w-3.5" />
+                Editar Links
               </Button>
-              <Button size="sm" onClick={handleSaveWebhookSecret} disabled={savingWebhook} className="gap-1">
-                <Save className="h-3.5 w-3.5" />
-                {savingWebhook ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Webhook URL */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">URL do Webhook (cole no provedor de pagamento)</Label>
-            <div className="flex items-center gap-2">
-              <Input value={webhookUrl} readOnly className="font-mono text-xs bg-muted" />
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1"
-                onClick={() => {
-                  navigator.clipboard.writeText(webhookUrl);
-                  toast({ title: "URL copiado!" });
-                }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Copiar
-              </Button>
-            </div>
-          </div>
-
-          {/* Webhook Secret */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Shield className="h-3 w-3" />
-              Secret (enviado no header X-Webhook-Secret)
-            </Label>
-            {editingWebhook ? (
-              <Input
-                value={webhookSecret}
-                onChange={(e) => setWebhookSecret(e.target.value)}
-                placeholder="Insira um secret seguro..."
-                type="password"
-              />
             ) : (
-              <p className="font-mono text-sm text-foreground">
-                {webhookSecret ? "••••••••••••" : <span className="text-muted-foreground/50 italic">Não configurado</span>}
-              </p>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => { setEditingLinks(false); fetchSettings(); }}>
+                  Cancelar
+                </Button>
+                <Button size="sm" onClick={handleSaveLinks} disabled={savingLinks} className="gap-1">
+                  <Save className="h-3.5 w-3.5" />
+                  {savingLinks ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
             )}
           </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {Object.keys(paymentLinks).map((key) => (
+              <div key={key} className="space-y-1.5">
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground">
+                  {key.replace("link_", "Plano ")}
+                </Label>
+                {editingLinks ? (
+                  <Input 
+                    value={paymentLinks[key]} 
+                    onChange={(e) => setPaymentLinks({...paymentLinks, [key]: e.target.value})}
+                    placeholder="https://pay.example.com/..."
+                    className="h-8 text-xs"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-muted/30 rounded px-2 py-1.5 text-xs truncate font-mono">
+                      {paymentLinks[key] || "Link não configurado"}
+                    </div>
+                    {paymentLinks[key] && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                        navigator.clipboard.writeText(paymentLinks[key]);
+                        toast({ title: "Link copiado!" });
+                      }}>
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
 
-          {/* Payload example */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Exemplo de payload (JSON)</Label>
-            <pre className="bg-muted rounded-md p-3 text-xs font-mono overflow-x-auto">
-{`{
-  "event": "compra_realizada",
-  "plan": "basico",
-  "email": "usuario@email.com",
-  "amount": 546,
-  "reference": "REF123"
-}`}
-            </pre>
-            <p className="text-[11px] text-muted-foreground">
-              Eventos: <code className="bg-muted px-1 rounded">compra_realizada</code> (auto), <code className="bg-muted px-1 rounded">compra_abandonada</code>, <code className="bg-muted px-1 rounded">pagamento_referencia</code>, <code className="bg-muted px-1 rounded">pagamento_express</code>, <code className="bg-muted px-1 rounded">pagamento_internacional</code>, <code className="bg-muted px-1 rounded">compra_iniciada</code> (notificam admin)
-            </p>
+          <div className="pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold flex items-center gap-2 uppercase tracking-wider">
+                <Webhook className="h-3.5 w-3.5 text-primary" />
+                Configuração do Webhook
+              </h4>
+              {!editingWebhook ? (
+                <Button variant="ghost" size="sm" onClick={() => setEditingWebhook(true)} className="h-7 text-[10px]">
+                  Editar Secret
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setEditingWebhook(false)} className="h-7 text-[10px]">Cancelar</Button>
+                  <Button size="sm" onClick={handleSaveWebhookSecret} disabled={savingWebhook} className="h-7 text-[10px]">Salvar</Button>
+                </div>
+              )}
+            </div>
+            
+            <div className="grid gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] text-muted-foreground">URL do Webhook (Copie para o seu provedor de pagamentos)</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-primary/5 border border-primary/10 rounded px-3 py-2 text-xs font-mono break-all text-primary">
+                    {webhookUrl}
+                  </div>
+                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => {
+                    navigator.clipboard.writeText(webhookUrl);
+                    toast({ title: "URL copiada!" });
+                  }}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Shield className="h-3 w-3" /> Secret do Webhook (Para validação de assinatura)
+                </Label>
+                {editingWebhook ? (
+                  <Input 
+                    type="password"
+                    value={webhookSecret} 
+                    onChange={(e) => setWebhookSecret(e.target.value)}
+                    placeholder="whsec_..."
+                    className="h-9 text-xs"
+                  />
+                ) : (
+                  <div className="bg-muted/30 rounded px-3 py-2 text-xs font-mono">
+                    {webhookSecret ? "••••••••••••••••" : "Não configurado"}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-blue-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <ShoppingCart className="h-3.5 w-3.5" />
-              No Checkout
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-blue-600">{activeCheckouts}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Últimos 30 min</p>
-          </CardContent>
-        </Card>
-        <Card className="border-amber-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Pendentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-emerald-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Aprovados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-emerald-600">
-              {payments.filter((p) => p.estado === "aprovado").length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-destructive/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Rejeitados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-destructive">
-              {payments.filter((p) => p.estado === "rejeitado").length}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Table */}
+      {/* Payments List Card */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Pedidos de Pagamento</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4 text-primary" />
+            Pedidos de Pagamento Manual
+            {pendingCount > 0 && (
+              <Badge variant="destructive" className="ml-2 animate-pulse">
+                {pendingCount} Pendentes
+              </Badge>
+            )}
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={fetchPayments}>Actualizar Lista</Button>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -614,51 +559,50 @@ const AdminPaymentsTab = () => {
                   <TableHead>Utilizador</TableHead>
                   <TableHead>Plano</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead>Estado</TableHead>
                   <TableHead>Data</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {payments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      Nenhum pedido de pagamento.
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Nenhum pedido de pagamento encontrado.
                     </TableCell>
                   </TableRow>
                 ) : (
                   payments.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
-                        <div>
-                          <p className="font-medium text-sm">{p.user_nome}</p>
-                          <p className="text-xs text-muted-foreground">{p.user_email}</p>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{p.user_nome}</span>
+                          <span className="text-[10px] text-muted-foreground">{p.user_email}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{PLAN_LABELS[p.plano] || p.plano}</Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{p.valor} Kz</TableCell>
-                      <TableCell>
-                        <Badge className={ESTADO_COLORS[p.estado] || ""} variant="secondary">
-                          {p.estado.charAt(0).toUpperCase() + p.estado.slice(1)}
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold">
+                          {PLAN_LABELS[p.plano] || p.plano}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-sm font-medium">
+                        {p.valor.toLocaleString()} Kz
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {new Date(p.criado_em).toLocaleDateString("pt-AO", {
-                          day: "2-digit",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {new Date(p.criado_em).toLocaleDateString("pt-AO")}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
+                        <Badge className={`${ESTADO_COLORS[p.estado] || "bg-muted"} border-none text-[10px] uppercase font-bold`}>
+                          {p.estado}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
                           {p.ficheiro_url && (
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
+                              size="icon"
+                              className="h-8 w-8"
                               onClick={() => viewReceipt(p.ficheiro_url!)}
                             >
                               <Eye className="h-4 w-4" />
@@ -668,21 +612,19 @@ const AdminPaymentsTab = () => {
                             <>
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700"
-                                onClick={() =>
-                                  setConfirmDialog({ open: true, action: "aprovar", payment: p })
-                                }
+                                size="icon"
+                                className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                onClick={() => setConfirmDialog({ open: true, action: "aprovar", payment: p })}
+                                disabled={processing === p.id}
                               >
-                                <CheckCircle className="h-4 w-4" />
+                                {processing === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
                               </Button>
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                onClick={() =>
-                                  setConfirmDialog({ open: true, action: "rejeitar", payment: p })
-                                }
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                onClick={() => setConfirmDialog({ open: true, action: "rejeitar", payment: p })}
+                                disabled={processing === p.id}
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>
@@ -699,29 +641,26 @@ const AdminPaymentsTab = () => {
         </CardContent>
       </Card>
 
-      {/* Confirm Dialog */}
-      <Dialog
-        open={confirmDialog.open}
-        onOpenChange={(o) => setConfirmDialog((prev) => ({ ...prev, open: o }))}
-      >
-        <DialogContent className="sm:max-w-sm">
+      {/* Confirm Action Dialog */}
+      <Dialog open={confirmDialog.open} onOpenChange={(o) => !o && setConfirmDialog({ ...confirmDialog, open: false })}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {confirmDialog.action === "aprovar"
-                ? "Aprovar Pagamento?"
-                : "Rejeitar Pagamento?"}
+              {confirmDialog.action === "aprovar" ? "Aprovar Pagamento" : "Rejeitar Pagamento"}
             </DialogTitle>
             <DialogDescription>
-              {confirmDialog.action === "aprovar"
-                ? `O plano ${PLAN_LABELS[confirmDialog.payment?.plano || ""] || ""} será activado e o utilizador será notificado.`
-                : "O utilizador será notificado que o pagamento não foi aprovado."}
+              Tem a certeza que deseja {confirmDialog.action} o pagamento de{" "}
+              <strong>{confirmDialog.payment?.valor.toLocaleString()} Kz</strong> de{" "}
+              <strong>{confirmDialog.payment?.user_nome}</strong>?
+              {confirmDialog.action === "aprovar" && (
+                <p className="mt-2 text-emerald-600 font-medium">
+                  Isto irá activar o plano {PLAN_LABELS[confirmDialog.payment?.plano || ""] || confirmDialog.payment?.plano} e notificar o utilizador.
+                </p>
+              )}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDialog({ open: false, action: "aprovar", payment: null })}
-            >
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={() => setConfirmDialog({ ...confirmDialog, open: false })}>
               Cancelar
             </Button>
             <Button
@@ -729,40 +668,37 @@ const AdminPaymentsTab = () => {
               onClick={() => handleAction(confirmDialog.action)}
               disabled={!!processing}
             >
-              {processing ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : null}
-              {confirmDialog.action === "aprovar" ? "Aprovar" : "Rejeitar"}
+              {processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirmar {confirmDialog.action === "aprovar" ? "Aprovação" : "Rejeição"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Receipt Preview Dialog */}
+      {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-w-3xl h-[80vh]">
           <DialogHeader>
-            <DialogTitle>Comprovativo</DialogTitle>
+            <DialogTitle>Comprovativo de Pagamento</DialogTitle>
           </DialogHeader>
-          {previewUrl && (
-            <div className="space-y-3">
-              {previewUrl.match(/\.(jpg|jpeg|png)/) ? (
-                <img src={previewUrl} alt="Comprovativo" className="w-full rounded-lg" />
-              ) : (
-                <div className="flex flex-col items-center gap-3 py-6">
-                  <p className="text-sm text-muted-foreground">
-                    Ficheiro não pode ser pré-visualizado aqui.
-                  </p>
-                  <Button asChild variant="outline">
-                    <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Abrir ficheiro
-                    </a>
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="flex-1 overflow-auto bg-muted/30 rounded-lg flex items-center justify-center p-4">
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="Comprovativo"
+                className="max-w-full max-h-full object-contain shadow-lg"
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="gap-2" asChild>
+              <a href={previewUrl || "#"} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4" />
+                Ver em nova aba
+              </a>
+            </Button>
+            <Button onClick={() => setPreviewOpen(false)}>Fechar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
