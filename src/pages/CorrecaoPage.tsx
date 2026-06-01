@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import DOMPurify from "dompurify";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -488,14 +489,19 @@ const CorrecaoPage = () => {
             <Card className="p-6 prose prose-sm dark:prose-invert max-w-none overflow-auto max-h-[600px]">
               <div
                 dangerouslySetInnerHTML={{
-                  __html: (vista === "original" ? extractedContent : correctedMarkdown)
-                    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-                    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-                    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-                    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-                    .replace(/^- (.+)$/gm, "<li>$1</li>")
-                    .replace(/\n\n/g, "<br/><br/>")
-                    .replace(/\n/g, "<br/>"),
+                  __html: DOMPurify.sanitize(
+                    (vista === "original" ? extractedContent : correctedMarkdown)
+                      .replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+                      .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+                      .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+                      .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+                      .replace(/^- (.+)$/gm, "<li>$1</li>")
+                      .replace(/\n\n/g, "<br/><br/>")
+                      .replace(/\n/g, "<br/>")
+                  ),
                 }}
               />
             </Card>

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchAdminUsers } from "@/lib/admin-api";
 
@@ -392,7 +393,7 @@ const AdminMensagensPage = () => {
             </h1>
             <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
               <DialogTrigger asChild>
-                <Button size="icon" variant="ghost" className="rounded-full" onClick={fetchUsers}>
+                <Button size="icon" variant="ghost" className="rounded-full" onClick={() => setUsers([])}>
                   <Plus className="h-5 w-5" />
                 </Button>
               </DialogTrigger>
