@@ -207,8 +207,10 @@ Deno.serve(async (req) => {
 
     const storedSecret = secretRow?.valor || "";
 
-    if (storedSecret && webhookSecret !== storedSecret) {
-      console.log("Webhook rejected: invalid secret");
+    // Require a configured secret at all times. If none is set, or it doesn't
+    // match, reject the request so the endpoint can never be triggered anonymously.
+    if (!storedSecret || webhookSecret !== storedSecret) {
+      console.log("Webhook rejected: missing or invalid secret");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
