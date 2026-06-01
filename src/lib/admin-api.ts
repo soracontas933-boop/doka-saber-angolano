@@ -16,17 +16,19 @@ export interface AdminUsersResponse {
   };
 }
 
-export async function fetchAdminUsers(page = 1, perPage = 100, search = ""): Promise<AdminUsersResponse> {
+export async function fetchAdminUsers(page = 1, perPage = 100, search = "", userIds = ""): Promise<AdminUsersResponse> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error("Não autenticado");
 
-  const { data, error } = await supabase.functions.invoke("admin-users", {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    perPage: perPage.toString(),
+  });
+  if (search) params.set("search", search);
+  if (userIds) params.set("userIds", userIds);
+
+  const { data, error } = await supabase.functions.invoke(`admin-users?${params.toString()}`, {
     headers: { Authorization: `Bearer ${session.access_token}` },
-    query: {
-      page: page.toString(),
-      perPage: perPage.toString(),
-      search: search
-    }
   });
 
   if (error) throw error;
