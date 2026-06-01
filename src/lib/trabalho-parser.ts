@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+
 export interface TrabalhoSection {
   tipo: "indice" | "introducao" | "capitulo" | "conclusao" | "bibliografia";
   titulo: string;
@@ -135,7 +137,14 @@ export function parseTrabalhoSections(markdown: string): TrabalhoSection[] {
  * Renders markdown content to HTML for display inside A4 pages.
  */
 export function renderMarkdownToHTML(content: string): string {
-  let html = content
+  // Escape any raw HTML in the AI-generated content first so that markup such as
+  // <script> or <img onerror=...> from prompt injection cannot be rendered.
+  const escaped = content
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  let html = escaped
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")
     .replace(/^####\s+(.+)$/gm, '<h4 class="secao-subtitulo-4">$1</h4>')
