@@ -7,10 +7,12 @@ const ADMIN_EMAILS = [
   "manuelmatosjose67@gmail.com",
 ];
 
-const isMasterEmail = (email?: string | null) =>
-  ADMIN_EMAILS.some(
-    (admin) => (email ?? "").trim().toLowerCase() === admin.toLowerCase()
+const isMasterEmail = (email?: string | null) => {
+  const cleanEmail = (email ?? "").trim().toLowerCase();
+  return ADMIN_EMAILS.some(
+    (admin) => cleanEmail === admin.toLowerCase()
   );
+};
 
 export const useAdmin = () => {
   const { user, isLoading: authLoading } = useAuth();

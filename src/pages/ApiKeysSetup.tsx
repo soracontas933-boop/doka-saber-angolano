@@ -290,13 +290,19 @@ export default function ApiKeysSetup() {
 
       if (deleteError) {
         console.error("Erro ao deletar chaves antigas:", deleteError);
-        throw new Error(`Erro ao limpar chaves antigas: ${deleteError.message}. Verifique se você tem permissão de Admin.`);
+        const errorMsg = deleteError.code === '42501' 
+          ? "Permissão negada (RLS). Sua conta pode não estar devidamente configurada como Admin Master no banco de dados."
+          : deleteError.message;
+        throw new Error(`Erro ao limpar chaves antigas: ${errorMsg}`);
       }
 
       const { error: insertError } = await supabase.from("api_keys").insert(entries);
       if (insertError) {
         console.error("Erro ao inserir novas chaves:", insertError);
-        throw new Error(`Erro ao salvar novas chaves: ${insertError.message}. Verifique se você tem permissão de Admin.`);
+        const errorMsg = insertError.code === '42501'
+          ? "Permissão negada (RLS). Verifique as políticas de segurança da tabela api_keys."
+          : insertError.message;
+        throw new Error(`Erro ao salvar novas chaves: ${errorMsg}`);
       }
 
       toast({
