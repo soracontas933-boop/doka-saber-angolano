@@ -16,10 +16,10 @@ const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 
 const CALL_TIMEOUT_MS = 30_000;
-const DEFAULT_COOLDOWN_MS = 2 * 60 * 1000; // 2 min para erros genéricos
-const SHORT_COOLDOWN_MS = 30 * 1000; // 30 seg para rate limit simples
-const LONG_COOLDOWN_MS = 30 * 60 * 1000; // 30 min para erros de modelo/serviço
-const VERY_LONG_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 horas para suspensão/quota finalizada
+const DEFAULT_COOLDOWN_MS = 45 * 1000; // 45 seg para erros genéricos (reduzido de 2 min)
+const SHORT_COOLDOWN_MS = 15 * 1000; // 15 seg para rate limit simples (reduzido de 30 seg)
+const LONG_COOLDOWN_MS = 10 * 60 * 1000; // 10 min para erros de modelo/serviço (reduzido de 30 min)
+const VERY_LONG_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 horas para suspensão/quota finalizada (reduzido de 6 horas)
 
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
@@ -202,29 +202,44 @@ async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
 
   const now = Date.now();
   const keys: Record<string, KeyEntry[]> = {};
+  const keysInCooldown: KeyEntry[] = [];
   let skipped = 0;
 
   for (const row of data) {
+    const entry: KeyEntry = {
+      id: row.id,
+      chave: row.chave,
+      prioridade: row.prioridade ?? 0,
+      ultimo_erro: row.ultimo_erro,
+    };
+
     if (row.ultimo_erro) {
       const cooldownUntil = new Date(row.ultimo_erro).getTime();
       if (Number.isFinite(cooldownUntil) && cooldownUntil > now) {
         skipped++;
+        keysInCooldown.push(entry);
         continue;
       }
     }
 
     if (!keys[row.servico]) keys[row.servico] = [];
-    keys[row.servico].push({
-      id: row.id,
-      chave: row.chave,
-      prioridade: row.prioridade ?? 0,
-      ultimo_erro: row.ultimo_erro,
-    });
+    keys[row.servico].push(entry);
   }
 
   const total = data.length;
   const healthy = total - skipped;
   console.log(`Chaves: ${healthy}/${total} saudáveis (${skipped} em cooldown)`);
+
+  // CRÍTICO: Se TODAS as chaves estão em cooldown, retornar as de cooldown como fallback
+  // Isto evita o erro "Nenhuma API disponível" quando há chaves mas todas estão em cooldown
+  if (Object.keys(keys).length === 0 && keysInCooldown.length > 0) {
+    console.warn(`⚠️ FALLBACK: Todas as chaves estão em cooldown. Usando fallback com ${keysInCooldown.length} chaves em cooldown.`);
+    for (const entry of keysInCooldown) {
+      if (!keys[entry.servico]) keys[entry.servico] = [];
+      keys[entry.servico].push(entry);
+    }
+  }
+
   return keys;
 }
 
@@ -453,7 +468,8 @@ serve(async (req) => {
 
         // Validate non-empty / non-trivial response
         const respText = result?.choices?.[0]?.message?.content || "";
-        if (!respText || respText.trim().length < 50) {
+        // Reduzido de 50 para 20 chars para ser menos rigoroso com respostas curtas
+        if (!respText || respText.trim().length < 20) {
           throw new Error(`${svc} returned empty/short response (${respText.length} chars)`);
         }
 

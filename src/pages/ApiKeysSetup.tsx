@@ -346,7 +346,7 @@ export default function ApiKeysSetup() {
         }
       }
 
-      // 3. Atualizar chaves existentes (COM id)
+      // 3. Atualizar chaves existentes (COM id) E LIMPAR COOLDOWNS
       if (existingKeys.length > 0) {
         const updateEntries = existingKeys.map((row, index) => ({
           id: row.id,
@@ -364,6 +364,7 @@ export default function ApiKeysSetup() {
               chave: entry.chave,
               ativo: entry.ativo,
               prioridade: entry.prioridade,
+              ultimo_erro: null, // CRÍTICO: Limpar cooldown ao salvar
             })
             .eq("id", entry.id);
 
@@ -375,6 +376,17 @@ export default function ApiKeysSetup() {
             throw new Error(errorMsg);
           }
         }
+      }
+
+      // 4. CRÍTICO: Limpar cooldowns de TODAS as chaves ativas (novo salvamento = reset)
+      const { error: clearCooldownError } = await supabase
+        .from("api_keys")
+        .update({ ultimo_erro: null })
+        .eq("ativo", true);
+
+      if (clearCooldownError) {
+        console.warn("Aviso: Não foi possível limpar cooldowns:", clearCooldownError.message);
+        // Não lançar erro aqui, pois as chaves foram salvas com sucesso
       }
 
       toast({
