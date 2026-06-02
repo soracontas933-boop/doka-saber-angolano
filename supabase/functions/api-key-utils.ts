@@ -219,23 +219,27 @@ export function buildOptimizedQueue(
 
   const queue: QueueItem[] = [];
 
-  // Para cada serviço, adiciona no máximo 2 chaves: 1 saudável + 1 fallback
+  // Para cada serviço, adiciona chaves saudáveis para garantir resiliência
+  // Mas limitamos a 3 por serviço para não esgotar tudo se houver um erro sistêmico
   for (const service of services) {
     const serviceKeys = keys[service] || [];
     if (serviceKeys.length === 0) continue;
 
-    // Primeira chave: a melhor disponível (saudável ou que sairá do cooldown mais cedo)
-    const bestKey = selectBestKey(serviceKeys);
-    if (bestKey) {
-      queue.push({ service, keyEntry: bestKey });
+    // Tenta pegar até 3 chaves saudáveis deste serviço
+    const healthyOnes = serviceKeys
+      .filter((k) => !isKeyInCooldown(k))
+      .sort((a, b) => a.prioridade - b.prioridade)
+      .slice(0, 3);
+
+    for (const k of healthyOnes) {
+      queue.push({ service, keyEntry: k });
     }
 
-    // Segunda chave: fallback (a segunda melhor, se diferente da primeira)
-    if (serviceKeys.length > 1) {
-      const otherKeys = serviceKeys.filter((k) => k.id !== bestKey?.id);
-      const secondBestKey = selectBestKey(otherKeys);
-      if (secondBestKey) {
-        queue.push({ service, keyEntry: secondBestKey });
+    // Se não houver nenhuma saudável, pegamos a melhor em cooldown como último recurso
+    if (healthyOnes.length === 0) {
+      const bestCooldown = selectBestKey(serviceKeys);
+      if (bestCooldown) {
+        queue.push({ service, keyEntry: bestCooldown });
       }
     }
   }
