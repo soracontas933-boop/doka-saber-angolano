@@ -283,31 +283,48 @@ export default function ApiKeysSetup() {
         return;
       }
 
-      const { error: deleteError } = await supabase
+      // Identificar chaves que foram removidas da UI para desativá-las ou removê-las
+      const currentKeysIds = keys.map(k => k.id).filter(Boolean);
+      
+      // Marcar como inativas as chaves que não estão mais na lista (soft delete)
+      // ou deletar apenas as que não estão mais presentes
+      const { error: cleanupError } = await supabase
         .from("api_keys")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
+        .update({ ativo: false })
+        .not("id", "in", `(${currentKeysIds.join(',') || '00000000-0000-0000-0000-000000000000'})`);
 
-      if (deleteError) {
-        console.error("Erro ao deletar chaves antigas:", deleteError);
-        const errorMsg = deleteError.code === '42501' 
-          ? "Permissão negada (RLS). Sua conta pode não estar devidamente configurada como Admin Master no banco de dados."
-          : deleteError.message;
-        throw new Error(`Erro ao limpar chaves antigas: ${errorMsg}`);
+      if (cleanupError) {
+        console.error("Erro ao limpar chaves removidas:", cleanupError);
       }
 
-      const { error: insertError } = await supabase.from("api_keys").insert(entries);
-      if (insertError) {
-        console.error("Erro ao inserir novas chaves:", insertError);
-        const errorMsg = insertError.code === '42501'
-          ? "Permissão negada (RLS). Verifique as políticas de segurança da tabela api_keys."
-          : insertError.message;
-        throw new Error(`Erro ao salvar novas chaves: ${errorMsg}`);
+      // Preparar entradas para upsert (preservando IDs se existirem)
+      const upsertEntries = PROVIDERS.flatMap((provider) =>
+        keys
+          .filter((row) => row.servico === provider.key && row.chave?.trim())
+          .map((row, index) => ({
+            ...(row.id ? { id: row.id } : {}),
+            servico: provider.key,
+            chave: row.chave.trim(),
+            ativo: true,
+            prioridade: index,
+          }))
+      );
+
+      const { error: upsertError } = await supabase.from("api_keys").upsert(upsertEntries, {
+        onConflict: 'id'
+      });
+
+      if (upsertError) {
+        console.error("Erro ao salvar chaves:", upsertError);
+        const errorMsg = upsertError.code === '42501'
+          ? "Permissão negada (RLS). Verifique se seu email está na lista de Admin Master ou se as políticas permitem UPSERT."
+          : upsertError.message;
+        throw new Error(`Erro ao salvar chaves: ${errorMsg}`);
       }
 
       toast({
         title: "Chaves salvas!",
-        description: `${entries.length} chave(s) API configurada(s). O fallback automático está activo.`,
+        description: `${upsertEntries.length} chave(s) API configurada(s). O fallback automático está activo.`,
       });
 
       fetchKeys();

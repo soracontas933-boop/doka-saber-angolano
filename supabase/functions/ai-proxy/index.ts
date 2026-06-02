@@ -257,7 +257,14 @@ function getCooldownMs(errorMsg: string) {
     return VERY_LONG_COOLDOWN_MS;
   }
 
-  if (lower.includes("wrong api key") || lower.includes("unauthorized") || /\berror 401\b/i.test(errorMsg)) {
+  if (
+    lower.includes("wrong api key") || 
+    lower.includes("unauthorized") || 
+    lower.includes("suspended") ||
+    lower.includes("permission_denied") ||
+    /\berror 401\b/i.test(errorMsg) ||
+    /\berror 403\b/i.test(errorMsg)
+  ) {
     return VERY_LONG_COOLDOWN_MS;
   }
 
