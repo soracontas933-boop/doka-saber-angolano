@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/hooks/use-admin";
 import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft, ChevronDown, ChevronRight, Minimize2, Maximize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -61,6 +62,19 @@ const getErrorMessage = (error: unknown) => {
 export default function ApiKeysSetup() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isAdmin, isLoading: adminLoading, isAuthReady } = useAdmin();
+
+  useEffect(() => {
+    if (isAuthReady && !adminLoading && !isAdmin) {
+      toast({
+        title: "Acesso negado",
+        description: "Você não tem permissão para acessar esta página.",
+        variant: "destructive",
+      });
+      navigate("/dashboard");
+    }
+  }, [isAdmin, adminLoading, isAuthReady, navigate, toast]);
+
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -290,18 +304,29 @@ export default function ApiKeysSetup() {
         return;
       }
 
-      // Identificar chaves que foram removidas da UI para desativá-las ou removê-las
-      const currentKeysIds = keys.map(k => k.id).filter(Boolean);
+      // Identificar chaves que foram removidas da UI para desativá-las
+      const currentKeysIds = keys.map(k => k.id).filter((id): id is string => !!id);
       
-      // Marcar como inativas as chaves que não estão mais na lista (soft delete)
-      // ou deletar apenas as que não estão mais presentes
-      const { error: cleanupError } = await supabase
-        .from("api_keys")
-        .update({ ativo: false })
-        .not("id", "in", `(${currentKeysIds.join(',') || '00000000-0000-0000-0000-000000000000'})`);
+      // Marcar como inativas as chaves que não estão mais na lista
+      if (currentKeysIds.length > 0) {
+        const { error: cleanupError } = await supabase
+          .from("api_keys")
+          .update({ ativo: false })
+          .not("id", "in", `(${currentKeysIds.join(',')})`);
 
-      if (cleanupError) {
-        console.error("Erro ao limpar chaves removidas:", cleanupError);
+        if (cleanupError) {
+          console.error("Erro ao limpar chaves removidas:", cleanupError);
+        }
+      } else {
+        // Se não houver IDs, desativar todas as chaves
+        const { error: cleanupError } = await supabase
+          .from("api_keys")
+          .update({ ativo: false })
+          .eq("ativo", true);
+          
+        if (cleanupError) {
+          console.error("Erro ao limpar todas as chaves:", cleanupError);
+        }
       }
 
       // Preparar entradas para upsert (preservando IDs se existirem)
@@ -372,13 +397,15 @@ export default function ApiKeysSetup() {
   const getFilledCount = (providerKey: ProviderKey) => keys.filter((row) => row.servico === providerKey && row.chave?.trim()).length;
   const totalActiveKeys = keys.filter((row) => row.chave?.trim()).length;
 
-  if (fetching) {
+  if (fetching || adminLoading || !isAuthReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <p className="text-sm text-muted-foreground">Carregando chaves...</p>
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
     );
   }
+
+  if (!isAdmin) return null;
 
   return (
     <>

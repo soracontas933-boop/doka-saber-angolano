@@ -51,8 +51,8 @@ const App = () => (
             <Route path="/" element={<RootRedirect />} />
             <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
             <Route element={<ProtectedRoute />}>
+              <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/home" element={<UserHomePage />} />
