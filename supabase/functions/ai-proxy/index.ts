@@ -16,10 +16,10 @@ const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 
 const CALL_TIMEOUT_MS = 30_000;
-const DEFAULT_COOLDOWN_MS = 60 * 1000;
-const SHORT_COOLDOWN_MS = 30 * 1000;
-const LONG_COOLDOWN_MS = 60 * 60 * 1000;
-const VERY_LONG_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+const DEFAULT_COOLDOWN_MS = 2 * 60 * 1000; // 2 min para erros genéricos
+const SHORT_COOLDOWN_MS = 30 * 1000; // 30 seg para rate limit simples
+const LONG_COOLDOWN_MS = 30 * 60 * 1000; // 30 min para erros de modelo/serviço
+const VERY_LONG_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 horas para suspensão/quota finalizada
 
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
@@ -278,14 +278,14 @@ function getCooldownMs(errorMsg: string) {
   }
 
   if (/\berror 429\b/i.test(errorMsg) || lower.includes("rate limit")) {
-    return DEFAULT_COOLDOWN_MS;
+    return SHORT_COOLDOWN_MS; // Rate limit é temporário, tenta de novo rápido
   }
 
   if (/\berror 5\d\d\b/i.test(errorMsg)) {
-    return 2 * 60 * 1000;
+    return DEFAULT_COOLDOWN_MS; // Erro de servidor, espera 2 min
   }
 
-  return 5 * 60 * 1000;
+  return DEFAULT_COOLDOWN_MS;
 }
 
 function formatCooldown(ms: number) {

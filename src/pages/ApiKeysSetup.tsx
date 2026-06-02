@@ -68,6 +68,13 @@ export default function ApiKeysSetup() {
   const [collapsedProviders, setCollapsedProviders] = useState<Set<string>>(new Set());
   const [bulkProvider, setBulkProvider] = useState<ProviderConfig | null>(null);
   const [bulkValue, setBulkValue] = useState("");
+  const [now, setNow] = useState(Date.now());
+
+  // Atualizar o tempo real a cada segundo para o cooldown
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const toggleProviderCollapsed = (providerKey: string) => {
     setCollapsedProviders((current) => {
@@ -345,14 +352,20 @@ export default function ApiKeysSetup() {
     return Number.isFinite(timestamp) ? timestamp : 0;
   };
 
-  const isExhausted = (row: KeyRow) => getCooldownUntil(row) > Date.now();
+  const isExhausted = (row: KeyRow) => getCooldownUntil(row) > now;
 
   const getCooldownRemaining = (row: KeyRow) => {
-    const remaining = getCooldownUntil(row) - Date.now();
+    const remaining = getCooldownUntil(row) - now;
     if (remaining <= 0) return "0s";
     if (remaining < 60_000) return `${Math.ceil(remaining / 1000)}s`;
-    if (remaining < 60 * 60 * 1000) return `${Math.ceil(remaining / 60_000)}min`;
-    return `${Math.ceil(remaining / (60 * 60 * 1000))}h`;
+    if (remaining < 60 * 60 * 1000) {
+      const mins = Math.floor(remaining / 60_000);
+      const secs = Math.ceil((remaining % 60_000) / 1000);
+      return `${mins}m ${secs}s`;
+    }
+    const hours = Math.floor(remaining / (60 * 60 * 1000));
+    const mins = Math.ceil((remaining % (60 * 60 * 1000)) / 60_000);
+    return `${hours}h ${mins}m`;
   };
 
   const getProviderKeys = (providerKey: ProviderKey) => keys.filter((row) => row.servico === providerKey);
