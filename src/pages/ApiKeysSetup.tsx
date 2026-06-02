@@ -307,26 +307,22 @@ export default function ApiKeysSetup() {
       // Identificar chaves que foram removidas da UI para desativá-las
       const currentKeysIds = keys.map(k => k.id).filter((id): id is string => !!id);
       
-      // Marcar como inativas as chaves que não estão mais na lista
-      if (currentKeysIds.length > 0) {
-        const { error: cleanupError } = await supabase
-          .from("api_keys")
-          .update({ ativo: false })
-          .not("id", "in", `(${currentKeysIds.join(',')})`);
-
-        if (cleanupError) {
-          console.error("Erro ao limpar chaves removidas:", cleanupError);
+      try {
+        // Marcar como inativas as chaves que não estão mais na lista
+        if (currentKeysIds.length > 0) {
+          await supabase
+            .from("api_keys")
+            .update({ ativo: false })
+            .not("id", "in", `(${currentKeysIds.join(',')})`);
+        } else {
+          // Se não houver IDs, desativar todas as chaves ativas
+          await supabase
+            .from("api_keys")
+            .update({ ativo: false })
+            .eq("ativo", true);
         }
-      } else {
-        // Se não houver IDs, desativar todas as chaves
-        const { error: cleanupError } = await supabase
-          .from("api_keys")
-          .update({ ativo: false })
-          .eq("ativo", true);
-          
-        if (cleanupError) {
-          console.error("Erro ao limpar todas as chaves:", cleanupError);
-        }
+      } catch (cleanupErr) {
+        console.error("Erro não-crítico na limpeza:", cleanupErr);
       }
 
       // Preparar entradas para upsert (preservando IDs se existirem)
