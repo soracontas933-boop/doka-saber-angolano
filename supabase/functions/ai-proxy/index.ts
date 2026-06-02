@@ -1,5 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  KeyEntry,
+  getCooldownMs,
+  formatCooldown,
+  getHealthyKeysByService,
+  buildOptimizedQueue,
+  getKeyHealthStats,
+  isKeyInCooldown,
+} from "../api-key-utils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,10 +25,6 @@ const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 
 const CALL_TIMEOUT_MS = 30_000;
-const DEFAULT_COOLDOWN_MS = 45 * 1000; // 45 seg para erros genéricos (reduzido de 2 min)
-const SHORT_COOLDOWN_MS = 15 * 1000; // 15 seg para rate limit simples (reduzido de 30 seg)
-const LONG_COOLDOWN_MS = 10 * 60 * 1000; // 10 min para erros de modelo/serviço (reduzido de 30 min)
-const VERY_LONG_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 horas para suspensão/quota finalizada (reduzido de 6 horas)
 
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
@@ -171,8 +176,6 @@ async function callMistral(messages: any[], apiKey: string, maxTokens: number, t
 
 // ─── Key management ─────────────────────────────────────────────
 
-interface KeyEntry { id: string; chave: string; prioridade: number; ultimo_erro: string | null; servico: string; }
-
 function createSupabaseAdmin() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -181,7 +184,7 @@ function createSupabaseAdmin() {
   );
 }
 
-async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
+async function getApiKeys(): Promise<KeyEntry[]> {
   const supabase = createSupabaseAdmin();
 
   const { data, error } = await supabase
@@ -192,122 +195,21 @@ async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
 
   if (error) {
     console.error("Erro ao carregar chaves API:", error.message);
-    return {};
+    return [];
   }
 
   if (!data || data.length === 0) {
     console.warn("Nenhuma chave API ativa encontrada.");
-    return {};
+    return [];
   }
 
-  const now = Date.now();
-  const keys: Record<string, KeyEntry[]> = {};
-  const keysInCooldown: KeyEntry[] = [];
-  let skipped = 0;
-
-  for (const row of data) {
-    const entry: KeyEntry = {
-      id: row.id,
-      chave: row.chave,
-      prioridade: row.prioridade ?? 0,
-      ultimo_erro: row.ultimo_erro,
-      servico: row.servico,
-    };
-
-    if (row.ultimo_erro) {
-      const cooldownUntil = new Date(row.ultimo_erro).getTime();
-      if (Number.isFinite(cooldownUntil) && cooldownUntil > now) {
-        skipped++;
-        keysInCooldown.push(entry);
-        continue;
-      }
-    }
-
-    if (!keys[row.servico]) keys[row.servico] = [];
-    keys[row.servico].push(entry);
-  }
-
-  const total = data.length;
-  const healthy = total - skipped;
-  console.log(`Chaves: ${healthy}/${total} saudáveis (${skipped} em cooldown)`);
-
-  // CRÍTICO: Se TODAS as chaves estão em cooldown, retornar as de cooldown como fallback
-  // Isto evita o erro "Nenhuma API disponível" quando há chaves mas todas estão em cooldown
-  if (Object.keys(keys).length === 0 && keysInCooldown.length > 0) {
-    console.warn(`⚠️ FALLBACK: Todas as chaves estão em cooldown. Usando fallback com ${keysInCooldown.length} chaves em cooldown.`);
-    for (const entry of keysInCooldown) {
-      if (!keys[entry.servico]) keys[entry.servico] = [];
-      keys[entry.servico].push(entry);
-    }
-  }
-
-  return keys;
-}
-
-function parseRetryDelayMs(errorMsg: string) {
-  const matchers = [
-    /retry(?:ing)?\s+(?:in|after)\s+([\d.]+)s/i,
-    /retrydelay\s*[:=]\s*"?([\d.]+)s/i,
-    /try again in\s+([\d.]+)s/i,
-    /please retry in\s+([\d.]+)s/i,
-  ];
-
-  for (const pattern of matchers) {
-    const match = errorMsg.match(pattern);
-    if (match) {
-      const seconds = Number(match[1]);
-      if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
-    }
-  }
-
-  return null;
-}
-
-function getCooldownMs(errorMsg: string) {
-  const lower = errorMsg.toLowerCase();
-
-  if (
-    (lower.includes("quota exceeded") || lower.includes("billing details")) &&
-    (lower.includes("limit: 0") || lower.includes("perday") || lower.includes("free tier"))
-  ) {
-    return VERY_LONG_COOLDOWN_MS;
-  }
-
-  if (
-    lower.includes("wrong api key") || 
-    lower.includes("unauthorized") || 
-    lower.includes("suspended") ||
-    lower.includes("permission_denied") ||
-    /\berror 401\b/i.test(errorMsg) ||
-    /\berror 403\b/i.test(errorMsg)
-  ) {
-    return VERY_LONG_COOLDOWN_MS;
-  }
-
-  if (lower.includes("no endpoints found") || lower.includes("does not exist") || /\berror 404\b/i.test(errorMsg)) {
-    return LONG_COOLDOWN_MS;
-  }
-
-  const retryDelayMs = parseRetryDelayMs(errorMsg);
-  if (retryDelayMs) {
-    return Math.max(SHORT_COOLDOWN_MS, Math.min(retryDelayMs + 5_000, 15 * 60 * 1000));
-  }
-
-  if (/\berror 429\b/i.test(errorMsg) || lower.includes("rate limit")) {
-    return SHORT_COOLDOWN_MS; // Rate limit é temporário, tenta de novo rápido
-  }
-
-  if (/\berror 5\d\d\b/i.test(errorMsg)) {
-    return DEFAULT_COOLDOWN_MS; // Erro de servidor, espera 2 min
-  }
-
-  return DEFAULT_COOLDOWN_MS;
-}
-
-function formatCooldown(ms: number) {
-  if (ms < 60_000) return `${Math.ceil(ms / 1000)}s`;
-  if (ms < 60 * 60 * 1000) return `${Math.ceil(ms / 60_000)}min`;
-  return `${Math.ceil(ms / (60 * 60 * 1000))}h`;
+  return data.map((row) => ({
+    id: row.id,
+    chave: row.chave,
+    prioridade: row.prioridade ?? 0,
+    ultimo_erro: row.ultimo_erro,
+    servico: row.servico,
+  }));
 }
 
 async function markKeyExhausted(keyId: string, errorMsg: string) {
@@ -354,51 +256,9 @@ const CALL_FNS: Record<string, CallFn> = {
 const IMAGE_SERVICES = new Set(["gemini"]);
 const SERVICE_ORDER = ["groq", "cerebras", "together", "openrouter", "gemini", "mistral"];
 
-// ─── Interleaved round-robin ────────────────────────────────────
-
-interface KeyAttempt { service: string; keyEntry: KeyEntry; }
-
-function buildInterleavedQueue(
-  keys: Record<string, KeyEntry[]>,
-  hasImages: boolean,
-  preferredService?: string,
-): KeyAttempt[] {
-  const baseServices = hasImages
-    ? SERVICE_ORDER.filter(s => IMAGE_SERVICES.has(s))
-    : [...SERVICE_ORDER];
-
-  const services = preferredService && baseServices.includes(preferredService)
-    ? [preferredService, ...baseServices.filter((service) => service !== preferredService)]
-    : baseServices;
-
-  let maxKeys = 0;
-  for (const svc of services) {
-    const count = keys[svc]?.length || 0;
-    if (count > maxKeys) maxKeys = count;
-  }
-
-  const queue: KeyAttempt[] = [];
-  for (let round = 0; round < maxKeys; round++) {
-    for (const svc of services) {
-      const svcKeys = keys[svc];
-      if (!svcKeys || round >= svcKeys.length) continue;
-      queue.push({ service: svc, keyEntry: svcKeys[round] });
-    }
-  }
-
-  if (queue.length > 1) {
-    const offset = Math.floor(Math.random() * queue.length);
-    return [...queue.slice(offset), ...queue.slice(0, offset)];
-  }
-
-  return queue;
-}
-
 // ─── Language enforcement ────────────────────────────────────────
 
 function enforceLanguage(messages: any[]): any[] {
-  // We no longer globally enforce Angola variant here. 
-  // Language/Context is now managed by the specific module prompts.
   return messages;
 }
 
@@ -438,22 +298,50 @@ serve(async (req) => {
 
     const messages = enforceLanguage(rawMessages);
 
-    const keys = await getApiKeys();
+    const allKeys = await getApiKeys();
+    const now = Date.now();
+    const stats = getKeyHealthStats(allKeys, now);
+
+    console.log(`📊 Saúde das chaves: ${stats.healthy}/${stats.total} saudáveis`);
+    for (const [svc, svcStats] of Object.entries(stats.byService)) {
+      console.log(`  ${svc}: ${svcStats.healthy}/${svcStats.total} saudáveis`);
+    }
+
     const hasImages = messages.some((m: any) =>
       Array.isArray(m.content) && m.content.some((p: any) => p.type === "image_url")
     );
     const preferredService = typeof service === "string" && service.trim() ? service.trim().toLowerCase() : undefined;
 
-    const queue = buildInterleavedQueue(keys, hasImages, preferredService);
+    // Filtra serviços disponíveis baseado no tipo de requisição
+    const availableServices = hasImages
+      ? SERVICE_ORDER.filter(s => IMAGE_SERVICES.has(s))
+      : [...SERVICE_ORDER];
+
+    // Agrupa chaves por serviço (apenas saudáveis)
+    const healthyKeysByService = getHealthyKeysByService(allKeys, now);
+
+    // Constrói fila otimizada: máximo 2 chaves por serviço
+    const queue = buildOptimizedQueue(healthyKeysByService, availableServices, preferredService);
 
     if (queue.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Nenhuma API disponível. Todas as chaves podem estar em cooldown ou sem quota neste momento. Tente novamente em instantes ou adicione novas chaves em /setup-api-keys." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Se nenhuma chave saudável, usa fallback com chaves em cooldown
+      console.warn("⚠️ Nenhuma chave saudável disponível. Tentando com chaves em cooldown...");
+      const allKeysByService: Record<string, KeyEntry[]> = {};
+      for (const key of allKeys) {
+        if (!allKeysByService[key.servico]) allKeysByService[key.servico] = [];
+        allKeysByService[key.servico].push(key);
+      }
+      const fallbackQueue = buildOptimizedQueue(allKeysByService, availableServices, preferredService);
+
+      if (fallbackQueue.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "Nenhuma API disponível. Todas as chaves podem estar em cooldown ou sem quota neste momento. Tente novamente em instantes ou adicione novas chaves em /setup-api-keys." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    console.log(`Fila${preferredService ? ` (${preferredService} preferido)` : ""}: ${queue.map(q => `${q.service}[${q.keyEntry.id.substring(0,4)}]`).join(" → ")}`);
+    console.log(`🔄 Fila${preferredService ? ` (${preferredService} preferido)` : ""}: ${queue.slice(0, 3).map(q => `${q.service}[${q.keyEntry.id.substring(0,4)}]`).join(" → ")}${queue.length > 3 ? "..." : ""}`);
 
     let lastError: Error | null = null;
 
@@ -469,7 +357,6 @@ serve(async (req) => {
 
         // Validate non-empty / non-trivial response
         const respText = result?.choices?.[0]?.message?.content || "";
-        // Reduzido de 50 para 20 chars para ser menos rigoroso com respostas curtas
         if (!respText || respText.trim().length < 20) {
           throw new Error(`${svc} returned empty/short response (${respText.length} chars)`);
         }
@@ -486,7 +373,7 @@ serve(async (req) => {
         console.error(`✗ ${svc} ${keyEntry.id.substring(0, 8)}...: ${error.message.substring(0, 120)}`);
         lastError = error;
 
-        // Mark key as exhausted — cooldown for 15 min
+        // Mark key as exhausted with real cooldown time
         await markKeyExhausted(keyEntry.id, error.message);
         continue;
       }

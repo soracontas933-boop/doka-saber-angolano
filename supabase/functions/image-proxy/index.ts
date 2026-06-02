@@ -1,5 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  KeyEntry,
+  getCooldownMs,
+  formatCooldown,
+  getHealthyKeysByService,
+  buildOptimizedQueue,
+  getKeyHealthStats,
+} from "../api-key-utils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -142,9 +150,7 @@ function getPollinationsUrl(prompt: string, width: number, height: number): stri
   return `${POLLINATIONS_URL}/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true`;
 }
 
-// ─── Key management (same pattern as ai-proxy) ─────────────────
-
-interface KeyEntry { id: string; chave: string; prioridade: number; ultimo_erro: string | null; }
+// ─── Key management (using centralized utils) ──────────────────
 
 function createSupabaseAdmin() {
   return createClient(
@@ -155,8 +161,9 @@ function createSupabaseAdmin() {
 }
 
 const IMAGE_SERVICES = ["stability", "huggingface", "replicate", "segmind", "leonardo", "cloudflare_ai"];
+const SERVICE_ORDER = ["stability", "huggingface", "replicate", "segmind", "leonardo", "cloudflare_ai"];
 
-async function getImageApiKeys(): Promise<Record<string, KeyEntry[]>> {
+async function getImageApiKeys(): Promise<KeyEntry[]> {
   const supabase = createSupabaseAdmin();
   const { data, error } = await supabase
     .from("api_keys")
@@ -165,34 +172,40 @@ async function getImageApiKeys(): Promise<Record<string, KeyEntry[]>> {
     .in("servico", IMAGE_SERVICES)
     .order("prioridade", { ascending: true });
 
-  if (error || !data) return {};
-  const now = Date.now();
-  const keys: Record<string, KeyEntry[]> = {};
-  for (const row of data) {
-    if (row.ultimo_erro) {
-      const cd = new Date(row.ultimo_erro).getTime();
-      if (Number.isFinite(cd) && cd > now) continue;
-    }
-    if (!keys[row.servico]) keys[row.servico] = [];
-    keys[row.servico].push({ id: row.id, chave: row.chave, prioridade: row.prioridade ?? 0, ultimo_erro: row.ultimo_erro });
-  }
-  return keys;
+  if (error || !data) return [];
+  
+  return data.map((row) => ({
+    id: row.id,
+    chave: row.chave,
+    prioridade: row.prioridade ?? 0,
+    ultimo_erro: row.ultimo_erro,
+    servico: row.servico,
+  }));
 }
 
 async function markKeyExhausted(keyId: string, errorMsg: string) {
-  const cooldownMs = 5 * 60 * 1000;
+  const cooldownMs = getCooldownMs(errorMsg);
+  const cooldownUntil = new Date(Date.now() + cooldownMs).toISOString();
+
   try {
     const supabase = createSupabaseAdmin();
-    await supabase.from("api_keys").update({ ultimo_erro: new Date(Date.now() + cooldownMs).toISOString() }).eq("id", keyId);
-    console.log(`⏸ Image key ${keyId.substring(0, 8)}... cooldown: ${errorMsg.substring(0, 80)}`);
-  } catch (e) { console.error("Mark key error:", e); }
+    await supabase
+      .from("api_keys")
+      .update({ ultimo_erro: cooldownUntil })
+      .eq("id", keyId);
+    console.log(`⏸ Image key ${keyId.substring(0, 8)}... em cooldown (${formatCooldown(cooldownMs)}): ${errorMsg.substring(0, 80)}`);
+  } catch (e) {
+    console.error("Mark key error:", e);
+  }
 }
 
 async function clearKeyCooldown(keyId: string) {
   try {
     const supabase = createSupabaseAdmin();
     await supabase.from("api_keys").update({ ultimo_erro: null }).eq("id", keyId);
-  } catch (e) { console.error("Clear cooldown error:", e); }
+  } catch (e) {
+    console.error("Clear cooldown error:", e);
+  }
 }
 
 type ImageCallFn = (prompt: string, key: string, w: number, h: number) => Promise<string>;
@@ -237,48 +250,61 @@ serve(async (req) => {
       });
     }
 
-    const keys = await getImageApiKeys();
+    const allKeys = await getImageApiKeys();
+    const now = Date.now();
+    const stats = getKeyHealthStats(allKeys, now);
 
-    // Build queue: interleaved round-robin
-    const queue: { service: string; key: KeyEntry }[] = [];
-    let maxLen = 0;
-    for (const svc of IMAGE_SERVICES) {
-      const c = keys[svc]?.length || 0;
-      if (c > maxLen) maxLen = c;
+    console.log(`📊 Saúde das chaves de imagem: ${stats.healthy}/${stats.total} saudáveis`);
+    for (const [svc, svcStats] of Object.entries(stats.byService)) {
+      console.log(`  ${svc}: ${svcStats.healthy}/${svcStats.total} saudáveis`);
     }
-    for (let round = 0; round < maxLen; round++) {
-      for (const svc of IMAGE_SERVICES) {
-        if (keys[svc] && round < keys[svc].length) {
-          queue.push({ service: svc, key: keys[svc][round] });
-        }
+
+    // Agrupa chaves por serviço (apenas saudáveis)
+    const healthyKeysByService = getHealthyKeysByService(allKeys, now);
+
+    // Constrói fila otimizada: máximo 2 chaves por serviço
+    const queue = buildOptimizedQueue(healthyKeysByService, SERVICE_ORDER);
+
+    if (queue.length === 0) {
+      // Se nenhuma chave saudável, usa fallback com chaves em cooldown
+      console.warn("⚠️ Nenhuma chave de imagem saudável. Tentando com chaves em cooldown...");
+      const allKeysByService: Record<string, KeyEntry[]> = {};
+      for (const key of allKeys) {
+        if (!allKeysByService[key.servico]) allKeysByService[key.servico] = [];
+        allKeysByService[key.servico].push(key);
+      }
+      const fallbackQueue = buildOptimizedQueue(allKeysByService, SERVICE_ORDER);
+
+      if (fallbackQueue.length === 0) {
+        console.log("→ Pollinations fallback (sem chaves disponíveis)");
+        const pollinationsUrl = getPollinationsUrl(prompt, width, height);
+        return new Response(JSON.stringify({ image_url: pollinationsUrl, service_used: "pollinations" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 
-    // Randomize start
-    if (queue.length > 1) {
-      const offset = Math.floor(Math.random() * queue.length);
-      queue.push(...queue.splice(0, offset));
-    }
-
-    console.log(`Image queue (${queue.length} keys): ${queue.map(q => q.service).join(" → ")} + Pollinations fallback`);
+    console.log(`🔄 Fila de imagens: ${queue.slice(0, 3).map(q => `${q.service}[${q.keyEntry.id.substring(0,4)}]`).join(" → ")}${queue.length > 3 ? "..." : ""}`);
 
     let lastError: Error | null = null;
 
-    for (const { service, key } of queue) {
+    for (const { service, keyEntry } of queue) {
       const callFn = CALL_FNS[service];
       if (!callFn) continue;
+
       try {
-        console.log(`→ ${service} (${key.id.substring(0, 8)}...)`);
-        const imageUrl = await callFn(prompt, key.chave, width, height);
-        await clearKeyCooldown(key.id);
+        console.log(`→ ${service} (${keyEntry.id.substring(0, 8)}...)`);
+        const imageUrl = await callFn(prompt, keyEntry.chave, width, height);
+        await clearKeyCooldown(keyEntry.id);
         console.log(`✓ ${service} OK`);
         return new Response(JSON.stringify({ image_url: imageUrl, service_used: service }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
-      } catch (e: any) {
-        lastError = e instanceof Error ? e : new Error(String(e));
-        console.error(`✗ ${service}: ${lastError.message.substring(0, 120)}`);
-        await markKeyExhausted(key.id, lastError.message);
+      } catch (caughtError: any) {
+        const error = caughtError instanceof Error ? caughtError : new Error(String(caughtError));
+        console.error(`✗ ${service} ${keyEntry.id.substring(0, 8)}...: ${error.message.substring(0, 120)}`);
+        lastError = error;
+        await markKeyExhausted(keyEntry.id, error.message);
       }
     }
 
