@@ -67,6 +67,7 @@ const AdminMensagensPage = () => {
   const [showNewChat, setShowNewChat] = useState(false);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [userSearch, setUserSearch] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userSearching, setUserSearching] = useState(false);
   const [newChatSubject, setNewChatSubject] = useState("");
   const [newChatMessage, setNewChatMessage] = useState("");
@@ -325,6 +326,7 @@ const AdminMensagensPage = () => {
       setNewChatSubject("");
       setNewChatMessage("");
       setUserSearch("");
+      setSelectedUserId(null);
       fetchConversations();
       toast({ title: "Conversa iniciada" });
     } else {
@@ -393,7 +395,7 @@ const AdminMensagensPage = () => {
             </h1>
             <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
               <DialogTrigger asChild>
-                <Button size="icon" variant="ghost" className="rounded-full" onClick={() => setUsers([])}>
+                <Button size="icon" variant="ghost" className="rounded-full" onClick={() => { setUsers([]); setUserSearch(""); setSelectedUserId(null); }}>
                   <Plus className="h-5 w-5" />
                 </Button>
               </DialogTrigger>
@@ -412,12 +414,17 @@ const AdminMensagensPage = () => {
                     />
                     {userSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
                   </div>
+
                   {users.length > 0 && (
                     <ScrollArea className="h-40 border rounded-md">
                       {users.map(u => (
                         <button
                           key={u.id}
-                          onClick={() => { setUserSearch(u.nome + " (" + u.email + ")"); setUsers([]); handleStartConversation(u.id); }}
+                          onClick={() => { 
+                            setUserSearch(u.nome + " (" + u.email + ")"); 
+                            setSelectedUserId(u.id);
+                            setUsers([]); 
+                          }}
                           className="w-full text-left px-3 py-2 hover:bg-muted text-sm border-b last:border-0"
                         >
                           <p className="font-medium">{u.nome}</p>
@@ -426,6 +433,7 @@ const AdminMensagensPage = () => {
                       ))}
                     </ScrollArea>
                   )}
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Assunto</label>
                     <Input
@@ -442,6 +450,18 @@ const AdminMensagensPage = () => {
                       onChange={(e) => setNewChatMessage(e.target.value)}
                     />
                   </div>
+                  
+                  <Button 
+                    className="w-full" 
+                    disabled={creatingSending || !newChatSubject.trim() || !newChatMessage.trim() || !selectedUserId}
+                    onClick={() => selectedUserId && handleStartConversation(selectedUserId)}
+                  >
+                    {creatingSending ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</>
+                    ) : (
+                      <><Send className="h-4 w-4 mr-2" /> Enviar Mensagem</>
+                    )}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
