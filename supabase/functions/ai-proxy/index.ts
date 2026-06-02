@@ -171,7 +171,7 @@ async function callMistral(messages: any[], apiKey: string, maxTokens: number, t
 
 // ─── Key management ─────────────────────────────────────────────
 
-interface KeyEntry { id: string; chave: string; prioridade: number; ultimo_erro: string | null; }
+interface KeyEntry { id: string; chave: string; prioridade: number; ultimo_erro: string | null; servico: string; }
 
 function createSupabaseAdmin() {
   return createClient(
@@ -211,6 +211,7 @@ async function getApiKeys(): Promise<Record<string, KeyEntry[]>> {
       chave: row.chave,
       prioridade: row.prioridade ?? 0,
       ultimo_erro: row.ultimo_erro,
+      servico: row.servico,
     };
 
     if (row.ultimo_erro) {
@@ -351,7 +352,7 @@ const CALL_FNS: Record<string, CallFn> = {
 };
 
 const IMAGE_SERVICES = new Set(["gemini"]);
-const SERVICE_ORDER = ["cerebras", "openrouter", "groq", "gemini", "mistral", "together"];
+const SERVICE_ORDER = ["groq", "cerebras", "together", "openrouter", "gemini", "mistral"];
 
 // ─── Interleaved round-robin ────────────────────────────────────
 
