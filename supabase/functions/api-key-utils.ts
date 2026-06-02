@@ -45,17 +45,19 @@ export function parseRetryDelayMs(errorMsg: string): number | null {
 export function getCooldownMs(errorMsg: string): number {
   const lower = errorMsg.toLowerCase();
 
-  // 1. ERROS PERMANENTES (2 horas) - Chave inválida, suspensão, etc
+  // 1. ERROS PERMANENTES (24 horas) - Chave inválida, suspensão, etc
+  // Aumentado para 24h para evitar tentativas inúteis em chaves mortas
   if (
     lower.includes("wrong api key") ||
     lower.includes("unauthorized") ||
     lower.includes("suspended") ||
     lower.includes("permission_denied") ||
     lower.includes("invalid api key") ||
+    lower.includes("api key not found") ||
     /\berror 401\b/i.test(errorMsg) ||
     /\berror 403\b/i.test(errorMsg)
   ) {
-    return 2 * 60 * 60 * 1000; // 2 horas
+    return 24 * 60 * 60 * 1000; // 24 horas
   }
 
   // 2. QUOTA FINALIZADA - Limite diário/mensal atingido
@@ -63,11 +65,13 @@ export function getCooldownMs(errorMsg: string): number {
     lower.includes("quota exceeded") || 
     lower.includes("billing details") ||
     lower.includes("limit_reached") ||
-    lower.includes("rate_limit_exceeded")
+    lower.includes("rate_limit_exceeded") ||
+    lower.includes("insufficient_quota") ||
+    lower.includes("quota_reached")
   ) {
     // Gemini (Google AI Studio) tem cooldown real de 12 horas para free tier
     if (lower.includes("gemini") || lower.includes("google")) {
-      return 12 * 60 * 60 * 1000; // 12 horas
+      return 12 * 60 * 60 * 1000; // 12 horas (conforme solicitado pelo usuário)
     }
     // Groq, Cerebras e outros costumam ter resets mais rápidos ou diários
     if (lower.includes("groq") || lower.includes("cerebras") || lower.includes("together")) {
@@ -93,13 +97,13 @@ export function getCooldownMs(errorMsg: string): number {
     return Math.max(10 * 1000, Math.min(retryDelayMs + 5_000, 15 * 60 * 1000));
   }
 
-  // 5. RATE LIMIT GENÉRICO (30 segundos) - Retry rápido
-  if (/\berror 429\b/i.test(errorMsg) || lower.includes("rate limit")) {
-    return 30 * 1000; // 30 segundos
+  // 5. RATE LIMIT GENÉRICO (30-60 segundos) - Retry rápido
+  if (/\berror 429\b/i.test(errorMsg) || lower.includes("rate limit") || lower.includes("too many requests")) {
+    return 60 * 1000; // 1 minuto (aumentado de 30s para ser mais conservador)
   }
 
   // 6. ERRO DE SERVIDOR (60 segundos) - Pode ser temporário
-  if (/\berror 5\d\d\b/i.test(errorMsg)) {
+  if (/\berror 5\d\d\b/i.test(errorMsg) || lower.includes("internal server error")) {
     return 60 * 1000; // 1 minuto
   }
 

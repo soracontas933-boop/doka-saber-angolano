@@ -266,19 +266,21 @@ serve(async (req) => {
     const queue = buildOptimizedQueue(healthyKeysByService, SERVICE_ORDER);
 
     if (queue.length === 0) {
-      // Se nenhuma chave saudável, usa fallback com chaves em cooldown
-      console.warn("⚠️ Nenhuma chave de imagem saudável. Tentando com chaves em cooldown...");
-      const allKeysByService: Record<string, KeyEntry[]> = {};
-      for (const key of allKeys) {
-        if (!allKeysByService[key.servico]) allKeysByService[key.servico] = [];
-        allKeysByService[key.servico].push(key);
-      }
-      const fallbackQueue = buildOptimizedQueue(allKeysByService, SERVICE_ORDER);
-      
-      if (fallbackQueue.length > 0) {
-        queue.push(...fallbackQueue);
+      // Se nenhuma chave saudável, tenta apenas a melhor em cooldown se estiver perto de expirar
+      const bestCooldownKey = allKeys
+        .sort((a, b) => {
+          const timeA = getTimeUntilReady(a, now);
+          const timeB = getTimeUntilReady(b, now);
+          return timeA - timeB;
+        })[0];
+
+      const remainingMs = bestCooldownKey ? getTimeUntilReady(bestCooldownKey, now) : Infinity;
+
+      if (bestCooldownKey && remainingMs < 60_000) { // 1 minuto de tolerância para imagem
+        console.warn(`⚠️ Nenhuma chave de imagem saudável. Tentando ${bestCooldownKey.servico} (pronta em ${Math.ceil(remainingMs/1000)}s)...`);
+        queue.push({ service: bestCooldownKey.servico, keyEntry: bestCooldownKey });
       } else {
-        console.log("→ Pollinations fallback (sem chaves disponíveis)");
+        console.log("→ Pollinations fallback (todas as chaves em cooldown)");
         const pollinationsUrl = getPollinationsUrl(prompt, width, height);
         return new Response(JSON.stringify({ image_url: pollinationsUrl, service_used: "pollinations" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

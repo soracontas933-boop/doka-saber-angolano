@@ -83,7 +83,8 @@ async function clearKeyCooldown(keyId: string) {
 
 async function ocrWithGemini(image_base64: string, mime_type: string, apiKey: string, prompt: string): Promise<string> {
   const isPdf = mime_type === "application/pdf" || mime_type.includes("pdf");
-  const model = isPdf ? "gemini-2.5-flash" : "gemini-2.0-flash";
+  // Gemini 1.5 Flash é o modelo mais estável para OCR gratuito
+  const model = "gemini-1.5-flash";
   const body = {
     contents: [{
       role: "user",
@@ -216,8 +217,33 @@ serve(async (req) => {
     }
 
     if (providers.length === 0) {
-      return new Response(JSON.stringify({ error: "Nenhuma chave de OCR disponível. Todas podem estar em cooldown. Tente novamente em alguns minutos ou adicione novas chaves em /setup-api-keys." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // Tenta a melhor em cooldown se estiver quase pronta
+      const bestCooldownKey = allKeys
+        .sort((a, b) => {
+          const timeA = getTimeUntilReady(a, now);
+          const timeB = getTimeUntilReady(b, now);
+          return timeA - timeB;
+        })[0];
+      
+      const remainingMs = bestCooldownKey ? getTimeUntilReady(bestCooldownKey, now) : Infinity;
+      
+      if (bestCooldownKey && remainingMs < 60_000) {
+        console.warn(`⚠️ Nenhuma chave saudável. Tentando ${bestCooldownKey.servico} (pronta em ${Math.ceil(remainingMs/1000)}s)...`);
+        providers.push({
+          name: bestCooldownKey.servico,
+          keyId: bestCooldownKey.id,
+          fn: () => bestCooldownKey.servico === "gemini" 
+            ? ocrWithGemini(image_base64, mime_type, bestCooldownKey.chave, promptToUse)
+            : ocrWithGroq(image_base64, mime_type, bestCooldownKey.chave, promptToUse)
+        });
+      } else {
+        const errorMsg = bestCooldownKey 
+          ? `Todas as chaves de OCR estão em cooldown. Próxima em ${formatCooldown(remainingMs)}.`
+          : "Nenhuma chave API de OCR configurada ou ativa.";
+          
+        return new Response(JSON.stringify({ error: errorMsg }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     console.log(`🔄 Fila OCR: ${providers.slice(0, 3).map(p => `${p.name}[${p.keyId.substring(0,4)}]`).join(" → ")}${providers.length > 3 ? "..." : ""}`);

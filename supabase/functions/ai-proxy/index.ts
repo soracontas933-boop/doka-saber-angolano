@@ -139,7 +139,11 @@ async function callGemini(messages: any[], apiKey: string, maxTokens: number, te
   const body: any = { contents, generationConfig: { maxOutputTokens: maxTokens, temperature } };
   if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction.content }] };
 
-  const res = await fetchWithTimeout(`${GEMINI_URL}/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+  // Usando gemini-1.5-flash ou gemini-2.0-flash dependendo da disponibilidade
+  // gemini-2.0-flash-exp é comum no Google AI Studio free tier
+  // Gemini 1.5 Flash é o modelo padrão mais estável para chaves gratuitas do AI Studio
+  const model = "gemini-1.5-flash";
+  const res = await fetchWithTimeout(`${GEMINI_URL}/${model}:generateContent?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -324,9 +328,8 @@ serve(async (req) => {
     const queue = buildOptimizedQueue(healthyKeysByService, availableServices, preferredService);
 
     if (queue.length === 0) {
-      // Se nenhuma chave saudável, tenta apenas a chave que sairá mais cedo do cooldown
-      console.warn("⚠️ Nenhuma chave saudável disponível. Tentando com a melhor em cooldown...");
-      
+      // Se nenhuma chave saudável, tenta apenas a chave que sairá mais cedo do cooldown, 
+      // mas APENAS se o tempo restante for pequeno (ex: < 2 minutos) para não queimar créditos em erros certos
       const bestCooldownKey = allKeys
         .filter(k => availableServices.includes(k.servico))
         .sort((a, b) => {
@@ -335,12 +338,19 @@ serve(async (req) => {
           return timeA - timeB;
         })[0];
 
-      if (bestCooldownKey) {
+      const remainingMs = bestCooldownKey ? getTimeUntilReady(bestCooldownKey, now) : Infinity;
+
+      if (bestCooldownKey && remainingMs < 120_000) {
+        console.warn(`⚠️ Nenhuma chave saudável. Tentando ${bestCooldownKey.servico} (pronta em ${Math.ceil(remainingMs/1000)}s)...`);
         queue.push({ service: bestCooldownKey.servico, keyEntry: bestCooldownKey });
       } else {
+        const errorMsg = bestCooldownKey 
+          ? `Todas as chaves estão em cooldown. A mais próxima estará pronta em ${formatCooldown(remainingMs)}.`
+          : "Nenhuma chave API configurada ou ativa para os serviços necessários.";
+        
         return new Response(
-          JSON.stringify({ error: "Nenhuma API disponível. Todas as chaves podem estar em cooldown ou sem quota neste momento. Tente novamente em instantes ou adicione novas chaves em /setup-api-keys." }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: errorMsg }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
