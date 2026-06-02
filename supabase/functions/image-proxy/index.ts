@@ -274,8 +274,10 @@ serve(async (req) => {
         allKeysByService[key.servico].push(key);
       }
       const fallbackQueue = buildOptimizedQueue(allKeysByService, SERVICE_ORDER);
-
-      if (fallbackQueue.length === 0) {
+      
+      if (fallbackQueue.length > 0) {
+        queue.push(...fallbackQueue);
+      } else {
         console.log("→ Pollinations fallback (sem chaves disponíveis)");
         const pollinationsUrl = getPollinationsUrl(prompt, width, height);
         return new Response(JSON.stringify({ image_url: pollinationsUrl, service_used: "pollinations" }), {

@@ -333,7 +333,9 @@ serve(async (req) => {
       }
       const fallbackQueue = buildOptimizedQueue(allKeysByService, availableServices, preferredService);
 
-      if (fallbackQueue.length === 0) {
+      if (fallbackQueue.length > 0) {
+        queue.push(...fallbackQueue);
+      } else {
         return new Response(
           JSON.stringify({ error: "Nenhuma API disponível. Todas as chaves podem estar em cooldown ou sem quota neste momento. Tente novamente em instantes ou adicione novas chaves em /setup-api-keys." }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }

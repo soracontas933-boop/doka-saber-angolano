@@ -193,12 +193,9 @@ serve(async (req) => {
     const geminiKeys = healthyKeys.filter(k => k.servico === "gemini");
     const groqKeys = healthyKeys.filter(k => k.servico === "groq");
 
-    // PDFs: até 3 Gemini (Groq Vision NÃO aceita PDFs)
-    // Imagens: até 2 Gemini + 2 Groq
-    const maxGemini = isPdf ? 3 : 2;
-    const maxGroq = isPdf ? 0 : 2;
-    const selectedGemini = geminiKeys.slice(0, maxGemini);
-    const selectedGroq = groqKeys.slice(0, maxGroq);
+    // Consumo mínimo: apenas 1 chave por provedor disponível
+    const selectedGemini = geminiKeys.slice(0, 1);
+    const selectedGroq = isPdf ? [] : groqKeys.slice(0, 1);
 
     const providers: Array<{ name: string; keyId: string; fn: () => Promise<string> }> = [];
 

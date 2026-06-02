@@ -378,16 +378,8 @@ export default function ApiKeysSetup() {
         }
       }
 
-      // 4. CRÍTICO: Limpar cooldowns de TODAS as chaves ativas (novo salvamento = reset)
-      const { error: clearCooldownError } = await supabase
-        .from("api_keys")
-        .update({ ultimo_erro: null })
-        .eq("ativo", true);
-
-      if (clearCooldownError) {
-        console.warn("Aviso: Não foi possível limpar cooldowns:", clearCooldownError.message);
-        // Não lançar erro aqui, pois as chaves foram salvas com sucesso
-      }
+      // 4. Limpar cooldown apenas das chaves que foram efetivamente alteradas ou reativadas
+      // (Já feito individualmente no passo 3 para chaves existentes)
 
       toast({
         title: "Chaves salvas!",

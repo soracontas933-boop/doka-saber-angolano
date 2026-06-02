@@ -58,12 +58,22 @@ export function getCooldownMs(errorMsg: string): number {
     return 2 * 60 * 60 * 1000; // 2 horas
   }
 
-  // 2. QUOTA FINALIZADA (4 horas) - Limite diário/mensal atingido
+  // 2. QUOTA FINALIZADA - Limite diário/mensal atingido
   if (
-    (lower.includes("quota exceeded") || lower.includes("billing details")) &&
-    (lower.includes("limit: 0") || lower.includes("perday") || lower.includes("free tier"))
+    lower.includes("quota exceeded") || 
+    lower.includes("billing details") ||
+    lower.includes("limit_reached") ||
+    lower.includes("rate_limit_exceeded")
   ) {
-    return 4 * 60 * 60 * 1000; // 4 horas
+    // Gemini (Google AI Studio) tem cooldown real de 12 horas para free tier
+    if (lower.includes("gemini") || lower.includes("google")) {
+      return 12 * 60 * 60 * 1000; // 12 horas
+    }
+    // Groq, Cerebras e outros costumam ter resets mais rápidos ou diários
+    if (lower.includes("groq") || lower.includes("cerebras") || lower.includes("together")) {
+      return 1 * 60 * 60 * 1000; // 1 hora (reset agressivo para rotação)
+    }
+    return 4 * 60 * 60 * 1000; // 4 horas padrão
   }
 
   // 3. MODELO/ENDPOINT NÃO ENCONTRADO (30 min) - Configuração errada
@@ -225,18 +235,17 @@ export function buildOptimizedQueue(
     const serviceKeys = keys[service] || [];
     if (serviceKeys.length === 0) continue;
 
-    // Tenta pegar até 3 chaves saudáveis deste serviço
-    const healthyOnes = serviceKeys
+    // Tenta pegar apenas a MELHOR chave saudável deste serviço para consumo mínimo
+    const bestHealthy = serviceKeys
       .filter((k) => !isKeyInCooldown(k))
-      .sort((a, b) => a.prioridade - b.prioridade)
-      .slice(0, 3);
+      .sort((a, b) => a.prioridade - b.prioridade)[0];
 
-    for (const k of healthyOnes) {
-      queue.push({ service, keyEntry: k });
+    if (bestHealthy) {
+      queue.push({ service, keyEntry: bestHealthy });
     }
 
     // Se não houver nenhuma saudável, pegamos a melhor em cooldown como último recurso
-    if (healthyOnes.length === 0) {
+    if (!bestHealthy) {
       const bestCooldown = selectBestKey(serviceKeys);
       if (bestCooldown) {
         queue.push({ service, keyEntry: bestCooldown });
@@ -244,12 +253,8 @@ export function buildOptimizedQueue(
     }
   }
 
-  // Randomiza ponto de partida para evitar sempre tentar o mesmo serviço primeiro
-  if (queue.length > 1) {
-    const offset = Math.floor(Math.random() * queue.length);
-    return [...queue.slice(offset), ...queue.slice(0, offset)];
-  }
-
+  // Mantém a ordem de prioridade definida em SERVICE_ORDER ou preferredService
+  // Isso garante o consumo mínimo e previsível das chaves
   return queue;
 }
 
