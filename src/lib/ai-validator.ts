@@ -212,7 +212,9 @@ export async function validateAndCorrectContent(
   // errors.push(...validateAngolanContext(currentContent, prompt)); // Removed to allow custom context
 
   // Passo 3: Re-geração se ficou demasiado curto após limpeza
-  const tooShort = currentContent.trim().length < 300;
+  // Ignora re-geração se o conteúdo parecer ser um JSON (comum em estruturas e planos)
+  const isJson = currentContent.trim().startsWith("{") && currentContent.trim().endsWith("}");
+  const tooShort = currentContent.trim().length < 300 && !isJson;
   const hasSeriousErrors = errors.some(e =>
     e.includes("excessivamente curto") || e.includes("sem sentido")
   );

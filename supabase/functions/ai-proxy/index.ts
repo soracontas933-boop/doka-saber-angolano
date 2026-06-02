@@ -7,7 +7,7 @@ import {
   getHealthyKeysByService,
   buildOptimizedQueue,
   getKeyHealthStats,
-  isKeyInCooldown,
+  getTimeUntilReady,
 } from "../api-key-utils.ts";
 
 const corsHeaders = {
@@ -320,21 +320,23 @@ serve(async (req) => {
     // Agrupa chaves por serviço (apenas saudáveis)
     const healthyKeysByService = getHealthyKeysByService(allKeys, now);
 
-    // Constrói fila otimizada: máximo 2 chaves por serviço
+    // Constrói fila otimizada: apenas a MELHOR chave por serviço para consumo mínimo
     const queue = buildOptimizedQueue(healthyKeysByService, availableServices, preferredService);
 
     if (queue.length === 0) {
-      // Se nenhuma chave saudável, usa fallback com chaves em cooldown
-      console.warn("⚠️ Nenhuma chave saudável disponível. Tentando com chaves em cooldown...");
-      const allKeysByService: Record<string, KeyEntry[]> = {};
-      for (const key of allKeys) {
-        if (!allKeysByService[key.servico]) allKeysByService[key.servico] = [];
-        allKeysByService[key.servico].push(key);
-      }
-      const fallbackQueue = buildOptimizedQueue(allKeysByService, availableServices, preferredService);
+      // Se nenhuma chave saudável, tenta apenas a chave que sairá mais cedo do cooldown
+      console.warn("⚠️ Nenhuma chave saudável disponível. Tentando com a melhor em cooldown...");
+      
+      const bestCooldownKey = allKeys
+        .filter(k => availableServices.includes(k.servico))
+        .sort((a, b) => {
+          const timeA = getTimeUntilReady(a, now);
+          const timeB = getTimeUntilReady(b, now);
+          return timeA - timeB;
+        })[0];
 
-      if (fallbackQueue.length > 0) {
-        queue.push(...fallbackQueue);
+      if (bestCooldownKey) {
+        queue.push({ service: bestCooldownKey.servico, keyEntry: bestCooldownKey });
       } else {
         return new Response(
           JSON.stringify({ error: "Nenhuma API disponível. Todas as chaves podem estar em cooldown ou sem quota neste momento. Tente novamente em instantes ou adicione novas chaves em /setup-api-keys." }),
@@ -388,7 +390,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("ai-proxy error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Internal Server Error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

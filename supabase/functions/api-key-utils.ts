@@ -229,13 +229,12 @@ export function buildOptimizedQueue(
 
   const queue: QueueItem[] = [];
 
-  // Para cada serviço, adiciona chaves saudáveis para garantir resiliência
-  // Mas limitamos a 3 por serviço para não esgotar tudo se houver um erro sistêmico
+  // Para cada serviço, adiciona APENAS a melhor chave saudável para consumo mínimo
   for (const service of services) {
     const serviceKeys = keys[service] || [];
     if (serviceKeys.length === 0) continue;
 
-    // Tenta pegar apenas a MELHOR chave saudável deste serviço para consumo mínimo
+    // Pega a melhor chave saudável deste serviço (prioridade menor primeiro)
     const bestHealthy = serviceKeys
       .filter((k) => !isKeyInCooldown(k))
       .sort((a, b) => a.prioridade - b.prioridade)[0];
@@ -243,18 +242,9 @@ export function buildOptimizedQueue(
     if (bestHealthy) {
       queue.push({ service, keyEntry: bestHealthy });
     }
-
-    // Se não houver nenhuma saudável, pegamos a melhor em cooldown como último recurso
-    if (!bestHealthy) {
-      const bestCooldown = selectBestKey(serviceKeys);
-      if (bestCooldown) {
-        queue.push({ service, keyEntry: bestCooldown });
-      }
-    }
   }
 
-  // Mantém a ordem de prioridade definida em SERVICE_ORDER ou preferredService
-  // Isso garante o consumo mínimo e previsível das chaves
+  // Retorna a fila intercalada por serviço (1 chave por provedor)
   return queue;
 }
 
