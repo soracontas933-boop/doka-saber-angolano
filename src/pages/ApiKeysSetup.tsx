@@ -288,24 +288,19 @@ export default function ApiKeysSetup() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const entries = PROVIDERS.flatMap((provider) =>
-        keys
-          .filter((row) => row.servico === provider.key && row.chave?.trim())
-          .map((row, index) => ({
-            servico: provider.key,
-            chave: row.chave.trim(),
-            ativo: true,
-            prioridade: index,
-          }))
-      );
+      const filledKeys = keys.filter(row => row.chave?.trim());
 
-      if (entries.length === 0) {
+      if (filledKeys.length === 0) {
         toast({ title: "Nenhuma chave inserida", variant: "destructive" });
         return;
       }
 
+      // Separar chaves novas (sem id) de chaves existentes (com id)
+      const newKeys = filledKeys.filter(row => !row.id);
+      const existingKeys = filledKeys.filter(row => row.id);
+
       // Identificar IDs atuais para saber o que foi removido
-      const currentKeysIds = keys.map(k => k.id).filter((id): id is string => !!id);
+      const currentKeysIds = existingKeys.map(k => k.id).filter((id): id is string => !!id);
       
       // 1. Desativar chaves que não estão mais na lista
       if (currentKeysIds.length > 0) {
@@ -329,34 +324,62 @@ export default function ApiKeysSetup() {
         }
       }
 
-      // 2. Preparar entradas para upsert
-      const upsertEntries = keys
-        .filter(row => row.chave?.trim())
-        .map((row, index) => ({
-          ...(row.id ? { id: row.id } : {}),
+      // 2. Inserir novas chaves (SEM id, deixar o banco gerar)
+      if (newKeys.length > 0) {
+        const insertEntries = newKeys.map((row, index) => ({
           servico: row.servico,
           chave: row.chave.trim(),
           ativo: true,
           prioridade: index,
         }));
 
-      if (upsertEntries.length > 0) {
-        const { error: upsertError } = await supabase
+        const { error: insertError } = await supabase
           .from("api_keys")
-          .upsert(upsertEntries);
+          .insert(insertEntries);
 
-        if (upsertError) {
-          console.error("Erro ao salvar chaves:", upsertError);
-          const errorMsg = upsertError.code === '42501'
+        if (insertError) {
+          console.error("Erro ao inserir chaves:", insertError);
+          const errorMsg = insertError.code === '42501'
             ? "Permissão negada (RLS). O seu utilizador não tem permissão de escrita na tabela api_keys. Verifique se o seu email está na lista de Administradores Master no banco de dados."
-            : upsertError.message;
+            : insertError.message;
           throw new Error(errorMsg);
+        }
+      }
+
+      // 3. Atualizar chaves existentes (COM id)
+      if (existingKeys.length > 0) {
+        const updateEntries = existingKeys.map((row, index) => ({
+          id: row.id,
+          servico: row.servico,
+          chave: row.chave.trim(),
+          ativo: true,
+          prioridade: index,
+        }));
+
+        for (const entry of updateEntries) {
+          const { error: updateError } = await supabase
+            .from("api_keys")
+            .update({
+              servico: entry.servico,
+              chave: entry.chave,
+              ativo: entry.ativo,
+              prioridade: entry.prioridade,
+            })
+            .eq("id", entry.id);
+
+          if (updateError) {
+            console.error("Erro ao atualizar chave:", updateError);
+            const errorMsg = updateError.code === '42501'
+              ? "Permissão negada (RLS). O seu utilizador não tem permissão de escrita na tabela api_keys."
+              : updateError.message;
+            throw new Error(errorMsg);
+          }
         }
       }
 
       toast({
         title: "Chaves salvas!",
-        description: `${upsertEntries.length} chave(s) API configurada(s). O fallback automático está activo.`,
+        description: `${filledKeys.length} chave(s) API configurada(s). O fallback automático está activo.`,
       });
 
       fetchKeys();
