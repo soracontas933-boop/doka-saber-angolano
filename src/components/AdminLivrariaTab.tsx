@@ -98,13 +98,17 @@ const AdminLivrariaTab = () => {
     let capaUrl = form.capa_url;
     let ficheiroPath = form.ficheiro_path;
 
-    const sanitize = (name: string) =>
-      name
+    const sanitize = (name: string) => {
+      const ext = name.split('.').pop();
+      const base = name.split('.').slice(0, -1).join('.');
+      const cleanBase = base
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9._-]/g, "_")
+        .replace(/[^a-zA-Z0-9]/g, "_")
         .replace(/_+/g, "_")
-        .slice(-120);
+        .slice(0, 50);
+      return `${cleanBase}.${ext}`;
+    };
 
     // Se não houver capa mas houver PDF novo, gerar capa do PDF
     let finalCoverFile = coverFile;
