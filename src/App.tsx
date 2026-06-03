@@ -36,6 +36,7 @@ import NotFound from "@/pages/NotFound";
 import RootRedirect from "@/components/RootRedirect";
 import CreditosPage from "@/pages/CreditosPage";
 import NoCreditsModal from "@/components/NoCreditsModal";
+import SupportNotification from "@/components/SupportNotification";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <NoCreditsModal />
+          <SupportNotification />
           <Routes>
             <Route path="/" element={<RootRedirect />} />
             <Route path="/landing" element={<HomePage />} />
