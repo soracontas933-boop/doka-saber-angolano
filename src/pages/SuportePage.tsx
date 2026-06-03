@@ -187,30 +187,7 @@ const SuportePage = () => {
     };
   }, [selectedConvo?.id, fetchChatMessages]);
 
-  // Fallback sync: keeps chat updated even if realtime socket drops
-  useEffect(() => {
-    if (!selectedConvo) return;
 
-    const interval = window.setInterval(() => {
-      fetchChatMessages(selectedConvo.id);
-    }, 4000);
-
-    const onFocus = () => fetchChatMessages(selectedConvo.id);
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        fetchChatMessages(selectedConvo.id);
-      }
-    };
-
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      window.clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [selectedConvo?.id, fetchChatMessages]);
 
   // Realtime for messages
   useEffect(() => {
