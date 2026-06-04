@@ -82,7 +82,9 @@ const LivroDetalhePage = () => {
     
     setProcessing(true);
     try {
-      const { data, error } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 300);
+      // Tenta primeiro o novo bucket 'ebooks', se falhar ou se o path não começar com 'files/', tenta o antigo
+      const bucket = book.ficheiro_path.startsWith('files/') ? 'ebooks' : 'book-files';
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(book.ficheiro_path, 300);
       if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
       
       const response = await fetch(data.signedUrl);
@@ -109,7 +111,9 @@ const LivroDetalhePage = () => {
     
     setProcessing(true);
     try {
-      const { data, error } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 3600);
+      // Tenta primeiro o novo bucket 'ebooks', se falhar ou se o path não começar com 'files/', tenta o antigo
+      const bucket = book.ficheiro_path.startsWith('files/') ? 'ebooks' : 'book-files';
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(book.ficheiro_path, 3600);
       if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
       
       setReadingBook({ url: data.signedUrl, title: book.titulo });

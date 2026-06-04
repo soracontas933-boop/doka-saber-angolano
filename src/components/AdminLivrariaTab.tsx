@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Loader2, Trash2, Edit, Check, X, BookOpen } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { uploadEbookPDF, uploadEbookCover, sanitizeFilename } from "@/lib/ebook-storage";
 import * as pdfjsLib from "pdfjs-dist";
 // @ts-ignore - importar worker como URL via Vite (evita falha de CDN)
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -98,18 +99,6 @@ const AdminLivrariaTab = () => {
     let capaUrl = form.capa_url;
     let ficheiroPath = form.ficheiro_path;
 
-    const sanitize = (name: string) => {
-      const ext = name.split('.').pop();
-      const base = name.split('.').slice(0, -1).join('.');
-      const cleanBase = base
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9]/g, "_")
-        .replace(/_+/g, "_")
-        .slice(0, 50);
-      return `${cleanBase}.${ext}`;
-    };
-
     // Se não houver capa mas houver PDF novo, gerar capa do PDF
     let finalCoverFile = coverFile;
     if (!finalCoverFile && pdfFile && !form.capa_url) {
@@ -117,24 +106,26 @@ const AdminLivrariaTab = () => {
       finalCoverFile = await generateCoverFromPdf(pdfFile);
     }
 
+    // Upload da capa usando o serviço centralizado
     if (finalCoverFile) {
-      const path = `cover-${Date.now()}-${sanitize(finalCoverFile.name)}`;
-      const { error } = await supabase.storage.from("book-covers").upload(path, finalCoverFile, {
-        upsert: true,
-        contentType: finalCoverFile.type || "image/jpeg",
-      });
-      if (error) { setSaving(false); return toast({ title: "Erro ao enviar capa", description: error.message, variant: "destructive" }); }
-      capaUrl = supabase.storage.from("book-covers").getPublicUrl(path).data.publicUrl;
+      const coverResult = await uploadEbookCover(finalCoverFile);
+      if (!coverResult.success) {
+        setSaving(false);
+        return toast({ title: "Erro ao enviar capa", description: coverResult.error, variant: "destructive" });
+      }
+      capaUrl = coverResult.coverUrl;
     }
 
+    // Upload do PDF usando o serviço centralizado
     if (pdfFile) {
-      const path = `book-${Date.now()}-${sanitize(pdfFile.name)}`;
-      const { error } = await supabase.storage.from("book-files").upload(path, pdfFile, {
-        upsert: true,
-        contentType: pdfFile.type || "application/pdf",
-      });
-      if (error) { setSaving(false); return toast({ title: "Erro ao enviar PDF", description: `${error.message}${pdfFile.size > 50*1024*1024 ? ' (ficheiro maior que 50MB)' : ''}`, variant: "destructive" }); }
-      ficheiroPath = path;
+      const pdfResult = await uploadEbookPDF(pdfFile);
+      if (!pdfResult.success) {
+        setSaving(false);
+        return toast({ title: "Erro ao enviar PDF", description: pdfResult.error, variant: "destructive" });
+      }
+      // Extrair o caminho relativo da URL pública
+      const urlParts = pdfResult.fileUrl?.split('/') || [];
+      ficheiroPath = `files/${urlParts[urlParts.length - 1]}`;
     }
 
     const payload: any = {
