@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
+import { ImageIcon, Loader2, Trash2, Upload, Play } from "lucide-react";
 
 const BUTTON_KEYS = [
   { key: "trabalho", label: "Trabalhos" },
@@ -24,6 +24,11 @@ interface ButtonCover {
   label: string | null;
 }
 
+const isVideoFile = (filename: string): boolean => {
+  const videoExtensions = [".mp4", ".webm", ".mov", ".avi", ".mkv", ".flv"];
+  return videoExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+};
+
 const AdminButtonCoversTab = () => {
   const [covers, setCovers] = useState<ButtonCover[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,13 +44,16 @@ const AdminButtonCoversTab = () => {
   useEffect(() => { fetchCovers(); }, []);
 
   const handleUpload = async (buttonKey: string, file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast({ title: "Apenas imagens são permitidas", variant: "destructive" });
+    const isVideo = file.type.startsWith("video/");
+    const isImage = file.type.startsWith("image/");
+
+    if (!isVideo && !isImage) {
+      toast({ title: "Apenas imagens ou vídeos são permitidos", variant: "destructive" });
       return;
     }
 
     setUploading(buttonKey);
-    const ext = file.name.split(".").pop() || "jpg";
+    const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
     const filePath = `${buttonKey}-${Date.now()}.${ext}`;
 
     // Upload to storage
@@ -60,20 +68,20 @@ const AdminButtonCoversTab = () => {
     }
 
     const { data: urlData } = supabase.storage.from("button-covers").getPublicUrl(filePath);
-    const imageUrl = urlData.publicUrl;
+    const mediaUrl = urlData.publicUrl;
 
     // Upsert in button_covers table
     const existing = covers.find(c => c.button_key === buttonKey);
     if (existing) {
       await (supabase.from("button_covers") as any)
-        .update({ image_url: imageUrl, atualizado_em: new Date().toISOString() })
+        .update({ image_url: mediaUrl, atualizado_em: new Date().toISOString() })
         .eq("id", existing.id);
     } else {
       await (supabase.from("button_covers") as any)
-        .insert({ button_key: buttonKey, image_url: imageUrl, label: BUTTON_KEYS.find(b => b.key === buttonKey)?.label });
+        .insert({ button_key: buttonKey, image_url: mediaUrl, label: BUTTON_KEYS.find(b => b.key === buttonKey)?.label });
     }
 
-    toast({ title: "Imagem atualizada!" });
+    toast({ title: isVideo ? "Vídeo atualizado!" : "Imagem atualizada!" });
     setUploading(null);
     fetchCovers();
   };
@@ -85,7 +93,7 @@ const AdminButtonCoversTab = () => {
       await supabase.storage.from("button-covers").remove([decodeURIComponent(parts[1])]);
     }
     await (supabase.from("button_covers") as any).delete().eq("id", cover.id);
-    toast({ title: "Imagem removida" });
+    toast({ title: "Mídia removida" });
     fetchCovers();
   };
 
@@ -108,12 +116,14 @@ const AdminButtonCoversTab = () => {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Faça upload de imagens para os botões de acção rápida na página inicial mobile.
+            Faça upload de imagens ou vídeos em loop para os botões de acção rápida na página inicial mobile.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {BUTTON_KEYS.map(({ key, label }) => {
               const cover = covers.find(c => c.button_key === key);
               const isUploading = uploading === key;
+              const isVideo = cover && isVideoFile(cover.image_url);
+
               return (
                 <div
                   key={key}
@@ -134,23 +144,38 @@ const AdminButtonCoversTab = () => {
                   </div>
 
                   {cover ? (
-                    <div className="relative w-full h-24 rounded-lg overflow-hidden bg-muted">
-                      <img
-                        src={cover.image_url}
-                        alt={label}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="relative w-full h-24 rounded-lg overflow-hidden bg-muted group">
+                      {isVideo ? (
+                        <>
+                          <video
+                            src={cover.image_url}
+                            className="w-full h-full object-cover"
+                            muted
+                            loop
+                            playsInline
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                            <Play className="h-6 w-6 text-white fill-white" />
+                          </div>
+                        </>
+                      ) : (
+                        <img
+                          src={cover.image_url}
+                          alt={label}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                     </div>
                   ) : (
                     <div className="w-full h-24 rounded-lg bg-muted/50 border-2 border-dashed border-border flex items-center justify-center">
-                      <p className="text-xs text-muted-foreground">Sem imagem</p>
+                      <p className="text-xs text-muted-foreground">Sem imagem ou vídeo</p>
                     </div>
                   )}
 
                   <label className="cursor-pointer">
                     <Input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,video/*"
                       className="hidden"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
@@ -165,7 +190,7 @@ const AdminButtonCoversTab = () => {
                       ) : (
                         <Upload className="h-4 w-4" />
                       )}
-                      {cover ? "Trocar Imagem" : "Enviar Imagem"}
+                      {cover ? (isVideo ? "Trocar Vídeo" : "Trocar Imagem") : "Enviar Mídia"}
                     </div>
                   </label>
                 </div>

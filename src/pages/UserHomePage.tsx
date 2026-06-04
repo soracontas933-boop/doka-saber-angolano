@@ -52,6 +52,11 @@ const tipoLabel: Record<string, string> = {
   curriculo: "Currículo",
 };
 
+const isVideoFile = (url: string): boolean => {
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv'];
+  return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+};
+
 const UserHomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -191,11 +196,22 @@ const UserHomePage = () => {
                   className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-card border border-border active:scale-[0.97] transition-all duration-150 overflow-hidden hover:border-primary shadow-xl"
                 >
                   {coverUrl && (
-                    <img
-                      src={coverUrl}
-                      alt={action.label}
-                      className="absolute inset-0 w-full h-full object-cover rounded-lg z-0"
-                    />
+                    isVideoFile(coverUrl) ? (
+                      <video
+                        src={coverUrl}
+                        className="absolute inset-0 w-full h-full object-cover rounded-lg z-0"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                      />
+                    ) : (
+                      <img
+                        src={coverUrl}
+                        alt={action.label}
+                        className="absolute inset-0 w-full h-full object-cover rounded-lg z-0"
+                      />
+                    )
                   )}
                   {coverUrl && (
                     <span className="absolute inset-0 bg-foreground/40 rounded-lg z-[1]" />
