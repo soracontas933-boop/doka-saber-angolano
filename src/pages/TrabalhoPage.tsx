@@ -260,7 +260,7 @@ const TrabalhoPage = () => {
   };
 
   // Phase 3: Compile
-  const handleCompile = () => {
+  const handleCompile = async () => {
     // Build full markdown from all subtemas
     const sections = subtemas.map((s) => {
       const tituloPrefix = s.tipo === "capitulo"
@@ -279,28 +279,27 @@ const TrabalhoPage = () => {
     const indiceMarkdown = `## Índice\n\n${indiceLinhas.join("\n")}`;
 
     const fullContent = [indiceMarkdown, ...sections.map((s) => s.markdown)].join("\n\n");
-    setResultadoCompilado(fullContent);
 
     // Generate cover image
+    let capaUrl: string | null = null;
     if (tipoCapa === "upload" && capaUpload) {
-      setCapaImageUrl(URL.createObjectURL(capaUpload));
+      capaUrl = URL.createObjectURL(capaUpload);
     } else if (tipoCapa === "personalizada") {
-      const imgUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
-      setCapaImageUrl(imgUrl);
-    } else {
-      // tipoCapa === "padrao" or anything else: use Angolan coat of arms (or school logo if uploaded)
-      setCapaImageUrl(null);
+      capaUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
     }
 
+    // IMPORTANTE: Validar e debitar créditos ANTES de compilar/exibir
+    const debitSuccess = await logUsage("trabalho");
+    if (!debitSuccess) {
+      toast.error("Não foi possível debitar os créditos. O trabalho não foi salvo.");
+      return;
+    }
+
+    // Só após débito bem-sucedido, compilar e exibir
+    setResultadoCompilado(fullContent);
+    setCapaImageUrl(capaUrl);
     setFase("resultado");
-    toast.success("Trabalho compilado com sucesso!");
-    
-    // Log usage after successful compilation
-    logUsage("trabalho").then(success => {
-      if (!success) {
-        console.warn("Falha ao debitar créditos, mas o trabalho foi compilado.");
-      }
-    });
+    toast.success("Trabalho compilado e créditos debitados com sucesso!");
 
     saveProject("trabalho", tema || "Trabalho sem título", {
       resultado: fullContent,
@@ -311,7 +310,7 @@ const TrabalhoPage = () => {
       nomeDocente,
       tipoTrabalho,
     });
-  };
+  };;
 
   const handleBack = () => {
     if (fase === "estrutura") {

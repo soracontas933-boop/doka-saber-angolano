@@ -75,10 +75,15 @@ const CurriculoPage: React.FC = () => {
 
     setGenerating(true);
     try {
-      await logUsage("cv", "cv-builder");
+      // IMPORTANTE: Validar e debitar créditos ANTES de exibir resultado
+      const logSuccess = await logUsage("cv", "cv-builder");
+      if (!logSuccess) {
+        toast.error("Não foi possível debitar os créditos. O CV não foi salvo.");
+        return;
+      }
       setGenerated(true);
       setEditTab("modelo");
-      toast.success(`CV gerado! (-${CV_COST} créditos)`);
+      toast.success(`CV gerado e créditos debitados com sucesso! (-${CV_COST} créditos)`);
     } catch (e) {
       toast.error("Erro ao gerar CV.");
     } finally {

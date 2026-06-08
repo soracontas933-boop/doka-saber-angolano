@@ -143,8 +143,13 @@ const PlanoAulaPage = () => {
       const fases: FaseAula[] = parsed.fases;
       setHFases(fases);
 
-      toast.success("Plano de aula horizontal gerado com sucesso!");
-      await logUsage("plano_aula");
+      // IMPORTANTE: Validar e debitar créditos ANTES de salvar/exibir
+      const logSuccess = await logUsage("plano_aula");
+      if (!logSuccess) {
+        toast.error("Não foi possível debitar os créditos. O plano não foi salvo.");
+        return;
+      }
+      toast.success("Plano de aula horizontal gerado e créditos debitados com sucesso!");
 
       saveProject("plano-aula", `Plano Horizontal - ${hData.disciplina || "Geral"} - ${hData.classe}`, {
         tipo: "horizontal",
@@ -190,8 +195,13 @@ const PlanoAulaPage = () => {
       setEtapa("A complementar estratégias...");
       const revisado = await reviewWithOpenRouter(plano);
       setResultadoV(revisado);
-      toast.success("Plano de aula gerado com sucesso!");
-      await logUsage("plano_aula");
+      // IMPORTANTE: Validar e debitar créditos ANTES de salvar/exibir
+      const logSuccess = await logUsage("plano_aula");
+      if (!logSuccess) {
+        toast.error("Não foi possível debitar os créditos. O plano não foi salvo.");
+        return;
+      }
+      toast.success("Plano de aula gerado e créditos debitados com sucesso!");
 
       saveProject("plano-aula", `Plano Vertical - ${disciplinaV || "Geral"} - ${classeV}`, {
         tipo: "vertical",

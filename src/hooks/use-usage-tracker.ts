@@ -58,6 +58,7 @@ export function useUsageTracker() {
   /**
    * Regista o uso e desconta os créditos da BD via RPC consume_credits.
    * Retorna true se a dedução foi bem-sucedida.
+   * Dispara evento global para sincronizar créditos em tempo real.
    */
   const logUsage = useCallback(async (modulo: ModuloType, servicoIa?: string, tokensUsados?: number): Promise<boolean> => {
     if (!user) return false;
@@ -93,6 +94,8 @@ export function useUsageTracker() {
     }
 
     await refetch();
+    // Disparar evento global para sincronizar créditos em tempo real em todas as instâncias
+    window.dispatchEvent(new CustomEvent("credits:updated", { detail: { modulo, cost } }));
     return true;
   }, [user, refetch, getRemaining]);
 

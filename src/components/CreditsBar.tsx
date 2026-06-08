@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Crown, Zap, Sun, Moon, Headphones, Plus, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
+import { useCreditsSync } from "@/hooks/use-credits-sync";
 import NotificationBell from "@/components/NotificationBell";
 import ScannerButton from "@/components/ScannerButton";
 import { useTheme } from "@/hooks/use-theme";
@@ -18,6 +19,9 @@ const CreditsBar = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [warned, setWarned] = useState(false);
   const [hidden, setHidden] = useState(false);
+
+  // Sincronizar créditos em tempo real
+  useCreditsSync();
 
   // Hide mobile top bar on scroll down, show on scroll up
   useEffect(() => {
@@ -85,6 +89,23 @@ const CreditsBar = () => {
       setWarned(true);
     }
   }, [isLow, warned, remaining, navigate]);
+
+  // Resetar aviso quando créditos são recarregados
+  useEffect(() => {
+    if (!isLow) {
+      setWarned(false);
+    }
+  }, [isLow]);
+
+  // Forçar re-render quando créditos são atualizados via evento global
+  useEffect(() => {
+    const handleCreditsUpdated = () => {
+      // Trigger re-render via state update (força re-render do componente)
+      setWarned((prev) => prev);
+    };
+    window.addEventListener("credits:updated", handleCreditsUpdated);
+    return () => window.removeEventListener("credits:updated", handleCreditsUpdated);
+  }, []);
 
   if (loading || !plan) return null;
 

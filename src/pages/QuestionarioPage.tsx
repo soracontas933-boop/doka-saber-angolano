@@ -138,8 +138,13 @@ const QuestionarioPage = () => {
 
       setResultado(finalQuestionario);
 
-      toast.success("Questionário gerado com sucesso!");
-      await logUsage("questionario");
+      // IMPORTANTE: Validar e debitar créditos ANTES de salvar/exibir
+      const logSuccess = await logUsage("questionario");
+      if (!logSuccess) {
+        toast.error("Não foi possível debitar os créditos. O questionário não foi salvo.");
+        return;
+      }
+      toast.success("Questionário gerado e créditos debitados com sucesso!");
 
       const nomeDisciplinaSave = disciplina === "__manual__" ? disciplinaManual : disciplina;
       saveProject("questionario", `Questionário - ${nomeDisciplinaSave || "Geral"}`, {

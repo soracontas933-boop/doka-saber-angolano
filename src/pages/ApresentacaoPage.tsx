@@ -118,7 +118,17 @@ export default function ApresentacaoPage() {
         });
       }).finally(() => setGeneratingImages(false));
 
-      if (!regenerateOnly) logUsage("apresentacao" as any);
+      // IMPORTANTE: Validar e debitar créditos ANTES de exibir resultado
+      if (!regenerateOnly) {
+        const logSuccess = await logUsage("apresentacao" as any);
+        if (!logSuccess) {
+          toast.error("Não foi possível debitar os créditos. A apresentação não foi salva.");
+          setStep("customize");
+          setLoading(false);
+          setProgress("");
+          return;
+        }
+      }
     } catch (e) {
       console.error(e);
       toast.error("Erro a gerar a apresentação.");

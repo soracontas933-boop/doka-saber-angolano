@@ -220,8 +220,14 @@ const CorrecaoPage = () => {
       }
 
       setProgress(100);
+      // IMPORTANTE: Validar e debitar créditos ANTES de exibir resultado
+      const logSuccess = await logUsage("correcao");
+      if (!logSuccess) {
+        toast.error("Não foi possível debitar os créditos. A correção não foi salva.");
+        setStep("report");
+        return;
+      }
       setStep("result");
-      logUsage("correcao");
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Erro na correcção.");

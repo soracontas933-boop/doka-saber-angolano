@@ -153,8 +153,13 @@ const ResumoPage = () => {
       const imgUrl = generateImageUrl(imagePrompts.resumo(disciplina || "educação"));
       setImagemResumo(imgUrl);
 
-      toast.success("Resumo gerado! A abrir o editor...");
-      await logUsage("resumo");
+      // IMPORTANTE: Validar e debitar créditos ANTES de salvar/exibir
+      const logSuccess = await logUsage("resumo");
+      if (!logSuccess) {
+        toast.error("Não foi possível debitar os créditos. O resumo não foi salvo.");
+        return;
+      }
+      toast.success("Resumo gerado e créditos debitados com sucesso!");
 
       saveProject("resumo", `${tipoResumo} - ${disciplina || "Geral"}`, {
         resultado: revisado,
