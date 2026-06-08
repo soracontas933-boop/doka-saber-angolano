@@ -121,11 +121,19 @@ serve(async (req) => {
       });
     }
 
-    // ─── DIVIDIR ────────────────────────────────────────────────
+    // ─── DIVIDIR (10 créditos) ──────────────────────────────────
     if (action === "dividir") {
       if (groupRow.criado_por !== user.id) {
         return new Response(JSON.stringify({ error: "apenas_dono_pode_dividir" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Cobra 10 créditos (custo de um trabalho)
+      const ok = await consumeCredits(supa, user.id, 10);
+      if (!ok) {
+        return new Response(JSON.stringify({ error: "creditos_insuficientes" }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 

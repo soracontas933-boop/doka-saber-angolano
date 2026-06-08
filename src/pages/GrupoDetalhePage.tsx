@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { exportPartToWord, exportPartToPDF } from "@/lib/study-group-export";
+import { useUserPlan } from "@/hooks/use-user-plan";
 
 interface Group {
   id: string;
@@ -68,6 +69,7 @@ interface Part {
 export default function GrupoDetalhePage() {
   const { id: groupId } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { plan, refetch: refetchPlan } = useUserPlan();
   const navigate = useNavigate();
 
   const [group, setGroup] = useState<Group | null>(null);
@@ -200,12 +202,24 @@ export default function GrupoDetalhePage() {
       if (!r.ok || j.error) {
         if (j.error === "creditos_insuficientes") {
           toast.error("Sem créditos suficientes.");
-          window.dispatchEvent(new CustomEvent("delle:no-credits", { detail: { needed: 10, available: 0 } }));
+          
+          // Calcula saldo real para o modal não mostrar zero fixo
+          const total = plan?.creditos_totais === -1 ? Infinity : (plan?.creditos_totais ?? 0);
+          const used = plan?.creditos_usados ?? 0;
+          const remaining = total === Infinity ? Infinity : Math.max(0, (total as number) - used);
+          
+          window.dispatchEvent(new CustomEvent("delle:no-credits", { 
+            detail: { needed: 10, available: remaining } 
+          }));
         } else {
           toast.error(j.error || `Erro ${r.status}`);
         }
         return null;
       }
+      
+      // Atualiza o plano/créditos no front-end após sucesso
+      await refetchPlan();
+      
       return j;
     } catch (e: any) {
       toast.error(e.message || "Falha na IA.");

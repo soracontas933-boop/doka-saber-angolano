@@ -27,6 +27,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useUserPlan } from "@/hooks/use-user-plan";
 
 const COR_OPCOES = [
   "#1E9DF1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
@@ -54,6 +55,7 @@ interface Invite {
 
 export default function GruposPage() {
   const { user } = useAuth();
+  const { plan } = useUserPlan();
   const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -192,7 +194,15 @@ export default function GruposPage() {
       if (!data?.ok) {
         if (data?.error === "creditos_insuficientes") {
           toast.error("Precisas de pelo menos 20 créditos para entrar no grupo.");
-          window.dispatchEvent(new CustomEvent("delle:no-credits", { detail: { needed: 20, available: 0 } }));
+          
+          // Calcula saldo real para o modal não mostrar zero fixo
+          const total = plan?.creditos_totais === -1 ? Infinity : (plan?.creditos_totais ?? 0);
+          const used = plan?.creditos_usados ?? 0;
+          const remaining = total === Infinity ? Infinity : Math.max(0, (total as number) - used);
+          
+          window.dispatchEvent(new CustomEvent("delle:no-credits", { 
+            detail: { needed: 20, available: remaining } 
+          }));
         } else {
           toast.error(data?.error || "Falha ao aceitar.");
         }
