@@ -57,31 +57,44 @@ export function useUsageTracker() {
 
   /**
    * Regista o uso e desconta os créditos da BD via RPC consume_credits.
+   * Retorna true se a dedução foi bem-sucedida.
    */
-  const logUsage = useCallback(async (modulo: ModuloType, servicoIa?: string, tokensUsados?: number) => {
-    if (!user) return;
+  const logUsage = useCallback(async (modulo: ModuloType, servicoIa?: string, tokensUsados?: number): Promise<boolean> => {
+    if (!user) return false;
     const cost = CREDIT_COSTS[modulo] ?? 1;
 
     // Desconta créditos atomicamente
-    const { data: ok } = await supabase.rpc("consume_credits" as any, {
+    const { data: ok, error: rpcError } = await supabase.rpc("consume_credits" as any, {
       p_user_id: user.id,
       p_amount: cost,
     });
 
-    if (ok === false) {
-      toast.error("Não foi possível descontar créditos (saldo insuficiente).");
+    if (rpcError || ok === false) {
+      toast.error("Saldo insuficiente ou erro ao descontar créditos.");
+      // Disparar evento para abrir popup de upgrade se for saldo insuficiente
+      if (ok === false) {
+        window.dispatchEvent(new CustomEvent("delle:no-credits", { 
+          detail: { needed: cost, available: getRemaining() } 
+        }));
+      }
+      return false;
     }
 
-    // Regista log
-    await supabase.from("usage_logs").insert({
+    // Regista log apenas se a dedução funcionou
+    const { error: logError } = await supabase.from("usage_logs").insert({
       user_id: user.id,
       modulo,
       servico_ia: servicoIa || null,
       tokens_usados: tokensUsados || 0,
     });
 
-    refetch();
-  }, [user, refetch]);
+    if (logError) {
+      console.error("Erro ao registar log de uso:", logError);
+    }
+
+    await refetch();
+    return true;
+  }, [user, refetch, getRemaining]);
 
   return { checkLimit, logUsage, getAllUsageCounts, getRemaining };
 }

@@ -296,7 +296,11 @@ const TrabalhoPage = () => {
     toast.success("Trabalho compilado com sucesso!");
     
     // Log usage after successful compilation
-    logUsage("trabalho");
+    logUsage("trabalho").then(success => {
+      if (!success) {
+        console.warn("Falha ao debitar créditos, mas o trabalho foi compilado.");
+      }
+    });
 
     saveProject("trabalho", tema || "Trabalho sem título", {
       resultado: fullContent,

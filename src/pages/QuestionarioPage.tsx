@@ -139,7 +139,7 @@ const QuestionarioPage = () => {
       setResultado(finalQuestionario);
 
       toast.success("Questionário gerado com sucesso!");
-      logUsage("questionario");
+      await logUsage("questionario");
 
       const nomeDisciplinaSave = disciplina === "__manual__" ? disciplinaManual : disciplina;
       saveProject("questionario", `Questionário - ${nomeDisciplinaSave || "Geral"}`, {

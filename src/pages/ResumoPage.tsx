@@ -154,7 +154,7 @@ const ResumoPage = () => {
       setImagemResumo(imgUrl);
 
       toast.success("Resumo gerado! A abrir o editor...");
-      logUsage("resumo");
+      await logUsage("resumo");
 
       saveProject("resumo", `${tipoResumo} - ${disciplina || "Geral"}`, {
         resultado: revisado,
