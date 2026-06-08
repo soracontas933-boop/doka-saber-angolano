@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
     }
 
     const adminEmails = ["kenymatos943@gmail.com", "manuelmatosjose67@gmail.com"];
+    const callerEmail = (caller.email || "").toLowerCase();
     
     // Also check admin_roles table for authorized users
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
@@ -41,7 +42,7 @@ Deno.serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (!adminEmails.includes(caller.email || "") && !adminRole) {
+    if (!adminEmails.some(email => email.toLowerCase() === callerEmail) && !adminRole) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

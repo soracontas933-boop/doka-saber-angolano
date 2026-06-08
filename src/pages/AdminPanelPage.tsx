@@ -331,10 +331,24 @@ const AdminPanelPage = () => {
     if (!isAdmin) return;
     setLoading(true);
     try {
-      // Fetch users with pagination
-      const usersRes = await fetchAdminUsers(page, perPage, searchQuery);
-      const emailMap = usersRes.emailMap;
-      setTotalUsers(usersRes.pagination.total);
+      // Fetch users with pagination - with fallback to avoid global error
+      let usersRes;
+      try {
+        usersRes = await fetchAdminUsers(page, perPage, searchQuery);
+      } catch (err) {
+        console.error("Erro ao chamar fetchAdminUsers:", err);
+        // Fallback: fetch from profiles directly if edge function fails
+        const { data: fallbackProfiles, count } = await (supabase.from("profiles") as any)
+          .select("id, nome, telefone", { count: "exact" })
+          .ilike("nome", `%${searchQuery}%`)
+          .range((page - 1) * perPage, page * perPage - 1);
+        
+        usersRes = {
+          users: (fallbackProfiles || []).map((p: any) => ({ ...p, email: "" })),
+          pagination: { total: count || 0 },
+          emailMap: {}
+        };
+      }
 
       const userIds = usersRes.users.map(u => u.id);
 
@@ -350,11 +364,13 @@ const AdminPanelPage = () => {
             .from("usage_logs")
             .select("*")
             .order("criado_em", { ascending: false })
-            .limit(30),
+            .limit(30)
+            .catch(() => ({ data: [] })),
           (supabase.from("page_views") as any)
             .select("id, user_id, page, created_at")
             .order("created_at", { ascending: false })
-            .limit(1000),
+            .limit(1000)
+            .catch(() => ({ data: [] })),
         ]);
 
       const profiles = profilesRes.data ?? [];
