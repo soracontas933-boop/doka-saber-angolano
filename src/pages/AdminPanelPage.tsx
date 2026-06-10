@@ -351,54 +351,90 @@ const AdminPanelPage = () => {
       }
 
       const userIds = usersRes.users.map(u => u.id);
+      setTotalUsers(usersRes.pagination.total);
 
-      const [profilesRes, plansRes, projectsRes, logsRes, recentLogsRes, pageViewsRes] =
-        await Promise.all([
+      // Only fetch related data if we have users
+      let profilesRes = { data: null };
+      let plansRes = { data: null };
+      let projectsRes = { data: null };
+      let logsRes = { data: null };
+      let recentLogsRes = { data: null };
+      let pageViewsRes = { data: null };
+
+      if (userIds.length > 0) {
+        const results = await Promise.all([
           (supabase.from("profiles") as any)
             .select("id, nome, genero, idade, telefone, funcao, created_at")
-            .in("id", userIds),
-          supabase.from("user_plans").select("*").in("user_id", userIds),
-          supabase.from("projects").select("user_id, tipo, criado_em").in("user_id", userIds),
-          supabase.from("usage_logs").select("user_id, servico_ia, tokens_usados, criado_em").in("user_id", userIds),
-          supabase
-            .from("usage_logs")
+            .in("id", userIds)
+            .catch((err) => { console.error("Erro ao buscar profiles:", err); return { data: null }; }),
+          (supabase.from("user_plans") as any)
             .select("*")
-            .order("criado_em", { ascending: false })
-            .limit(30)
-            .catch(() => ({ data: [] })),
-          (supabase.from("page_views") as any)
-            .select("id, user_id, page, created_at")
-            .order("created_at", { ascending: false })
-            .limit(1000)
-            .catch(() => ({ data: [] })),
+            .in("user_id", userIds)
+            .catch((err) => { console.error("Erro ao buscar user_plans:", err); return { data: null }; }),
+          (supabase.from("projects") as any)
+            .select("user_id, tipo, criado_em")
+            .in("user_id", userIds)
+            .catch((err) => { console.error("Erro ao buscar projects:", err); return { data: null }; }),
+          (supabase.from("usage_logs") as any)
+            .select("user_id, servico_ia, tokens_usados, criado_em")
+            .in("user_id", userIds)
+            .catch((err) => { console.error("Erro ao buscar usage_logs:", err); return { data: null }; }),
         ]);
+        profilesRes = results[0];
+        plansRes = results[1];
+        projectsRes = results[2];
+        logsRes = results[3];
+      }
 
-      const profiles = profilesRes.data ?? [];
-      const plans = plansRes.data ?? [];
-      const projects = projectsRes.data ?? [];
-      const logs = logsRes.data ?? [];
+      // Fetch recent logs and page views separately (global data, not filtered by userIds)
+      try {
+        recentLogsRes = await (supabase.from("usage_logs") as any)
+          .select("*")
+          .order("criado_em", { ascending: false })
+          .limit(30);
+      } catch (err) {
+        console.error("Erro ao buscar recent logs:", err);
+        recentLogsRes = { data: null };
+      }
+
+      try {
+        pageViewsRes = await (supabase.from("page_views") as any)
+          .select("id, user_id, page, created_at")
+          .order("created_at", { ascending: false })
+          .limit(1000);
+      } catch (err) {
+        console.error("Erro ao buscar page_views:", err);
+        pageViewsRes = { data: null };
+      }
+
+      const profiles = (profilesRes.data && Array.isArray(profilesRes.data)) ? profilesRes.data : [];
+      const plans = (plansRes.data && Array.isArray(plansRes.data)) ? plansRes.data : [];
+      const projects = (projectsRes.data && Array.isArray(projectsRes.data)) ? projectsRes.data : [];
+      const logs = (logsRes.data && Array.isArray(logsRes.data)) ? logsRes.data : [];
 
       const userMap = new Map<string, ManagedUser>();
 
       // Initialize with data from edge function
-      usersRes.users.forEach(u => {
-        userMap.set(u.id, {
-          id: u.id,
-          email: u.email,
-          nome: u.nome,
-          genero: null,
-          idade: null,
-          telefone: u.telefone,
-          funcao: null,
-          created_at: "", // Will be filled from profiles
-          plano: "gratuito",
-          planId: null,
-          creditos_usados: 0,
-          creditos_totais: 0,
-          totalProjects: 0,
-          totalTokens: 0,
-          lastActivity: null,
-        });
+      usersRes.users.forEach((u: any) => {
+        if (u && u.id) {
+          userMap.set(u.id, {
+            id: u.id,
+            email: u.email || "",
+            nome: u.nome || null,
+            genero: null,
+            idade: null,
+            telefone: u.telefone || null,
+            funcao: null,
+            created_at: "", // Will be filled from profiles
+            plano: "gratuito",
+            planId: null,
+            creditos_usados: 0,
+            creditos_totais: 0,
+            totalProjects: 0,
+            totalTokens: 0,
+            lastActivity: null,
+          });
+        }
       });
 
       profiles.forEach((p: any) => {
@@ -424,26 +460,32 @@ const AdminPanelPage = () => {
       });
 
       const typeCount: Record<string, number> = {};
-      projects.forEach((p) => {
-        typeCount[p.tipo] = (typeCount[p.tipo] || 0) + 1;
-        const u = userMap.get(p.user_id);
-        if (u) {
-          u.totalProjects += 1;
-          if (!u.lastActivity || new Date(p.criado_em) > new Date(u.lastActivity)) {
-            u.lastActivity = p.criado_em;
+      projects.forEach((p: any) => {
+        if (p && p.tipo) {
+          typeCount[p.tipo] = (typeCount[p.tipo] || 0) + 1;
+        }
+        if (p && p.user_id) {
+          const u = userMap.get(p.user_id);
+          if (u) {
+            u.totalProjects += 1;
+            if (p.criado_em && (!u.lastActivity || new Date(p.criado_em) > new Date(u.lastActivity))) {
+              u.lastActivity = p.criado_em;
+            }
           }
         }
       });
 
       const svcTokens: Record<string, number> = {};
-      logs.forEach((l) => {
-        const svc = l.servico_ia || "desconhecido";
-        svcTokens[svc] = (svcTokens[svc] || 0) + (l.tokens_usados || 0);
-        if (l.user_id) {
+      logs.forEach((l: any) => {
+        if (l && l.servico_ia) {
+          const svc = l.servico_ia || "desconhecido";
+          svcTokens[svc] = (svcTokens[svc] || 0) + (l.tokens_usados || 0);
+        }
+        if (l && l.user_id) {
           const u = userMap.get(l.user_id);
           if (u) {
             u.totalTokens += l.tokens_usados ?? 0;
-            if (!u.lastActivity || new Date(l.criado_em) > new Date(u.lastActivity)) {
+            if (l.criado_em && (!u.lastActivity || new Date(l.criado_em) > new Date(u.lastActivity))) {
               u.lastActivity = l.criado_em;
             }
           }
@@ -453,29 +495,35 @@ const AdminPanelPage = () => {
       // Filter out master accounts from logs/views
       const masterIds = new Set(
         Array.from(userMap.entries())
-          .filter(([, u]) => MASTER_EMAILS.includes(u.email.toLowerCase()))
+          .filter(([, u]) => u.email && MASTER_EMAILS.includes(u.email.toLowerCase()))
           .map(([id]) => id)
       );
 
       setUsers(
         Array.from(userMap.values())
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .sort((a, b) => {
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return dateB - dateA;
+          })
       );
       setTokensByService(svcTokens);
       setProjectsByType(typeCount);
-      setRecentLogs((recentLogsRes.data ?? []).filter((l: any) => !masterIds.has(l.user_id)));
-      setPageViews((pageViewsRes.data ?? []).filter((v: any) => !masterIds.has(v.user_id)));
+      setRecentLogs(((recentLogsRes.data && Array.isArray(recentLogsRes.data)) ? recentLogsRes.data : []).filter((l: any) => l && l.user_id && !masterIds.has(l.user_id)));
+      setPageViews(((pageViewsRes.data && Array.isArray(pageViewsRes.data)) ? pageViewsRes.data : []).filter((v: any) => v && v.user_id && !masterIds.has(v.user_id)));
     } catch (err) {
       console.error(err);
       toast({ title: "Erro ao carregar dados", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, perPage, searchQuery]);
+  }, [isAdmin, perPage, searchQuery, currentPage]);
 
   useEffect(() => {
-    fetchData(currentPage);
-  }, [fetchData, currentPage]);
+    if (isAdmin && isAuthReady) {
+      fetchData(currentPage);
+    }
+  }, [fetchData, currentPage, isAdmin, isAuthReady]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -487,7 +535,7 @@ const AdminPanelPage = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
-    fetchData(1);
+    // fetchData will be called by useEffect when currentPage changes
   };
 
   const openUserDialog = (user: ManagedUser) => {

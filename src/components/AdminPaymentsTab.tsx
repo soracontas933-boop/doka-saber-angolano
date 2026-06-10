@@ -112,11 +112,15 @@ const AdminPaymentsTab = () => {
     let nameMap: Record<string, string> = {};
     
     try {
-      const res = await fetchAdminUsers(1, 100, "", userIds.join(","));
-      res.users.forEach(u => {
-        emailMap[u.id] = u.email;
-        nameMap[u.id] = u.nome;
-      });
+      if (userIds.length > 0) {
+        const res = await fetchAdminUsers(1, 100, "", userIds.join(","));
+        if (res && res.users) {
+          res.users.forEach(u => {
+            emailMap[u.id] = u.email;
+            nameMap[u.id] = u.nome;
+          });
+        }
+      }
     } catch (err) {
       console.error(err);
       // Fallback to profiles table if function fails
