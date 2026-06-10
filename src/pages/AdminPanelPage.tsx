@@ -832,17 +832,131 @@ const AdminPanelPage = () => {
 
         {/* Other Tabs Content... (Same as original but wrapped in TabsContent) */}
         <TabsContent value="plans">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Plan distribution would need global data, keeping static or page-based for now */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Object.entries(PLAN_LABELS).map(([key, label]) => {
+              const count = users.filter(u => u.plano === key).length;
+              const totalOnPage = users.length || 1;
+              const percentage = Math.round((count / totalOnPage) * 100);
+              
+              return (
+                <Card key={key} className="border-primary/10">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-end justify-between">
+                      <p className="text-2xl font-bold">{count}</p>
+                      <Badge variant="outline" className="text-[10px]">{percentage}%</Badge>
+                    </div>
+                    <div className="h-1.5 w-full bg-muted rounded-full mt-3 overflow-hidden">
+                      <div 
+                        className={`h-full ${PLAN_COLORS[key] || "bg-primary"}`} 
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
         
         <TabsContent value="stats">
-           {/* Stats content */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" /> Uso de Tokens por Serviço
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Object.keys(tokensByService).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-10 text-center">Sem dados de uso de IA.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.entries(tokensByService).sort((a, b) => b[1] - a[1]).map(([svc, tokens]) => (
+                      <div key={svc} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium capitalize">{svc}</span>
+                          <span className="text-muted-foreground">{tokens.toLocaleString()} tokens</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div 
+                            className="h-full bg-primary" 
+                            style={{ width: `${(tokens / maxTokens) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" /> Projetos por Tipo
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Object.keys(projectsByType).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-10 text-center">Sem projetos criados.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.entries(projectsByType).sort((a, b) => b[1] - a[1]).map(([tipo, count]) => (
+                      <div key={tipo} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                        <span className="font-medium capitalize">{tipo.replace("-", " ")}</span>
+                        <Badge variant="secondary" className="text-base font-bold">{count}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="logs">
-           {/* Logs content */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Logs Recentes de Atividade</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Módulo</TableHead>
+                      <TableHead>Serviço IA</TableHead>
+                      <TableHead>Tokens</TableHead>
+                      <TableHead>Data</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentLogs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          Nenhum log encontrado.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      recentLogs.map((log) => (
+                        <TableRow key={log.id}>
+                          <TableCell className="font-medium capitalize">{log.modulo.replace("-", " ")}</TableCell>
+                          <TableCell className="text-xs">{log.servico_ia || "—"}</TableCell>
+                          <TableCell>{log.tokens_usados?.toLocaleString() || 0}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {new Date(log.criado_em).toLocaleString("pt-AO")}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="traffic">
