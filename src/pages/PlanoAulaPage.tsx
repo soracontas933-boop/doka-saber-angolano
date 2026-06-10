@@ -109,10 +109,6 @@ const PlanoAulaPage = () => {
       toast.error("Preencha o sumário ou adicione fotos do conteúdo");
       return;
     }
-    
-    const canProceed = await checkLimit("plano_aula");
-    if (!canProceed) return;
-    
     setLoading(true);
     setHFases(null);
 
@@ -146,16 +142,14 @@ const PlanoAulaPage = () => {
       const parsed = JSON.parse(jsonMatch[0]);
       const fases: FaseAula[] = parsed.fases;
       setHFases(fases);
-      toast.success("Plano de aula horizontal gerado com sucesso!");
 
       // IMPORTANTE: Validar e debitar créditos ANTES de salvar/exibir
       const logSuccess = await logUsage("plano_aula");
       if (!logSuccess) {
         toast.error("Não foi possível debitar os créditos. O plano não foi salvo.");
-        setHFases(null);
         return;
       }
-      toast.success("Créditos debitados com sucesso!");
+      toast.success("Plano de aula horizontal gerado e créditos debitados com sucesso!");
 
       saveProject("plano-aula", `Plano Horizontal - ${hData.disciplina || "Geral"} - ${hData.classe}`, {
         tipo: "horizontal",
