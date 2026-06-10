@@ -100,14 +100,20 @@ const CreditsBar = () => {
   // Forçar re-render quando créditos são atualizados via evento global
   useEffect(() => {
     const handleCreditsUpdated = () => {
-      // Trigger re-render via state update (força re-render do componente)
-      setWarned((prev) => prev);
+      // Força refetch do plano para sincronizar com o backend
+      // Isso garante que o saldo exibido seja sempre o mais recente
+      refetch();
     };
     window.addEventListener("credits:updated", handleCreditsUpdated);
     return () => window.removeEventListener("credits:updated", handleCreditsUpdated);
-  }, []);
+  }, [refetch]);
 
   if (loading || !plan) return null;
+  
+  // Debug: Log para verificar se os valores estão sendo atualizados
+  if (plan && typeof window !== 'undefined' && (window as any).__DEBUG_CREDITS__) {
+    console.log(`[CreditsBar] Créditos: ${plan.creditos_usados}/${plan.creditos_totais}, Remaining: ${remaining}`);
+  }
 
   const planKey = (plan.plano || "gratuito") as PlanKey;
   const cfg = PLAN_CONFIGS[planKey] || PLAN_CONFIGS.gratuito;

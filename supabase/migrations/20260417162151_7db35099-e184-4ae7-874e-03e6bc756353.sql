@@ -95,3 +95,6 @@ INSERT INTO public.credit_packs (nome, creditos, preco, ordem) VALUES
   ('Pacote Médio', 300, 1200, 2),
   ('Pacote Grande', 1000, 3500, 3)
 ON CONFLICT DO NOTHING;
+
+-- Ativar realtime para user_plans para sincronização em tempo real
+ALTER PUBLICATION supabase_realtime ADD TABLE public.user_plans;

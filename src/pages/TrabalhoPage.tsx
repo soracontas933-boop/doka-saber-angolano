@@ -261,6 +261,10 @@ const TrabalhoPage = () => {
 
   // Phase 3: Compile
   const handleCompile = async () => {
+    // Validar créditos ANTES de compilar
+    const canProceed = await checkLimit("trabalho");
+    if (!canProceed) return;
+    
     // Build full markdown from all subtemas
     const sections = subtemas.map((s) => {
       const tituloPrefix = s.tipo === "capitulo"
@@ -288,7 +292,7 @@ const TrabalhoPage = () => {
       capaUrl = generateImageUrl(imagePrompts.capaTrabaho(tema, disciplina || "Educação"));
     }
 
-    // IMPORTANTE: Validar e debitar créditos ANTES de compilar/exibir
+    // IMPORTANTE: Debitar créditos ANTES de compilar/exibir
     const debitSuccess = await logUsage("trabalho");
     if (!debitSuccess) {
       toast.error("Não foi possível debitar os créditos. O trabalho não foi salvo.");
@@ -299,7 +303,7 @@ const TrabalhoPage = () => {
     setResultadoCompilado(fullContent);
     setCapaImageUrl(capaUrl);
     setFase("resultado");
-    toast.success("Trabalho compilado e créditos debitados com sucesso!");
+    toast.success("Trabalho compilado com sucesso! (-10 créditos debitados)");
 
     saveProject("trabalho", tema || "Trabalho sem título", {
       resultado: fullContent,
