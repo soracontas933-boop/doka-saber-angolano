@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Download, BookOpen, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import PDFViewer from "@/components/PDFViewer";
+import { getEbookDownloadUrl } from "@/lib/ebook-storage";
 
 const MeusLivrosTab = () => {
   const [items, setItems] = useState<any[]>([]);
@@ -34,11 +35,13 @@ const MeusLivrosTab = () => {
     
     setDownloadingId(book.id);
     try {
-      const { data, error } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 300);
-      if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
+      const result = await getEbookDownloadUrl(book.ficheiro_path, 300);
+      if (!result.success || !result.signedUrl) {
+        throw new Error(result.error || "URL não gerada");
+      }
       
       // Forçar download em vez de abrir em nova aba
-      const response = await fetch(data.signedUrl);
+      const response = await fetch(result.signedUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -63,10 +66,12 @@ const MeusLivrosTab = () => {
     
     setDownloadingId(book.id);
     try {
-      const { data, error } = await supabase.storage.from("book-files").createSignedUrl(book.ficheiro_path, 3600);
-      if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
+      const result = await getEbookDownloadUrl(book.ficheiro_path, 3600);
+      if (!result.success || !result.signedUrl) {
+        throw new Error(result.error || "URL não gerada");
+      }
       
-      setReadingBook({ url: data.signedUrl, title: book.titulo });
+      setReadingBook({ url: result.signedUrl, title: book.titulo });
     } catch (err) {
       toast({ title: "Erro", description: "Não foi possível abrir o leitor", variant: "destructive" });
     } finally {

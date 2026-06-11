@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 
 import PDFViewer from "@/components/PDFViewer";
 import BookPaymentDialog from "@/components/BookPaymentDialog";
+import { getEbookDownloadUrl } from "@/lib/ebook-storage";
 
 const LivroDetalhePage = () => {
   const { id } = useParams();
@@ -73,21 +74,17 @@ const LivroDetalhePage = () => {
     toast({ title: "Compra concluída! Livro disponível na sua biblioteca." });
   };
 
-
-
-
-
   const handleDownload = async () => {
     if (!book.ficheiro_path) return toast({ title: "Erro", description: "Caminho do ficheiro não encontrado", variant: "destructive" });
     
     setProcessing(true);
     try {
-      // Tenta primeiro o novo bucket 'ebooks', se falhar ou se o path não começar com 'files/', tenta o antigo
-      const bucket = book.ficheiro_path.startsWith('files/') ? 'ebooks' : 'book-files';
-      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(book.ficheiro_path, 300);
-      if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
+      const result = await getEbookDownloadUrl(book.ficheiro_path, 300);
+      if (!result.success || !result.signedUrl) {
+        throw new Error(result.error || "URL não gerada");
+      }
       
-      const response = await fetch(data.signedUrl);
+      const response = await fetch(result.signedUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -111,12 +108,12 @@ const LivroDetalhePage = () => {
     
     setProcessing(true);
     try {
-      // Tenta primeiro o novo bucket 'ebooks', se falhar ou se o path não começar com 'files/', tenta o antigo
-      const bucket = book.ficheiro_path.startsWith('files/') ? 'ebooks' : 'book-files';
-      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(book.ficheiro_path, 3600);
-      if (error || !data?.signedUrl) throw error || new Error("URL não gerada");
+      const result = await getEbookDownloadUrl(book.ficheiro_path, 3600);
+      if (!result.success || !result.signedUrl) {
+        throw new Error(result.error || "URL não gerada");
+      }
       
-      setReadingBook({ url: data.signedUrl, title: book.titulo });
+      setReadingBook({ url: result.signedUrl, title: book.titulo });
     } catch (err) {
       toast({ title: "Erro ao abrir leitor", variant: "destructive" });
     } finally {
