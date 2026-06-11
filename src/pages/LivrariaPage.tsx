@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getLivrosComCache } from "@/lib/livrosCache";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,24 +56,35 @@ const LivrariaPage = () => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [{ data: bs }, { data: cs }, { data: { user } }] = await Promise.all([
-        supabase
-          .from("books")
-          .select("*")
-          .eq("publicado", true)
-          .order("destaque", { ascending: false })
-          .order("criado_em", { ascending: false }),
-        supabase.from("book_categories").select("*").eq("ativo", true).order("ordem"),
-        supabase.auth.getUser(),
-      ]);
-      setBooks((bs as Book[]) || []);
-      setCategories((cs as Category[]) || []);
-      if (user) {
-        const { data: lib } = await supabase
-          .from("book_library")
-          .select("book_id")
-          .eq("user_id", user.id);
-        setMyLibrary(new Set((lib || []).map((r: any) => r.book_id)));
+      try {
+        // Usar cache para livros
+        const bs = await getLivrosComCache(supabase);
+        
+        // Filtrar apenas livros publicados
+        const publishedBooks = (bs as Book[]).filter((b) => b.publicado === true);
+        
+        // Ordenar por destaque e data de criação
+        publishedBooks.sort((a, b) => {
+          if (b.destaque !== a.destaque) {
+            return (b.destaque ? 1 : 0) - (a.destaque ? 1 : 0);
+          }
+          return new Date(b.criado_em || 0).getTime() - new Date(a.criado_em || 0).getTime();
+        });
+        
+        const { data: cs } = await supabase.from("book_categories").select("*").eq("ativo", true).order("ordem");
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        setBooks(publishedBooks || []);
+        setCategories((cs as Category[]) || []);
+        if (user) {
+          const { data: lib } = await supabase
+            .from("book_library")
+            .select("book_id")
+            .eq("user_id", user.id);
+          setMyLibrary(new Set((lib || []).map((r: any) => r.book_id)));
+        }
+      } catch (error) {
+        console.error("Erro ao carregar livros:", error);
       }
       setLoading(false);
     };
