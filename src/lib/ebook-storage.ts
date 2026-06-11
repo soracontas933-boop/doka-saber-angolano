@@ -105,13 +105,32 @@ export const uploadEbookCover = async (file: File): Promise<EbookUploadResult> =
 /**
  * Gera URL assinada para download de um ebook
  * Suporta tanto o novo bucket 'ebooks' quanto o antigo 'book-files' para compatibilidade
+ * Também suporta URLs de Hostinger no formato 'hostinger-private://bucket/path'
  */
 export const getEbookDownloadUrl = async (
   ficheiroPath: string,
   expirationSeconds: number = 300
 ): Promise<EbookDownloadResult> => {
   try {
-    // Determina qual bucket usar baseado no caminho
+    // Detectar se é um caminho de Hostinger
+    if (ficheiroPath.startsWith("hostinger-private://")) {
+      // Importar dinâmicamente a função de Hostinger
+      const { getSignedUrl } = await import("./hostinger-storage");
+      
+      // Extrair bucket e path do formato 'hostinger-private://bucket/path'
+      const parts = ficheiroPath.replace("hostinger-private://", "").split("/");
+      const bucket = parts[0];
+      const path = parts.slice(1).join("/");
+      
+      if (!bucket || !path) {
+        return { success: false, error: "Caminho de Hostinger inválido" };
+      }
+      
+      const result = await getSignedUrl(bucket, path, expirationSeconds);
+      return result;
+    }
+    
+    // Determina qual bucket usar baseado no caminho (compatibilidade com Supabase)
     const bucket = ficheiroPath.startsWith("files/") ? "ebooks" : "book-files";
 
     const { data, error } = await supabase.storage
