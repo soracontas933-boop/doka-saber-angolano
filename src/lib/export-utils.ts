@@ -6,13 +6,14 @@ import { parseTrabalhoSections } from "@/lib/trabalho-parser";
 
 export interface CoverPageData {
   nomeEscola?: string;
+  faculdade?: string;
+  curso?: string;
   tipoTrabalho: string;
   tema: string;
   nomeAluno?: string;
   numero?: string;
   sala?: string;
   turma?: string;
-  curso?: string;
   disciplina?: string;
   nomeDocente?: string;
   localidade?: string;
@@ -20,6 +21,8 @@ export interface CoverPageData {
   classe?: string;
   nomesIntegrantes?: string[];
   modalidade?: "individual" | "grupo";
+  grauAcademico?: string;
+  normaFormatacao?: string;
 }
 
 const ANGOLA_COAT_OF_ARMS_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Coat_of_arms_of_Angola.svg/200px-Coat_of_arms_of_Angola.svg.png";
@@ -378,6 +381,8 @@ function generateCoverPageHTML(data: CoverPageData): string {
         <p style="margin: 4px 0; font-size: 13pt;">República de Angola</p>
         <p style="margin: 4px 0; font-size: 13pt;">Ministério da Educação</p>
         <p style="margin: 4px 0; font-size: 13pt;">${e(data.nomeEscola || "Instituto de Ensino")}</p>
+        ${data.faculdade ? `<p style="margin: 4px 0; font-size: 12pt;">${e(data.faculdade)}</p>` : ""}
+        ${data.grauAcademico ? `<p style="margin: 4px 0; font-size: 12pt;">Grau: ${e(data.grauAcademico)}</p>` : ""}
       </div>
 
       <div style="border: 2px solid #000; padding: 30px 40px; margin: 20px 0; text-align: center; width: 85%;">

@@ -27,6 +27,8 @@ const CapaPage: React.FC<CapaPageProps> = ({ data, capaImageUrl, logoUrl }) => {
           <p className="capa-republica">República de Angola</p>
           <p className="capa-ministerio">Ministério da Educação</p>
           {data.nomeEscola && <p className="capa-escola">{data.nomeEscola}</p>}
+          {data.faculdade && <p className="capa-faculdade text-sm">{data.faculdade}</p>}
+          {data.grauAcademico && <p className="capa-grau text-sm">Grau: {data.grauAcademico}</p>}
         </div>
 
         {/* Title box */}

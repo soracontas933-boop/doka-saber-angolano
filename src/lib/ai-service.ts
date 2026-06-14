@@ -486,8 +486,15 @@ Retorna em JSON:
     classe: string;
     paginas: number;
     tipo: string;
-  }) =>
-    `Para o tema "${dados.titulo}", disciplina ${dados.disciplina}, ${dados.classe}, tipo ${dados.tipo}, com aproximadamente ${dados.paginas} páginas, sugere uma estrutura de subtemas/capítulos para o desenvolvimento do trabalho. Retorna APENAS um JSON válido no formato: { "subtemas": [ { "titulo": "string", "tipo": "introducao|capitulo|conclusao|bibliografia", "descricao": "breve descrição do conteúdo esperado" } ] }. A estrutura deve incluir: Introdução, ${Math.max(2, Math.floor(dados.paginas / 2))} capítulos de desenvolvimento relevantes ao tema no contexto angolano, Conclusão e Bibliografia. Não incluas Capa nem Índice.`,
+  }) => {
+    const isTFC = dados.tipo === "Monografia" || dados.tipo === "TCC";
+    const numCapitulos = isTFC ? 5 : Math.max(2, Math.floor(dados.paginas / 2));
+    const extraInfo = isTFC 
+      ? "Como é uma Monografia/TCC, a estrutura deve ser rigorosa e académica, seguindo os padrões universitários angolanos. Inclui obrigatoriamente capítulos para: Introdução (com problema, objectivos, justificativa), Fundamentação Teórica, Metodologia, Apresentação e Discussão de Resultados, e Conclusões."
+      : "";
+    
+    return `Para o tema "${dados.titulo}", disciplina ${dados.disciplina}, ${dados.classe}, tipo ${dados.tipo}, com aproximadamente ${dados.paginas} páginas, sugere uma estrutura de subtemas/capítulos para o desenvolvimento do trabalho. ${extraInfo} Retorna APENAS um JSON válido no formato: { "subtemas": [ { "titulo": "string", "tipo": "introducao|capitulo|conclusao|bibliografia", "descricao": "breve descrição do conteúdo esperado" } ] }. A estrutura deve incluir: Introdução, ${numCapitulos} capítulos de desenvolvimento relevantes ao tema no contexto angolano, Conclusão e Bibliografia. Não incluas Capa nem Índice.`;
+  },
 
   subtema: (dados: {
     temaGeral: string;
@@ -515,11 +522,12 @@ Retorna em JSON:
       ? " Ao final de cada parágrafo, inclui uma citação académica entre parênteses no formato (Apelido, Ano, p. X) usando APENAS autores da lista fornecida."
       : " NÃO incluas citações entre parênteses (ex.: (Apelido, Ano, p. X)) no corpo do texto. Escreve um texto corrido, académico, sem referências inline.";
 
+    const isTFC = dados.tipoSubtema === "Monografia" || dados.tipoSubtema === "TCC"; // Note: this logic might need the type from parent
     const instrucoes: Record<string, string> = {
-      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, objectivos do trabalho (geral e específicos), justificativa/importância do tema, e metodologia utilizada. Deve ter pelo menos 2-3 parágrafos bem desenvolvidos.${citacaoNota}${bibRef}`,
-      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 3-4 parágrafos densos.${citacaoNota}${bibRef}`,
-      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais abordados nos capítulos, apresenta as principais constatações, e sugere recomendações ou perspectivas futuras. Deve ter 2-3 parágrafos.${citacaoNota}${bibRef}`,
-      bibliografia: `Selecciona 5-8 referências da lista abaixo que sejam mais relevantes para o trabalho sobre "${dados.temaGeral}" na disciplina ${dados.disciplina}, ${dados.classe}. NÃO INVENTES nenhuma referência — usa APENAS as que estão nesta lista. Formata cada uma em APA.\n\nREFERÊNCIAS DISPONÍVEIS (escolhe apenas destas):\n${refsTexto}`,
+      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, problema de investigação, pergunta de investigação, hipóteses (se aplicável), objectivos do trabalho (geral e específicos), justificativa/importância do tema, metodologia utilizada e estrutura do trabalho. Deve ser muito detalhado e académico.${citacaoNota}${bibRef}`,
+      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 4-6 parágrafos densos e científicos.${citacaoNota}${bibRef}`,
+      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais, responde à pergunta de investigação, verifica o alcance dos objectivos, aponta limitações e sugere recomendações futuras. Deve ser uma síntese crítica e profunda.${citacaoNota}${bibRef}`,
+      bibliografia: `Selecciona 10-15 referências da lista abaixo que sejam mais relevantes para o trabalho sobre "${dados.temaGeral}" na disciplina ${dados.disciplina}, ${dados.classe}. NÃO INVENTES nenhuma referência — usa APENAS as que estão nesta lista. Formata cada uma rigorosamente em APA.\n\nREFERÊNCIAS DISPONÍVEIS (escolhe apenas destas):\n${refsTexto}`,
     };
     const tipo = dados.tipoSubtema as keyof typeof instrucoes;
     return `${instrucoes[tipo] || instrucoes.capitulo} Disciplina: ${dados.disciplina}, Nível: ${dados.classe}. ${dados.contexto ? `Contexto dos capítulos anteriores: ${dados.contexto}` : ""} Retorna APENAS o conteúdo em markdown (sem título de nível 1 ou 2, começa directo no texto). RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA — nunca em inglês.`;

@@ -51,6 +51,7 @@ const TrabalhoPage = () => {
   const { settings: trabalhoSettings, updateSettings: updateTrabalhoSettings, resetSettings: resetTrabalhoSettings } = useTrabalhoSettings();
   const [tema, setTema] = useLocalStorage("doka_trabalho_tema", "");
   const [nomeEscola, setNomeEscola] = useLocalStorage("doka_trabalho_escola", "");
+  const [faculdade, setFaculdade] = useLocalStorage("doka_trabalho_faculdade", "");
   const [logoEscola, setLogoEscola] = useState<File | null>(null);
   const [modalidade, setModalidade] = useLocalStorage<"individual" | "grupo">("doka_trabalho_modalidade", "individual");
   const [numIntegrantes, setNumIntegrantes] = useLocalStorage("doka_trabalho_numIntegrantes", 4);
@@ -67,6 +68,8 @@ const TrabalhoPage = () => {
   const [paginas, setPaginas] = useLocalStorage("doka_trabalho_paginas", 5);
   const [numero, setNumero] = useLocalStorage("doka_trabalho_numero", "");
   const [curso, setCurso] = useLocalStorage("doka_trabalho_curso", "");
+  const [grauAcademico, setGrauAcademico] = useLocalStorage("doka_trabalho_grau", "Licenciatura");
+  const [normaFormatacao, setNormaFormatacao] = useLocalStorage("doka_trabalho_norma", "APA");
   const [elementosVisuais, setElementosVisuais] = useLocalStorage("doka_trabalho_elementosVisuais", 2);
   const [tipoCapa, setTipoCapa] = useLocalStorage<"padrao" | "upload" | "personalizada">("doka_trabalho_tipoCapa", "padrao");
   const [capaUpload, setCapaUpload] = useState<File | null>(null);
@@ -126,8 +129,8 @@ const TrabalhoPage = () => {
   };
 
   const getCoverData = (): CoverPageData => ({
-    nomeEscola, tipoTrabalho, tema, nomeDocente, localidade, anoLectivo, classe, disciplina,
-    sala, turma, numero, curso, modalidade,
+    nomeEscola, faculdade, tipoTrabalho, tema, nomeDocente, localidade, anoLectivo, classe, disciplina,
+    sala, turma, numero, curso, modalidade, grauAcademico, normaFormatacao,
     nomeAluno: modalidade === "individual" ? nomeAluno : undefined,
     nomesIntegrantes: modalidade === "grupo" ? nomesIntegrantes.filter(Boolean) : undefined,
   });
@@ -137,7 +140,9 @@ const TrabalhoPage = () => {
     e.preventDefault();
     if (!tema.trim()) { toast.error("Insira o tema do trabalho"); return; }
     
-    const canProceed = await checkLimit("trabalho");
+    const isTFC = tipoTrabalho === "Monografia" || tipoTrabalho === "TCC";
+    const moduloCusto = isTFC ? "tfc" : "trabalho";
+    const canProceed = await checkLimit(moduloCusto);
     if (!canProceed) return;
     
     setLoading(true);
@@ -152,7 +157,8 @@ const TrabalhoPage = () => {
         tipo: tipoTrabalho,
       });
 
-      const response = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 4000, 0.7);
+      const isTFC = tipoTrabalho === "Monografia" || tipoTrabalho === "TCC";
+      const response = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, isTFC ? 6000 : 4000, 0.7);
       
       // Parse JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -201,6 +207,7 @@ const TrabalhoPage = () => {
       const bibSubtema = subtemas.find((s) => s.tipo === "bibliografia" && s.status === "gerado");
       const bibliografia = bibSubtema?.conteudo || undefined;
 
+      const isTFC = tipoTrabalho === "Monografia" || tipoTrabalho === "TCC";
       const prompt = prompts.subtema({
         temaGeral: tema,
         tituloSubtema: sub.titulo,
@@ -214,7 +221,7 @@ const TrabalhoPage = () => {
         incluirCitacoes: trabalhoSettings.incluirCitacoes,
       });
 
-      const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, 6000, 0.7);
+      const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, isTFC ? 8000 : 6000, 0.7);
 
       // Validate bibliography against real references
       let conteudoFinal = conteudo;
@@ -289,7 +296,9 @@ const TrabalhoPage = () => {
     }
 
     // IMPORTANTE: Validar e debitar créditos ANTES de compilar/exibir
-    const debitSuccess = await logUsage("trabalho");
+    const isTFC = tipoTrabalho === "Monografia" || tipoTrabalho === "TCC";
+    const moduloCusto = isTFC ? "tfc" : "trabalho";
+    const debitSuccess = await logUsage(moduloCusto);
     if (!debitSuccess) {
       toast.error("Não foi possível debitar os créditos. O trabalho não foi salvo.");
       return;
@@ -367,6 +376,26 @@ const TrabalhoPage = () => {
           onSubmit={handleGenerateStructure}
           className="space-y-4"
         >
+          {/* Tipo de Trabalho (Now first) */}
+          <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-xs">Tipo de Trabalho <span className="text-destructive">*</span></Label>
+              <Select value={tipoTrabalho} onValueChange={(v) => {
+                setTipoTrabalho(v);
+                if (v === "Monografia" || v === "TCC") {
+                  if (paginas < 30) setPaginas(30);
+                }
+              }}>
+                <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiposTrabalho.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Tema */}
           <div className="bg-card md:bg-card border border-border/50 md:border-border rounded-2xl p-3 sm:p-6 shadow-sm md:shadow-card space-y-3">
             <div className="space-y-1.5">
@@ -388,14 +417,25 @@ const TrabalhoPage = () => {
               Dados da Instituição
             </h2>
             <div className="space-y-1.5">
-              <Label className="text-foreground text-xs">Nome da Escola</Label>
+              <Label className="text-foreground text-xs">Nome da Escola / Universidade</Label>
               <Input
-                placeholder="Ex: Instituto Médio de Economia"
+                placeholder="Ex: UAN"
                 value={nomeEscola}
                 onChange={(e) => setNomeEscola(e.target.value)}
                 className="bg-muted md:bg-background border-border md:border-input text-foreground h-10"
               />
             </div>
+            {(tipoTrabalho === "Monografia" || tipoTrabalho === "TCC") && (
+              <div className="space-y-1.5">
+                <Label className="text-foreground text-xs">Faculdade</Label>
+                <Input
+                  placeholder="Ex: Faculdade de Direito"
+                  value={faculdade}
+                  onChange={(e) => setFaculdade(e.target.value)}
+                  className="bg-muted md:bg-background border-border md:border-input text-foreground h-10"
+                />
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label className="text-foreground text-xs">Logotipo</Label>
               <label className="flex items-center gap-3 px-3 py-2.5 border border-dashed border-border md:border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 md:bg-accent/20">
@@ -509,16 +549,33 @@ const TrabalhoPage = () => {
               Configurações
             </h2>
 
-            <div className="grid grid-cols-3 gap-2 md:grid-cols-1 md:gap-4">
-              <div className="space-y-1.5 col-span-2 md:col-span-1">
-                <Label className="text-foreground text-xs">Tipo</Label>
-                <Select value={tipoTrabalho} onValueChange={setTipoTrabalho}>
-                  <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {tiposTrabalho.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(tipoTrabalho === "Monografia" || tipoTrabalho === "TCC") && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label className="text-foreground text-xs">Grau Académico</Label>
+                    <Select value={grauAcademico} onValueChange={setGrauAcademico}>
+                      <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Técnico Médio">Técnico Médio</SelectItem>
+                        <SelectItem value="Licenciatura">Licenciatura</SelectItem>
+                        <SelectItem value="Mestrado">Mestrado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-foreground text-xs">Norma de Formatação</Label>
+                    <Select value={normaFormatacao} onValueChange={setNormaFormatacao}>
+                      <SelectTrigger className="bg-muted md:bg-background border-border md:border-input text-foreground h-10 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="APA">APA</SelectItem>
+                        <SelectItem value="ABNT">ABNT</SelectItem>
+                        <SelectItem value="Padrão Institucional">Padrão Institucional</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
               <div className="space-y-1.5">
                 <Label className="text-foreground text-xs">Páginas</Label>
                 <div className="flex items-center gap-1">
@@ -526,7 +583,7 @@ const TrabalhoPage = () => {
                     <Minus className="h-3 w-3" />
                   </Button>
                   <span className="text-xs font-medium flex-1 text-center text-foreground">{paginas}</span>
-                  <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-border md:border-input" onClick={() => setPaginas(Math.min(30, paginas + 1))}>
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7 border-border md:border-input" onClick={() => setPaginas(Math.min((tipoTrabalho === "Monografia" || tipoTrabalho === "TCC" ? 120 : 30), paginas + 1))}>
                     <Plus className="h-3 w-3" />
                   </Button>
                 </div>
@@ -738,9 +795,9 @@ const TrabalhoPage = () => {
                 <span className="text-xs">{etapa || "A gerar..."}</span>
               </span>
             ) : (
-              <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2">
                 Gerar Estrutura
-                <CreditCostBadge modulo="trabalho" />
+                <CreditCostBadge modulo={(tipoTrabalho === "Monografia" || tipoTrabalho === "TCC") ? "tfc" : "trabalho"} />
               </span>
             )}
           </Button>

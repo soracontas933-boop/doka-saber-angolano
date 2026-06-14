@@ -4,7 +4,7 @@ export const CREDIT_COSTS = {
   resumo: 5,
   questionario: 3,
   plano_aula: 15,
-  tfc: 50,
+  tfc: 100,
   correcao: 8,
   apresentacao: 12,
   cv: 14,
