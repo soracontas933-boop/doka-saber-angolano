@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { generateWithGroq, generateImageUrl, imagePrompts, prompts, DOKA_SYSTEM_PROMPT } from "@/lib/ai-service";
+import { validateTotalContent, getContentRecommendation } from "@/lib/pagination-calculator";
 import { validarBibliografia } from "@/lib/referencias-reais";
 import { exportToWord, exportToPDF, type CoverPageData } from "@/lib/export-utils";
 import { exportMultiPagePdf } from "@/lib/multi-page-pdf";
@@ -158,7 +159,7 @@ const TrabalhoPage = () => {
       });
 
       const isTFC = tipoTrabalho === "Monografia" || tipoTrabalho === "TCC";
-      const response = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, isTFC ? 6000 : 4000, 0.7);
+      const response = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, isTFC ? 8000 : 4000, 0.7);
       
       // Parse JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -221,7 +222,7 @@ const TrabalhoPage = () => {
         incluirCitacoes: trabalhoSettings.incluirCitacoes,
       });
 
-      const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, isTFC ? 8000 : 6000, 0.7);
+      const conteudo = await generateWithGroq(DOKA_SYSTEM_PROMPT, prompt, isTFC ? 12000 : 6000, 0.7);
 
       // Validate bibliography against real references
       let conteudoFinal = conteudo;
@@ -268,6 +269,22 @@ const TrabalhoPage = () => {
 
   // Phase 3: Compile
   const handleCompile = async () => {
+    const isTFC = tipoTrabalho === "Monografia" || tipoTrabalho === "TCC";
+    
+    // Validar paginação para monografias/TCC
+    if (isTFC) {
+      const validation = validateTotalContent(subtemas, paginas);
+      if (!validation.isValid) {
+        const recommendation = getContentRecommendation(validation.deficit, subtemas.length);
+        toast.error(
+          `Conteúdo insuficiente: ${validation.message}\n\n${recommendation}\n\nGere novamente os subtemas ou aumente o número de páginas.`
+        );
+        return;
+      } else {
+        console.log(`[Paginação] ${validation.message}`);
+      }
+    }
+    
     // Build full markdown from all subtemas
     const sections = subtemas.map((s) => {
       const tituloPrefix = s.tipo === "capitulo"
@@ -296,7 +313,6 @@ const TrabalhoPage = () => {
     }
 
     // IMPORTANTE: Validar e debitar créditos ANTES de compilar/exibir
-    const isTFC = tipoTrabalho === "Monografia" || tipoTrabalho === "TCC";
     const moduloCusto = isTFC ? "tfc" : "trabalho";
     const debitSuccess = await logUsage(moduloCusto);
     if (!debitSuccess) {

@@ -488,9 +488,17 @@ Retorna em JSON:
     tipo: string;
   }) => {
     const isTFC = dados.tipo === "Monografia" || dados.tipo === "TCC";
-    const numCapitulos = isTFC ? 5 : Math.max(2, Math.floor(dados.paginas / 2));
+    // Para monografias/TCC: calcula capítulos com base em páginas (mín 5, máx 10)
+    // Cada capítulo deve ter ~4-6 páginas
+    let numCapitulos = 5;
+    if (isTFC) {
+      numCapitulos = Math.max(5, Math.min(10, Math.ceil(dados.paginas / 5)));
+    } else {
+      numCapitulos = Math.max(2, Math.floor(dados.paginas / 2));
+    }
+    
     const extraInfo = isTFC 
-      ? "Como é uma Monografia/TCC, a estrutura deve ser rigorosa e académica, seguindo os padrões universitários angolanos. Inclui obrigatoriamente capítulos para: Introdução (com problema, objectivos, justificativa), Fundamentação Teórica, Metodologia, Apresentação e Discussão de Resultados, e Conclusões."
+      ? `Como é uma Monografia/TCC com ${dados.paginas} páginas, a estrutura deve ser rigorosa e académica, seguindo os padrões universitários angolanos. Cada capítulo deve ter profundidade e extensão suficientes (4-6 páginas cada). Inclui obrigatoriamente capítulos para: Introdução (com problema, objectivos, justificativa, 3-4 páginas), Fundamentação Teórica (5-6 páginas), Metodologia (3-4 páginas), Apresentação e Discussão de Resultados (5-6 páginas), e Conclusões (2-3 páginas). Total de ${numCapitulos} capítulos de desenvolvimento.`
       : "";
     
     return `Para o tema "${dados.titulo}", disciplina ${dados.disciplina}, ${dados.classe}, tipo ${dados.tipo}, com aproximadamente ${dados.paginas} páginas, sugere uma estrutura de subtemas/capítulos para o desenvolvimento do trabalho. ${extraInfo} Retorna APENAS um JSON válido no formato: { "subtemas": [ { "titulo": "string", "tipo": "introducao|capitulo|conclusao|bibliografia", "descricao": "breve descrição do conteúdo esperado" } ] }. A estrutura deve incluir: Introdução, ${numCapitulos} capítulos de desenvolvimento relevantes ao tema no contexto angolano, Conclusão e Bibliografia. Não incluas Capa nem Índice.`;
@@ -524,10 +532,10 @@ Retorna em JSON:
 
     const isTFC = dados.tipoSubtema === "Monografia" || dados.tipoSubtema === "TCC"; // Note: this logic might need the type from parent
     const instrucoes: Record<string, string> = {
-      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui: contextualização do tema, problema de investigação, pergunta de investigação, hipóteses (se aplicável), objectivos do trabalho (geral e específicos), justificativa/importância do tema, metodologia utilizada e estrutura do trabalho. Deve ser muito detalhado e académico.${citacaoNota}${bibRef}`,
-      capitulo: `Gera o conteúdo detalhado do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. O conteúdo deve ser rico, educativo, com subcapítulos, exemplos práticos e contextualizado à realidade angolana. Mínimo 4-6 parágrafos densos e científicos.${citacaoNota}${bibRef}`,
-      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". Resume os pontos principais, responde à pergunta de investigação, verifica o alcance dos objectivos, aponta limitações e sugere recomendações futuras. Deve ser uma síntese crítica e profunda.${citacaoNota}${bibRef}`,
-      bibliografia: `Selecciona 10-15 referências da lista abaixo que sejam mais relevantes para o trabalho sobre "${dados.temaGeral}" na disciplina ${dados.disciplina}, ${dados.classe}. NÃO INVENTES nenhuma referência — usa APENAS as que estão nesta lista. Formata cada uma rigorosamente em APA.\n\nREFERÊNCIAS DISPONÍVEIS (escolhe apenas destas):\n${refsTexto}`,
+      introducao: `Gera a Introdução do trabalho sobre "${dados.temaGeral}". Inclui OBRIGATORIAMENTE: contextualização abrangente do tema (2-3 parágrafos), problema de investigação claramente definido, pergunta de investigação, hipóteses (se aplicável), objectivos do trabalho (geral e 3-5 específicos), justificativa/importância do tema com argumentação sólida, metodologia utilizada e estrutura do trabalho. Deve ser MUITO detalhado, académico, com 3000-4000 palavras, múltiplos parágrafos densos, exemplos concretos contextualizados em Angola.${citacaoNota}${bibRef}`,
+      capitulo: `Gera o conteúdo EXTREMAMENTE DETALHADO do capítulo "${dados.tituloSubtema}" do trabalho sobre "${dados.temaGeral}". Este é o capítulo ${dados.posicao} de ${dados.totalSubtemas} do desenvolvimento. REQUISITOS OBRIGATÓRIOS: (1) Mínimo 3000-4000 palavras; (2) Múltiplos subcapítulos (##) com títulos descritivos; (3) Cada subcapítulo com 3-5 parágrafos densos; (4) Exemplos práticos, estudos de caso, dados estatísticos; (5) Contextualizado à realidade angolana com referências específicas; (6) Análise crítica e reflexiva; (7) Transições coesas entre ideias; (8) Tabelas, listas numeradas ou estruturadas quando apropriado. O conteúdo deve ser académico, rigoroso, sem repetições, bem organizado e substancial.${citacaoNota}${bibRef}`,
+      conclusao: `Gera a Conclusão do trabalho sobre "${dados.temaGeral}". REQUISITOS: (1) Mínimo 1500-2000 palavras; (2) Resume SINTETICAMENTE os pontos principais de cada capítulo (sem repetição literal); (3) Responde explicitamente à pergunta de investigação; (4) Verifica o alcance de cada objectivo específico; (5) Aponta limitações da investigação; (6) Sugere recomendações futuras e desdobramentos possíveis; (7) Reflexão crítica sobre as implicações dos resultados; (8) Perspectivas de aplicação prática. Deve ser uma síntese crítica, profunda e bem argumentada.${citacaoNota}${bibRef}`,
+      bibliografia: `Selecciona 12-20 referências da lista abaixo que sejam mais relevantes para o trabalho sobre "${dados.temaGeral}" na disciplina ${dados.disciplina}, ${dados.classe}. NÃO INVENTES nenhuma referência — usa APENAS as que estão nesta lista. Formata cada uma rigorosamente em APA. Organiza por ordem alfabética. Inclui uma breve anotação (1-2 frases) sobre a relevância de cada referência para o trabalho.\n\nREFERÊNCIAS DISPONÍVEIS (escolhe apenas destas):\n${refsTexto}`,
     };
     const tipo = dados.tipoSubtema as keyof typeof instrucoes;
     return `${instrucoes[tipo] || instrucoes.capitulo} Disciplina: ${dados.disciplina}, Nível: ${dados.classe}. ${dados.contexto ? `Contexto dos capítulos anteriores: ${dados.contexto}` : ""} Retorna APENAS o conteúdo em markdown (sem título de nível 1 ou 2, começa directo no texto). RESPONDE EXCLUSIVAMENTE EM PORTUGUÊS DE ANGOLA — nunca em inglês.`;
