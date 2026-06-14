@@ -23,34 +23,58 @@ const MobileNav = () => {
   });
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-background/80 backdrop-blur-xl border-t border-border/40">
-      <div className="px-4 py-3 flex-row pt-px pb-[4px] flex items-start justify-center text-justify font-mono">
+    <nav className="md:hidden fixed bottom-6 left-6 right-6 z-50 rounded-[32px] bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className="px-6 py-4 flex items-center justify-between relative">
         {visibleItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           
+          if (item.to === "/home") {
+             return (
+               <NavLink
+                key={item.to}
+                to={item.to}
+                className="relative z-10 flex flex-col items-center gap-1 transition-all duration-300 active:scale-90"
+              >
+                <item.icon className={`h-6 w-6 ${isActive ? "text-white" : "text-white/40"}`} />
+                <span className={`text-[10px] font-medium ${isActive ? "text-white" : "text-white/40"}`}>Início</span>
+              </NavLink>
+             );
+          }
+
+          if (item.label === "Ajustes") {
+             return (
+               <NavLink
+                key={item.to}
+                to={item.to}
+                className="relative z-10 flex flex-col items-center gap-1 transition-all duration-300 active:scale-90"
+              >
+                <item.icon className={`h-6 w-6 ${isActive ? "text-white" : "text-white/40"}`} />
+                <span className={`text-[10px] font-medium ${isActive ? "text-white" : "text-white/40"}`}>Perfil</span>
+              </NavLink>
+             );
+          }
+
           return (
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex flex-col items-center gap-1.5 px-2 py-1 transition-all duration-200 active:scale-90 mr-[6px]"
+              className="relative z-10 flex flex-col items-center gap-1 transition-all duration-300 active:scale-90"
             >
-              <div className={`p-1 rounded-full transition-all duration-300 ${isActive ? 'bg-primary/10' : 'bg-transparent'}`}>
-                <item.icon
-                  className={`h-5.5 w-5.5 transition-all duration-300 ${
-                    isActive ? "text-primary stroke-[2.5px]" : "text-muted-foreground stroke-[1.5px] shadow-glass"
-                  }`}
-                />
-              </div>
-              <span
-                className={`text-[10px] font-medium transition-colors duration-300 ${
-                  isActive ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                {item.label}
-              </span>
+              <item.icon className={`h-6 w-6 ${isActive ? "text-white" : "text-white/40"}`} />
+              <span className={`text-[10px] font-medium ${isActive ? "text-white" : "text-white/40"}`}>{item.label}</span>
             </NavLink>
           );
         })}
+        
+        {/* Central Add Button Style Placeholder */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-[2px] shadow-lg shadow-blue-500/20">
+           <div className="w-full h-full rounded-full bg-[#0B0B0F] flex items-center justify-center">
+              <div className="w-6 h-6 relative">
+                 <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white rounded-full" />
+                 <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white rounded-full" />
+              </div>
+           </div>
+        </div>
       </div>
     </nav>
   );

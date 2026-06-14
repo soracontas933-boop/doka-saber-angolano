@@ -53,6 +53,18 @@
     --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
     --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
 
+    /* 3D & Immersive Design Tokens */
+    --immersive-bg: 240 10% 4%;
+    --immersive-card: 240 10% 8%;
+    --immersive-accent: 260 80% 60%;
+    --immersive-blue: 210 100% 50%;
+    --immersive-purple: 270 100% 60%;
+    --immersive-cyan: 180 100% 50%;
+    
+    --shadow-3d: 0 20px 40px rgba(0, 0, 0, 0.4);
+    --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
+    --shadow-glow-purple: 0 0 20px rgba(168, 85, 247, 0.3);
+
     /* Custom Design Tokens */
     --delle-surface: 240 14% 97%;
     --delle-card: 0 0% 100%;
@@ -147,6 +159,23 @@
   
   .glass-effect {
     @apply bg-white/80 dark:bg-black/80 backdrop-blur-md border-white/20 dark:border-white/10;
+  }
+
+  .immersive-card {
+    @apply bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/10 shadow-3d rounded-[24px];
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .text-gradient-blue-purple {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#3B82F6] to-[#A855F7];
+  }
+
+  .bg-glow-purple {
+    background: radial-gradient(circle at center, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+  }
+
+  .bg-glow-blue {
+    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
   }
 }
 

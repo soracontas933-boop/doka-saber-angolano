@@ -129,193 +129,149 @@ const UserHomePage = () => {
   ].filter(i => i.remaining !== null) : [];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile Layout */}
-      <div className="md:hidden">
+    <div className="min-h-screen bg-[#0B0B0F] text-white overflow-x-hidden">
+      {/* Mobile Layout Imersivo */}
+      <div className="md:hidden pb-24">
+        
+        {/* Background Glows */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full" />
+          <div className="absolute top-[20%] -right-[10%] w-[50%] h-[30%] bg-purple-600/20 blur-[100px] rounded-full" />
+        </div>
 
-        {/* Hero section */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="px-4 pt-3 pb-2"
-        >
-          <h2 className="text-xl font-normal text-foreground">
-            Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">O que vais criar hoje?</p>
-          {canInstall && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-              <Button
-                onClick={install}
-                size="sm"
-                className="mt-2 w-full gap-2 rounded-md font-normal text-xs h-10"
-              >
-                <Download className="h-4 w-4" /> Baixar o App
-              </Button>
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* Usage Counters Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="px-4 pt-1 pb-3"
-        >
-          <p className="text-[10px] font-normal mb-1.5 uppercase tracking-wider text-muted-foreground">Gerações restantes</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
-            {usageItems.map((item) => (
-              <div key={item.label} className="gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card items-center justify-center flex flex-row shadow-glass">
-                <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[11px] font-normal text-foreground">{item.remaining}</span>
-                <span className="text-[10px] text-muted-foreground">{item.label}</span>
+        {/* Hero Section Imersiva */}
+        <div className="relative z-10 px-6 pt-20 pb-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-[2px]">
+                <div className="w-full h-full rounded-full bg-[#0B0B0F] flex items-center justify-center overflow-hidden">
+                   <img src="/doka-logo.png" alt="Doka" className="w-6 h-6 object-contain" />
+                </div>
               </div>
+              <div>
+                <h2 className="text-lg font-medium text-white/90">
+                  Olá, {profile.nome?.split(" ")[0] || "Lucas"}! 👋
+                </h2>
+                <p className="text-xs text-white/50">Pronto para aprender hoje?</p>
+              </div>
+            </div>
+
+            <div className="relative mb-10">
+              <h1 className="text-4xl font-bold leading-[1.1] tracking-tight mb-4">
+                Aprenda <br />
+                <span className="text-gradient-blue-purple">mais, estude <br />melhor</span>
+              </h1>
+              <p className="text-sm text-white/40 max-w-[240px] leading-relaxed">
+                Seu assistente inteligente para conquistar seus objetivos.
+              </p>
+              
+              {/* Brain Illustration Placeholder / Decoration */}
+              <div className="absolute -top-10 -right-4 w-48 h-48 pointer-events-none">
+                <div className="absolute inset-0 bg-glow-blue blur-3xl opacity-50" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-32 h-32 rounded-full border border-blue-500/20 animate-pulse" />
+                   <div className="absolute w-24 h-24 rounded-full border border-purple-500/10" />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Quick Actions Grid Imersiva */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            {quickActions.slice(0, 4).map((action, i) => (
+              <motion.button
+                key={action.to}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 + i * 0.1 }}
+                onClick={() => navigate(action.to)}
+                className="immersive-card p-5 flex flex-col items-start gap-4 active:scale-95 transition-all group relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner">
+                  <action.icon className="h-6 w-6 text-blue-400" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-semibold text-white/90 mb-1">{action.label}</h3>
+                  <p className="text-[10px] text-white/40 leading-tight">
+                    {action.featureKey === "trabalho" ? "Crie e organize seus trabalhos" : 
+                     action.featureKey === "resumo" ? "Resuma conteúdos de forma rápida" :
+                     action.featureKey === "questionario" ? "Pratique e teste seus conhecimentos" :
+                     "Planeje seus estudos"}
+                  </p>
+                </div>
+                <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                   <ChevronRight className="h-3 w-3 text-white/40" />
+                </div>
+              </motion.button>
             ))}
           </div>
-        </motion.div>
 
-        {/* Quick Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="px-4 pb-4"
-        >
-          <div className="grid grid-cols-3 gap-3">
-            {quickActions.map((action, i) => {
-              const coverKey = action.to.replace("/", "");
-              const coverUrl = buttonCovers[coverKey];
-              return (
-                <motion.button
-                  key={action.to}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 + i * 0.04 }}
-                  onClick={() => navigate(action.to)}
-                  className="group relative flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-card border border-border active:scale-[0.97] transition-all duration-150 overflow-hidden hover:border-primary shadow-xl"
-                >
-                  {coverUrl && (
-                    isVideoFile(coverUrl) ? (
-                      <video
-                        src={coverUrl}
-                        className="absolute inset-0 w-full h-full object-cover rounded-lg z-0"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                      />
-                    ) : (
-                      <img
-                        src={coverUrl}
-                        alt={action.label}
-                        className="absolute inset-0 w-full h-full object-cover rounded-lg z-0"
-                      />
-                    )
-                  )}
-                  {coverUrl && (
-                    <span className="absolute inset-0 bg-foreground/40 rounded-lg z-[1]" />
-                  )}
-                  <div className={`relative z-10 w-11 h-11 rounded-md flex items-center justify-center transition-all duration-150 ${coverUrl ? "bg-background/20" : "bg-muted"}`}>
-                    <action.icon className={`h-5 w-5 transition-colors duration-150 ${coverUrl ? "text-background" : "text-primary"}`} />
-                  </div>
-                  <span className={`relative z-10 text-[11px] font-normal text-center leading-tight transition-colors duration-150 ${coverUrl ? "text-background" : "text-foreground"}`}>
-                    {action.label}
-                  </span>
-                </motion.button>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Community Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="px-4 pb-4"
-        >
-          <button
-            onClick={() => navigate("/grupos")}
-            className="group w-full rounded-lg border border-border bg-card p-4 transition-all duration-150 active:scale-[0.97] flex items-center justify-between hover:border-primary shadow-xl"
+          {/* AI Assistant Banner */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="immersive-card p-6 mb-8 relative overflow-hidden group"
           >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-md bg-muted">
-                <UsersRound className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-white/10">
+                <Zap className="h-8 w-8 text-purple-400" />
               </div>
-              <div className="text-left">
-                <p className="font-normal text-sm text-foreground">Comunidade</p>
-                <p className="text-xs text-muted-foreground">
-                  {groupCount > 0 ? `${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Criar ou juntar"}
-                </p>
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span className="text-[10px] uppercase tracking-widest text-purple-400 font-bold">Assistente IA</span>
+                </div>
+                <h3 className="text-sm font-bold text-white mb-1">Tire dúvidas, aprenda mais rápido.</h3>
+                <p className="text-[11px] text-white/40 leading-snug">Pergunte qualquer coisa sobre seus estudos e receba respostas inteligentes.</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
+                <ChevronRight className="h-5 w-5 text-white" />
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </button>
-        </motion.div>
+          </motion.div>
 
-        {/* Recent Projects */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="px-4 pb-6"
-        >
-          <div className="border border-border bg-card p-4 rounded-lg shadow-2xl">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-normal text-sm text-foreground">Projetos Recentes</h3>
-              <button onClick={() => navigate("/meus-projetos")}>
-                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+          {/* Continue de onde parou */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-white/90">Continue de onde parou</h3>
+              <button onClick={() => navigate("/meus-projetos")} className="text-[11px] text-white/40 flex items-center gap-1">
+                Ver todos <ChevronRight className="h-3 w-3" />
               </button>
             </div>
-
-            {recentProjects.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6">
-                Nenhum projecto ainda. Começa agora! 🚀
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {recentProjects.map((p, i) => (
-                  <motion.button
-                    key={p.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + i * 0.04 }}
-                    onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full flex items-center gap-3 p-3 rounded-md transition-all duration-150 text-left border border-border bg-background hover:border-primary shadow-xl"
-                  >
-                    <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
-                      <WrapText className="h-4 w-4 text-primary" />
+            
+            <div className="space-y-3">
+              {recentProjects.length === 0 ? (
+                <div className="immersive-card p-6 text-center">
+                   <p className="text-xs text-white/30">Nenhum projeto recente.</p>
+                </div>
+              ) : (
+                recentProjects.slice(0, 2).map((p) => (
+                  <div key={p.id} onClick={() => navigate(`/${p.tipo}`)} className="immersive-card p-4 flex items-center gap-4 active:scale-[0.98] transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-purple-600/20 flex items-center justify-center border border-purple-500/20">
+                      <BookOpen className="h-6 w-6 text-purple-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-normal truncate text-foreground">{p.titulo}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {tipoLabel[p.tipo] || p.tipo} · {new Date(p.criado_em).toLocaleDateString("pt-AO")}
-                      </p>
+                      <h4 className="text-sm font-semibold text-white/90 truncate">{p.titulo}</h4>
+                      <p className="text-[10px] text-white/40">{tipoLabel[p.tipo] || p.tipo}</p>
+                      <div className="mt-2 w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-purple-500 w-[64%]" />
+                      </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] border-border text-muted-foreground"
-                      >
-                        Completo
-                      </Badge>
+                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                       <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white/60 border-b-[5px] border-b-transparent ml-1" />
                     </div>
-                  </motion.button>
-                ))}
-              </div>
-            )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-
-          {/* Aumentar Saldo */}
-          <Button
-            onClick={() => navigate("/planos")}
-            className="w-full mt-3 h-11 rounded-md font-normal text-sm bg-black shadow-2xl"
-          >
-            Aumentar Saldo
-          </Button>
-        </motion.div>
-
+        </div>
       </div>
 
       {/* Desktop Layout */}
