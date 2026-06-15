@@ -110,7 +110,7 @@ const CurriculoPage: React.FC = () => {
   /* ─────────── ETAPA 1: Formulário + botão Gerar ─────────── */
   if (!generated) {
     return (
-      <div className="min-h-screen max-w-3xl mx-auto pb-32">
+      <div className="min-h-screen max-w-3xl mx-auto pb-40 md:pb-32">
         <div className="flex items-center gap-2 mb-4">
           <FileText className="h-6 w-6 text-primary" />
           <h1 className="text-xl font-bold text-foreground">Criar Currículo</h1>
@@ -137,8 +137,8 @@ const CurriculoPage: React.FC = () => {
 
         {/* Sticky CTA bar */}
         <div className="fixed bottom-0 left-0 right-0 md:left-[var(--sidebar-width,16rem)] bg-background/95 backdrop-blur border-t border-border p-4 z-40">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
-            <div className="text-sm">
+          <div className="max-w-3xl mx-auto px-4 md:px-0 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm text-center sm:text-left">
               <div className="font-semibold">Gerar CV</div>
               <div className="text-muted-foreground text-xs">
                 {canGenerate ? `Custa ${CV_COST} créditos` : "Preenche o nome e o título profissional"}
@@ -148,7 +148,7 @@ const CurriculoPage: React.FC = () => {
               size="lg"
               onClick={handleGenerate}
               disabled={generating}
-              className="min-w-[170px]"
+              className="min-w-[140px] sm:min-w-[170px] w-full sm:w-auto"
               title={!canGenerate ? "Preenche o nome e o título profissional" : undefined}
             >
               <Sparkles className="h-4 w-4 mr-2" />
