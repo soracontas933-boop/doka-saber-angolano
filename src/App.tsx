@@ -53,6 +53,7 @@ const App = () => (
             <Route path="/" element={<RootRedirect />} />
             <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/livraria/:id" element={<LivroDetalhePage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
               <Route element={<AppLayout />}>
@@ -77,7 +78,7 @@ const App = () => (
                 <Route path="/curriculo" element={<CurriculoPage />} />
                 <Route path="/apresentacao" element={<ApresentacaoPage />} />
                 <Route path="/livraria" element={<LivrariaPage />} />
-                <Route path="/livraria/:id" element={<LivroDetalhePage />} />
+
                 <Route path="/minha-biblioteca" element={<MinhaBibliotecaPage />} />
                 <Route path="/faturamento" element={<FaturamentoPage />} />
               </Route>

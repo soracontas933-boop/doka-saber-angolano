@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,13 +32,15 @@ const AuthPage = () => {
   const [loginImageUrl, setLoginImageUrl] = useState<string | null>(null);
   
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
+  const returnTo = searchParams.get("returnTo");
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/home", { replace: true });
+      navigate(returnTo || "/home", { replace: true });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, returnTo]);
 
   useEffect(() => {
     const fetchLoginImage = async () => {
@@ -74,7 +76,7 @@ const AuthPage = () => {
           return;
         }
         toast.success("Bem-vindo de volta!");
-        navigate("/home", { replace: true });
+        navigate(returnTo || "/home", { replace: true });
       } else {
         if (!name.trim() || !genero || !funcao) {
           toast.error("Preencha todos os campos obrigatórios.");
@@ -107,7 +109,7 @@ const AuthPage = () => {
           return;
         }
         toast.success("Conta criada com sucesso!");
-        navigate("/home", { replace: true });
+        navigate(returnTo || "/home", { replace: true });
       }
     } catch {
       toast.error("Erro inesperado. Tente novamente.");

@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, BookOpen, Eye, Download, TrendingUp } from "lucide-react";
+import { Plus, Loader2, BookOpen, Eye, Download, TrendingUp, ExternalLink, Copy, Share2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import * as pdfjsLib from "pdfjs-dist";
 // @ts-ignore
@@ -176,10 +176,25 @@ const PublicarLivroTab = () => {
                   <h3 className="font-semibold text-sm line-clamp-2">{b.titulo}</h3>
                   <p className="text-xs text-muted-foreground">{b.gratuito ? "Grátis" : `${b.preco_kz} Kz · ${b.preco_creditos} créd`}</p>
                   {estadoBadge(b)}
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
-                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {b.visualizacoes}</span>
-                    <span className="flex items-center gap-1"><Download className="h-3 w-3" /> {b.downloads}</span>
-                  </div>
+	                  <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
+	                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {b.visualizacoes}</span>
+	                    <span className="flex items-center gap-1"><Download className="h-3 w-3" /> {b.downloads}</span>
+	                  </div>
+	                  
+	                  {b.estado_aprovacao === "aprovado" && (
+	                    <div className="flex gap-2 pt-2">
+	                      <Button size="sm" variant="outline" className="h-7 px-2 text-[10px] gap-1 rounded-lg" onClick={() => {
+	                        const url = `${window.location.origin}/livraria/${b.id}`;
+	                        navigator.clipboard.writeText(url);
+	                        toast({ title: "Link copiado!", description: "Link de venda copiado." });
+	                      }}>
+	                        <Copy className="h-3 w-3" /> Copiar Link
+	                      </Button>
+	                      <Button size="sm" variant="outline" className="h-7 px-2 text-[10px] gap-1 rounded-lg" onClick={() => window.open(`/livraria/${b.id}`, '_blank')}>
+	                        <ExternalLink className="h-3 w-3" /> Ver
+	                      </Button>
+	                    </div>
+	                  )}
                   {b.estado_aprovacao === "rejeitado" && b.motivo_rejeicao && (
                     <p className="text-[10px] text-red-600 mt-1 line-clamp-2">{b.motivo_rejeicao}</p>
                   )}

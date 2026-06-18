@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Eye } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Eye, Share2, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 import PDFViewer from "@/components/PDFViewer";
@@ -45,7 +45,7 @@ const LivroDetalhePage = () => {
   }, [id]);
 
   const handleObterGratis = async () => {
-    if (!user) return navigate("/auth");
+    if (!user) return navigate(`/auth?returnTo=${encodeURIComponent(window.location.pathname)}`);
     setProcessing(true);
     const { data, error } = await supabase.rpc("comprar_livro_com_creditos", { p_book_id: id });
     setProcessing(false);
@@ -59,7 +59,7 @@ const LivroDetalhePage = () => {
   };
 
   const handleComprarCreditos = async () => {
-    if (!user) return navigate("/auth");
+    if (!user) return navigate(`/auth?returnTo=${encodeURIComponent(window.location.pathname)}`);
     if (!confirm(`Confirmar compra de "${book.titulo}" por ${book.preco_creditos} créditos?`)) return;
     setProcessing(true);
     const { data, error } = await supabase.rpc("comprar_livro_com_creditos", { p_book_id: id });
@@ -121,14 +121,32 @@ const LivroDetalhePage = () => {
     }
   };
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({ title: "Link copiado!", description: "Agora pode partilhar este livro." });
+  };
+
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   if (!book) return <div className="text-center py-20">Livro não encontrado.</div>;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl pb-24 md:pb-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4 gap-2">
-        <ArrowLeft className="h-4 w-4" /> Voltar
-      </Button>
+      {/* SEO/Social Meta Tags (Simplified for React) */}
+      {useEffect(() => {
+        document.title = `${book.titulo} | Doka`;
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute("content", book.descricao || "");
+      }, [book])}
+
+      <div className="flex justify-between items-center mb-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleCopyLink} className="gap-2 rounded-full">
+          <Share2 className="h-4 w-4" /> Partilhar
+        </Button>
+      </div>
+
 
       <div className="grid md:grid-cols-[260px_1fr] gap-6">
         <div className="bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-apple-card">

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, Trash2, Edit, Check, X, BookOpen } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, Check, X, BookOpen, ExternalLink, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { uploadEbookPDF, uploadEbookCover, sanitizeFilename } from "@/lib/ebook-storage";
 import * as pdfjsLib from "pdfjs-dist";
@@ -238,10 +238,16 @@ const AdminLivrariaTab = () => {
                     </div>
                   </div>
                   <p className="text-xs font-medium mt-1 line-clamp-2">{b.titulo}</p>
-                  <div className="flex gap-1 mt-1">
-                    <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEdit(b)}><Edit className="h-3 w-3" /></Button>
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600" onClick={() => deleteBook(b.id)}><Trash2 className="h-3 w-3" /></Button>
-                  </div>
+	                  <div className="flex flex-wrap gap-1 mt-1">
+	                    <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEdit(b)} title="Editar"><Edit className="h-3 w-3" /></Button>
+	                    <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600" onClick={() => deleteBook(b.id)} title="Apagar"><Trash2 className="h-3 w-3" /></Button>
+	                    <Button size="sm" variant="ghost" className="h-7 px-2 text-blue-600" onClick={() => {
+	                      const url = `${window.location.origin}/livraria/${b.id}`;
+	                      navigator.clipboard.writeText(url);
+	                      toast({ title: "Link copiado!", description: "Link externo de venda copiado para a área de transferência." });
+	                    }} title="Copiar link de venda"><Copy className="h-3 w-3" /></Button>
+	                    <Button size="sm" variant="ghost" className="h-7 px-2 text-green-600" onClick={() => window.open(`/livraria/${b.id}`, '_blank')} title="Ver página de venda"><ExternalLink className="h-3 w-3" /></Button>
+	                  </div>
                 </div>
               ))}
             </div>
