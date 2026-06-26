@@ -35,6 +35,12 @@ const LivroDetalhePage = () => {
         if (user) {
           const { data: lib } = await supabase.from("book_library").select("id").eq("user_id", user.id).eq("book_id", b.id).maybeSingle();
           setOwned(!!lib);
+          
+          // Se o usuário acabou de logar vindo de uma intenção de compra
+          const searchParams = new URLSearchParams(window.location.search);
+          if (searchParams.get("action") === "pay" && !lib) {
+            setOpenPaymentDialog(true);
+          }
         }
         await supabase.from("books").update({ visualizacoes: (b.visualizacoes || 0) + 1 }).eq("id", b.id);
         await supabase.from("book_views").insert({ book_id: b.id, user_id: user?.id || null });
@@ -222,7 +228,18 @@ const LivroDetalhePage = () => {
                     <Coins className="h-4 w-4" /> Pagar com {book.preco_creditos} créditos
                   </Button>
                 )}
-                <Button onClick={() => setOpenPaymentDialog(true)} variant="outline" size="lg" className="rounded-2xl gap-2">
+                <Button 
+                  onClick={() => {
+                    if (!user) {
+                      navigate(`/auth?returnTo=${encodeURIComponent(window.location.pathname + "?action=pay")}`);
+                    } else {
+                      setOpenPaymentDialog(true);
+                    }
+                  }} 
+                  variant="outline" 
+                  size="lg" 
+                  className="rounded-2xl gap-2"
+                >
                   <FileText className="h-4 w-4" /> Pagar {book.preco_kz} Kz (comprovativo)
                 </Button>
               </>
