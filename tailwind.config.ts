@@ -12,14 +12,6 @@ export default {
         "2xl": "1400px",
       },
     },
-    screens: {
-      'xs': '400px',
-      'sm': '640px',
-      'md': '768px',
-      'lg': '1024px',
-      'xl': '1280px',
-      '2xl': '1400px',
-    },
     extend: {
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
@@ -79,7 +71,6 @@ export default {
         'apple-card': '0 2px 8px rgba(0, 0, 0, 0.04)',
         'apple-card-hover': '0 4px 12px rgba(0, 0, 0, 0.08)',
         'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
-        'shadow-3d': '0 20px 40px rgba(0, 0, 0, 0.2), 0 15px 12px rgba(0, 0, 0, 0.1)',
       },
       keyframes: {
         "accordion-down": {

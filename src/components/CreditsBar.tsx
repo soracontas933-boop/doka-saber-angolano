@@ -126,12 +126,12 @@ const CreditsBar = () => {
 
   return (
     <>
-      {/* ===== MOBILE TOP BAR IMERSIVA ===== */}
-      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0B0B0F]/40 backdrop-blur-2xl border-b border-white/5 transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}>
-        <div className="flex items-center justify-between px-6 py-4 gap-4">
+      {/* ===== MOBILE TOP BAR ===== */}
+      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40 transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}>
+        <div className="flex items-center justify-between px-4 py-3 gap-2 shadow-glass">
           <button
             onClick={() => navigate("/configuracoes")}
-            className="w-10 h-10 rounded-2xl overflow-hidden flex items-center justify-center text-xs font-semibold shrink-0 bg-white/5 text-white border border-white/10 hover:bg-white/10 transition-all duration-200 active:scale-95 shadow-inner"
+            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 active:scale-95"
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt={initials} className="w-full h-full object-cover" />
@@ -140,44 +140,41 @@ const CreditsBar = () => {
             )}
           </button>
 
-          {/* Centro: Créditos com barra de progresso Imersiva */}
+          {/* Centro: Créditos com barra de progresso */}
           <button
             onClick={() => navigate("/creditos")}
-            className={`flex-1 flex items-center gap-3 px-4 py-2.5 rounded-2xl border transition-all active:scale-[0.98] bg-white/5 border-white/10 shadow-lg`}
+            className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border transition-all active:scale-[0.98] ${bgClass}`}
           >
             {isLow || isEmpty ? (
-              <AlertTriangle className={`h-4 w-4 text-amber-400`} />
+              <AlertTriangle className={`h-4 w-4 ${colorClass}`} />
             ) : (
-              <Zap className={`h-4 w-4 text-blue-400`} />
+              <Zap className={`h-4 w-4 ${colorClass}`} />
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline justify-between gap-2">
-                <span className={`text-sm font-bold text-white/90`}>{displayRemaining}</span>
-                <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">Créditos</span>
+                <span className={`text-sm font-bold ${colorClass}`}>{displayRemaining}</span>
+                <span className="text-[10px] text-muted-foreground">créditos</span>
               </div>
               {totalCredits !== Infinity && (
-                <div className="w-full h-1 rounded-full bg-white/5 overflow-hidden mt-1.5">
+                <div className="w-full h-1 rounded-full bg-secondary/60 overflow-hidden mt-1">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      isEmpty ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-gradient-to-r from-blue-500 to-purple-600"
+                      isEmpty ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-gradient-to-r from-primary to-blue-400"
                     }`}
                     style={{ width: `${Math.max(2, percentageRemaining)}%` }}
                   />
                 </div>
               )}
             </div>
+            <Plus className="h-3.5 w-3.5 text-black" />
           </button>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 active:scale-90 transition-all">
-               <ScannerButton />
-            </div>
-            <button onClick={() => navigate("/suporte")} className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 active:scale-90 transition-all">
-              <Headphones className="h-4 w-4 text-white/60" />
+          <div className="flex items-center gap-1 shrink-0">
+            <ScannerButton />
+            <button onClick={() => navigate("/suporte")} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90">
+              <Headphones className="h-4 w-4 text-black" />
             </button>
-            <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 active:scale-90 transition-all">
-               <NotificationBell />
-            </div>
+            <NotificationBell />
           </div>
         </div>
       </div>
