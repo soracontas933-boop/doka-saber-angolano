@@ -50,10 +50,10 @@ const App = () => (
           <NoCreditsModal />
           <SupportNotification />
           <Routes>
+            <Route path="/livraria/:id" element={<LivroDetalhePage />} />
             <Route path="/" element={<RootRedirect />} />
             <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/livraria/:id" element={<LivroDetalhePage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
               <Route element={<AppLayout />}>
