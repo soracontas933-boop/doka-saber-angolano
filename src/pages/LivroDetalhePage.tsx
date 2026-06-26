@@ -44,6 +44,15 @@ const LivroDetalhePage = () => {
     load();
   }, [id]);
 
+  // SEO/Social Meta Tags (Simplified for React)
+  useEffect(() => {
+    if (book) {
+      document.title = `${book.titulo} | Doka`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute("content", book.descricao || "");
+    }
+  }, [book]);
+
   const handleObterGratis = async () => {
     if (!user) return navigate(`/auth?returnTo=${encodeURIComponent(window.location.pathname)}`);
     setProcessing(true);
@@ -131,13 +140,6 @@ const LivroDetalhePage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl pb-24 md:pb-6">
-      {/* SEO/Social Meta Tags (Simplified for React) */}
-      {useEffect(() => {
-        document.title = `${book.titulo} | Doka`;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) metaDesc.setAttribute("content", book.descricao || "");
-      }, [book])}
-
       <div className="flex justify-between items-center mb-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Voltar
@@ -146,7 +148,6 @@ const LivroDetalhePage = () => {
           <Share2 className="h-4 w-4" /> Partilhar
         </Button>
       </div>
-
 
       <div className="grid md:grid-cols-[260px_1fr] gap-6">
         <div className="bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-apple-card">

@@ -162,8 +162,8 @@
   }
 
   .immersive-card {
-    @apply bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/10 shadow-3d rounded-[24px];
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    @apply bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/10 rounded-[24px];
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 15px 12px rgba(0, 0, 0, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
 
   .text-gradient-blue-purple {
