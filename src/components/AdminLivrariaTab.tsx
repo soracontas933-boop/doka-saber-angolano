@@ -241,11 +241,11 @@ const AdminLivrariaTab = () => {
 	                  <div className="flex flex-wrap gap-1 mt-1">
 	                    <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEdit(b)} title="Editar"><Edit className="h-3 w-3" /></Button>
 	                    <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600" onClick={() => deleteBook(b.id)} title="Apagar"><Trash2 className="h-3 w-3" /></Button>
-	                    <Button size="sm" variant="ghost" className="h-7 px-2 text-blue-600" onClick={() => {
-	                      const url = `${window.location.origin}/livraria/${b.id}`;
-	                      navigator.clipboard.writeText(url);
-	                      toast({ title: "Link copiado!", description: "Link externo de venda copiado para a área de transferência." });
-	                    }} title="Copiar link de venda"><Copy className="h-3 w-3" /></Button>
+		                    <Button size="sm" variant="ghost" className="h-7 px-2 text-blue-600" onClick={() => {
+		                      const url = `${window.location.origin}/livraria/${b.id}`;
+		                      navigator.clipboard.writeText(url);
+		                      toast({ title: "Link público copiado!", description: "Este link pode ser enviado para clientes." });
+		                    }} title="Copiar link público de venda"><Copy className="h-3 w-3" /></Button>
 	                    <Button size="sm" variant="ghost" className="h-7 px-2 text-green-600" onClick={() => window.open(`/livraria/${b.id}`, '_blank')} title="Ver página de venda"><ExternalLink className="h-3 w-3" /></Button>
 	                  </div>
                 </div>
