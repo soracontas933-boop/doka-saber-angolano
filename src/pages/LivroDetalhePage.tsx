@@ -44,12 +44,36 @@ const LivroDetalhePage = () => {
     load();
   }, [id]);
 
-  // SEO/Social Meta Tags (Simplified for React)
+  // SEO/Social Meta Tags Dinâmicas
   useEffect(() => {
     if (book) {
+      // Título da Aba
       document.title = `${book.titulo} | Doka`;
-      const metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc) metaDesc.setAttribute("content", book.descricao || "");
+
+      // Função auxiliar para atualizar ou criar meta tags
+      const updateMeta = (name: string, content: string, attr = "name") => {
+        let el = document.querySelector(`meta[${attr}="${name}"]`);
+        if (!el) {
+          el = document.createElement("meta");
+          el.setAttribute(attr, name);
+          document.head.appendChild(el);
+        }
+        el.setAttribute("content", content);
+      };
+
+      // Tags padrão e OpenGraph (Social)
+      updateMeta("description", book.descricao || "Descubra este livro na Doka.");
+      updateMeta("og:title", `${book.titulo} | Doka`, "property");
+      updateMeta("og:description", book.descricao || "Descubra este livro na Doka.", "property");
+      updateMeta("og:image", book.capa_url || "", "property");
+      updateMeta("og:url", window.location.href, "property");
+      updateMeta("og:type", "book", "property");
+      
+      // Twitter
+      updateMeta("twitter:card", "summary_large_image");
+      updateMeta("twitter:title", book.titulo);
+      updateMeta("twitter:description", book.descricao || "");
+      updateMeta("twitter:image", book.capa_url || "");
     }
   }, [book]);
 
