@@ -27,6 +27,8 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  History,
+  Cpu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
@@ -154,7 +156,7 @@ const TrafficPanel = ({
   );
 
   const totalViews = filtered.length;
-  const uniqueUsers = new Set(filtered.map((v) => v.user_id)).size;
+  const uniqueUsers = new Set(filtered.map((v) => v.user_id || v.ip || v.id)).size;
 
   // Views by page
   const byPage = useMemo(() => {
@@ -391,7 +393,7 @@ const AdminPanelPage = () => {
         recentLogsRes = await (supabase.from("usage_logs") as any)
           .select("*")
           .order("criado_em", { ascending: false })
-          .limit(30);
+          .limit(100);
       } catch (err) {
         console.error("Erro ao buscar recent logs:", err);
         recentLogsRes = { data: null };
@@ -401,7 +403,7 @@ const AdminPanelPage = () => {
         pageViewsRes = await (supabase.from("page_views") as any)
           .select("id, user_id, page, created_at")
           .order("created_at", { ascending: false })
-          .limit(1000);
+          .limit(2000);
       } catch (err) {
         console.error("Erro ao buscar page_views:", err);
         pageViewsRes = { data: null };
@@ -425,7 +427,7 @@ const AdminPanelPage = () => {
             idade: null,
             telefone: u.telefone || null,
             funcao: null,
-            created_at: "", // Will be filled from profiles
+            created_at: u.created_at || new Date().toISOString(),
             plano: "gratuito",
             planId: null,
             creditos_usados: 0,
@@ -437,58 +439,48 @@ const AdminPanelPage = () => {
         }
       });
 
+      // Merge data
       profiles.forEach((p: any) => {
-        const existing = userMap.get(p.id);
-        if (existing) {
-          existing.nome = p.nome;
-          existing.genero = p.genero;
-          existing.idade = p.idade;
-          existing.telefone = p.telefone;
-          existing.funcao = p.funcao;
-          existing.created_at = p.created_at;
+        const u = userMap.get(p.id);
+        if (u) {
+          u.nome = p.nome || u.nome;
+          u.genero = p.genero;
+          u.idade = p.idade;
+          u.telefone = p.telefone || u.telefone;
+          u.funcao = p.funcao;
+          u.created_at = p.created_at || u.created_at;
         }
       });
 
-      plans.forEach((pl: any) => {
-        const existing = userMap.get(pl.user_id);
-        if (existing) {
-          existing.plano = pl.plano;
-          existing.planId = pl.id;
-          existing.creditos_usados = pl.creditos_usados;
-          existing.creditos_totais = pl.creditos_totais;
-        }
-      });
-
-      const typeCount: Record<string, number> = {};
-      projects.forEach((p: any) => {
-        if (p && p.tipo) {
-          typeCount[p.tipo] = (typeCount[p.tipo] || 0) + 1;
-        }
-        if (p && p.user_id) {
-          const u = userMap.get(p.user_id);
-          if (u) {
-            u.totalProjects += 1;
-            if (p.criado_em && (!u.lastActivity || new Date(p.criado_em) > new Date(u.lastActivity))) {
-              u.lastActivity = p.criado_em;
-            }
-          }
+      plans.forEach((p: any) => {
+        const u = userMap.get(p.user_id);
+        if (u) {
+          u.plano = p.plano;
+          u.planId = p.id;
+          u.creditos_usados = p.creditos_usados;
+          u.creditos_totais = p.creditos_totais;
         }
       });
 
       const svcTokens: Record<string, number> = {};
+      const typeCount: Record<string, number> = {};
+
+      projects.forEach((p: any) => {
+        const u = userMap.get(p.user_id);
+        if (u) u.totalProjects++;
+        typeCount[p.tipo] = (typeCount[p.tipo] || 0) + 1;
+      });
+
       logs.forEach((l: any) => {
-        if (l && l.servico_ia) {
-          const svc = l.servico_ia || "desconhecido";
-          svcTokens[svc] = (svcTokens[svc] || 0) + (l.tokens_usados || 0);
-        }
-        if (l && l.user_id) {
-          const u = userMap.get(l.user_id);
-          if (u) {
-            u.totalTokens += l.tokens_usados ?? 0;
-            if (l.criado_em && (!u.lastActivity || new Date(l.criado_em) > new Date(u.lastActivity))) {
-              u.lastActivity = l.criado_em;
-            }
+        const u = userMap.get(l.user_id);
+        if (u) {
+          u.totalTokens += l.tokens_usados || 0;
+          if (!u.lastActivity || new Date(l.criado_em) > new Date(u.lastActivity)) {
+            u.lastActivity = l.criado_em;
           }
+        }
+        if (l.servico_ia) {
+          svcTokens[l.servico_ia] = (svcTokens[l.servico_ia] || 0) + (l.tokens_usados || 0);
         }
       });
 
@@ -509,8 +501,9 @@ const AdminPanelPage = () => {
       );
       setTokensByService(svcTokens);
       setProjectsByType(typeCount);
-      setRecentLogs(((recentLogsRes.data && Array.isArray(recentLogsRes.data)) ? recentLogsRes.data : []).filter((l: any) => l && l.user_id && !masterIds.has(l.user_id)));
-      setPageViews(((pageViewsRes.data && Array.isArray(pageViewsRes.data)) ? pageViewsRes.data : []).filter((v: any) => v && v.user_id && !masterIds.has(v.user_id)));
+      setRecentLogs(((recentLogsRes.data && Array.isArray(recentLogsRes.data)) ? recentLogsRes.data : []).filter((l: any) => l && (!l.user_id || !masterIds.has(l.user_id))));
+      // Tráfego: Remover filtro restritivo de user_id para mostrar visitas anónimas
+      setPageViews(((pageViewsRes.data && Array.isArray(pageViewsRes.data)) ? pageViewsRes.data : []).filter((v: any) => v && (!v.user_id || !masterIds.has(v.user_id))));
     } catch (err) {
       console.error(err);
       toast({ title: "Erro ao carregar dados", variant: "destructive" });
@@ -535,7 +528,6 @@ const AdminPanelPage = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
-    // fetchData will be called by useEffect when currentPage changes
   };
 
   const openUserDialog = (user: ManagedUser) => {
@@ -590,15 +582,6 @@ const AdminPanelPage = () => {
     }
   };
 
-  const totals = useMemo(
-    () => ({
-      totalUsers: totalUsers,
-      // These are now partial since we only have current page projects/tokens in userMap
-      // In a real app, we'd want a separate KPI endpoint for true totals
-    }),
-    [totalUsers]
-  );
-
   if (isLoadingAdmin || !isAdmin) {
     return (
       <div className="flex items-center justify-center h-full py-20">
@@ -642,8 +625,43 @@ const AdminPanelPage = () => {
             <p className="text-xs text-muted-foreground mt-1">registados</p>
           </CardContent>
         </Card>
+        
+        <Card className="border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Projetos</CardTitle>
+            <FileText className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">
+              {Object.values(projectsByType).reduce((a, b) => a + b, 0)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">gerados (pág. atual)</p>
+          </CardContent>
+        </Card>
 
-        {/* Other KPI cards simplified as they need global stats */}
+        <Card className="border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Tokens IA</CardTitle>
+            <Cpu className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">
+              {(Object.values(tokensByService).reduce((a, b) => a + b, 0) / 1000).toFixed(1)}k
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">consumidos (pág. atual)</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Visitas</CardTitle>
+            <Eye className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">{pageViews.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">recentes</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs */}
@@ -652,10 +670,6 @@ const AdminPanelPage = () => {
           <TabsTrigger value="users" className="gap-2">
             <Users className="h-4 w-4" />
             Utilizadores
-          </TabsTrigger>
-          <TabsTrigger value="plans" className="gap-2">
-            <CreditCard className="h-4 w-4" />
-            Planos
           </TabsTrigger>
           <TabsTrigger value="stats" className="gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -677,25 +691,24 @@ const AdminPanelPage = () => {
             <ImageIcon className="h-4 w-4" />
             Hero / Site
           </TabsTrigger>
-          <TabsTrigger value="masters" className="gap-2">
-            <Crown className="h-4 w-4" />
-            Masters
-          </TabsTrigger>
           <TabsTrigger value="button-covers" className="gap-2">
-                <Smartphone className="h-4 w-4" /> Capas Mobile
-              </TabsTrigger>
-              <TabsTrigger value="landing" className="gap-2">
-                <Globe className="h-4 w-4" /> Landing Page
-              </TabsTrigger>
-              <TabsTrigger value="livraria" className="gap-2">
-                <Library className="h-4 w-4" /> Livraria
-              </TabsTrigger>
-              <TabsTrigger value="features" className="gap-2">
-                <SlidersHorizontal className="h-4 w-4" /> Funcionalidades
-              </TabsTrigger>
-              <TabsTrigger value="downloads" className="gap-2">
-                <Download className="h-4 w-4" /> Downloads
-              </TabsTrigger>
+            <Smartphone className="h-4 w-4" /> Capas Mobile
+          </TabsTrigger>
+          <TabsTrigger value="landing" className="gap-2">
+            <Globe className="h-4 w-4" /> Landing Page
+          </TabsTrigger>
+          <TabsTrigger value="livraria" className="gap-2">
+            <Library className="h-4 w-4" /> Livraria
+          </TabsTrigger>
+          <TabsTrigger value="features" className="gap-2">
+            <SlidersHorizontal className="h-4 w-4" /> Funcionalidades
+          </TabsTrigger>
+          <TabsTrigger value="downloads" className="gap-2">
+            <Download className="h-4 w-4" /> Downloads
+          </TabsTrigger>
+          <TabsTrigger value="masters" className="gap-2">
+            <Crown className="h-4 w-4" /> Masters
+          </TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -797,7 +810,6 @@ const AdminPanelPage = () => {
                     </Table>
                   </div>
                   
-                  {/* Pagination Controls */}
                   <div className="flex items-center justify-between px-4 py-4 border-t">
                     <p className="text-sm text-muted-foreground">
                       Mostrando {users.length} de {totalUsers} utilizadores
@@ -829,20 +841,121 @@ const AdminPanelPage = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* Other Tabs Content... (Same as original but wrapped in TabsContent) */}
-        <TabsContent value="plans">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Plan distribution would need global data, keeping static or page-based for now */}
-          </div>
-        </TabsContent>
         
         <TabsContent value="stats">
-           {/* Stats content */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Tokens por Serviço de IA</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(tokensByService).length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-10 text-center">Sem dados de tokens nesta página.</p>
+                  ) : (
+                    Object.entries(tokensByService)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([svc, tokens]) => (
+                        <div key={svc} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium">{svc}</span>
+                            <span className="text-muted-foreground">{tokens.toLocaleString()} tokens</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full bg-primary"
+                              style={{ width: `${(tokens / maxTokens) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Projetos por Tipo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(projectsByType).length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-10 text-center">Sem dados de projetos nesta página.</p>
+                  ) : (
+                    Object.entries(projectsByType)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([tipo, count]) => (
+                        <div key={tipo} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
+                              <FileText className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="font-medium capitalize">{tipo}</span>
+                          </div>
+                          <Badge variant="secondary" className="text-sm font-bold">
+                            {count}
+                          </Badge>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="logs">
-           {/* Logs content */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="h-5 w-5 text-primary" />
+                Logs Recentes de Atividade
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Módulo</TableHead>
+                    <TableHead>Serviço IA</TableHead>
+                    <TableHead>Tokens</TableHead>
+                    <TableHead>Utilizador ID</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentLogs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        Nenhum log encontrado.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    recentLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {new Date(log.criado_em).toLocaleString("pt-AO")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">{log.modulo}</Badge>
+                        </TableCell>
+                        <TableCell className="text-xs font-mono">
+                          {log.servico_ia || "—"}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {log.tokens_usados?.toLocaleString() || 0}
+                        </TableCell>
+                        <TableCell className="text-[10px] font-mono text-muted-foreground">
+                          {log.user_id || "Anónimo"}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="traffic">
@@ -855,10 +968,6 @@ const AdminPanelPage = () => {
 
         <TabsContent value="hero">
           <AdminHeroTab />
-        </TabsContent>
-
-        <TabsContent value="masters">
-          <AdminMastersTab />
         </TabsContent>
 
         <TabsContent value="button-covers">
@@ -879,6 +988,10 @@ const AdminPanelPage = () => {
 
         <TabsContent value="downloads">
           <AdminDownloadsTab />
+        </TabsContent>
+
+        <TabsContent value="masters">
+          <AdminMastersTab />
         </TabsContent>
       </Tabs>
 

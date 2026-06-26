@@ -14,6 +14,7 @@ import {
   Download,
   MoreHorizontal,
   ChevronRight,
+  Play,
 } from "lucide-react";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { supabase } from "@/integrations/supabase/client";
@@ -237,20 +238,41 @@ const UserHomePage = () => {
         >
           <button
             onClick={() => navigate("/grupos")}
-            className="group w-full rounded-lg border border-border bg-card p-4 transition-all duration-150 active:scale-[0.97] flex items-center justify-between hover:border-primary shadow-xl"
+            className="group relative w-full rounded-lg border border-border bg-card p-4 transition-all duration-150 active:scale-[0.97] flex items-center justify-between hover:border-primary shadow-xl overflow-hidden"
           >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-md bg-muted">
-                <UsersRound className="h-5 w-5 text-primary" />
+            {buttonCovers["comunidade"] && (
+              isVideoFile(buttonCovers["comunidade"]) ? (
+                <video
+                  src={buttonCovers["comunidade"]}
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              ) : (
+                <img
+                  src={buttonCovers["comunidade"]}
+                  alt="Comunidade"
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                />
+              )
+            )}
+            {buttonCovers["comunidade"] && (
+              <span className="absolute inset-0 bg-foreground/40 z-[1]" />
+            )}
+            <div className="relative z-10 flex items-center gap-3">
+              <div className={`p-2.5 rounded-md ${buttonCovers["comunidade"] ? "bg-background/20" : "bg-muted"}`}>
+                <UsersRound className={`h-5 w-5 ${buttonCovers["comunidade"] ? "text-background" : "text-primary"}`} />
               </div>
               <div className="text-left">
-                <p className="font-normal text-sm text-foreground">Comunidade</p>
-                <p className="text-xs text-muted-foreground">
+                <p className={`font-normal text-sm ${buttonCovers["comunidade"] ? "text-background" : "text-foreground"}`}>Comunidade</p>
+                <p className={`text-xs ${buttonCovers["comunidade"] ? "text-background/80" : "text-muted-foreground"}`}>
                   {groupCount > 0 ? `${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Criar ou juntar"}
                 </p>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            <ChevronRight className={`relative z-10 h-5 w-5 ${buttonCovers["comunidade"] ? "text-background" : "text-muted-foreground"}`} />
           </button>
         </motion.div>
 
@@ -310,9 +332,30 @@ const UserHomePage = () => {
           {/* Aumentar Saldo */}
           <Button
             onClick={() => navigate("/planos")}
-            className="w-full mt-3 h-11 rounded-md font-normal text-sm bg-black shadow-2xl"
+            className="group relative w-full mt-3 h-11 rounded-md font-normal text-sm bg-black shadow-2xl overflow-hidden"
           >
-            Aumentar Saldo
+            {buttonCovers["aumentar-saldo"] && (
+              isVideoFile(buttonCovers["aumentar-saldo"]) ? (
+                <video
+                  src={buttonCovers["aumentar-saldo"]}
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              ) : (
+                <img
+                  src={buttonCovers["aumentar-saldo"]}
+                  alt="Aumentar Saldo"
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                />
+              )
+            )}
+            {buttonCovers["aumentar-saldo"] && (
+              <span className="absolute inset-0 bg-foreground/40 z-[1]" />
+            )}
+            <span className="relative z-10">Aumentar Saldo</span>
           </Button>
         </motion.div>
 
@@ -331,85 +374,28 @@ const UserHomePage = () => {
           {[
             { to: "/trabalho", icon: WrapText, label: "Criar Trabalho", desc: "Gerar trabalho escolar completo" },
             { to: "/resumo", icon: BookOpen, label: "Criar Resumo", desc: "Resumir conteúdos rapidamente" },
-            { to: "/questionario", icon: HelpCircle, label: "Gerar Questionário", desc: "Quiz automático com respostas" },
-            { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", desc: "Planificar aulas facilmente" },
-            { to: "/correcao", icon: Search, label: "Corrigir Trabalho", desc: "Análise e correcção com IA" },
-            { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projectos", desc: "Ver todos os projectos salvos" },
+            { to: "/questionario", icon: HelpCircle, label: "Gerar Questionário", desc: "Criar perguntas e respostas" },
+            { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", desc: "Estruturar aulas profissionais" },
+            { to: "/apresentacao", icon: Presentation, label: "Apresentação", desc: "Gerar slides inteligentes" },
+            { to: "/curriculo", icon: Search, label: "Currículo Profissional", desc: "Criar CV de destaque" },
           ].map((action, i) => (
             <motion.button
               key={action.to}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.05 + i * 0.03 }}
+              transition={{ delay: i * 0.05 }}
               onClick={() => navigate(action.to)}
-              className="group relative overflow-hidden rounded-lg border border-border bg-card p-5 text-left transition-all duration-150 hover:border-primary shadow-2xl"
+              className="flex items-start gap-4 p-6 rounded-xl bg-card border border-border hover:border-primary hover:shadow-lg transition-all text-left group"
             >
-              <div className="inline-flex p-2.5 rounded-md bg-muted text-primary mb-3">
-                <action.icon className="h-5 w-5" />
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <action.icon className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-normal text-foreground">{action.label}</h3>
-              <p className="text-xs text-muted-foreground mt-1">{action.desc}</p>
+              <div>
+                <h3 className="font-medium text-lg text-foreground">{action.label}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{action.desc}</p>
+              </div>
             </motion.button>
           ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-            className="rounded-lg border border-border bg-card p-6 shadow-apple-card"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="h-4 w-4 text-primary" />
-              <h3 className="font-normal text-foreground">Meu Plano</h3>
-            </div>
-            <div className="flex items-center justify-between mb-4">
-              <Badge variant="secondary" className="capitalize">{plan?.plano || "gratuito"}</Badge>
-              <span className="text-sm text-foreground">{plan ? `${plan.creditos_usados}/${plan.creditos_totais === -1 ? "∞" : plan.creditos_totais}` : "..."}</span>
-            </div>
-            <Progress value={creditPercent} className="h-1.5 mb-4" />
-            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/planos")}>
-              Ver Planos
-            </Button>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="rounded-lg border border-border bg-card p-6 shadow-apple-card"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <UsersRound className="h-4 w-4 text-primary" />
-              <h3 className="font-normal text-foreground">Comunidade</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              {groupCount > 0 ? `Participa em ${groupCount} grupo${groupCount > 1 ? "s" : ""}` : "Ainda não fazes parte de nenhum grupo"}
-            </p>
-            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/grupos")}>
-              Ver Grupos
-            </Button>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-            className="rounded-lg border border-border bg-card p-6 shadow-apple-card"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <FolderOpen className="h-4 w-4 text-primary" />
-              <h3 className="font-normal text-foreground">Projectos Recentes</h3>
-            </div>
-            {recentProjects.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum projecto ainda.</p>
-            ) : (
-              <div className="space-y-2">
-                {recentProjects.slice(0, 3).map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => navigate(`/${p.tipo}`)}
-                    className="w-full text-left flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-all duration-150"
-                  >
-                    <WrapText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-sm text-foreground truncate">{p.titulo}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </motion.div>
         </div>
       </div>
     </div>
