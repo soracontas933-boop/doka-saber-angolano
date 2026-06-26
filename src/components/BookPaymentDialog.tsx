@@ -56,13 +56,10 @@ const BookPaymentDialog = ({
   const [authorPaymentMethods, setAuthorPaymentMethods] = useState<any[]>([]);
   const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const [isAdminBook, setIsAdminBook] = useState(false);
 
   useEffect(() => {
     if (open) {
-      // Pre-fill email from authenticated user
       if (user?.email) setEmail(user.email);
-
       loadAuthorPaymentMethods();
     }
   }, [open, user]);
@@ -71,17 +68,6 @@ const BookPaymentDialog = ({
     if (!book?.criado_por) return;
     setLoadingPaymentMethods(true);
 
-    // Verificar se o livro foi criado por um admin
-    const { data: authorProfile } = await supabase
-      .from("profiles")
-      .select("funcao")
-      .eq("id", book.criado_por)
-      .maybeSingle();
-
-    const isAdmin = authorProfile?.funcao === "admin" || book.criado_por === "admin";
-    setIsAdminBook(isAdmin);
-
-    // Carregar métodos de pagamento do autor
     const { data, error } = await supabase
       .from("book_payout_methods")
       .select("*")
@@ -99,11 +85,9 @@ const BookPaymentDialog = ({
     const methods = data || [];
     setAuthorPaymentMethods(methods);
 
-    // Pré-selecionar o método pré-definido do livro (se configurado pelo admin)
     if (book.metodo_pagamento_padrao && methods.some((m) => m.id === book.metodo_pagamento_padrao)) {
       setSelectedMethod(book.metodo_pagamento_padrao);
     } else {
-      // Fallback: selecionar o método preferido do autor
       const preferredMethod = methods.find((m) => m.preferido);
       if (preferredMethod) {
         setSelectedMethod(preferredMethod.id);
@@ -115,110 +99,52 @@ const BookPaymentDialog = ({
 
   const handleFileSelect = (selectedFile: File) => {
     if (!ACCEPTED_TYPES.includes(selectedFile.type)) {
-      toast({
-        title: "Formato não suportado",
-        description: "Use JPEG, PNG, PDF ou Word.",
-        variant: "destructive",
-      });
+      toast({ title: "Formato não suportado", description: "Use JPEG, PNG, PDF ou Word.", variant: "destructive" });
       return;
     }
     if (selectedFile.size > MAX_FILE_SIZE) {
-      toast({
-        title: "Ficheiro demasiado grande",
-        description: "Máximo 5MB.",
-        variant: "destructive",
-      });
+      toast({ title: "Ficheiro demasiado grande", description: "Máximo 5MB.", variant: "destructive" });
       return;
     }
     setFile(selectedFile);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    if (e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
-    }
-  };
-
   const handleSubmit = async () => {
     if (!file) {
-      toast({
-        title: "Carregue o comprovativo",
-        description: "Selecione um ficheiro para continuar.",
-        variant: "destructive",
-      });
+      toast({ title: "Carregue o comprovativo", variant: "destructive" });
       return;
     }
     if (!email || !email.includes("@")) {
-      toast({
-        title: "Email inválido",
-        description: "Insira um email válido.",
-        variant: "destructive",
-      });
+      toast({ title: "Email inválido", variant: "destructive" });
       return;
     }
 
     setSubmitting(true);
     try {
-      // Upload file
       const ext = file.name.split(".").pop();
       const filePath = `${user.id}/${book.id}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("book-receipts")
-        .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage.from("book-receipts").upload(filePath, file);
 
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        toast({
-          title: "Erro ao carregar ficheiro",
-          description: "Tente novamente.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("book-receipts")
-        .getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage.from("book-receipts").getPublicUrl(filePath);
 
-      // Insert payment request
-      const { error: insertError } = await supabase
-        .from("book_purchase_requests")
-        .insert({
-          user_id: user.id,
-          book_id: book.id,
-          email_confirmacao: email,
-          ficheiro_url: publicUrl,
-          valor: book.preco_kz,
-        });
-
-      if (insertError) {
-        console.error("Insert error:", insertError);
-        toast({
-          title: "Erro ao submeter pedido",
-          description: "Tente novamente.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Pedido enviado com sucesso! 🎉",
-        description:
-          "Aguarde a aprovação do admin (até 24h). Receberá uma notificação por email.",
+      const { error: insertError } = await supabase.from("book_purchase_requests").insert({
+        user_id: user.id,
+        book_id: book.id,
+        email_confirmacao: email,
+        ficheiro_url: publicUrl,
+        valor: book.preco_kz,
       });
+
+      if (insertError) throw insertError;
+
+      toast({ title: "Pedido enviado com sucesso! 🎉", description: "Aguarde a aprovação do admin (até 24h)." });
       onOpenChange(false);
       setFile(null);
-      setEmail("");
     } catch (err) {
       console.error(err);
-      toast({
-        title: "Erro inesperado",
-        description: "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao submeter", description: "Tente novamente mais tarde.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -241,122 +167,67 @@ const BookPaymentDialog = ({
     };
   };
 
-  const selectedMethodData = authorPaymentMethods.find(
-    (m) => m.id === selectedMethod
-  );
-  const selectedDisplay = selectedMethodData ? getMethodDisplay(selectedMethodData) : null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-0 shadow-2xl bg-white dark:bg-slate-900">
+        <DialogHeader className="space-y-2 pb-2">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold">
             <CreditCard className="h-5 w-5 text-primary" />
-            Pagar por Comprovativo
+            Pagamento por Transferência
           </DialogTitle>
-          <DialogDescription className="text-sm">
-            Transfira <span className="font-bold text-foreground">{book.preco_kz} Kz</span> para a conta selecionada e envie o comprovativo
+          <DialogDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            Transfira <span className="font-bold text-slate-900 dark:text-white">{book.preco_kz} Kz</span> e envie o comprovativo.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Livro Info */}
-          <Card className="bg-gradient-to-r from-primary/5 to-blue-500/5 border-primary/20">
-            <CardContent className="pt-4">
-              <div className="flex gap-3">
-                {book.capa_url && (
-                  <img
-                    src={book.capa_url}
-                    alt={book.titulo}
-                    className="h-16 w-12 rounded object-cover"
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground truncate">{book.titulo}</p>
-                  <p className="text-sm text-muted-foreground">por {book.autor}</p>
-                  <Badge variant="secondary" className="mt-1">
-                    {book.preco_kz} Kz
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Methods Selection */}
-          {loadingPaymentMethods ? (
-            <div className="flex justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <div className="space-y-5">
+          {/* Livro Info - Sólido */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex gap-3">
+            {book.capa_url && (
+              <img src={book.capa_url} alt={book.titulo} className="h-14 w-10 rounded shadow-sm object-cover" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{book.titulo}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{book.autor}</p>
+              <Badge className="mt-1 bg-primary/10 text-primary border-0 text-[10px]">{book.preco_kz} Kz</Badge>
             </div>
+          </div>
+
+          {/* Payment Methods */}
+          {loadingPaymentMethods ? (
+            <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
           ) : authorPaymentMethods.length === 0 ? (
-            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 flex gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-yellow-900">Nenhum método configurado</p>
-                <p className="text-sm text-yellow-800">
-                  O autor não configurou métodos de pagamento. Contacte o suporte.
-                </p>
-              </div>
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 p-3 border border-amber-100 dark:border-amber-900/30 flex gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800 dark:text-amber-200">O autor ainda não configurou métodos de pagamento.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">
-                Selecione o método de pagamento:
-              </p>
-              <Tabs
-                value={selectedMethod || ""}
-                onValueChange={setSelectedMethod}
-                className="w-full"
-              >
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Dados Bancários</p>
+              <Tabs value={selectedMethod || ""} onValueChange={setSelectedMethod} className="w-full">
+                <TabsList className="flex w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-xl h-10">
                   {authorPaymentMethods.map((method) => (
-                    <TabsTrigger key={method.id} value={method.id} className="text-xs">
-                      {method.tipo === "iban" ? (
-                        <>
-                          <Building2 className="h-3 w-3 mr-1" />
-                          <span className="hidden sm:inline">IBAN</span>
-                        </>
-                      ) : (
-                        <>
-                          <Smartphone className="h-3 w-3 mr-1" />
-                          <span className="hidden sm:inline">Multicaixa</span>
-                        </>
-                      )}
-                      {method.preferido && <CheckCircle className="h-3 w-3 ml-1 text-green-500" />}
+                    <TabsTrigger key={method.id} value={method.id} className="flex-1 text-[10px] sm:text-xs rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all">
+                      {method.tipo === "iban" ? "IBAN" : "Express"}
+                      {method.preferido && <CheckCircle className="h-2.5 w-2.5 ml-1 text-green-500" />}
                     </TabsTrigger>
                   ))}
                 </TabsList>
 
                 {authorPaymentMethods.map((method) => {
                   const display = getMethodDisplay(method);
-                  const Icon = display.icon;
                   return (
-                    <TabsContent key={method.id} value={method.id} className="space-y-3">
-                      <Card className="border-primary/20 bg-primary/5">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                              <Icon className="h-4 w-4 text-primary" />
-                              {display.title}
-                            </CardTitle>
-                            {method.preferido && (
-                              <Badge variant="default" className="bg-green-600">
-                                Preferido
-                              </Badge>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">Dados para transferência:</p>
-                            <div className="bg-white rounded-lg border border-border p-3 font-mono text-sm break-all select-all">
-                              {display.value}
-                            </div>
-                          </div>
-                          {display.subtitle && (
-                            <p className="text-xs text-muted-foreground">{display.subtitle}</p>
-                          )}
-                        </CardContent>
-                      </Card>
+                    <TabsContent key={method.id} value={method.id} className="mt-3">
+                      <div className="bg-slate-900 dark:bg-black text-white p-4 rounded-xl space-y-3 shadow-lg">
+                        <div className="flex justify-between items-start">
+                          <p className="text-[10px] text-slate-400 font-medium uppercase">{display.title}</p>
+                          {method.preferido && <Badge className="bg-green-500 hover:bg-green-500 text-[9px] h-4">Preferido</Badge>}
+                        </div>
+                        <div className="bg-white/10 p-3 rounded-lg break-all font-mono text-sm border border-white/5 select-all">
+                          {display.value}
+                        </div>
+                        {display.subtitle && <p className="text-[10px] text-slate-400">{display.subtitle}</p>}
+                      </div>
                     </TabsContent>
                   );
                 })}
@@ -364,101 +235,52 @@ const BookPaymentDialog = ({
             </div>
           )}
 
-          <Separator />
+          <Separator className="bg-slate-100 dark:bg-slate-800" />
 
-          {/* File Upload */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Carregar Comprovativo</Label>
-            <div
-              className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 cursor-pointer transition-all ${
-                dragOver
-                  ? "border-primary bg-primary/5"
-                  : file
-                  ? "border-primary/50 bg-primary/5"
-                  : "border-muted-foreground/25 hover:border-primary/50"
-              }`}
-              onClick={() => {
-                const input = document.createElement("input");
-                input.type = "file";
-                input.accept = ".jpg,.jpeg,.png,.pdf,.doc,.docx";
-                input.onchange = (e) => {
-                  const f = (e.target as HTMLInputElement).files?.[0];
-                  if (f) handleFileSelect(f);
-                };
-                input.click();
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-            >
-              {file ? (
-                <div className="flex items-center gap-2 w-full">
-                  <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-sm text-foreground truncate flex-1">{file.name}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFile(null);
-                    }}
-                    className="p-1 rounded-full hover:bg-muted flex-shrink-0"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-sm font-medium text-foreground">Clique ou arraste o ficheiro</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    JPEG, PNG, PDF ou Word (máx. 5MB)
-                  </p>
-                </>
-              )}
+          {/* Form */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Seu Email para Confirmação</Label>
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="exemplo@email.com" className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Comprovativo</Label>
+              <div
+                className={`relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition-all ${
+                  file ? "border-primary/50 bg-primary/5" : "border-slate-200 dark:border-slate-800 hover:border-primary/30"
+                }`}
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = ".jpg,.jpeg,.png,.pdf,.doc,.docx";
+                  input.onchange = (e) => {
+                    const f = (e.target as HTMLInputElement).files?.[0];
+                    if (f) handleFileSelect(f);
+                  };
+                  input.click();
+                }}
+              >
+                {file ? (
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="bg-primary/10 p-2 rounded-lg"><FileText className="h-5 w-5 text-primary" /></div>
+                    <span className="text-xs font-medium truncate flex-1">{file.name}</span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={(e) => { e.stopPropagation(); setFile(null); }}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-full mb-2"><Upload className="h-5 w-5 text-slate-400" /></div>
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Carregar ficheiro</p>
+                    <p className="text-[10px] text-slate-400 mt-1">PNG, JPG ou PDF (máx. 5MB)</p>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email-confirm" className="text-sm font-medium">
-              Email para Confirmação
-            </Label>
-            <Input
-              id="email-confirm"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={submitting}
-            />
-          </div>
-
-          {/* Info Message */}
-          <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-            <p className="text-xs text-blue-900 leading-relaxed">
-              <span className="font-medium">⏱️ Tempo de processamento:</span> Após verificação do comprovativo, o livro será libertado em até 24 horas úteis. Receberá uma notificação por email quando o processo for concluído.
-            </p>
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting || !file || !email || authorPaymentMethods.length === 0}
-            className="w-full h-11 rounded-lg"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                A submeter...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-2" />
-                Submeter Pagamento
-              </>
-            )}
+          <Button onClick={handleSubmit} disabled={submitting} className="w-full h-12 rounded-xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-[0.98]">
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+            Confirmar Pagamento
           </Button>
         </div>
       </DialogContent>
