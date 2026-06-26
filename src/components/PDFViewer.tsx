@@ -145,19 +145,19 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
   const isBookmarked = bookmarks.some(b => b.page === pageNum);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background flex flex-col select-none">
+    <div className="fixed inset-0 z-[100] bg-background flex flex-col select-none animate-in fade-in duration-300">
       {/* Header */}
-      <div className="h-14 border-b flex items-center justify-between px-4 bg-card shrink-0 shadow-sm">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0 rounded-full">
-            <X className="h-5 w-5" />
+      <div className="h-14 sm:h-16 border-b flex items-center justify-between px-2 sm:px-4 bg-card shrink-0 shadow-sm">
+        <div className="flex items-center gap-1 sm:gap-3 overflow-hidden">
+          <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0 rounded-full hover:bg-muted">
+            <X className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
-          <h2 className="font-semibold text-sm truncate max-w-[150px] md:max-w-xs">{title || "Leitor de PDF"}</h2>
+          <h2 className="font-bold text-xs sm:text-base truncate max-w-[100px] sm:max-w-xs">{title || "Leitor de PDF"}</h2>
         </div>
 
-        <div className="flex items-center gap-1 md:gap-2">
-          {/* Luminosidade */}
-          <div className="flex items-center mr-2 bg-muted/50 rounded-full px-2 py-1">
+        <div className="flex items-center gap-0.5 sm:gap-2">
+          {/* Luminosidade - Ocultar em mobile pequeno se necessário, ou manter compacto */}
+          <div className="hidden xs:flex items-center mr-1 sm:mr-2 bg-muted/50 rounded-full px-2 py-1">
             <Sun className="h-3 w-3 text-muted-foreground mr-1" />
             <input 
               type="range" 
@@ -165,17 +165,19 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
               max="100" 
               value={brightness} 
               onChange={(e) => setBrightness(parseInt(e.target.value))}
-              className="w-16 h-1 bg-primary/20 rounded-lg appearance-none cursor-pointer"
+              className="w-12 sm:w-16 h-1 bg-primary/20 rounded-lg appearance-none cursor-pointer"
             />
           </div>
 
-          <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="h-8 w-8 rounded-full">
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <span className="text-[10px] font-medium min-w-[35px] text-center">{Math.round(scale * 100)}%</span>
-          <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(3, s + 0.2))} className="h-8 w-8 rounded-full">
-            <ZoomIn className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center bg-muted/30 rounded-full px-1">
+            <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="h-7 w-7 sm:h-9 sm:w-9 rounded-full">
+              <ZoomOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            </Button>
+            <span className="text-[9px] sm:text-xs font-bold min-w-[30px] sm:min-w-[40px] text-center">{Math.round(scale * 100)}%</span>
+            <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(3, s + 0.2))} className="h-7 w-7 sm:h-9 sm:w-9 rounded-full">
+              <ZoomIn className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            </Button>
+          </div>
           
           <Button 
             variant={isBookmarked ? "default" : "ghost"} 
@@ -239,20 +241,20 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
 
         {/* PDF Content */}
         <div 
-          className="flex-1 overflow-auto bg-muted/30 p-4 md:p-8 flex justify-center items-start transition-all duration-300"
+          className="flex-1 overflow-auto bg-slate-100 dark:bg-slate-900/50 p-2 sm:p-8 flex justify-center items-start transition-all duration-300"
           style={{ filter: `brightness(${brightness}%)` }}
         >
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-full gap-3">
+            <div className="flex flex-col items-center justify-center h-full gap-4">
               <div className="relative">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <BookOpen className="h-5 w-5 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
+                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">Preparando sua leitura...</p>
+              <p className="text-xs sm:text-sm font-bold text-slate-500 animate-pulse">Preparando sua leitura...</p>
             </div>
           ) : (
-            <div className="shadow-2xl bg-white rounded-sm overflow-hidden mb-12">
-              <canvas ref={canvasRef} />
+            <div className="shadow-2xl bg-white dark:bg-slate-800 rounded-lg overflow-hidden mb-20 sm:mb-12 border border-slate-200 dark:border-slate-700 max-w-full">
+              <canvas ref={canvasRef} className="max-w-full h-auto" />
             </div>
           )}
         </div>
@@ -260,39 +262,41 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
 
       {/* Footer / Controls */}
       {!loading && (
-        <div className="h-16 border-t flex items-center justify-center gap-4 px-4 bg-card shrink-0 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+        <div className="h-20 sm:h-24 border-t flex items-center justify-between sm:justify-center gap-2 sm:gap-8 px-4 sm:px-8 bg-card/80 backdrop-blur-md shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe">
           <Button 
-            variant="outline" 
-            size="sm" 
+            variant="ghost" 
+            size="icon" 
             onClick={() => changePage(-1)} 
             disabled={pageNum <= 1 || rendering}
-            className="rounded-full h-10 px-4 md:px-6"
+            className="rounded-2xl h-12 w-12 sm:w-auto sm:px-6 bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white transition-all"
           >
-            <ChevronLeft className="h-4 w-4 md:mr-2" /> 
-            <span className="hidden md:inline">Anterior</span>
+            <ChevronLeft className="h-5 w-5 sm:mr-2" /> 
+            <span className="hidden sm:inline font-bold">Anterior</span>
           </Button>
           
-          <div className="flex flex-col items-center">
-            <span className="text-sm font-bold">
-              {pageNum} <span className="text-muted-foreground font-normal mx-1">/</span> {numPages}
-            </span>
-            <div className="w-32 md:w-48 h-1 bg-muted rounded-full mt-1 overflow-hidden">
+          <div className="flex flex-col items-center flex-1 sm:flex-none max-w-[120px] sm:max-w-none">
+            <div className="bg-primary/10 px-3 py-1 rounded-full mb-2">
+              <span className="text-xs sm:text-sm font-black text-primary">
+                {pageNum} <span className="opacity-40 mx-0.5">/</span> {numPages}
+              </span>
+            </div>
+            <div className="w-full sm:w-48 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-primary transition-all duration-300" 
+                className="h-full bg-primary transition-all duration-500 ease-out shadow-[0_0_10px_rgba(var(--primary),0.5)]" 
                 style={{ width: `${(pageNum / numPages) * 100}%` }}
               />
             </div>
           </div>
 
           <Button 
-            variant="outline" 
-            size="sm" 
+            variant="ghost" 
+            size="icon" 
             onClick={() => changePage(1)} 
             disabled={pageNum >= numPages || rendering}
-            className="rounded-full h-10 px-4 md:px-6"
+            className="rounded-2xl h-12 w-12 sm:w-auto sm:px-6 bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white transition-all"
           >
-            <span className="hidden md:inline">Próxima</span>
-            <ChevronRight className="h-4 w-4 md:ml-2" />
+            <span className="hidden sm:inline font-bold">Próxima</span>
+            <ChevronRight className="h-5 w-5 sm:ml-2" />
           </Button>
         </div>
       )}

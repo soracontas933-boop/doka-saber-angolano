@@ -177,6 +177,10 @@
   .bg-glow-blue {
     background: radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
   }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 @keyframes ripple-effect {
