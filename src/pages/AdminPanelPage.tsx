@@ -312,6 +312,10 @@ const AdminPanelPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [trafficPeriod, setTrafficPeriod] = useState<"today" | "7d" | "30d">("7d");
 
+  // Global Stats
+  const [globalTotalProjects, setGlobalTotalProjects] = useState(0);
+  const [globalTotalTokens, setGlobalTotalTokens] = useState(0);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -333,7 +337,7 @@ const AdminPanelPage = () => {
     if (!isAdmin) return;
     setLoading(true);
     try {
-      // Fetch users with pagination - with fallback to avoid global error
+      // Fetch users with pagination
       let usersRes;
       try {
         usersRes = await fetchAdminUsers(page, perPage, searchQuery);
@@ -355,64 +359,42 @@ const AdminPanelPage = () => {
       const userIds = usersRes.users.map(u => u.id);
       setTotalUsers(usersRes.pagination.total);
 
-      // Only fetch related data if we have users
-      let profilesRes = { data: null };
-      let plansRes = { data: null };
-      let projectsRes = { data: null };
-      let logsRes = { data: null };
-      let recentLogsRes = { data: null };
-      let pageViewsRes = { data: null };
-
-      if (userIds.length > 0) {
-        const results = await Promise.all([
-          (supabase.from("profiles") as any)
-            .select("id, nome, genero, idade, telefone, funcao, created_at")
-            .in("id", userIds)
-            .catch((err) => { console.error("Erro ao buscar profiles:", err); return { data: null }; }),
-          (supabase.from("user_plans") as any)
-            .select("*")
-            .in("user_id", userIds)
-            .catch((err) => { console.error("Erro ao buscar user_plans:", err); return { data: null }; }),
-          (supabase.from("projects") as any)
-            .select("user_id, tipo, criado_em")
-            .in("user_id", userIds)
-            .catch((err) => { console.error("Erro ao buscar projects:", err); return { data: null }; }),
-          (supabase.from("usage_logs") as any)
-            .select("user_id, servico_ia, tokens_usados, criado_em")
-            .in("user_id", userIds)
-            .catch((err) => { console.error("Erro ao buscar usage_logs:", err); return { data: null }; }),
+      // Fetch related data in parallel with separate try-catches
+      const fetchRelated = async () => {
+        const results = await Promise.allSettled([
+          userIds.length > 0 
+            ? (supabase.from("profiles") as any).select("id, nome, genero, idade, telefone, funcao, created_at").in("id", userIds)
+            : Promise.resolve({ data: [] }),
+          userIds.length > 0 
+            ? (supabase.from("user_plans") as any).select("*").in("user_id", userIds)
+            : Promise.resolve({ data: [] }),
+          userIds.length > 0 
+            ? (supabase.from("projects") as any).select("user_id, tipo, criado_em").in("user_id", userIds)
+            : Promise.resolve({ data: [] }),
+          userIds.length > 0 
+            ? (supabase.from("usage_logs") as any).select("user_id, servico_ia, tokens_usados, criado_em").in("user_id", userIds)
+            : Promise.resolve({ data: [] }),
+          (supabase.from("usage_logs") as any).select("*").order("criado_em", { ascending: false }).limit(100),
+          (supabase.from("page_views") as any).select("id, user_id, page, created_at").order("created_at", { ascending: false }).limit(2000),
+          (supabase.from("projects") as any).select("id", { count: "exact", head: true }),
+          (supabase.from("usage_logs") as any).select("tokens_usados"),
         ]);
-        profilesRes = results[0];
-        plansRes = results[1];
-        projectsRes = results[2];
-        logsRes = results[3];
-      }
 
-      // Fetch recent logs and page views separately (global data, not filtered by userIds)
-      try {
-        recentLogsRes = await (supabase.from("usage_logs") as any)
-          .select("*")
-          .order("criado_em", { ascending: false })
-          .limit(100);
-      } catch (err) {
-        console.error("Erro ao buscar recent logs:", err);
-        recentLogsRes = { data: null };
-      }
+        return results.map(r => r.status === 'fulfilled' ? r.value : { data: null, count: 0 });
+      };
 
-      try {
-        pageViewsRes = await (supabase.from("page_views") as any)
-          .select("id, user_id, page, created_at")
-          .order("created_at", { ascending: false })
-          .limit(2000);
-      } catch (err) {
-        console.error("Erro ao buscar page_views:", err);
-        pageViewsRes = { data: null };
-      }
+      const [profilesRes, plansRes, projectsRes, logsRes, recentLogsRes, pageViewsRes, globalProjectsRes, globalLogsRes] = await fetchRelated();
 
-      const profiles = (profilesRes.data && Array.isArray(profilesRes.data)) ? profilesRes.data : [];
-      const plans = (plansRes.data && Array.isArray(plansRes.data)) ? plansRes.data : [];
-      const projects = (projectsRes.data && Array.isArray(projectsRes.data)) ? projectsRes.data : [];
-      const logs = (logsRes.data && Array.isArray(logsRes.data)) ? logsRes.data : [];
+      const profiles = (profilesRes && Array.isArray(profilesRes.data)) ? profilesRes.data : [];
+      const plans = (plansRes && Array.isArray(plansRes.data)) ? plansRes.data : [];
+      const projects = (projectsRes && Array.isArray(projectsRes.data)) ? projectsRes.data : [];
+      const logs = (logsRes && Array.isArray(logsRes.data)) ? logsRes.data : [];
+      const recentLogsData = (recentLogsRes && Array.isArray(recentLogsRes.data)) ? recentLogsRes.data : [];
+      const pageViewsData = (pageViewsRes && Array.isArray(pageViewsRes.data)) ? pageViewsRes.data : [];
+      
+      setGlobalTotalProjects(globalProjectsRes?.count || 0);
+      const totalTokens = (globalLogsRes?.data || []).reduce((acc: number, curr: any) => acc + (curr.tokens_usados || 0), 0);
+      setGlobalTotalTokens(totalTokens);
 
       const userMap = new Map<string, ManagedUser>();
 
@@ -501,16 +483,15 @@ const AdminPanelPage = () => {
       );
       setTokensByService(svcTokens);
       setProjectsByType(typeCount);
-      setRecentLogs(((recentLogsRes.data && Array.isArray(recentLogsRes.data)) ? recentLogsRes.data : []).filter((l: any) => l && (!l.user_id || !masterIds.has(l.user_id))));
-      // Tráfego: Remover filtro restritivo de user_id para mostrar visitas anónimas
-      setPageViews(((pageViewsRes.data && Array.isArray(pageViewsRes.data)) ? pageViewsRes.data : []).filter((v: any) => v && (!v.user_id || !masterIds.has(v.user_id))));
+      setRecentLogs(recentLogsData.filter((l: any) => l && (!l.user_id || !masterIds.has(l.user_id))));
+      setPageViews(pageViewsData.filter((v: any) => v && (!v.user_id || !masterIds.has(v.user_id))));
     } catch (err) {
       console.error(err);
       toast({ title: "Erro ao carregar dados", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, perPage, searchQuery, currentPage]);
+  }, [isAdmin, perPage, searchQuery]);
 
   useEffect(() => {
     if (isAdmin && isAuthReady) {
@@ -601,16 +582,18 @@ const AdminPanelPage = () => {
           <ShieldCheck className="h-7 w-7 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Painel Master</h1>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+           <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -632,10 +615,8 @@ const AdminPanelPage = () => {
             <FileText className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">
-              {Object.values(projectsByType).reduce((a, b) => a + b, 0)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">gerados (pág. atual)</p>
+            <p className="text-3xl font-bold text-foreground">{globalTotalProjects}</p>
+            <p className="text-xs text-muted-foreground mt-1">gerados (total)</p>
           </CardContent>
         </Card>
 
@@ -646,9 +627,9 @@ const AdminPanelPage = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">
-              {(Object.values(tokensByService).reduce((a, b) => a + b, 0) / 1000).toFixed(1)}k
+              {(globalTotalTokens / 1000).toFixed(1)}k
             </p>
-            <p className="text-xs text-muted-foreground mt-1">consumidos (pág. atual)</p>
+            <p className="text-xs text-muted-foreground mt-1">consumidos (total)</p>
           </CardContent>
         </Card>
 
