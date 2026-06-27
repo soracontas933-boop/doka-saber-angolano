@@ -127,13 +127,11 @@ const BookPaymentDialog = ({
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage.from("book-receipts").getPublicUrl(filePath);
-
       const { error: insertError } = await supabase.from("book_purchase_requests").insert({
         user_id: user.id,
         book_id: book.id,
         email_confirmacao: email,
-        ficheiro_url: publicUrl,
+        ficheiro_url: filePath,
         valor: book.preco_kz,
       });
 

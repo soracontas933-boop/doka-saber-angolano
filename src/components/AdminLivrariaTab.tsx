@@ -287,30 +287,44 @@ const AdminLivrariaTab = () => {
                       <p className="font-medium text-sm">{r.books?.titulo}</p>
                       <p className="text-xs text-muted-foreground">{r.email_confirmacao} • {r.valor} Kz • {new Date(r.criado_em).toLocaleString()}</p>
 	                      {r.ficheiro_url && (
-	                        <button 
-	                          onClick={async () => {
-	                            try {
-	                              const { createHostingerStorageClient } = await import("@/lib/hostinger-storage");
-	                              const client = createHostingerStorageClient("book-receipts");
-	                              
-	                              // Se for uma URL completa, extraímos o path. Se for só o path, usamos direto.
-	                              let path = r.ficheiro_url;
-	                              if (path.includes('/book-receipts/')) {
-	                                path = path.split('/book-receipts/').pop() || path;
-	                              }
-	                              
-	                              const { data, error } = await client.createSignedUrl(path, 300);
-	                              if (error) throw error;
-	                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-	                            } catch (err) {
-	                              console.error(err);
-	                              toast({ title: "Erro ao carregar comprovativo", variant: "destructive" });
-	                            }
-	                          }}
-	                          className="text-xs text-primary underline"
-	                        >
-	                          Ver comprovativo
-	                        </button>
+		                        <button 
+		                          onClick={async () => {
+		                            try {
+		                              // Se for uma URL completa do Supabase (legado), extraímos o path. 
+		                              // Se for só o path, usamos direto.
+		                              let path = r.ficheiro_url;
+		                              if (path.includes('/book-receipts/')) {
+		                                path = path.split('/book-receipts/').pop() || path;
+		                              }
+		                              
+		                              const { createHostingerStorageClient } = await import("@/lib/hostinger-storage");
+		                              const client = createHostingerStorageClient("book-receipts");
+		                              
+		                              const { data, error } = await client.createSignedUrl(path, 300);
+		                              
+		                              if (data?.signedUrl) {
+		                                window.open(data.signedUrl, '_blank');
+		                              } else {
+		                                // Fallback para Supabase se Hostinger falhar ou não estiver configurado
+		                                const { data: sbData, error: sbError } = await supabase.storage
+		                                  .from("book-receipts")
+		                                  .createSignedUrl(path, 300);
+		                                  
+		                                if (sbData?.signedUrl) {
+		                                  window.open(sbData.signedUrl, '_blank');
+		                                } else {
+		                                  throw error || sbError || new Error("Não foi possível gerar URL assinada");
+		                                }
+		                              }
+		                            } catch (err) {
+		                              console.error(err);
+		                              toast({ title: "Erro ao carregar comprovativo", variant: "destructive" });
+		                            }
+		                          }}
+		                          className="text-xs text-primary underline"
+		                        >
+		                          Ver comprovativo
+		                        </button>
 	                      )}
                     </div>
                     <Badge variant={r.estado === "pendente" ? "secondary" : r.estado === "aprovado" ? "default" : "destructive"}>{r.estado}</Badge>

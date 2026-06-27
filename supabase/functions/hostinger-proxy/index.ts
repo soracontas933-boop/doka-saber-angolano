@@ -83,7 +83,8 @@ async function checkFileAccess(
         return false;
       }
 
-      case "comprovativos": {
+      case "comprovativos":
+      case "book-receipts": {
         // Usuário pode acessar apenas seus próprios comprovativos
         // ou se for admin
         const { data: adminRole } = await supabase
@@ -130,7 +131,8 @@ async function generateSignedUrl(
   // Em produção, você precisará integrar com a API da Hostinger
   // para gerar URLs verdadeiramente assinadas
 
-  const baseUrl = bucket.includes("private") ? HOSTINGER_PRIVATE_URL : HOSTINGER_PUBLIC_URL;
+  const isPrivate = bucket.includes("private") || bucket === "book-receipts" || bucket === "comprovativos" || bucket === "ebooks" || bucket === "book-files";
+  const baseUrl = isPrivate ? HOSTINGER_PRIVATE_URL : HOSTINGER_PUBLIC_URL;
   const token = generateAccessToken(bucket, filePath, expirationSeconds);
 
   return `${baseUrl}/${filePath}?token=${token}&expires=${Date.now() + expirationSeconds * 1000}`;
