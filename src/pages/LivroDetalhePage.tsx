@@ -169,85 +169,161 @@ const LivroDetalhePage = () => {
   if (!book) return <div className="text-center py-20">Livro não encontrado.</div>;
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl pb-24 md:pb-6">
-      <div className="flex justify-between items-center mb-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleCopyLink} className="gap-2 rounded-full">
-          <Share2 className="h-4 w-4" /> Partilhar
-        </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header com botões de navegação */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+            <ArrowLeft className="h-4 w-4" /> Voltar
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCopyLink} className="gap-2 rounded-full">
+            <Share2 className="h-4 w-4" /> Partilhar
+          </Button>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-[260px_1fr] gap-6">
-        <div className="bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-apple-card">
-          {book.capa_url ? (
-            <img src={book.capa_url} alt={book.titulo} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-blue-400/20">
-              <BookOpen className="h-16 w-16 text-primary/60" />
+      {/* Conteúdo Principal - Layout Responsivo */}
+      <div className="container mx-auto px-4 py-6 pb-24 md:pb-6">
+        {/* Layout para Desktop: 2 colunas (capa à esquerda, info à direita) */}
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 lg:gap-8">
+          
+          {/* Coluna 1: Capa do Livro */}
+          <div className="flex flex-col gap-4">
+            {/* Capa - Responsiva */}
+            <div className="bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-lg sticky top-20 md:top-0">
+              {book.capa_url ? (
+                <img 
+                  src={book.capa_url} 
+                  alt={book.titulo} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-blue-400/20">
+                  <BookOpen className="h-16 w-16 text-primary/60" />
+                </div>
+              )}
             </div>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          {book.book_categories?.nome && <Badge variant="outline">{book.book_categories.nome}</Badge>}
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{book.titulo}</h1>
-          <p className="text-muted-foreground">por <span className="font-medium text-foreground">{book.autor}</span></p>
-
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            {book.paginas && <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {book.paginas} págs</span>}
-            <span>{book.idioma}</span>
-            {book.classe && <span>• {book.classe}</span>}
-            <span>• {book.downloads} downloads</span>
           </div>
 
-          <Card><CardContent className="p-4 text-sm whitespace-pre-wrap">{book.descricao || "Sem descrição."}</CardContent></Card>
-
-          <div className="flex flex-wrap gap-2">
-            {owned ? (
-              <>
-                <Button onClick={handleRead} disabled={processing} size="lg" className="rounded-2xl gap-2">
-                  {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
-                  Ler agora
-                </Button>
-                <Button onClick={handleDownload} variant="outline" disabled={processing} size="lg" className="rounded-2xl gap-2">
-                  {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  Baixar PDF
-                </Button>
-              </>
-            ) : book.gratuito ? (
-              <Button onClick={handleObterGratis} disabled={processing} size="lg" className="rounded-2xl gap-2">
-                {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                Obter Grátis
-              </Button>
-            ) : (
-              <>
-                {book.preco_creditos > 0 && (
-                  <Button onClick={handleComprarCreditos} disabled={processing} size="lg" className="rounded-2xl gap-2">
-                    <Coins className="h-4 w-4" /> Pagar com {book.preco_creditos} créditos
-                  </Button>
-                )}
-                <Button 
-                  onClick={() => {
-                    if (!user) {
-                      navigate(`/auth?returnTo=${encodeURIComponent(window.location.pathname + "?action=pay")}`);
-                    } else {
-                      setOpenPaymentDialog(true);
-                    }
-                  }} 
-                  variant="outline" 
-                  size="lg" 
-                  className="rounded-2xl gap-2"
-                >
-                  <FileText className="h-4 w-4" /> Pagar {book.preco_kz} Kz (comprovativo)
-                </Button>
-              </>
+          {/* Coluna 2: Informações e Ações */}
+          <div className="space-y-6">
+            
+            {/* Categoria */}
+            {book.book_categories?.nome && (
+              <div>
+                <Badge variant="outline" className="text-xs">{book.book_categories.nome}</Badge>
+              </div>
             )}
+
+            {/* Título */}
+            <div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
+                {book.titulo}
+              </h1>
+            </div>
+
+            {/* Autor */}
+            <div>
+              <p className="text-muted-foreground">por <span className="font-semibold text-foreground">{book.autor}</span></p>
+            </div>
+
+            {/* Metadados do Livro */}
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground py-3 border-y border-border">
+              {book.paginas && (
+                <span className="flex items-center gap-1">
+                  <FileText className="h-4 w-4" /> 
+                  <span>{book.paginas} págs</span>
+                </span>
+              )}
+              {book.idioma && <span>{book.idioma}</span>}
+              {book.classe && <span>• {book.classe}</span>}
+              <span>• {book.downloads} downloads</span>
+            </div>
+
+            {/* Descrição */}
+            <div>
+              <Card className="border-dashed">
+                <CardContent className="p-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+                  {book.descricao || "Sem descrição disponível."}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Botões de Ação - Responsivos */}
+            <div className="space-y-3">
+              {owned ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button 
+                    onClick={handleRead} 
+                    disabled={processing} 
+                    size="lg" 
+                    className="rounded-xl gap-2 w-full"
+                  >
+                    {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                    Ler agora
+                  </Button>
+                  <Button 
+                    onClick={handleDownload} 
+                    variant="outline" 
+                    disabled={processing} 
+                    size="lg" 
+                    className="rounded-xl gap-2 w-full"
+                  >
+                    {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    Baixar PDF
+                  </Button>
+                </div>
+              ) : book.gratuito ? (
+                <Button 
+                  onClick={handleObterGratis} 
+                  disabled={processing} 
+                  size="lg" 
+                  className="rounded-xl gap-2 w-full"
+                >
+                  {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  Obter Grátis
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  {book.preco_creditos > 0 && (
+                    <Button 
+                      onClick={handleComprarCreditos} 
+                      disabled={processing} 
+                      size="lg" 
+                      className="rounded-xl gap-2 w-full"
+                    >
+                      {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Coins className="h-4 w-4" />}
+                      Pagar com {book.preco_creditos} créditos
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={() => {
+                      if (!user) {
+                        navigate(`/auth?returnTo=${encodeURIComponent(window.location.pathname + "?action=pay")}`);
+                      } else {
+                        setOpenPaymentDialog(true);
+                      }
+                    }} 
+                    variant="outline" 
+                    size="lg" 
+                    className="rounded-xl gap-2 w-full"
+                  >
+                    {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                    Pagar {book.preco_kz} Kz
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Info Adicional */}
+            <div className="pt-4 border-t border-border text-xs text-muted-foreground">
+              <p>Visualizações: <span className="font-semibold text-foreground">{book.visualizacoes || 0}</span></p>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Diálogos */}
       <BookPaymentDialog
         open={openPaymentDialog}
         onOpenChange={setOpenPaymentDialog}
