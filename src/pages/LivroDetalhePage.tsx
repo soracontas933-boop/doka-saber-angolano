@@ -185,12 +185,12 @@ const LivroDetalhePage = () => {
       {/* Conteúdo Principal - Layout Responsivo */}
       <div className="container mx-auto px-4 py-6 pb-24 md:pb-6">
         {/* Layout para Desktop: 2 colunas (capa à esquerda, info à direita) */}
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 lg:gap-8">
+        <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[160px_1fr] md:grid-cols-[280px_1fr] gap-4 sm:gap-5 md:gap-6 lg:gap-8">
           
           {/* Coluna 1: Capa do Livro */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
             {/* Capa - Responsiva */}
-            <div className="bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-lg sticky top-20 md:top-0">
+            <div className="bg-secondary rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden aspect-[2/3] shadow-md md:shadow-lg sticky top-20 md:top-0">
               {book.capa_url ? (
                 <img 
                   src={book.capa_url} 
@@ -199,7 +199,7 @@ const LivroDetalhePage = () => {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-blue-400/20">
-                  <BookOpen className="h-16 w-16 text-primary/60" />
+                  <BookOpen className="h-8 sm:h-12 md:h-16 w-8 sm:w-12 md:w-16 text-primary/60" />
                 </div>
               )}
             </div>
@@ -217,21 +217,21 @@ const LivroDetalhePage = () => {
 
             {/* Título */}
             <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
+              <h1 className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight">
                 {book.titulo}
               </h1>
             </div>
 
             {/* Autor */}
             <div>
-              <p className="text-muted-foreground">por <span className="font-semibold text-foreground">{book.autor}</span></p>
+              <p className="text-xs sm:text-sm text-muted-foreground">por <span className="font-semibold text-foreground">{book.autor}</span></p>
             </div>
 
             {/* Metadados do Livro */}
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground py-3 border-y border-border">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground py-2 sm:py-3 border-y border-border">
               {book.paginas && (
                 <span className="flex items-center gap-1">
-                  <FileText className="h-4 w-4" /> 
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4" /> 
                   <span>{book.paginas} págs</span>
                 </span>
               )}
@@ -243,57 +243,61 @@ const LivroDetalhePage = () => {
             {/* Descrição */}
             <div>
               <Card className="border-dashed">
-                <CardContent className="p-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+                <CardContent className="p-2 sm:p-3 md:p-4 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
                   {book.descricao || "Sem descrição disponível."}
                 </CardContent>
               </Card>
             </div>
 
             {/* Botões de Ação - Responsivos */}
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {owned ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   <Button 
                     onClick={handleRead} 
                     disabled={processing} 
-                    size="lg" 
-                    className="rounded-xl gap-2 w-full"
+                    size="sm" 
+                    className="rounded-lg sm:rounded-xl gap-1 sm:gap-2 w-full text-xs sm:text-sm"
                   >
-                    {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
-                    Ler agora
+                    {processing ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                    <span className="hidden sm:inline">Ler agora</span>
+                    <span className="sm:hidden">Ler</span>
                   </Button>
                   <Button 
                     onClick={handleDownload} 
                     variant="outline" 
                     disabled={processing} 
-                    size="lg" 
-                    className="rounded-xl gap-2 w-full"
+                    size="sm" 
+                    className="rounded-lg sm:rounded-xl gap-1 sm:gap-2 w-full text-xs sm:text-sm"
                   >
-                    {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                    Baixar PDF
+                    {processing ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : <Download className="h-3 w-3 sm:h-4 sm:w-4" />}
+                    <span className="hidden sm:inline">Baixar PDF</span>
+                    <span className="sm:hidden">Baixar</span>
                   </Button>
                 </div>
               ) : book.gratuito ? (
                 <Button 
                   onClick={handleObterGratis} 
                   disabled={processing} 
-                  size="lg" 
-                  className="rounded-xl gap-2 w-full"
+                  size="sm" 
+                  className="rounded-lg sm:rounded-xl gap-1 sm:gap-2 w-full text-xs sm:text-sm"
                 >
-                  {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  Obter Grátis
+                  {processing ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : <Download className="h-3 w-3 sm:h-4 sm:w-4" />}
+                  <span className="hidden sm:inline">Obter Grátis</span>
+                  <span className="sm:hidden">Grátis</span>
                 </Button>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {book.preco_creditos > 0 && (
                     <Button 
                       onClick={handleComprarCreditos} 
                       disabled={processing} 
-                      size="lg" 
-                      className="rounded-xl gap-2 w-full"
+                      size="sm" 
+                      className="rounded-lg sm:rounded-xl gap-1 sm:gap-2 w-full text-xs sm:text-sm"
                     >
-                      {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Coins className="h-4 w-4" />}
-                      Pagar com {book.preco_creditos} créditos
+                      {processing ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : <Coins className="h-3 w-3 sm:h-4 sm:w-4" />}
+                      <span className="hidden sm:inline">Pagar com {book.preco_creditos} créditos</span>
+                      <span className="sm:hidden">{book.preco_creditos} créditos</span>
                     </Button>
                   )}
                   <Button 
@@ -305,14 +309,15 @@ const LivroDetalhePage = () => {
                       }
                     }} 
                     variant="outline" 
-                    size="lg" 
-                    className="rounded-xl gap-2 w-full"
+                    size="sm" 
+                    className="rounded-lg sm:rounded-xl gap-1 sm:gap-2 w-full text-xs sm:text-sm"
                   >
-                    {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-                    Pagar {book.preco_kz} Kz
+                    {processing ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : <FileText className="h-3 w-3 sm:h-4 sm:w-4" />}
+                    <span className="hidden sm:inline">Pagar {book.preco_kz} Kz</span>
+                    <span className="sm:hidden">Pagar</span>
                   </Button>
                 </div>
-              )}
+              )
             </div>
 
             {/* Info Adicional */}
