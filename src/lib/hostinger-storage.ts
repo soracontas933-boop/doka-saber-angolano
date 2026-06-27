@@ -32,6 +32,7 @@ const BUCKET_CONFIG: Record<string, { type: 'public' | 'private'; hostingerBucke
   'book-covers': { type: 'public', hostingerBucket: 'doka-public' },
   'book-files': { type: 'private', hostingerBucket: 'doka-private' },
   'comprovativos': { type: 'private', hostingerBucket: 'doka-private' },
+  'book-receipts': { type: 'private', hostingerBucket: 'doka-private' },
   'button-covers': { type: 'public', hostingerBucket: 'doka-public' },
   'hero-images': { type: 'public', hostingerBucket: 'doka-public' },
   'landing-images': { type: 'public', hostingerBucket: 'doka-public' },

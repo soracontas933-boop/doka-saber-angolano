@@ -171,13 +171,30 @@ const AdminPaymentsTab = () => {
   }, [fetchPayments, fetchActiveCheckouts]);
 
   const viewReceipt = async (filePath: string) => {
-    const { data } = await supabase.storage
-      .from("comprovativos")
-      .createSignedUrl(filePath, 300);
-    if (data?.signedUrl) {
-      setPreviewUrl(data.signedUrl);
-      setPreviewOpen(true);
-    } else {
+    try {
+      const { createHostingerStorageClient } = await import("@/lib/hostinger-storage");
+      const client = createHostingerStorageClient("comprovativos");
+      
+      const { data, error } = await client.createSignedUrl(filePath, 300);
+      
+      if (data?.signedUrl) {
+        setPreviewUrl(data.signedUrl);
+        setPreviewOpen(true);
+      } else {
+        // Fallback para Supabase se Hostinger falhar ou não estiver configurado
+        const { data: sbData } = await supabase.storage
+          .from("comprovativos")
+          .createSignedUrl(filePath, 300);
+          
+        if (sbData?.signedUrl) {
+          setPreviewUrl(sbData.signedUrl);
+          setPreviewOpen(true);
+        } else {
+          throw error || new Error("Não foi possível gerar URL assinada");
+        }
+      }
+    } catch (err) {
+      console.error(err);
       toast({ title: "Erro ao carregar comprovativo", variant: "destructive" });
     }
   };

@@ -286,7 +286,32 @@ const AdminLivrariaTab = () => {
                     <div>
                       <p className="font-medium text-sm">{r.books?.titulo}</p>
                       <p className="text-xs text-muted-foreground">{r.email_confirmacao} • {r.valor} Kz • {new Date(r.criado_em).toLocaleString()}</p>
-                      {r.ficheiro_url && <a href={r.ficheiro_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Ver comprovativo</a>}
+	                      {r.ficheiro_url && (
+	                        <button 
+	                          onClick={async () => {
+	                            try {
+	                              const { createHostingerStorageClient } = await import("@/lib/hostinger-storage");
+	                              const client = createHostingerStorageClient("book-receipts");
+	                              
+	                              // Se for uma URL completa, extraímos o path. Se for só o path, usamos direto.
+	                              let path = r.ficheiro_url;
+	                              if (path.includes('/book-receipts/')) {
+	                                path = path.split('/book-receipts/').pop() || path;
+	                              }
+	                              
+	                              const { data, error } = await client.createSignedUrl(path, 300);
+	                              if (error) throw error;
+	                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+	                            } catch (err) {
+	                              console.error(err);
+	                              toast({ title: "Erro ao carregar comprovativo", variant: "destructive" });
+	                            }
+	                          }}
+	                          className="text-xs text-primary underline"
+	                        >
+	                          Ver comprovativo
+	                        </button>
+	                      )}
                     </div>
                     <Badge variant={r.estado === "pendente" ? "secondary" : r.estado === "aprovado" ? "default" : "destructive"}>{r.estado}</Badge>
                     {r.estado === "pendente" && (
