@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download, Loader2, Coins, FileText, Eye, Share2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Loader2, Link as LinkIcon, FileText, Eye, Share2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 import PDFViewer from "@/components/PDFViewer";
@@ -184,10 +184,10 @@ const LivroDetalhePage = () => {
 
       <main className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Seção Superior: Capa e Info Principal */}
-        <div className="flex flex-row gap-6 mb-8">
+        <div className="flex flex-row gap-6 mb-8 items-start">
           {/* Capa do Livro */}
-          <div className="w-1/3 min-w-[120px] max-w-[200px]">
-            <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl bg-gray-100 border border-gray-100">
+          <div className="w-1/3 min-w-[120px] max-w-[180px]">
+            <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-lg bg-gray-100 border border-gray-100">
               {book.capa_url ? (
                 <img src={book.capa_url} alt={book.titulo} className="w-full h-full object-cover" />
               ) : (
@@ -199,9 +199,9 @@ const LivroDetalhePage = () => {
           </div>
 
           {/* Info Básica */}
-          <div className="flex-1 flex flex-col justify-center gap-2">
+          <div className="flex-1 flex flex-col gap-2 pt-2">
             {book.book_categories?.nome && (
-              <Badge variant="secondary" className="w-fit bg-gray-50 text-gray-500 hover:bg-gray-50 border-none font-normal px-3 py-1 text-[11px] rounded-full">
+              <Badge variant="secondary" className="w-fit bg-gray-50 text-gray-500 hover:bg-gray-50 border border-gray-100 font-normal px-3 py-1 text-[11px] rounded-full mb-1">
                 {book.book_categories.nome}
               </Badge>
             )}
@@ -233,10 +233,10 @@ const LivroDetalhePage = () => {
         <div className="mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-3">Sobre o livro</h2>
           <div className="relative">
-            <p className={`text-[15px] leading-relaxed text-gray-600 ${!showFullDescription ? 'line-clamp-4' : ''}`}>
+            <p className={`text-[15px] leading-relaxed text-gray-600 ${!showFullDescription ? 'line-clamp-3' : ''}`}>
               {book.descricao || "Sem descrição disponível."}
             </p>
-            {book.descricao && book.descricao.length > 200 && (
+            {book.descricao && book.descricao.length > 150 && (
               <button 
                 onClick={() => setShowFullDescription(!showFullDescription)}
                 className="mt-2 flex items-center gap-1 text-blue-600 text-sm font-medium"
@@ -272,8 +272,8 @@ const LivroDetalhePage = () => {
           ) : (
             <div className="flex flex-col gap-3">
               {book.preco_creditos > 0 && (
-                <Button onClick={handleComprarCreditos} disabled={processing} className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base gap-2 shadow-sm">
-                  {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Coins className="h-5 w-5" />}
+                <Button onClick={handleComprarCreditos} disabled={processing} className="w-full h-14 rounded-2xl bg-[#3b82f6] hover:bg-blue-700 text-white font-semibold text-base gap-2 shadow-sm">
+                  {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <LinkIcon className="h-5 w-5" />}
                   Pagar com {book.preco_creditos} créditos
                 </Button>
               )}
@@ -286,7 +286,7 @@ const LivroDetalhePage = () => {
                   }
                 }} 
                 variant="outline" 
-                className="w-full h-14 rounded-2xl border-gray-200 text-gray-900 font-semibold text-base gap-2 hover:bg-gray-50"
+                className="w-full h-14 rounded-2xl border border-gray-200 text-gray-900 font-semibold text-base gap-2 hover:bg-gray-50"
               >
                 <FileText className="h-5 w-5" />
                 Pagar {book.preco_kz} Kz
