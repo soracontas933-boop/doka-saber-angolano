@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { GraduationCap } from "lucide-react";
+import { BackgroundMediaCarousel } from "@/components/BackgroundMediaCarousel";
+import { useState, useEffect } from "react";
 
 const quickActionsAll = [
   { to: "/trabalho", icon: WrapText, label: "Trabalhos", featureKey: "trabalho" },
@@ -70,6 +72,7 @@ const UserHomePage = () => {
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [groupCount, setGroupCount] = useState(0);
   const [buttonCovers, setButtonCovers] = useState<Record<string, string>>({});
+  const [heroBackgroundMedia, setHeroBackgroundMedia] = useState<any>(null);
   const { getAllUsageCounts } = useUsageTracker();
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
 
@@ -77,12 +80,13 @@ const UserHomePage = () => {
     if (!user) return;
     const fetchData = async () => {
       try {
-        const [profileRes, planRes, projectsRes, groupsRes, coversRes] = await Promise.all([
+        const [profileRes, planRes, projectsRes, groupsRes, coversRes, heroRes] = await Promise.all([
           supabase.from("profiles").select("nome").eq("id", user.id).single(),
           supabase.from("user_plans").select("plano, creditos_usados, creditos_totais, limite_trabalhos, limite_resumos, limite_questionarios, limite_planos_aula, limite_tfc").eq("user_id", user.id).single(),
           supabase.from("projects").select("id, titulo, tipo, criado_em").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(5),
           supabase.from("workgroup_members").select("id").eq("user_id", user.id).eq("aceite", true),
           (supabase.from("button_covers") as any).select("button_key, image_url"),
+          (supabase.from("hero_background_media") as any).select("*").eq("ativo", true).single(),
         ]);
         if (profileRes.data) setProfile(profileRes.data);
         if (planRes.data) setPlan(planRes.data);
@@ -92,6 +96,9 @@ const UserHomePage = () => {
           const map: Record<string, string> = {};
           (coversRes.data as any[]).forEach((c: any) => { map[c.button_key] = c.image_url; });
           setButtonCovers(map);
+        }
+        if (heroRes.data) {
+          setHeroBackgroundMedia(heroRes.data);
         }
       } catch (error) {
         console.error("Erro ao carregar dados da home:", error);
@@ -134,54 +141,69 @@ const UserHomePage = () => {
       {/* Mobile Layout */}
       <div className="md:hidden">
 
-        {/* Hero section */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="px-4 pt-3 pb-2"
-        >
-          <h2 className="text-xl font-normal text-foreground">
-            Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">O que vais criar hoje?</p>
-          {canInstall && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-              <Button
-                onClick={install}
-                size="sm"
-                className="mt-2 w-full gap-2 rounded-md font-normal text-xs h-10"
-              >
-                <Download className="h-4 w-4" /> Baixar o App
-              </Button>
-            </motion.div>
+        {/* Hero section with Background Media */}
+        <div className="relative w-screen -mx-[calc((100vw-100%)/2)] overflow-hidden">
+          {/* Background Media */}
+          {heroBackgroundMedia && (
+            <BackgroundMediaCarousel
+              mediaUrl={heroBackgroundMedia.media_url}
+              mediaType={heroBackgroundMedia.media_type}
+              carouselItems={heroBackgroundMedia.carousel_items || []}
+              autoPlayInterval={heroBackgroundMedia.auto_play_interval || 5000}
+            />
           )}
-        </motion.div>
 
-        {/* Usage Counters Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="px-4 pt-1 pb-3"
-        >
-          <p className="text-[10px] font-normal mb-1.5 uppercase tracking-wider text-muted-foreground">Gerações restantes</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
-            {usageItems.map((item) => (
-              <div key={item.label} className="gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card items-center justify-center flex flex-row shadow-glass">
-                <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[11px] font-normal text-foreground">{item.remaining}</span>
-                <span className="text-[10px] text-muted-foreground">{item.label}</span>
-              </div>
-            ))}
+          {/* Content Container */}
+          <div className="relative z-20 px-4 pt-3 pb-2">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <h2 className="text-xl font-normal text-foreground">
+                Olá, {profile.nome?.split(" ")[0] || "Estudante"} 👋
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">O que vais criar hoje?</p>
+              {canInstall && (
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
+                  <Button
+                    onClick={install}
+                    size="sm"
+                    className="mt-2 w-full gap-2 rounded-md font-normal text-xs h-10"
+                  >
+                    <Download className="h-4 w-4" /> Baixar o App
+                  </Button>
+                </motion.div>
+              )}
+            </motion.div>
           </div>
-        </motion.div>
+
+          {/* Usage Counters Row */}
+          <div className="relative z-20 px-4 pt-1 pb-3">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+            >
+              <p className="text-[10px] font-normal mb-1.5 uppercase tracking-wider text-muted-foreground">Gerações restantes</p>
+              <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+                {usageItems.map((item) => (
+                  <div key={item.label} className="gap-1.5 px-3 py-1.5 rounded-md border border-border shrink-0 bg-card items-center justify-center flex flex-row shadow-glass">
+                    <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-[11px] font-normal text-foreground">{item.remaining}</span>
+                    <span className="text-[10px] text-muted-foreground">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
 
         {/* Quick Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="px-4 pb-4"
+          className="px-4 pb-4 relative z-10"
         >
           <div className="grid grid-cols-3 gap-3">
             {quickActions.map((action, i) => {

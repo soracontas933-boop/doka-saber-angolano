@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { ImageIcon, Loader2, Trash2, Upload, Play } from "lucide-react";
+import AdminHeroBackgroundTab from "./AdminHeroBackgroundTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const BUTTON_KEYS = [
   { key: "trabalho", label: "Trabalhos" },
@@ -30,6 +32,7 @@ const isVideoFile = (filename: string): boolean => {
 };
 
 const AdminButtonCoversTab = () => {
+  const [activeTab, setActiveTab] = useState("covers");
   const [covers, setCovers] = useState<ButtonCover[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -106,6 +109,13 @@ const AdminButtonCoversTab = () => {
   }
 
   return (
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="covers">Capas de Botões</TabsTrigger>
+        <TabsTrigger value="hero">Mídia de Fundo</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="covers">
     <div className="space-y-4">
       <Card>
         <CardHeader>
@@ -200,6 +210,12 @@ const AdminButtonCoversTab = () => {
         </CardContent>
       </Card>
     </div>
+      </TabsContent>
+
+      <TabsContent value="hero">
+        <AdminHeroBackgroundTab />
+      </TabsContent>
+    </Tabs>
   );
 };
 
