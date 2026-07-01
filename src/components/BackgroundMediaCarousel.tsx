@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface BackgroundMediaCarouselProps {
@@ -16,6 +16,7 @@ export const BackgroundMediaCarousel = ({
 }: BackgroundMediaCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (mediaType !== "carousel" || carouselItems.length === 0) return;
@@ -26,6 +27,25 @@ export const BackgroundMediaCarousel = ({
 
     return () => clearInterval(interval);
   }, [mediaType, carouselItems.length, autoPlayInterval]);
+
+  // Garantir que o vídeo reproduza automaticamente
+  useEffect(() => {
+    if (mediaType === "video" && videoRef.current) {
+      const video = videoRef.current;
+      
+      // Tentar reproduzir o vídeo
+      const playPromise = video.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .catch((error) => {
+            console.warn("Autoplay foi bloqueado pelo navegador:", error);
+            // Alguns navegadores bloqueiam autoplay sem interação do usuário
+            // Neste caso, o vídeo ainda terá loop ativado e reproduzirá quando possível
+          });
+      }
+    }
+  }, [mediaType, mediaUrl]);
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + carouselItems.length) % carouselItems.length);
@@ -51,15 +71,35 @@ export const BackgroundMediaCarousel = ({
 
       {/* Vídeo em Loop */}
       {mediaType === "video" && mediaUrl && (
-        <video
-          src={mediaUrl}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover"
-          onLoadedData={() => setIsLoading(false)}
-        />
+        <>
+          <video
+            ref={videoRef}
+            src={mediaUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            controls={false}
+            className="w-full h-full object-cover"
+            onLoadedData={() => setIsLoading(false)}
+            onPlay={() => setIsLoading(false)}
+            onCanPlay={() => setIsLoading(false)}
+            onError={(e) => {
+              console.error("Erro ao carregar vídeo:", mediaUrl, e);
+              setIsLoading(false);
+            }}
+            crossOrigin="anonymous"
+          />
+          {/* Fallback para navegadores que bloqueiam autoplay */}
+          <style>{`
+            video {
+              display: block;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+          `}</style>
+        </>
       )}
 
       {/* Carrossel */}
