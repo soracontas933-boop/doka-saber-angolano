@@ -57,7 +57,7 @@ const AdminButtonCoversTab = () => {
 
     setUploading(buttonKey);
     const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
-    const filePath = `${buttonKey}-${Date.now()}.${ext}`;
+    const filePath = `covers/${buttonKey}-${Date.now()}.${ext}`;
 
     // Upload to storage
     const { error: uploadErr } = await supabase.storage

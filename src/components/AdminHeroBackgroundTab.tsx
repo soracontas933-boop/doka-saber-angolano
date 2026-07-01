@@ -91,7 +91,13 @@ const AdminHeroBackgroundTab = () => {
         setFile(null);
       }
 
-      if (!file && media.media_type !== "carousel" && !mediaUrl) {
+      if (media.media_type === "carousel") {
+        if (!media.carousel_items || media.carousel_items.length === 0) {
+          toast({ title: "Adicione pelo menos uma imagem ao carrossel", variant: "destructive" });
+          setSaving(false);
+          return;
+        }
+      } else if (!file && !mediaUrl) {
         toast({ title: "Forneça uma URL ou faça upload de um ficheiro", variant: "destructive" });
         setSaving(false);
         return;
@@ -99,7 +105,7 @@ const AdminHeroBackgroundTab = () => {
 
       const payload = {
         media_type: media.media_type,
-        media_url: mediaUrl || null,
+        media_url: media.media_type === "carousel" ? (media.carousel_items?.[0] || null) : (mediaUrl || null),
         carousel_items: media.media_type === "carousel" ? media.carousel_items || [] : null,
         auto_play_interval: media.auto_play_interval || 5000,
         ativo: media.ativo,
@@ -112,7 +118,10 @@ const AdminHeroBackgroundTab = () => {
         ({ error } = await supabase.from("hero_background_media").insert(payload));
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro detalhado do Supabase:", error);
+        throw error;
+      }
       toast({ title: "Mídia de fundo salva com sucesso!" });
       loadMedia();
     } catch (err: any) {
