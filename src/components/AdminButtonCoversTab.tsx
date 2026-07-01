@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ImageIcon, Loader2, Trash2, Upload, Play } from "lucide-react";
+import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
 import AdminHeroBackgroundTab from "./AdminHeroBackgroundTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -156,18 +156,14 @@ const AdminButtonCoversTab = () => {
                   {cover ? (
                     <div className="relative w-full h-24 rounded-lg overflow-hidden bg-muted group">
                       {isVideo ? (
-                        <>
-                          <video
-                            src={cover.image_url}
-                            className="w-full h-full object-cover"
-                            muted
-                            loop
-                            playsInline
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-                            <Play className="h-6 w-6 text-white fill-white" />
-                          </div>
-                        </>
+                        <video
+                          src={cover.image_url}
+                          className="w-full h-full object-cover"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
                       ) : (
                         <img
                           src={cover.image_url}

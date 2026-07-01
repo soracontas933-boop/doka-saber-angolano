@@ -219,7 +219,7 @@ const AdminHeroBackgroundTab = () => {
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-xs text-muted-foreground mb-2">Pré-visualização:</p>
                 {media.media_type === "video" ? (
-                  <video src={media.media_url} className="w-full h-32 object-cover rounded" muted loop />
+                  <video src={media.media_url} className="w-full h-32 object-cover rounded" autoPlay muted loop playsInline />
                 ) : (
                   <img src={media.media_url} alt="Preview" className="w-full h-32 object-cover rounded" />
                 )}

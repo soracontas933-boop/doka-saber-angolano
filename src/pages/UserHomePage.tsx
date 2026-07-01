@@ -14,7 +14,6 @@ import {
   Download,
   MoreHorizontal,
   ChevronRight,
-  Play,
 } from "lucide-react";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { supabase } from "@/integrations/supabase/client";
