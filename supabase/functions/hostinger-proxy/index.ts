@@ -67,17 +67,34 @@ async function checkFileAccess(
 
         if (adminRole) return true;
 
-        // Verificar se possui o livro
-        const bookIdMatch = filePath.match(/book-(\w+)/);
-        if (bookIdMatch) {
+        // Verificar se possui o livro na biblioteca
+        // Buscamos na tabela books pelo ficheiro_path que corresponde ao arquivo solicitado
+        // e verificamos se o usuário tem esse livro na sua biblioteca
+        const { data: book } = await supabase
+          .from("books")
+          .select("id")
+          .or(`ficheiro_path.eq.${filePath},ficheiro_path.eq.hostinger-private://${bucket}/${filePath}`)
+          .maybeSingle();
+
+        if (book) {
           const { data: bookLibrary } = await supabase
             .from("book_library")
             .select("id")
             .eq("user_id", userId)
-            .eq("book_id", bookIdMatch[1])
+            .eq("book_id", book.id)
             .maybeSingle();
 
           if (bookLibrary) return true;
+
+          // Também permitir se o usuário for o criador do livro
+          const { data: isCreator } = await supabase
+            .from("books")
+            .select("id")
+            .eq("id", book.id)
+            .eq("criado_por", userId)
+            .maybeSingle();
+          
+          if (isCreator) return true;
         }
 
         return false;

@@ -102,7 +102,9 @@ export async function getSignedUrl(
     }
 
     // Para arquivos privados, chamamos a API de proxy
-    const apiUrl = import.meta.env.VITE_HOSTINGER_SIGNED_URL_API || 'https://api.seu-dominio.com/api/signed-url';
+    // Usar a URL da Edge Function do Supabase como proxy
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const apiUrl = `${supabaseUrl}/functions/v1/hostinger-proxy/api/signed-url`;
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {

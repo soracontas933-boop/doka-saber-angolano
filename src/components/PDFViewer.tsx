@@ -82,7 +82,7 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
         console.error("Erro ao carregar PDF:", error);
         toast({
           title: "Erro ao carregar livro",
-          description: "Não foi possível carregar o arquivo PDF. Tente novamente mais tarde.",
+          description: error.message || "Não foi possível carregar o arquivo PDF. Tente novamente mais tarde.",
           variant: "destructive"
         });
         setLoading(false);
