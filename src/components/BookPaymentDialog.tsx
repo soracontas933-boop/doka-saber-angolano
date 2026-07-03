@@ -167,26 +167,26 @@ const BookPaymentDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[98vw] sm:w-[95vw] sm:max-w-2xl max-h-[96vh] overflow-y-auto p-4 sm:p-8 rounded-t-[2rem] sm:rounded-[2.5rem] border-0 shadow-2xl bg-white dark:bg-slate-900 bottom-0 sm:bottom-auto translate-y-0 sm:-translate-y-1/2">
+      <DialogContent className="w-[98vw] sm:w-[95vw] sm:max-w-2xl max-h-[96vh] overflow-y-auto p-4 sm:p-8 rounded-t-[2rem] sm:rounded-[2.5rem] border-0 shadow-2xl bg-background dark:bg-background bottom-0 sm:bottom-auto translate-y-0 sm:-translate-y-1/2">
         <DialogHeader className="space-y-1 sm:space-y-2 pb-2">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-2xl font-bold">
             <CreditCard className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             Pagamento por Transferência
           </DialogTitle>
-          <DialogDescription className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400">
-            Transfira <span className="font-bold text-slate-900 dark:text-white">{book.preco_kz} Kz</span> e envie o comprovativo.
+          <DialogDescription className="text-[11px] sm:text-sm text-muted-foreground">
+            Transfira <span className="font-bold text-foreground">{book.preco_kz} Kz</span> e envie o comprovativo.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 sm:space-y-6">
           {/* Livro Info - Sólido */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 sm:p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+          <div className="bg-secondary p-2.5 sm:p-4 rounded-2xl border border-border flex items-center gap-3 card-3d">
             {book.capa_url && (
               <img src={book.capa_url} alt={book.titulo} className="h-12 w-9 sm:h-16 sm:w-12 rounded-lg shadow-sm object-cover flex-shrink-0" />
             )}
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-xs sm:text-base text-slate-900 dark:text-white truncate leading-tight">{book.titulo}</p>
-              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 truncate">{book.autor}</p>
+              <p className="font-bold text-xs sm:text-base text-foreground truncate leading-tight">{book.titulo}</p>
+              <p className="text-[10px] sm:text-sm text-muted-foreground truncate">{book.autor}</p>
               <Badge className="mt-1 bg-primary/10 text-primary border-0 text-[9px] sm:text-xs px-2 py-0 h-5">{book.preco_kz} Kz</Badge>
             </div>
           </div>
@@ -201,11 +201,11 @@ const BookPaymentDialog = ({
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Dados Bancários</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Dados Bancários</p>
               <Tabs value={selectedMethod || ""} onValueChange={setSelectedMethod} className="w-full">
-                <TabsList className="flex w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl h-11 sm:h-12">
+                <TabsList className="flex w-full bg-secondary p-1 rounded-2xl h-11 sm:h-12">
                   {authorPaymentMethods.map((method) => (
-                    <TabsTrigger key={method.id} value={method.id} className="flex-1 text-[11px] sm:text-sm font-bold rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all">
+                    <TabsTrigger key={method.id} value={method.id} className="flex-1 text-[11px] sm:text-sm font-bold rounded-xl data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm transition-all">
                       {method.tipo === "iban" ? "IBAN" : "Express"}
                       {method.preferido && <CheckCircle className="h-3 w-3 ml-1.5 text-green-500" />}
                     </TabsTrigger>
@@ -216,15 +216,15 @@ const BookPaymentDialog = ({
                   const display = getMethodDisplay(method);
                   return (
                     <TabsContent key={method.id} value={method.id} className="mt-3 sm:mt-4">
-                      <div className="bg-slate-900 dark:bg-black text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl space-y-3 sm:space-y-4 shadow-xl border border-white/5">
+                      <div className="bg-card text-foreground p-4 sm:p-6 rounded-2xl sm:rounded-3xl space-y-3 sm:space-y-4 shadow-xl border border-border button-3d">
                         <div className="flex justify-between items-start">
-                          <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider">{display.title}</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground font-bold uppercase tracking-wider">{display.title}</p>
                           {method.preferido && <Badge className="bg-green-500 hover:bg-green-500 text-[9px] sm:text-[10px] h-4 sm:h-5 px-2">Preferido</Badge>}
                         </div>
-                        <div className="bg-white/10 p-3 sm:p-4 rounded-xl break-all font-mono text-xs sm:text-base border border-white/5 select-all text-center sm:text-left leading-relaxed">
+                        <div className="bg-secondary p-3 sm:p-4 rounded-xl break-all font-mono text-xs sm:text-base border border-border select-all text-center sm:text-left leading-relaxed text-foreground">
                           {display.value}
                         </div>
-                        {display.subtitle && <p className="text-[10px] sm:text-xs text-slate-400 text-center sm:text-left">{display.subtitle}</p>}
+                        {display.subtitle && <p className="text-[10px] sm:text-xs text-muted-foreground text-center sm:text-left">{display.subtitle}</p>}
                       </div>
                     </TabsContent>
                   );
@@ -233,20 +233,20 @@ const BookPaymentDialog = ({
             </div>
           )}
 
-          <Separator className="bg-slate-100 dark:bg-slate-800" />
+          <Separator className="bg-border" />
 
           {/* Form */}
           <div className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <Label className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Seu Email para Confirmação</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="exemplo@email.com" className="h-11 sm:h-12 rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-sm sm:text-base focus:ring-2 focus:ring-primary/20 transition-all" />
+              <Label className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Seu Email para Confirmação</Label>
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="exemplo@email.com" className="h-11 sm:h-12 rounded-2xl border-border bg-secondary text-sm sm:text-base focus:ring-2 focus:ring-primary/20 transition-all" />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Comprovativo</Label>
+              <Label className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">Comprovativo</Label>
               <div
                 className={`relative flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed p-5 sm:p-10 transition-all cursor-pointer group ${
-                  file ? "border-primary/50 bg-primary/5" : "border-slate-200 dark:border-slate-800 hover:border-primary/30 hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                  file ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/30 hover:bg-secondary"
                 }`}
                 onClick={() => {
                   const input = document.createElement("input");
@@ -260,26 +260,26 @@ const BookPaymentDialog = ({
                 }}
               >
                 {file ? (
-                  <div className="flex items-center gap-3 w-full bg-white dark:bg-slate-900 p-3 rounded-2xl shadow-sm border border-primary/10">
+                  <div className="flex items-center gap-3 w-full bg-card p-3 rounded-2xl shadow-sm border border-primary/10 button-3d">
                     <div className="bg-primary/10 p-2.5 rounded-xl"><FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /></div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-bold truncate">{file.name}</p>
-                      <p className="text-[10px] text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <p className="text-xs sm:text-sm font-bold truncate text-foreground">{file.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 rounded-full hover:bg-red-50 hover:text-red-500" onClick={(e) => { e.stopPropagation(); setFile(null); }}><X className="h-4 w-4 sm:h-5 sm:w-5" /></Button>
                   </div>
                 ) : (
                   <>
-                    <div className="bg-slate-100 dark:bg-slate-800 p-3 sm:p-4 rounded-full mb-3 group-hover:scale-110 transition-transform"><Upload className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 group-hover:text-primary" /></div>
-                    <p className="text-xs sm:text-base font-bold text-slate-700 dark:text-slate-200">Carregar ficheiro</p>
-                    <p className="text-[10px] sm:text-xs text-slate-400 mt-1">PNG, JPG ou PDF (máx. 5MB)</p>
+                    <div className="bg-secondary p-3 sm:p-4 rounded-full mb-3 group-hover:scale-110 transition-transform"><Upload className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground group-hover:text-primary" /></div>
+                    <p className="text-xs sm:text-base font-bold text-foreground">Carregar ficheiro</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">PNG, JPG ou PDF (máx. 5MB)</p>
                   </>
                 )}
               </div>
             </div>
           </div>
 
-          <Button onClick={handleSubmit} disabled={submitting} className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[1.5rem] font-bold text-sm sm:text-base shadow-xl shadow-primary/20 transition-all active:scale-[0.98] hover:shadow-primary/30">
+          <Button onClick={handleSubmit} disabled={submitting} className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[1.5rem] font-bold text-sm sm:text-base shadow-xl shadow-primary/20 transition-all active:scale-[0.98] hover:shadow-primary/30 bg-gradient-to-br from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white button-3d">
             {submitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <CheckCircle className="h-5 w-5 mr-2" />}
             Confirmar Pagamento
           </Button>

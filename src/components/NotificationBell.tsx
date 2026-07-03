@@ -304,8 +304,8 @@ const NotificationBell = () => {
       }
     }}>
       <PopoverTrigger asChild>
-        <button className="relative p-2 rounded-md hover:bg-muted transition-colors">
-          <Bell className="lucide lucide-bell h-4.5 w-4.5 text-black" />
+        <button className="relative p-2 rounded-md hover:bg-muted transition-colors button-3d shadow-md hover:shadow-lg">
+          <Bell className="lucide lucide-bell h-4.5 w-4.5 text-black dark:text-white" />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4.5 min-w-[18px] rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1">
               {unreadCount > 9 ? "9+" : unreadCount}

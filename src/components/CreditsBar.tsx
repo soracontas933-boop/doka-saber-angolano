@@ -127,11 +127,11 @@ const CreditsBar = () => {
   return (
     <>
       {/* ===== MOBILE TOP BAR ===== */}
-      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40 transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}>
-        <div className="flex items-center justify-between px-4 py-3 gap-2 shadow-glass">
+      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-background to-background/95 backdrop-blur-md border-b border-border/40 transition-transform duration-300 shadow-lg shadow-black/10 dark:shadow-black/30 ${hidden ? "-translate-y-full" : "translate-y-0"}`}>
+        <div className="flex items-center justify-between px-4 py-3 gap-2">
           <button
             onClick={() => navigate("/configuracoes")}
-            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-200 active:scale-95"
+            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold shrink-0 bg-gradient-to-br from-primary/20 to-primary/10 text-primary border border-primary/30 hover:from-primary/30 hover:to-primary/20 transition-all duration-200 active:scale-95 button-3d shadow-lg shadow-primary/20 dark:shadow-primary/10"
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt={initials} className="w-full h-full object-cover" />
@@ -143,7 +143,7 @@ const CreditsBar = () => {
           {/* Centro: Créditos com barra de progresso */}
           <button
             onClick={() => navigate("/creditos")}
-            className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border transition-all active:scale-[0.98] ${bgClass}`}
+            className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border transition-all active:scale-[0.98] button-3d shadow-lg ${bgClass}`}
           >
             {isLow || isEmpty ? (
               <AlertTriangle className={`h-4 w-4 ${colorClass}`} />
@@ -171,7 +171,14 @@ const CreditsBar = () => {
 
           <div className="flex items-center gap-1 shrink-0">
             <ScannerButton />
-            <button onClick={() => navigate("/suporte")} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90">
+            <button 
+              onClick={toggleTheme} 
+              className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90 transition-all duration-200 button-3d shadow-md hover:shadow-lg"
+              title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4 text-yellow-400" /> : <Moon className="h-4 w-4 text-zinc-600" />}
+            </button>
+            <button onClick={() => navigate("/suporte")} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground active:scale-90 button-3d shadow-md hover:shadow-lg transition-all duration-200">
               <Headphones className="h-4 w-4 text-black" />
             </button>
             <NotificationBell />

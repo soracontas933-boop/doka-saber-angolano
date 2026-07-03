@@ -167,15 +167,15 @@ const LivroDetalhePage = () => {
   if (!book) return <div className="text-center py-20">Livro não encontrado.</div>;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header Fixo */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 h-14 flex justify-between items-center">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-900 font-medium">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-foreground font-medium hover:text-primary transition-colors">
             <ArrowLeft className="h-5 w-5" />
             <span>Voltar</span>
           </button>
-          <button onClick={handleCopyLink} className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-gray-200 text-gray-900 text-sm font-medium hover:bg-gray-50 transition-colors">
+          <button onClick={handleCopyLink} className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-border text-foreground text-sm font-medium hover:bg-secondary transition-colors button-3d shadow-md">
             <Share2 className="h-4 w-4" />
             <span>Partilhar</span>
           </button>
@@ -187,12 +187,12 @@ const LivroDetalhePage = () => {
         <div className="flex flex-row gap-6 mb-8 items-start">
           {/* Capa do Livro */}
           <div className="w-1/3 min-w-[120px] max-w-[180px]">
-            <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-lg bg-gray-100 border border-gray-100">
+            <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-lg bg-secondary border border-border card-3d">
               {book.capa_url ? (
                 <img src={book.capa_url} alt={book.titulo} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <BookOpen className="h-12 w-12 text-gray-300" />
+                  <BookOpen className="h-12 w-12 text-muted-foreground" />
                 </div>
               )}
             </div>
@@ -201,45 +201,45 @@ const LivroDetalhePage = () => {
           {/* Info Básica */}
           <div className="flex-1 flex flex-col gap-2 pt-2">
             {book.book_categories?.nome && (
-              <Badge variant="secondary" className="w-fit bg-gray-50 text-gray-500 hover:bg-gray-50 border border-gray-100 font-normal px-3 py-1 text-[11px] rounded-full mb-1">
+              <Badge variant="secondary" className="w-fit bg-secondary text-muted-foreground hover:bg-secondary/80 border border-border font-normal px-3 py-1 text-[11px] rounded-full mb-1">
                 {book.book_categories.nome}
               </Badge>
             )}
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
               {book.titulo}
             </h1>
-            <p className="text-sm text-gray-500">
-              por <span className="font-semibold text-gray-900">{book.autor}</span>
+            <p className="text-sm text-muted-foreground">
+              por <span className="font-semibold text-foreground">{book.autor}</span>
             </p>
           </div>
         </div>
 
         {/* Metadados - Linha Horizontal */}
-        <div className="flex items-center gap-4 py-4 border-y border-gray-100 text-[13px] text-gray-500 mb-8 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-4 py-4 border-y border-border text-[13px] text-muted-foreground mb-8 overflow-x-auto no-scrollbar">
           {book.paginas && (
             <div className="flex items-center gap-1.5 shrink-0">
               <FileText className="h-4 w-4" />
               <span>{book.paginas} págs</span>
             </div>
           )}
-          <span className="shrink-0">{book.idioma || "Português"}</span>
-          <span className="text-gray-300 shrink-0">•</span>
+          <span className="shrink-0">{book.idioma || "Portugués"}</span>
+          <span className="text-border shrink-0">•</span>
           <span className="shrink-0">{book.classe || "A&Z"}</span>
-          <span className="text-gray-300 shrink-0">•</span>
+          <span className="text-border shrink-0">•</span>
           <span className="shrink-0">{book.downloads || 0} downloads</span>
         </div>
 
         {/* Sobre o Livro */}
         <div className="mb-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">Sobre o livro</h2>
+          <h2 className="text-lg font-bold text-foreground mb-3">Sobre o livro</h2>
           <div className="relative">
-            <p className={`text-[15px] leading-relaxed text-gray-600 ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+            <p className={`text-[15px] leading-relaxed text-foreground/90 ${!showFullDescription ? 'line-clamp-3' : ''}`}>
               {book.descricao || "Sem descrição disponível."}
             </p>
             {book.descricao && book.descricao.length > 150 && (
               <button 
                 onClick={() => setShowFullDescription(!showFullDescription)}
-                className="mt-2 flex items-center gap-1 text-blue-600 text-sm font-medium"
+                className="mt-2 flex items-center gap-1 text-primary text-sm font-medium hover:text-primary/80 transition-colors"
               >
                 {showFullDescription ? (
                   <>Ver menos <ChevronUp className="h-4 w-4" /></>
@@ -255,24 +255,24 @@ const LivroDetalhePage = () => {
         <div className="space-y-3 mb-10">
           {owned ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button onClick={handleRead} disabled={processing} className="h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base gap-2 shadow-sm">
+              <Button onClick={handleRead} disabled={processing} className="h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white font-semibold text-base gap-2 shadow-lg button-3d">
                 {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Eye className="h-5 w-5" />}
                 Ler agora
               </Button>
-              <Button onClick={handleDownload} variant="outline" disabled={processing} className="h-14 rounded-2xl border-gray-200 text-gray-900 font-semibold text-base gap-2 hover:bg-gray-50">
+              <Button onClick={handleDownload} variant="outline" disabled={processing} className="h-14 rounded-2xl border-border text-foreground font-semibold text-base gap-2 hover:bg-secondary button-3d shadow-md">
                 {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                 Baixar PDF
               </Button>
             </div>
           ) : book.gratuito ? (
-            <Button onClick={handleObterGratis} disabled={processing} className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base gap-2 shadow-sm">
+            <Button onClick={handleObterGratis} disabled={processing} className="w-full h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white font-semibold text-base gap-2 shadow-lg button-3d">
               {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
               Obter Grátis
             </Button>
           ) : (
             <div className="flex flex-col gap-3">
               {book.preco_creditos > 0 && (
-                <Button onClick={handleComprarCreditos} disabled={processing} className="w-full h-14 rounded-2xl bg-[#3b82f6] hover:bg-blue-700 text-white font-semibold text-base gap-2 shadow-sm">
+                <Button onClick={handleComprarCreditos} disabled={processing} className="w-full h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white font-semibold text-base gap-2 shadow-lg button-3d">
                   {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <LinkIcon className="h-5 w-5" />}
                   Pagar com {book.preco_creditos} créditos
                 </Button>
@@ -286,7 +286,7 @@ const LivroDetalhePage = () => {
                   }
                 }} 
                 variant="outline" 
-                className="w-full h-14 rounded-2xl border border-gray-200 text-gray-900 font-semibold text-base gap-2 hover:bg-gray-50"
+                className="w-full h-14 rounded-2xl border border-border text-foreground font-semibold text-base gap-2 hover:bg-secondary button-3d shadow-md"
               >
                 <FileText className="h-5 w-5" />
                 Pagar {book.preco_kz} Kz
@@ -296,8 +296,8 @@ const LivroDetalhePage = () => {
         </div>
 
         {/* Rodapé de Info */}
-        <div className="flex justify-between items-center pt-6 border-t border-gray-100 text-[13px] text-gray-400">
-          <span>Visualizações: <span className="text-gray-600 font-medium">{book.visualizacoes || 0}</span></span>
+        <div className="flex justify-between items-center pt-6 border-t border-border text-[13px] text-muted-foreground/60">
+          <span>Visualizações: <span className="text-foreground font-medium">{book.visualizacoes || 0}</span></span>
           <span>{book.downloads || 0} downloads</span>
         </div>
       </main>
