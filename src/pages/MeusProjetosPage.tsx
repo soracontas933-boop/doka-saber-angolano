@@ -105,36 +105,46 @@ const MeusProjetosPage = () => {
     
     try {
       if (tipo === "trabalho") {
+        const trabalhoConteudo = conteudo.conteudo || conteudo.resultado || "";
+        const trabalhoCoverData = conteudo.coverData || {
+          tipoTrabalho: conteudo.tipoTrabalho || "Trabalho",
+          tema: conteudo.tema || titulo,
+          disciplina: conteudo.disciplina,
+          classe: conteudo.classe,
+          nomeEscola: conteudo.nomeEscola,
+          nomeDocente: conteudo.nomeDocente,
+          nomesIntegrantes: []
+        };
         if (format === 'pdf') {
-          await exportToPDF(conteudo.conteudo, conteudo.coverData);
+          await exportToPDF(trabalhoConteudo, trabalhoCoverData);
         } else {
-          await exportToWord(conteudo.conteudo, conteudo.coverData);
+          await exportToWord(trabalhoConteudo, trabalhoCoverData);
         }
       } else if (tipo === "resumo") {
         if (format === 'pdf') {
-          await exportResumoPDF(conteudo.resultado, conteudo.tipoResumo, conteudo.disciplina, titulo);
+          await exportResumoPDF(conteudo.resultado || "", conteudo.tipoResumo || "Resumo", conteudo.disciplina || "Geral", titulo);
         } else {
-          await exportResumoWord(conteudo.resultado, conteudo.tipoResumo, conteudo.disciplina, titulo);
+          await exportResumoWord(conteudo.resultado || "", conteudo.tipoResumo || "Resumo", conteudo.disciplina || "Geral", titulo);
         }
       } else if (tipo === "questionario") {
         if (format === 'pdf') {
-          await exportQuestionarioPDF(conteudo.resultado, conteudo.tipo, conteudo.disciplina, titulo);
+          await exportQuestionarioPDF(conteudo.resultado || "", conteudo.tipo || "Multipla Escolha", conteudo.disciplina || "Geral", titulo);
         } else {
-          await exportQuestionarioWord(conteudo.resultado, conteudo.tipo, conteudo.disciplina, titulo);
+          await exportQuestionarioWord(conteudo.resultado || "", conteudo.tipo || "Multipla Escolha", conteudo.disciplina || "Geral", titulo);
         }
       } else if (tipo === "plano-aula") {
         if (conteudo.tipo === "horizontal") {
           if (format === 'pdf') {
-            await exportPlanoAulaPdf(conteudo.dados, conteudo.fases);
+            await exportPlanoAulaPdf(conteudo.dados || {}, conteudo.fases || []);
           } else {
-            await exportPlanoAulaWord(conteudo.dados, conteudo.fases);
+            await exportPlanoAulaWord(conteudo.dados || {}, conteudo.fases || []);
           }
         } else {
           // Para plano vertical (texto simples) usamos exportadores de resumo como fallback
           if (format === 'pdf') {
-            await exportResumoPDF(conteudo.resultado, "Plano de Aula", conteudo.disciplina, titulo);
+            await exportResumoPDF(conteudo.resultado || "", "Plano de Aula", conteudo.disciplina || "Geral", titulo);
           } else {
-            await exportResumoWord(conteudo.resultado, "Plano de Aula", conteudo.disciplina, titulo);
+            await exportResumoWord(conteudo.resultado || "", "Plano de Aula", conteudo.disciplina || "Geral", titulo);
           }
         }
       }
@@ -156,13 +166,23 @@ const MeusProjetosPage = () => {
 
     switch (tipo) {
       case "trabalho":
+        const trabalhoConteudo = conteudo.conteudo || conteudo.resultado || "";
+        const trabalhoCoverData = conteudo.coverData || {
+          tipoTrabalho: conteudo.tipoTrabalho || "Trabalho",
+          tema: conteudo.tema || titulo,
+          disciplina: conteudo.disciplina,
+          classe: conteudo.classe,
+          nomeEscola: conteudo.nomeEscola,
+          nomeDocente: conteudo.nomeDocente,
+          nomesIntegrantes: []
+        };
         return (
           <div className="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-lg shadow-inner overflow-auto max-h-[70vh]">
             <TrabalhoCompleto 
-              conteudo={conteudo.conteudo} 
-              coverData={conteudo.coverData} 
-              capaImageUrl={conteudo.capaImageUrl}
-              logoUrl={conteudo.logoUrl}
+              conteudo={trabalhoConteudo} 
+              coverData={trabalhoCoverData} 
+              capaImageUrl={conteudo.capaImageUrl || null}
+              logoUrl={conteudo.logoUrl || null}
               editable={false}
             />
           </div>
@@ -171,9 +191,9 @@ const MeusProjetosPage = () => {
         return (
           <div className="max-w-4xl mx-auto bg-background p-4 rounded-lg overflow-auto max-h-[70vh]">
             <ResumoPreview 
-              resultado={conteudo.resultado} 
-              tipoResumo={conteudo.tipoResumo} 
-              disciplina={conteudo.disciplina} 
+              resultado={conteudo.resultado || ""} 
+              tipoResumo={conteudo.tipoResumo || "Resumo"} 
+              disciplina={conteudo.disciplina || "Geral"} 
             />
           </div>
         );
@@ -181,9 +201,9 @@ const MeusProjetosPage = () => {
         return (
           <div className="max-w-4xl mx-auto bg-background p-4 rounded-lg overflow-auto max-h-[70vh]">
             <QuestionarioPreview 
-              resultado={conteudo.resultado} 
-              tipo={conteudo.tipo} 
-              disciplina={conteudo.disciplina} 
+              resultado={conteudo.resultado || ""} 
+              tipo={conteudo.tipo || "Múltipla Escolha"} 
+              disciplina={conteudo.disciplina || "Geral"} 
             />
           </div>
         );
@@ -192,8 +212,8 @@ const MeusProjetosPage = () => {
           return (
             <div className="max-w-5xl mx-auto bg-background p-4 rounded-lg overflow-auto max-h-[70vh]">
               <PlanoHorizontalResult 
-                dados={conteudo.dados} 
-                fases={conteudo.fases} 
+                dados={conteudo.dados || {}} 
+                fases={conteudo.fases || []} 
               />
             </div>
           );
@@ -202,7 +222,7 @@ const MeusProjetosPage = () => {
           <div className="max-w-3xl mx-auto bg-card p-6 md:p-10 rounded-xl border shadow-sm overflow-auto max-h-[70vh]">
             <h2 className="text-2xl font-bold mb-6 text-center uppercase border-b pb-4">Plano de Aula</h2>
             <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap font-serif">
-              {conteudo.resultado}
+              {conteudo.resultado || "Sem conteúdo disponível"}
             </div>
           </div>
         );

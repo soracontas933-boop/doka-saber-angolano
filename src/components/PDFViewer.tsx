@@ -69,6 +69,7 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
     const loadPdf = async () => {
       try {
         setLoading(true);
+        setPageNum(1);
         console.log("Iniciando carregamento do PDF:", url);
         const loadingTask = pdfjsLib.getDocument({
           url,
@@ -125,10 +126,12 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
     };
 
     renderPage();
-  }, [pdf, pageNum, scale]);
+  }, [pdf, pageNum, scale, rendering]);
 
   const changePage = (offset: number) => {
-    setPageNum((prev) => Math.min(Math.max(1, prev + offset), numPages));
+    if (numPages > 0) {
+      setPageNum((prev) => Math.min(Math.max(1, prev + offset), numPages));
+    }
   };
 
   const toggleBookmark = () => {
@@ -244,7 +247,7 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
           className="flex-1 overflow-auto bg-slate-100 dark:bg-slate-900/50 p-2 sm:p-8 flex justify-center items-start transition-all duration-300"
           style={{ filter: `brightness(${brightness}%)` }}
         >
-          {loading ? (
+          {loading || !pdf ? (
             <div className="flex flex-col items-center justify-center h-full gap-4">
               <div className="relative">
                 <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
