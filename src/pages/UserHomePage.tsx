@@ -27,6 +27,7 @@ import { Progress } from "@/components/ui/progress";
 import { GraduationCap } from "lucide-react";
 import { BackgroundMediaCarousel } from "@/components/BackgroundMediaCarousel";
 import { useState, useEffect } from "react";
+import PixelTetris from "@/components/PixelTetris";
 
 const quickActionsAll = [
   { to: "/trabalho", icon: WrapText, label: "Trabalhos", featureKey: "trabalho" },
@@ -261,11 +262,29 @@ const UserHomePage = () => {
             onClick={() => navigate("/grupos")}
             className="group relative w-full rounded-lg border border-border bg-card p-4 transition-all duration-150 active:scale-[0.97] flex items-center justify-between hover:border-primary shadow-xl overflow-hidden"
           >
+            {/* Pixel Tetris animation background on mobile */}
+            <PixelTetris
+              boardColor="rgba(249, 115, 26, 0.08)"
+              colors={["#F9731A", "#FFFFFF"]}
+              movement={2}
+              cellSize={8}
+              gap={2}
+              rounded={10}
+              dropSpeed={1}
+              className="md:hidden"
+            />
+            {/* Overlay escurecimento: mobile (sempre com tetris) ou desktop com cover */}
+            <span className={`absolute inset-0 z-[1] ${
+              buttonCovers["comunidade"]
+                ? "bg-foreground/40 md:block hidden"
+                : "bg-foreground/50 md:hidden block"
+            }`} />
+            {/* Cover image/video apenas no desktop */}
             {buttonCovers["comunidade"] && (
               isVideoFile(buttonCovers["comunidade"]) ? (
                 <video
                   src={buttonCovers["comunidade"]}
-                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  className="absolute inset-0 w-full h-full object-cover z-0 hidden md:block"
                   autoPlay
                   muted
                   loop
@@ -275,12 +294,9 @@ const UserHomePage = () => {
                 <img
                   src={buttonCovers["comunidade"]}
                   alt="Comunidade"
-                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  className="absolute inset-0 w-full h-full object-cover z-0 hidden md:block"
                 />
               )
-            )}
-            {buttonCovers["comunidade"] && (
-              <span className="absolute inset-0 bg-foreground/40 z-[1]" />
             )}
             <div className="relative z-10 flex items-center gap-3">
               <div className={`p-2.5 rounded-md ${buttonCovers["comunidade"] ? "bg-background/20" : "bg-muted"}`}>
