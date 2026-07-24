@@ -273,12 +273,10 @@ const UserHomePage = () => {
               dropSpeed={1}
               className="md:hidden"
             />
-            {/* Overlay escurecimento: mobile (sempre com tetris) ou desktop com cover */}
-            <span className={`absolute inset-0 z-[1] ${
-              buttonCovers["comunidade"]
-                ? "bg-foreground/40 md:block hidden"
-                : "bg-foreground/50 md:hidden block"
-            }`} />
+            {/* Overlay escurecimento apenas no desktop com cover */}
+            {buttonCovers["comunidade"] && (
+              <span className="absolute inset-0 z-[1] hidden md:block bg-foreground/40" />
+            )}
             {/* Cover image/video apenas no desktop */}
             {buttonCovers["comunidade"] && (
               isVideoFile(buttonCovers["comunidade"]) ? (
