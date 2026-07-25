@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   ChevronUp, ChevronDown, Copy, Trash2, Plus, Sparkles, Loader2,
-  X, GripVertical, Wand2,
+  X, GripVertical, Wand2, Image as ImageIcon, Upload, EyeOff, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { Deck, Slide, SlideKind } from "@/types/presentation";
 import { LAYOUT_VARIANTS } from "@/lib/presentation/narrative";
-import { regenerateSingleSlide, type DensityLevel } from "@/lib/presentation/ai-deck";
+import { regenerateSingleSlide, generateSingleSlideImage, type DensityLevel } from "@/lib/presentation/ai-deck";
+import { isBadgeVisible } from "@/lib/presentation/themes";
 
 const ALL_KINDS: SlideKind[] = [
   "hero", "agenda", "context", "insight", "stats", "bento", "split",
@@ -27,7 +28,17 @@ const ALL_KINDS: SlideKind[] = [
   "case-study", "summary", "conclusion", "references", "closing", "cta",
 ];
 
-// ─── Item arrastável da lista de miniaturas ─────────────────────
+const IMAGE_STYLES = [
+  { id: "", label: "Automático" },
+  { id: "photorealistic, cinematic lighting", label: "Fotográfico" },
+  { id: "3D render, isometric, clean", label: "3D / Isométrico" },
+  { id: "flat illustration, vector, minimal", label: "Ilustração Flat" },
+  { id: "watercolor, hand-painted, organic", label: "Aquarela" },
+  { id: "line art, monochrome, geometric", label: "Line Art" },
+  { id: "abstract, gradient, generative art", label: "Abstrato" },
+  { id: "photography, editorial, magazine", label: "Editorial" },
+];
+
 function SortableSlideItem({
   slide, index, current, onClick,
 }: {
@@ -85,6 +96,11 @@ export function SlideEditor({
   const slide = deck.slides[current];
   const [regenHint, setRegenHint] = useState("");
   const [regenerating, setRegenerating] = useState(false);
+  const [imageStyle, setImageStyle] = useState("");
+  const [regeneratingImage, setRegeneratingImage] = useState(false);
+  const [showImageSection, setShowImageSection] = useState(true);
+  const [showBadge, setShowBadge] = useState(isBadgeVisible(deck.theme));
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -99,7 +115,6 @@ export function SlideEditor({
     if (oldIndex < 0 || newIndex < 0) return;
     const next = arrayMove(deck.slides, oldIndex, newIndex);
     onUpdate(next);
-    // mantém o mesmo slide seleccionado (segue-o para a nova posição)
     const currentId = slide?.id;
     const followed = next.findIndex(s => s.id === currentId);
     if (followed >= 0) onChange(followed);
@@ -205,8 +220,50 @@ export function SlideEditor({
     }
   };
 
+  const regenImage = async () => {
+    setRegeneratingImage(true);
+    try {
+      const url = await generateSingleSlideImage(slide, deck.theme, imageStyle || undefined);
+      if (url) {
+        update({ imageUrl: url });
+        toast.success("Imagem regenerada.");
+      } else {
+        toast.error("Falha ao gerar imagem.");
+      }
+    } catch {
+      toast.error("Erro ao gerar imagem.");
+    } finally {
+      setRegeneratingImage(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return toast.error("Selecciona uma imagem válida.");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem demasiado grande (máx 5MB).");
+    const reader = new FileReader();
+    reader.onload = () => {
+      update({ imageUrl: reader.result as string });
+      toast.success("Imagem carregada.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const toggleBadge = () => {
+    const newVal = !showBadge;
+    setShowBadge(newVal);
+    // Actualizar o tema do deck com showBadge
+    const next = deck.slides.map((s, i) => i === current ? { ...s } : s);
+    onUpdate(next); // forçar re-render
+    // Patch do tema (hack: mutar o tema directamente)
+    const themePatch = { ...deck.theme, showBadge: newVal };
+    const event = new CustomEvent("theme-badge-update", { detail: themePatch });
+    window.dispatchEvent(event);
+  };
+
   return (
-    <aside className="w-full md:w-[380px] shrink-0 border-l bg-card flex flex-col h-full">
+    <aside className="w-full md:w-[400px] shrink-0 border-l bg-card flex flex-col h-full">
       {/* Header */}
       <div className="shrink-0 border-b p-3 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-bold">
@@ -221,7 +278,7 @@ export function SlideEditor({
       </div>
 
       {/* Slide list (drag-and-drop) */}
-      <div className="shrink-0 border-b p-2 max-h-40 overflow-y-auto">
+      <div className="shrink-0 border-b p-2 max-h-36 overflow-y-auto">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={deck.slides.map(s => s.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-1">
@@ -375,10 +432,94 @@ export function SlideEditor({
           </div>
         </div>
 
+        {/* Image Controls */}
+        <div>
+          <button
+            onClick={() => setShowImageSection(!showImageSection)}
+            className="flex items-center gap-2 text-xs font-bold w-full mb-2"
+          >
+            <ImageIcon className="h-4 w-4" />
+            <span>Imagem do slide</span>
+            {showImageSection ? <ChevronUp className="h-3 w-3 ml-auto" /> : <ChevronDown className="h-3 w-3 ml-auto" />}
+          </button>
+          {showImageSection && (
+            <div className="space-y-2">
+              {slide.imageUrl && (
+                <div className="rounded-lg overflow-hidden border">
+                  <img src={slide.imageUrl} alt="Preview" className="w-full h-32 object-cover" />
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={regenImage}
+                  disabled={regeneratingImage}
+                  className="flex-1"
+                >
+                  {regeneratingImage ? (
+                    <><Loader2 className="h-3 w-3 mr-1 animate-spin" />A gerar…</>
+                  ) : (
+                    <><Sparkles className="h-3 w-3 mr-1" />Regenerar IA</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1"
+                >
+                  <Upload className="h-3 w-3 mr-1" />Upload
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+              </div>
+              {slide.imageUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => update({ imageUrl: undefined })}
+                  className="w-full text-destructive text-xs"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />Remover imagem
+                </Button>
+              )}
+              <div>
+                <Label className="text-[10px]">Estilo visual</Label>
+                <select
+                  value={imageStyle}
+                  onChange={(e) => setImageStyle(e.target.value)}
+                  className="mt-1 w-full rounded-md border bg-background px-2 py-1 text-xs"
+                >
+                  {IMAGE_STYLES.map(s => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Footnote */}
         <div>
           <Label className="text-xs">Footnote</Label>
           <Input value={slide.footnote || ""} onChange={(e) => update({ footnote: e.target.value })} className="mt-1" />
+        </div>
+
+        {/* Badge toggle */}
+        <div className="flex items-center justify-between py-2 border-t">
+          <span className="text-xs text-muted-foreground">Mostrar marca "Made with Delle"</span>
+          <button
+            onClick={toggleBadge}
+            className={`w-10 h-5 rounded-full transition-colors ${showBadge ? "bg-primary" : "bg-muted"}`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${showBadge ? "translate-x-5.5" : "translate-x-0.5"}`} />
+          </button>
         </div>
       </div>
 

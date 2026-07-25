@@ -375,6 +375,35 @@ async function pMapLimit<T, R>(items: T[], limit: number, fn: (item: T, idx: num
   return results;
 }
 
+// Gera imagem para um único slide (usado no editor)
+export async function generateSingleSlideImage(
+  slide: Slide,
+  theme: DeckTheme,
+  styleHint?: string,
+): Promise<string | null> {
+  const motifHint = MOTIF_PROMPT_HINTS[theme.motif] || "premium design";
+  const paletteHint = `color palette: ${theme.palette.primary}, ${theme.palette.accent}`;
+  const baseHint = slide.imagePrompt || `${slide.title} ${slide.subtitle || ""}`;
+
+  let kindHint = "";
+  if (slide.kind === "process") kindHint = ", clean infographic, flow diagram, no text";
+  else if (slide.kind === "timeline") kindHint = ", elegant timeline infographic, no text";
+  else if (slide.kind === "comparison") kindHint = ", split visual comparison, no text";
+  else if (slide.kind === "dashboard") kindHint = ", modern UI dashboard mockup, no text";
+  else if (slide.kind === "stats") kindHint = ", abstract data visualization, no text";
+  else if (slide.kind === "gallery") kindHint = ", curated photo collection, editorial";
+
+  const styleExtra = styleHint ? `, ${styleHint}` : "";
+  const prompt = `${baseHint}, ${motifHint}, ${paletteHint}${kindHint}${styleExtra}, professional, premium, no watermark`;
+
+  try {
+    const r = await generateImageAI(prompt, 1024, 768);
+    return r.image_url;
+  } catch {
+    return null;
+  }
+}
+
 export async function generateDeckImages(
   deck: Deck,
   onProgress?: (slideIndex: number, imageUrl: string) => void

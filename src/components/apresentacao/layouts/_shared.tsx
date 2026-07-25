@@ -27,15 +27,15 @@ export function getMotifStyles(theme: DeckTheme) {
   }
 }
 
-/** Shell base do slide — aplica fundo, fonte, cor e renderiza o badge "Made with Delle" */
-export function SlideShell({ children, theme, padding = "p-16", noBadge = false }: { children: React.ReactNode; theme: DeckTheme; padding?: string; noBadge?: boolean }) {
+/** Shell base do slide — aplica fundo, fonte, cor. Badge opcional. */
+export function SlideShell({ children, theme, padding = "p-16", noBadge = false, hideBadge = false }: { children: React.ReactNode; theme: DeckTheme; padding?: string; noBadge?: boolean; hideBadge?: boolean }) {
   return (
     <div
       className={`relative w-full h-full overflow-hidden ${padding}`}
       style={{ backgroundColor: theme.palette.bg, color: theme.palette.text, fontFamily: theme.fonts.body }}
     >
       {children}
-      {!noBadge && <MadeWithBadge theme={theme} />}
+      {!(noBadge || hideBadge) && <MadeWithBadge theme={theme} />}
     </div>
   );
 }

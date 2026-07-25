@@ -1,4 +1,5 @@
-import { LayoutProps, SlideShell, H1, RichText, Eyebrow, getMotifStyles, MadeWithBadge } from "./_shared";
+import { LayoutProps, SlideShell, H1, Eyebrow, getMotifStyles, MadeWithBadge } from "./_shared";
+import { isBadgeVisible } from "@/lib/presentation/themes";
 import type { Block } from "@/types/presentation";
 
 export function StatsLayout({ slide, theme }: LayoutProps) {
@@ -53,7 +54,7 @@ export function StatsLayout({ slide, theme }: LayoutProps) {
             <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${theme.palette.primary}22, ${theme.palette.accent}33)` }} />
           )}
         </div>
-        <MadeWithBadge theme={theme} />
+        {isBadgeVisible(theme) && <MadeWithBadge theme={theme} />}
       </div>
     );
   }

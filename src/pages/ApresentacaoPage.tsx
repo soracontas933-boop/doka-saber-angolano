@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Presentation, Download, Loader2, Sparkles, Send,
   Edit2, Trash2, Plus, Save, Shuffle, PanelRightOpen, PanelRightClose,
+  Tag,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,13 +11,13 @@ import { toast } from "sonner";
 import { generateWithAI, DELLE_SYSTEM_PROMPT } from "@/lib/ai-service";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { saveProject } from "@/lib/save-project";
-import { DECK_THEMES } from "@/lib/presentation/themes";
+import { DECK_THEMES, TEMPLATE_CATEGORIES, getThemesByCategory, isBadgeVisible, type TemplateCategory } from "@/lib/presentation/themes";
 import { composeSlots, assembleDeck, newSeed, pickTheme } from "@/lib/presentation/variator";
 import { generateDeckContent, generateDeckImages, type DensityLevel } from "@/lib/presentation/ai-deck";
 import { DeckRenderer } from "@/components/apresentacao/DeckRenderer";
 import { SlideEditor } from "@/components/apresentacao/SlideEditor";
 import { exportDeckToPDF } from "@/lib/presentation/deck-export";
-import type { Deck, AspectRatio, Slide } from "@/types/presentation";
+import type { Deck, AspectRatio, Slide, DeckTheme } from "@/types/presentation";
 
 interface Card { id: string; title: string; subtopics: string[] }
 
@@ -39,6 +40,8 @@ export default function ApresentacaoPage() {
   const [density, setDensity] = useState<DensityLevel>("medium");
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("16:9");
   const [extraKeywords] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | null>(null);
+  const [hideBadge, setHideBadge] = useState(false);
 
   const [deck, setDeck] = useState<Deck | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -81,9 +84,15 @@ export default function ApresentacaoPage() {
 
     try {
       const seed = newSeed();
-      const targetCount = Math.max(10, cards.length + 6); // garante seções obrigatórias
+      const targetCount = Math.max(10, cards.length + 6);
       const slots = composeSlots(targetCount, seed);
       const theme = pickTheme(seed, themeId);
+
+      // Aplicar toggle do badge ao tema seleccionado
+      const finalTheme: DeckTheme = {
+        ...theme,
+        showBadge: !hideBadge && isBadgeVisible(theme),
+      };
 
       const cardsOutline = cards.map(c =>
         `${c.title}: ${c.subtopics.join("; ")}`
@@ -102,7 +111,7 @@ export default function ApresentacaoPage() {
 
       const newDeck = assembleDeck({
         topic: mainTopic || chatMessage,
-        slots, aiSlides, theme, seed, aspectRatio,
+        slots, aiSlides, theme: finalTheme, seed, aspectRatio,
       });
       setDeck(newDeck);
       setCurrentSlide(0);
@@ -139,21 +148,23 @@ export default function ApresentacaoPage() {
     }
   };
 
-  // ─── Reshuffle: same content, new seed/theme/layouts ──
+  // ─── Reshuffle ──────────────────────────────
   const reshuffle = () => {
     if (!deck) return;
     const seed = newSeed();
     const slots = composeSlots(deck.slides.length, seed);
-    // mantém o conteúdo mas redistribui — usa títulos/body existentes
     const aiSlides = deck.slides.map(s => ({
       title: s.title, subtitle: s.subtitle, body: s.body, richBody: s.richBody,
       pill: s.pill, footnote: s.footnote, blocks: s.blocks, imagePrompt: s.imagePrompt,
     }));
-    const theme = pickTheme(seed); // tema aleatório novo
+    const theme = pickTheme(seed);
+    const finalTheme: DeckTheme = {
+      ...theme,
+      showBadge: !hideBadge && isBadgeVisible(theme),
+    };
     const newDeck = assembleDeck({
-      topic: deck.topic, slots, aiSlides, theme, seed, aspectRatio: deck.aspectRatio,
+      topic: deck.topic, slots, aiSlides, theme: finalTheme, seed, aspectRatio: deck.aspectRatio,
     });
-    // preserva imagens já geradas
     deck.slides.forEach((s, i) => { if (s.imageUrl && newDeck.slides[i]) newDeck.slides[i].imageUrl = s.imageUrl; });
     setDeck(newDeck);
     setCurrentSlide(0);
@@ -176,6 +187,11 @@ export default function ApresentacaoPage() {
       toast.success("PDF gerado.");
     } catch (e) { console.error(e); toast.error("Erro ao exportar."); }
   };
+
+  // Filtrar temas por categoria
+  const filteredThemes = categoryFilter
+    ? getThemesByCategory(categoryFilter)
+    : DECK_THEMES;
 
   // ─── UI ─────────────────────────────────────
   return (
@@ -293,13 +309,48 @@ export default function ApresentacaoPage() {
             <motion.div key="customize" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-6xl mx-auto py-10 px-6 space-y-8">
               <div>
                 <h2 className="text-3xl font-bold">Personaliza o design</h2>
-                <p className="text-muted-foreground">Cada paleta gera um estilo visual único.</p>
+                <p className="text-muted-foreground">Escolhe um template por setor e personaliza a tua apresentação.</p>
               </div>
 
+              {/* Templates por categoria */}
               <section className="space-y-3">
-                <h3 className="text-sm font-bold uppercase tracking-wider">Paleta</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                  <Tag className="h-4 w-4" />Templates por setor
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setCategoryFilter(null)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                      categoryFilter === null
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border hover:bg-muted"
+                    }`}
+                  >
+                    Todos
+                  </button>
+                  {TEMPLATE_CATEGORIES.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setCategoryFilter(cat.id === categoryFilter ? null : cat.id)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition flex items-center gap-1.5 ${
+                        categoryFilter === cat.id
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border hover:bg-muted"
+                      }`}
+                    >
+                      <span>{cat.icon}</span> {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Temas / paletas */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-bold uppercase tracking-wider">
+                  Paleta {!categoryFilter ? "e Template" : "do Template"}
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {DECK_THEMES.map(t => (
+                  {filteredThemes.map(t => (
                     <button key={t.id} onClick={() => setThemeId(t.id)}
                       className={`rounded-2xl overflow-hidden border-2 transition ${themeId === t.id ? "border-primary scale-[1.02]" : "border-transparent"}`}>
                       <div className="h-24 flex" style={{ backgroundColor: t.palette.bg }}>
@@ -309,14 +360,22 @@ export default function ApresentacaoPage() {
                       </div>
                       <div className="p-3 bg-card text-left">
                         <div className="text-sm font-bold">{t.name}</div>
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.motif}</div>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.motif}</span>
+                          {t.category && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                              {TEMPLATE_CATEGORIES.find(c => c.id === t.category)?.label}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </button>
                   ))}
                 </div>
               </section>
 
-              <section className="grid md:grid-cols-2 gap-6">
+              {/* Opções adicionais */}
+              <section className="grid md:grid-cols-3 gap-6">
                 <div className="space-y-3">
                   <h3 className="text-sm font-bold uppercase tracking-wider">Densidade de conteúdo</h3>
                   <p className="text-xs text-muted-foreground">Define quão desenvolvido será cada subtema nos slides.</p>
@@ -343,6 +402,21 @@ export default function ApresentacaoPage() {
                         {a}
                       </button>
                     ))}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold uppercase tracking-wider">Marca</h3>
+                  <div className="flex items-center justify-between p-3 rounded-xl border-2" style={{ borderColor: hideBadge ? "transparent" : undefined }}>
+                    <div>
+                      <div className="text-sm font-semibold">Marca "Made with Delle"</div>
+                      <div className="text-[11px] text-muted-foreground mt-1">Esconde o selo para apresentações sem marca.</div>
+                    </div>
+                    <button
+                      onClick={() => setHideBadge(!hideBadge)}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${hideBadge ? "bg-muted" : "bg-primary"}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${hideBadge ? "left-0.5" : "left-6"}`} />
+                    </button>
                   </div>
                 </div>
               </section>

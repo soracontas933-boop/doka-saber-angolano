@@ -1,4 +1,5 @@
 import { LayoutProps, SlideShell, H1, RichText, MadeWithBadge } from "./_shared";
+import { isBadgeVisible } from "@/lib/presentation/themes";
 
 export function ClosingLayout({ slide, theme }: LayoutProps) {
   // Variant: closing-cinematic
@@ -11,7 +12,7 @@ export function ClosingLayout({ slide, theme }: LayoutProps) {
           <H1 theme={theme} className="text-[10rem] leading-none" colorPrimary>{slide.title}</H1>
           {slide.subtitle && <p className="text-xl uppercase tracking-[0.4em]" style={{ color: theme.palette.accent }}>{slide.subtitle}</p>}
         </div>
-        <MadeWithBadge theme={theme} />
+        {isBadgeVisible(theme) && <MadeWithBadge theme={theme} />}
       </div>
     );
   }
@@ -54,7 +55,7 @@ export function ClosingLayout({ slide, theme }: LayoutProps) {
         <div className="w-2/5 relative overflow-hidden">
           <img src={slide.imageUrl!} alt="" className="absolute inset-0 w-full h-full object-cover" />
         </div>
-        <MadeWithBadge theme={theme} />
+        {isBadgeVisible(theme) && <MadeWithBadge theme={theme} />}
       </div>
     );
   }

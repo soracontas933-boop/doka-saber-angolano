@@ -1,4 +1,5 @@
 import { LayoutProps, H1, RichText, Eyebrow, MadeWithBadge } from "./_shared";
+import { isBadgeVisible } from "@/lib/presentation/themes";
 
 /**
  * Split layout estilo Gamma:
@@ -53,7 +54,7 @@ export function SplitLayout({ slide, theme }: LayoutProps) {
   return (
     <div className="relative w-full h-full flex" style={{ backgroundColor: theme.palette.bg, fontFamily: theme.fonts.body }}>
       {imageRight ? <>{TextSide}{ImgSide}</> : <>{ImgSide}{TextSide}</>}
-      <MadeWithBadge theme={theme} />
+      {isBadgeVisible(theme) && <MadeWithBadge theme={theme} />}
     </div>
   );
 }

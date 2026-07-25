@@ -12,6 +12,13 @@ import { QuoteLayout } from "./layouts/QuoteLayout";
 import { GalleryLayout } from "./layouts/GalleryLayout";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { ClosingLayout } from "./layouts/ClosingLayout";
+import { ContextLayout } from "./layouts/ContextLayout";
+import { InsightLayout } from "./layouts/InsightLayout";
+import { CaseStudyLayout } from "./layouts/CaseStudyLayout";
+import { SummaryLayout } from "./layouts/SummaryLayout";
+import { ConclusionLayout } from "./layouts/ConclusionLayout";
+import { ReferencesLayout } from "./layouts/ReferencesLayout";
+import { CtaLayout } from "./layouts/CtaLayout";
 import { GenericLayout } from "./layouts/GenericLayout";
 
 const ASPECT: Record<Deck["aspectRatio"], { w: number; h: number }> = {
@@ -26,6 +33,8 @@ export function SlideRenderer({ slide, theme }: { slide: Slide; theme: Deck["the
   switch (slide.kind) {
     case "hero":       return <HeroLayout {...props} />;
     case "agenda":     return <AgendaLayout {...props} />;
+    case "context":    return <ContextLayout {...props} />;
+    case "insight":    return <InsightLayout {...props} />;
     case "bento":      return <BentoLayout {...props} />;
     case "split":      return <SplitLayout {...props} />;
     case "stats":      return <StatsLayout {...props} />;
@@ -35,7 +44,12 @@ export function SlideRenderer({ slide, theme }: { slide: Slide; theme: Deck["the
     case "quote":      return <QuoteLayout {...props} />;
     case "gallery":    return <GalleryLayout {...props} />;
     case "dashboard":  return <DashboardLayout {...props} />;
+    case "case-study": return <CaseStudyLayout {...props} />;
+    case "summary":    return <SummaryLayout {...props} />;
+    case "conclusion": return <ConclusionLayout {...props} />;
+    case "references": return <ReferencesLayout {...props} />;
     case "closing":    return <ClosingLayout {...props} />;
+    case "cta":        return <CtaLayout {...props} />;
     default:           return <GenericLayout {...props} />;
   }
 }

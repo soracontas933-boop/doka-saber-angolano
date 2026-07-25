@@ -1,4 +1,5 @@
 import { LayoutProps, SlideShell, H1, Pill, RichText, MadeWithBadge } from "./_shared";
+import { isBadgeVisible } from "@/lib/presentation/themes";
 
 export function HeroLayout({ slide, theme }: LayoutProps) {
   const variant = slide.layoutVariant;
@@ -14,7 +15,7 @@ export function HeroLayout({ slide, theme }: LayoutProps) {
           <H1 theme={theme} className="text-7xl md:text-8xl" colorPrimary>{slide.title}</H1>
           {slide.subtitle && <RichText text={slide.subtitle} theme={theme} className="text-2xl max-w-3xl" />}
         </div>
-        <MadeWithBadge theme={theme} />
+        {isBadgeVisible(theme) && <MadeWithBadge theme={theme} />}
       </div>
     );
   }
@@ -47,7 +48,7 @@ export function HeroLayout({ slide, theme }: LayoutProps) {
         {slide.subtitle && <RichText text={slide.subtitle} theme={theme} className="text-xl md:text-2xl max-w-xl" />}
         {slide.pill && <div className="mt-2"><Pill theme={theme}>{slide.pill}</Pill></div>}
       </div>
-      <MadeWithBadge theme={theme} />
+      {isBadgeVisible(theme) && <MadeWithBadge theme={theme} />}
     </div>
   );
 }

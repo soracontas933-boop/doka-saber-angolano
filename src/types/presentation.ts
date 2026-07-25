@@ -84,6 +84,18 @@ export interface DeckPalette {
   isDark: boolean;
 }
 
+export type TemplateCategory =
+  | "executivo"
+  | "startup"
+  | "conferencia"
+  | "saude"
+  | "juridico"
+  | "engenharia"
+  | "academico"
+  | "comercial"
+  | "luxo"
+  | "dark-premium";
+
 export interface DeckTheme {
   id: string;
   name: string;
@@ -91,6 +103,8 @@ export interface DeckTheme {
   fonts: { heading: string; body: string };
   motif: ThemeMotif;
   radius: number;
+  category?: TemplateCategory;
+  showBadge?: boolean;
 }
 
 export type AspectRatio = "16:9" | "4:5" | "1:1" | "A4";
