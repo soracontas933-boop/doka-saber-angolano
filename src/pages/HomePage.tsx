@@ -33,7 +33,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingPaths } from "@/components/ui/background-paths";
-import DotMatrix from "@/components/DotMatrix";
 import AdminLandingPanelFloat from "@/components/AdminLandingPanelFloat";
 import { useAdmin } from "@/hooks/use-admin";
 import avatar1 from "@/assets/avatar-1.png";
@@ -355,30 +354,16 @@ const HomePage = () => {
         siteSettings.hero_text_align === "right" ? "items-end text-right" :
         "items-center text-center"
       }`}>
-        {/* Desktop: FloatingPaths + Hero images */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-50 md:block hidden">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-50">
           <FloatingPaths position={1} />
           <FloatingPaths position={-1} />
         </div>
 
         {hasHeroImages && (
           carouselEnabled && heroImages.length > 1 ?
-            <div className="hidden md:block"><HeroCarousel items={heroImages} /></div> :
-            <div className="hidden md:block"><HeroSingle item={heroImages[0]} /></div>)
+            <HeroCarousel items={heroImages} /> :
+            <HeroSingle item={heroImages[0]} />)
         }
-
-        {/* Mobile: Dot Matrix as hero background */}
-        <div className="md:hidden absolute inset-0 z-[6]">
-          <DotMatrix
-            frequency={2}
-            speed={3}
-            bgColor="#000000"
-            colors={["#3B82F6", "#ffffff", "#1e1e1e"]}
-            cellSize={10}
-            gamma={4}
-            paletteBias={10}
-          />
-        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
