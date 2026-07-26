@@ -27,19 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import {
-  Megaphone, Plus, Trash2, Edit, Loader2, Image as ImageIcon,
-  ExternalLink, Upload, Film, Eye, ArrowRight, GripVertical, X,
-  AppWindow, Link2
-} from "lucide-react";
-
-interface InternalButton {
-  path: string;
-  label: string;
-}
+import { Megaphone, Plus, Trash2, Edit, Loader2, Image as ImageIcon, ExternalLink, Upload, Film, Eye } from "lucide-react";
 
 interface Popup {
   id: string;
@@ -52,33 +41,7 @@ interface Popup {
   media_type: 'image' | 'video';
   max_views_per_day: number;
   created_at: string;
-  internal_buttons: InternalButton[] | null;
-  action_button_label: string | null;
-  action_button_path: string | null;
 }
-
-// Available internal pages in the application
-const INTERNAL_PAGES: InternalButton[] = [
-  { path: "/home", label: "Início" },
-  { path: "/dashboard", label: "Dashboard" },
-  { path: "/meus-projetos", label: "Meus Projetos" },
-  { path: "/trabalho", label: "Trabalho Escolar" },
-  { path: "/curriculo", label: "Currículo (CV)" },
-  { path: "/resumo", label: "Resumo" },
-  { path: "/questionario", label: "Questionário" },
-  { path: "/plano-aula", label: "Plano de Aula" },
-  { path: "/apresentacao", label: "Apresentação (Slides)" },
-  { path: "/correcao", label: "Corrigir Trabalho" },
-  { path: "/grupos", label: "Trabalho em Grupo" },
-  { path: "/livraria", label: "Livraria" },
-  { path: "/minha-biblioteca", label: "Minha Biblioteca" },
-  { path: "/planos", label: "Planos & Assinaturas" },
-  { path: "/creditos", label: "Créditos Extras" },
-  { path: "/faturamento", label: "Faturamento" },
-  { path: "/suporte", label: "Suporte & Ajuda" },
-  { path: "/configuracoes", label: "Configurações" },
-  { path: "/mensagens", label: "Mensagens" },
-];
 
 const AdminMarketingTab = () => {
   const [popups, setPopups] = useState<Popup[]>([]);
@@ -98,12 +61,6 @@ const AdminMarketingTab = () => {
   const [targetPlan, setTargetPlan] = useState("all");
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [maxViews, setMaxViews] = useState(1);
-  const [internalButtons, setInternalButtons] = useState<InternalButton[]>([]);
-  const [actionButtonLabel, setActionButtonLabel] = useState("");
-  const [actionButtonPath, setActionButtonPath] = useState("");
-
-  // Button selector state
-  const [selectedPage, setSelectedPage] = useState("");
 
   const fetchPopups = async () => {
     setLoading(true);
@@ -134,9 +91,6 @@ const AdminMarketingTab = () => {
       setTargetPlan(popup.target_plan);
       setMediaType(popup.media_type || 'image');
       setMaxViews(popup.max_views_per_day || 1);
-      setInternalButtons(popup.internal_buttons || []);
-      setActionButtonLabel(popup.action_button_label || "");
-      setActionButtonPath(popup.action_button_path || "");
     } else {
       setEditingPopup(null);
       setTitle("");
@@ -147,11 +101,7 @@ const AdminMarketingTab = () => {
       setTargetPlan("all");
       setMediaType('image');
       setMaxViews(1);
-      setInternalButtons([]);
-      setActionButtonLabel("");
-      setActionButtonPath("");
     }
-    setSelectedPage("");
     setDialogOpen(true);
   };
 
@@ -184,43 +134,6 @@ const AdminMarketingTab = () => {
     toast({ title: "Arquivo carregado com sucesso" });
   };
 
-  const addInternalButton = () => {
-    if (!selectedPage) {
-      toast({ title: "Selecione uma página", description: "Escolha uma página do aplicativo para adicionar como botão.", variant: "destructive" });
-      return;
-    }
-    const page = INTERNAL_PAGES.find(p => p.path === selectedPage);
-    if (!page) return;
-
-    // Check if already added
-    if (internalButtons.some(b => b.path === page.path)) {
-      toast({ title: "Página já adicionada", description: "Este botão já está na lista.", variant: "destructive" });
-      return;
-    }
-
-    setInternalButtons([...internalButtons, page]);
-    setSelectedPage("");
-    toast({ title: "Botão adicionado", description: `${page.label} foi adicionado como botão de navegação.` });
-  };
-
-  const removeInternalButton = (index: number) => {
-    setInternalButtons(internalButtons.filter((_, i) => i !== index));
-  };
-
-  const moveButtonUp = (index: number) => {
-    if (index === 0) return;
-    const newButtons = [...internalButtons];
-    [newButtons[index - 1], newButtons[index]] = [newButtons[index], newButtons[index - 1]];
-    setInternalButtons(newButtons);
-  };
-
-  const moveButtonDown = (index: number) => {
-    if (index === internalButtons.length - 1) return;
-    const newButtons = [...internalButtons];
-    [newButtons[index], newButtons[index + 1]] = [newButtons[index + 1], newButtons[index]];
-    setInternalButtons(newButtons);
-  };
-
   const handleSave = async () => {
     if (!title || !content) {
       toast({ title: "Campos obrigatórios", description: "Título e conteúdo são necessários.", variant: "destructive" });
@@ -237,9 +150,6 @@ const AdminMarketingTab = () => {
       target_plan: targetPlan,
       media_type: mediaType,
       max_views_per_day: maxViews,
-      internal_buttons: JSON.stringify(internalButtons),
-      action_button_label: actionButtonLabel || null,
-      action_button_path: actionButtonPath || null,
       updated_at: new Date().toISOString(),
     };
 
@@ -316,7 +226,6 @@ const AdminMarketingTab = () => {
                 <TableRow>
                   <TableHead>Título</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Ações</TableHead>
                   <TableHead>Visualizações/Dia</TableHead>
                   <TableHead>Público-alvo</TableHead>
                   <TableHead>Status</TableHead>
@@ -326,82 +235,52 @@ const AdminMarketingTab = () => {
               <TableBody>
                 {popups.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                       Nenhum pop-up configurado.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  popups.map((popup) => {
-                    const btnCount = popup.internal_buttons ? (typeof popup.internal_buttons === 'string' ? JSON.parse(popup.internal_buttons) : popup.internal_buttons).length : 0;
-                    const extLink = !!popup.link_url;
-                    const actionBtn = !!popup.action_button_path;
-                    return (
-                      <TableRow key={popup.id}>
-                        <TableCell className="font-medium">{popup.title}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            {popup.media_type === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-                            <span className="text-xs capitalize">{popup.media_type}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 flex-wrap">
-                            {btnCount > 0 && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs">
-                                <AppWindow className="h-3 w-3" />
-                                {btnCount} interno{btnCount > 1 ? 's' : ''}
-                              </span>
-                            )}
-                            {extLink && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-xs">
-                                <ExternalLink className="h-3 w-3" />
-                                Externo
-                              </span>
-                            )}
-                            {actionBtn && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
-                                <ArrowRight className="h-3 w-3" />
-                                Ação
-                              </span>
-                            )}
-                            {!btnCount && !extLink && !actionBtn && (
-                              <span className="text-xs text-muted-foreground">Nenhuma</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            <span>{popup.max_views_per_day}x</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="capitalize">{popup.target_plan === 'all' ? 'Todos' : popup.target_plan}</span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Switch 
-                              checked={popup.is_active} 
-                              onCheckedChange={() => handleToggleActive(popup)}
-                            />
-                            <span className={popup.is_active ? "text-emerald-600" : "text-muted-foreground"}>
-                              {popup.is_active ? "Ativo" : "Inativo"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(popup)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(popup.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
+                  popups.map((popup) => (
+                    <TableRow key={popup.id}>
+                      <TableCell className="font-medium">{popup.title}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {popup.media_type === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+                          <span className="text-xs capitalize">{popup.media_type}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          <span>{popup.max_views_per_day}x</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="capitalize">{popup.target_plan === 'all' ? 'Todos' : popup.target_plan}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={popup.is_active} 
+                            onCheckedChange={() => handleToggleActive(popup)}
+                          />
+                          <span className={popup.is_active ? "text-emerald-600" : "text-muted-foreground"}>
+                            {popup.is_active ? "Ativo" : "Inativo"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(popup)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(popup.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
@@ -410,7 +289,7 @@ const AdminMarketingTab = () => {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingPopup ? "Editar Pop-up" : "Criar Novo Pop-up"}</DialogTitle>
           </DialogHeader>
@@ -504,143 +383,16 @@ const AdminMarketingTab = () => {
               </div>
             </div>
 
-            {/* Action Button (Primary CTA - either internal or external) */}
-            <Separator />
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <ArrowRight className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Botão Principal de Ação</h3>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Este será o botão principal exibido no pop-up. Pode ser um link interno do app ou um link externo.
-              </p>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Botão de Ação Interna (Opcional)</label>
-                  <Select value={actionButtonPath} onValueChange={(val) => {
-                    setActionButtonPath(val);
-                    const page = INTERNAL_PAGES.find(p => p.path === val);
-                    if (page) setActionButtonLabel(page.label);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar página do app..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Nenhum (usar link externo)</SelectItem>
-                      {INTERNAL_PAGES.map((page) => (
-                        <SelectItem key={page.path} value={page.path}>
-                          {page.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="linkUrl" className="text-sm font-medium">
-                    <Link2 className="h-3 w-3 inline mr-1" />
-                    Link Externo (Opcional)
-                  </label>
-                  <Input 
-                    id="linkUrl" 
-                    value={linkUrl} 
-                    onChange={(e) => setLinkUrl(e.target.value)} 
-                    placeholder="https://... (usado se não houver botão interno)"
-                  />
-                </div>
-              </div>
-
-              {actionButtonPath && (
-                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 flex items-center gap-2">
-                  <ArrowRight className="h-4 w-4 text-primary" />
-                  <span className="text-sm text-primary font-medium">
-                    Botão principal: Navegar para <strong>{actionButtonLabel}</strong> ({actionButtonPath})
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Internal Navigation Buttons */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <AppWindow className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Botões de Navegação Interna</h3>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Adicione botões que levam o usuário diretamente para páginas do aplicativo. O usuário poderá clicar neles para navegar instantaneamente.
-              </p>
-
-              <div className="flex gap-2">
-                <Select value={selectedPage} onValueChange={setSelectedPage}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar página para adicionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INTERNAL_PAGES
-                      .filter(p => !internalButtons.some(b => b.path === p.path))
-                      .map((page) => (
-                        <SelectItem key={page.path} value={page.path}>
-                          {page.label}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={addInternalButton} variant="outline" size="sm" className="gap-1">
-                  <Plus className="h-3 w-3" />
-                  Adicionar
-                </Button>
-              </div>
-
-              {internalButtons.length > 0 && (
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-muted/30 px-3 py-2 flex items-center gap-2">
-                    <AppWindow className="h-3 w-3" />
-                    <span className="text-xs font-medium">Botões configurados ({internalButtons.length})</span>
-                  </div>
-                  <div className="divide-y">
-                    {internalButtons.map((btn, index) => (
-                      <div key={index} className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/10 transition-colors">
-                        <div className="flex flex-col gap-0.5">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 p-0"
-                            onClick={() => moveButtonUp(index)}
-                            disabled={index === 0}
-                          >
-                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 15l-6-6-6 6"/></svg>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 p-0"
-                            onClick={() => moveButtonDown(index)}
-                            disabled={index === internalButtons.length - 1}
-                          >
-                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
-                          </Button>
-                        </div>
-                        <ArrowRight className="h-3.5 w-3.5 text-primary ml-1" />
-                        <span className="text-sm font-medium flex-1">{btn.label}</span>
-                        <code className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{btn.path}</code>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-destructive hover:text-destructive"
-                          onClick={() => removeInternalButton(index)}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <label htmlFor="linkUrl" className="text-sm font-medium">URL de Destino (Opcional)</label>
+                <Input 
+                  id="linkUrl" 
+                  value={linkUrl} 
+                  onChange={(e) => setLinkUrl(e.target.value)} 
+                  placeholder="https://..."
+                />
+              </div>
               <div className="grid gap-2">
                 <label htmlFor="maxViews" className="text-sm font-medium">Visualizações por dia (por usuário)</label>
                 <Input 
@@ -652,6 +404,9 @@ const AdminMarketingTab = () => {
                   onChange={(e) => setMaxViews(parseInt(e.target.value) || 1)} 
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <label htmlFor="targetPlan" className="text-sm font-medium">Público-alvo (Plano)</label>
                 <Select value={targetPlan} onValueChange={setTargetPlan}>
@@ -667,11 +422,10 @@ const AdminMarketingTab = () => {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Switch id="isActive" checked={isActive} onCheckedChange={setIsActive} />
-              <Label htmlFor="isActive" className="text-sm font-medium">Ativar imediatamente</Label>
+              <div className="flex items-center gap-2 pt-8">
+                <Switch id="isActive" checked={isActive} onCheckedChange={setIsActive} />
+                <label htmlFor="isActive" className="text-sm font-medium">Ativar imediatamente</label>
+              </div>
             </div>
           </div>
           <DialogFooter>
