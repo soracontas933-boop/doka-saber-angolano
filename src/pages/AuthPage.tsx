@@ -171,7 +171,20 @@ const AuthPage = () => {
       </div>
 
       {/* Mobile: Imagem no topo com gradiente */}
-      <div className="md:hidden relative w-full h-64 overflow-hidden bg-[#F5F5F7] dark:bg-[#0B0B0B]">
+      <div className="md:hidden relative w-full h-72 overflow-hidden bg-[#F5F5F7] dark:bg-[#0B0B0B]">
+        {/* Botão Voltar no topo */}
+        <div className="absolute top-4 left-4 z-30">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-2 rounded-full hover:bg-black/20 px-2 text-white bg-black/30 backdrop-blur-sm" 
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="text-xs">Voltar</span>
+          </Button>
+        </div>
+
         <AnimatePresence mode="wait">
           <motion.div
             key={loginImageUrl || 'default'}
@@ -195,9 +208,27 @@ const AuthPage = () => {
           </motion.div>
         </AnimatePresence>
         
+        {/* Logo e Nome DELLE no canto inferior esquerdo */}
+        <div className="absolute bottom-4 left-4 z-20">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="flex items-center gap-2"
+          >
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+              <DelleLogo size={32} showText={false} />
+            </div>
+            <span className="text-white font-bold text-sm tracking-widest">DELLE</span>
+          </motion.div>
+        </div>
+
         {/* Gradiente preto na parte inferior da imagem */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50" />
       </div>
+
+      {/* Gradiente externo (transição suave) */}
+      <div className="md:hidden h-8 bg-gradient-to-b from-black/50 to-white dark:to-[#0B0B0B]" />
 
       {/* Lado Direito: Formulário (Desktop) e Conteúdo Mobile */}
       <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col relative bg-white dark:bg-[#0B0B0B]">
@@ -215,18 +246,6 @@ const AuthPage = () => {
         </div>
 
         <div className="flex-1 flex flex-col relative">
-          {/* Mobile: Botão voltar no topo da imagem */}
-          <div className="md:hidden absolute top-4 left-4 z-30">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="gap-2 rounded-full hover:bg-black/20 px-2 text-white" 
-              onClick={() => navigate("/")}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
-
           {/* Conteúdo do Formulário */}
           <div className="flex items-center justify-center p-6 sm:p-8 md:p-16 flex-1">
             <motion.div
