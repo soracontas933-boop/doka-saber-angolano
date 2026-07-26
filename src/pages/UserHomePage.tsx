@@ -28,7 +28,7 @@ import { GraduationCap } from "lucide-react";
 import { BackgroundMediaCarousel } from "@/components/BackgroundMediaCarousel";
 import { useState, useEffect } from "react";
 import PixelTetris from "@/components/PixelTetris";
-import DotMatrix from "@/components/DotMatrix";
+
 
 const quickActionsAll = [
   { to: "/trabalho", icon: WrapText, label: "Trabalhos", featureKey: "trabalho" },
@@ -155,19 +155,6 @@ const UserHomePage = () => {
               />
             </div>
           )}
-
-          {/* Mobile: Dot Matrix as hero background */}
-          <div className="md:hidden absolute inset-0 z-10">
-            <DotMatrix
-              frequency={2}
-              speed={3}
-              bgColor="#000000"
-              colors={["#3B82F6", "#ffffff", "#1e1e1e"]}
-              cellSize={10}
-              gamma={4}
-              paletteBias={10}
-            />
-          </div>
 
           {/* Content Container */}
           <div className="relative z-20 px-4 pt-3 pb-2">
