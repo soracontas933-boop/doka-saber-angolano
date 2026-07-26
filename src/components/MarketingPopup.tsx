@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserPlan } from "@/hooks/use-user-plan";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, ExternalLink, ArrowRight } from "lucide-react";
+
+interface InternalButton {
+  path: string;
+  label: string;
+}
 
 interface Popup {
   id: string;
@@ -20,6 +26,9 @@ interface Popup {
   target_plan: string;
   media_type: 'image' | 'video';
   max_views_per_day: number;
+  internal_buttons: InternalButton[] | null;
+  action_button_label: string | null;
+  action_button_path: string | null;
 }
 
 const MarketingPopup = () => {
@@ -27,6 +36,7 @@ const MarketingPopup = () => {
   const [open, setOpen] = useState(false);
   const { plan } = useUserPlan();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkAndFetchPopup = async () => {
@@ -89,14 +99,37 @@ const MarketingPopup = () => {
     setOpen(false);
   };
 
-  const handleAction = () => {
+  const handleExternalLink = () => {
     if (popup?.link_url) {
       window.open(popup.link_url, "_blank");
     }
     handleClose();
   };
 
+  const handleInternalNavigation = (path: string) => {
+    handleClose();
+    // Small delay to let dialog close animation finish
+    setTimeout(() => {
+      navigate(path);
+    }, 200);
+  };
+
+  const handleActionButton = () => {
+    if (popup?.action_button_path) {
+      handleInternalNavigation(popup.action_button_path);
+    } else if (popup?.link_url) {
+      handleExternalLink();
+    } else {
+      handleClose();
+    }
+  };
+
   if (!popup) return null;
+
+  const hasInternalButtons = popup.internal_buttons && popup.internal_buttons.length > 0;
+  const hasExternalLink = !!popup.link_url;
+  const hasActionButton = !!popup.action_button_path;
+  const hasAnyAction = hasInternalButtons || hasExternalLink || hasActionButton;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -123,12 +156,10 @@ const MarketingPopup = () => {
                   loop
                   playsInline
                   onLoadedMetadata={() => {
-                    // Tentar reproduzir com áudio
                     if (videoRef.current) {
                       const playPromise = videoRef.current.play();
                       if (playPromise !== undefined) {
                         playPromise.catch(() => {
-                          // Se falhar, tentar com muted
                           if (videoRef.current) {
                             videoRef.current.muted = true;
                             videoRef.current.play();
@@ -158,13 +189,53 @@ const MarketingPopup = () => {
               dangerouslySetInnerHTML={{ __html: popup.content }}
             />
 
-            <DialogFooter className="sm:justify-center pt-2 sticky bottom-0 bg-card">
-              <Button 
-                onClick={handleAction} 
-                className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:scale-105 transition-transform"
-              >
-                {popup.link_url ? "Ver Detalhes" : "Entendido"}
-              </Button>
+            <DialogFooter className="sm:justify-center pt-2 sticky bottom-0 bg-card flex flex-col gap-2">
+              {/* Primary action button (external link or internal action button) */}
+              {hasActionButton && (
+                <Button 
+                  onClick={handleActionButton}
+                  className="w-full px-6 py-4 text-base font-semibold rounded-full shadow-lg hover:scale-105 transition-transform bg-primary"
+                >
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  {popup.action_button_label || "Acessar"}
+                </Button>
+              )}
+              
+              {!hasActionButton && hasExternalLink && (
+                <Button 
+                  onClick={handleExternalLink} 
+                  className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:scale-105 transition-transform"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Ver Detalhes
+                </Button>
+              )}
+
+              {!hasActionButton && !hasExternalLink && !hasInternalButtons && (
+                <Button 
+                  onClick={handleClose} 
+                  className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:scale-105 transition-transform"
+                >
+                  Entendido
+                </Button>
+              )}
+
+              {/* Internal navigation buttons */}
+              {hasInternalButtons && (
+                <div className="w-full flex flex-col gap-2 pt-1">
+                  {(popup.internal_buttons as InternalButton[]).map((btn, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      onClick={() => handleInternalNavigation(btn.path)}
+                      className="w-full justify-start px-4 py-3 text-sm font-medium rounded-lg border border-primary/20 hover:border-primary/50 hover:bg-primary/5 transition-all"
+                    >
+                      <ArrowRight className="h-4 w-4 mr-2 text-primary" />
+                      {btn.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </DialogFooter>
           </div>
         </div>
