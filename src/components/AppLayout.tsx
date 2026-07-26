@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import MobileNav from "./MobileNav";
 import CreditsBar from "./CreditsBar";
+import MarketingPopup from "./MarketingPopup";
 import { usePageTracking } from "@/hooks/use-page-tracking";
 
 const AppLayout = () => {
@@ -16,6 +17,7 @@ const AppLayout = () => {
         </main>
       </div>
       <MobileNav />
+      <MarketingPopup />
     </div>
   );
 };

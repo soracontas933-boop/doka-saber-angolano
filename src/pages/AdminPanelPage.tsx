@@ -25,6 +25,7 @@ import {
   Library,
   SlidersHorizontal,
   Download,
+  Megaphone,
   ChevronLeft,
   ChevronRight,
   History,
@@ -33,6 +34,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
 import AdminMastersTab from "@/components/AdminMastersTab";
+import AdminMarketingTab from "@/components/AdminMarketingTab";
 import AdminHeroTab from "@/components/AdminHeroTab";
 import AdminButtonCoversTab from "@/components/AdminButtonCoversTab";
 import AdminLandingTabNew from "@/components/AdminLandingTabNew";
@@ -687,6 +689,9 @@ const AdminPanelPage = () => {
           <TabsTrigger value="downloads" className="gap-2">
             <Download className="h-4 w-4" /> Downloads
           </TabsTrigger>
+          <TabsTrigger value="marketing" className="gap-2">
+            <Megaphone className="h-4 w-4" /> Marketing
+          </TabsTrigger>
           <TabsTrigger value="masters" className="gap-2">
             <Crown className="h-4 w-4" /> Masters
           </TabsTrigger>
@@ -971,6 +976,9 @@ const AdminPanelPage = () => {
           <AdminDownloadsTab />
         </TabsContent>
 
+        <TabsContent value="marketing">
+          <AdminMarketingTab />
+        </TabsContent>
         <TabsContent value="masters">
           <AdminMastersTab />
         </TabsContent>
