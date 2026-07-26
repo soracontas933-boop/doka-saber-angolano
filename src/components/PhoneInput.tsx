@@ -82,7 +82,7 @@ export const PhoneInput = ({ value, onChange, id, className, placeholder }: Phon
   return (
     <div className={`flex gap-2 ${className ?? ""}`}>
       <Select value={country} onValueChange={handleCountryChange}>
-        <SelectTrigger className="h-12 w-[130px] rounded-xl border-border/60 shrink-0">
+        <SelectTrigger className="h-12 w-[130px] rounded-xl border-border/60 shrink-0 text-base md:text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-[300px]">
@@ -101,7 +101,7 @@ export const PhoneInput = ({ value, onChange, id, className, placeholder }: Phon
         placeholder={placeholder ?? "923 456 789"}
         value={local}
         onChange={(e) => handleLocalChange(e.target.value)}
-        className="h-12 rounded-xl border-border/60 flex-1"
+        className="h-12 rounded-xl border-border/60 flex-1 text-base md:text-sm"
       />
     </div>
   );

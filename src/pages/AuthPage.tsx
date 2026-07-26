@@ -209,17 +209,15 @@ const AuthPage = () => {
         </AnimatePresence>
         
         {/* Logo e Nome DELLE no canto inferior esquerdo */}
-        <div className="absolute bottom-4 left-4 z-20">
+        <div className="absolute bottom-6 left-6 z-20">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
             className="flex items-center gap-2"
           >
-            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-              <DelleLogo size={32} showText={false} />
-            </div>
-            <span className="text-white font-bold text-sm tracking-widest">DELLE</span>
+            <DelleLogo size={40} showText={false} footerLogo={true} />
+            <span className="text-white font-bold text-lg tracking-widest">DELLE</span>
           </motion.div>
         </div>
 
@@ -228,7 +226,7 @@ const AuthPage = () => {
       </div>
 
       {/* Gradiente externo (transição suave) */}
-      <div className="md:hidden h-8 bg-gradient-to-b from-black/50 to-white dark:to-[#0B0B0B]" />
+      <div className="md:hidden h-4 bg-background" />
 
       {/* Lado Direito: Formulário (Desktop) e Conteúdo Mobile */}
       <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col relative bg-white dark:bg-[#0B0B0B]">
@@ -283,7 +281,7 @@ const AuthPage = () => {
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           required={!isLogin}
-                          className="h-11 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-sm"
+                          className="h-12 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-base md:text-sm"
                         />
                       </div>
 
@@ -291,7 +289,7 @@ const AuthPage = () => {
                         <div className="space-y-2">
                           <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Género *</Label>
                           <Select value={genero} onValueChange={setGenero}>
-                            <SelectTrigger className="h-11 md:h-12 rounded-xl border-border/60 text-sm">
+                            <SelectTrigger className="h-12 md:h-12 rounded-xl border-border/60 text-base md:text-sm">
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
                             <SelectContent>
@@ -312,7 +310,7 @@ const AuthPage = () => {
                             max={99}
                             value={idade}
                             onChange={(e) => setIdade(e.target.value)}
-                            className="h-11 md:h-12 rounded-xl border-border/60 text-sm"
+                            className="h-12 md:h-12 rounded-xl border-border/60 text-base md:text-sm"
                           />
                         </div>
                       </div>
@@ -332,7 +330,7 @@ const AuthPage = () => {
                       <div className="space-y-2">
                         <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Função *</Label>
                         <Select value={funcao} onValueChange={setFuncao}>
-                          <SelectTrigger className="h-11 md:h-12 rounded-xl border-border/60 text-sm">
+                          <SelectTrigger className="h-12 md:h-12 rounded-xl border-border/60 text-base md:text-sm">
                             <SelectValue placeholder="Selecione a sua função" />
                           </SelectTrigger>
                           <SelectContent>
@@ -355,7 +353,7 @@ const AuthPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="h-11 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-sm"
+                    className="h-12 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-base md:text-sm"
                   />
                 </div>
 
@@ -369,7 +367,7 @@ const AuthPage = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="h-11 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-sm"
+                    className="h-12 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-base md:text-sm"
                   />
                 </div>
 
