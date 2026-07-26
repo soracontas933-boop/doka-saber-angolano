@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserPlan } from "@/hooks/use-user-plan";
 import {
@@ -26,6 +26,7 @@ const MarketingPopup = () => {
   const [popup, setPopup] = useState<Popup | null>(null);
   const [open, setOpen] = useState(false);
   const { plan } = useUserPlan();
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const checkAndFetchPopup = async () => {
@@ -99,8 +100,8 @@ const MarketingPopup = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none bg-transparent shadow-none">
-        <div className="relative bg-card rounded-xl overflow-hidden border shadow-2xl">
+      <DialogContent className="w-[95vw] sm:max-w-[550px] md:max-w-[650px] p-0 overflow-hidden border-none bg-transparent shadow-none">
+        <div className="relative bg-card rounded-xl overflow-hidden border shadow-2xl max-h-[90vh] flex flex-col">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -114,37 +115,53 @@ const MarketingPopup = () => {
             <div className="w-full bg-black flex items-center justify-center overflow-hidden">
               {popup.media_type === 'video' ? (
                 <video 
+                  ref={videoRef}
                   src={popup.image_url} 
-                  className="w-full max-h-[300px]" 
+                  className="w-full h-auto max-h-[60vh] object-contain" 
                   controls 
                   autoPlay 
-                  muted 
                   loop
+                  playsInline
+                  onLoadedMetadata={() => {
+                    // Tentar reproduzir com áudio
+                    if (videoRef.current) {
+                      const playPromise = videoRef.current.play();
+                      if (playPromise !== undefined) {
+                        playPromise.catch(() => {
+                          // Se falhar, tentar com muted
+                          if (videoRef.current) {
+                            videoRef.current.muted = true;
+                            videoRef.current.play();
+                          }
+                        });
+                      }
+                    }
+                  }}
                 />
               ) : (
                 <img 
                   src={popup.image_url} 
                   alt={popup.title} 
-                  className="w-full h-full object-contain max-h-[300px]"
+                  className="w-full h-auto max-h-[60vh] object-contain"
                 />
               )}
             </div>
           )}
 
-          <div className="p-6 space-y-4">
+          <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-center">{popup.title}</DialogTitle>
+              <DialogTitle className="text-xl sm:text-2xl font-bold text-center">{popup.title}</DialogTitle>
             </DialogHeader>
             
             <div 
-              className="text-muted-foreground text-center prose prose-sm dark:prose-invert max-w-none max-h-[200px] overflow-y-auto"
+              className="text-muted-foreground text-center prose prose-sm dark:prose-invert max-w-none text-sm sm:text-base"
               dangerouslySetInnerHTML={{ __html: popup.content }}
             />
 
-            <DialogFooter className="sm:justify-center pt-2">
+            <DialogFooter className="sm:justify-center pt-2 sticky bottom-0 bg-card">
               <Button 
                 onClick={handleAction} 
-                className="w-full sm:w-auto px-8 py-6 text-lg font-semibold rounded-full shadow-lg hover:scale-105 transition-transform"
+                className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:scale-105 transition-transform"
               >
                 {popup.link_url ? "Ver Detalhes" : "Entendido"}
               </Button>
