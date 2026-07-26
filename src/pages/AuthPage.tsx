@@ -128,54 +128,7 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background font-apple">
-      {/* === MOBILE: Imagem no topo === */}
-      <div className="relative w-full h-[38vh] sm:h-[40vh] md:hidden overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={loginImageUrl || 'default'}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            className="absolute inset-0"
-          >
-            {loginImageUrl ? (
-              <img 
-                src={loginImageUrl} 
-                alt="Auth Background" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#3B82F6]/20 to-[#1a1a2e] flex items-center justify-center">
-                <div className="opacity-10"><DelleLogo size={80} /></div>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-        
-        {/* Overlay escuro sobre a imagem mobile */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
-        {/* Logo e texto sobre a imagem mobile */}
-        <div className="absolute bottom-6 left-6 right-6 z-10 text-white">
-          <div className="invert brightness-0 mb-4 opacity-90"><DelleLogo size={32} /></div>
-        </div>
-
-        {/* Voltar ao site - mobile */}
-        <div className="absolute top-4 left-4 z-20">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="gap-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 px-3" 
-            onClick={() => navigate("/")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Button>
-        </div>
-      </div>
-
-      {/* === DESKTOP: Imagem no lado esquerdo === */}
+      {/* Lado Esquerdo: Imagem */}
       <div className="hidden md:flex md:w-1/2 lg:w-3/5 relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0B0B0B]">
         <AnimatePresence mode="wait">
           <motion.div
@@ -208,7 +161,7 @@ const AuthPage = () => {
             transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="mb-8 invert brightness-0"><DelleLogo size={40} /></div>
-            <h2 className="text-4xl font-bold mb-6 tracking-tight leading-[1.1]">
+            <h2 className="text-4xl font-bold mb-6 tracking-tight leading-[1.1] md:text-lg">
               A sua jornada educacional inteligente começa aqui.
             </h2>
             <p className="text-white/80 max-w-md font-medium text-sm">
@@ -218,10 +171,9 @@ const AuthPage = () => {
         </div>
       </div>
 
-      {/* === Formulário (mobile + desktop) === */}
+      {/* Lado Direito: Formulário */}
       <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col relative bg-white dark:bg-[#0B0B0B]">
-        {/* Voltar ao site - desktop */}
-        <div className="hidden md:block absolute top-6 left-6 lg:top-10 lg:left-10 z-20 bg-white dark:bg-[#0B0B0B]">
+        <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20 bg-white">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -233,20 +185,19 @@ const AuthPage = () => {
           </Button>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-6 py-6 sm:p-8 md:px-12 md:py-16">
+        <div className="flex-1 flex items-center justify-center p-8 sm:p-16">
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="w-full max-w-md"
           >
-            {/* Logo mobile - escondido no desktop */}
-            <div className="md:hidden flex justify-center mb-8">
-              <DelleLogo size={40} />
+            <div className="md:hidden flex justify-center mb-10">
+              <DelleLogo size={48} />
             </div>
 
-            <div className="space-y-3 mb-8 text-center md:text-left">
-              <h1 className="font-bold tracking-tight text-foreground text-xl sm:text-2xl">
+            <div className="space-y-3 mb-10 text-center md:text-left">
+              <h1 className="font-bold tracking-tight text-foreground text-2xl">
                 {isLogin ? "Bem-vindo de volta" : "Criar nova conta"}
               </h1>
               <p className="text-muted-foreground font-medium text-sm">
@@ -256,17 +207,17 @@ const AuthPage = () => {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <AnimatePresence mode="wait">
                 {!isLogin && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="space-y-4 overflow-hidden"
+                    className="space-y-5 overflow-hidden"
                   >
-                    <div className="space-y-1.5">
-                      <Label htmlFor="name" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-[11px]">Nome completo *</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Nome completo *</Label>
                       <Input
                         id="name"
                         placeholder="O seu nome"
@@ -277,9 +228,9 @@ const AuthPage = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-[11px]">Género *</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Género *</Label>
                         <Select value={genero} onValueChange={setGenero}>
                           <SelectTrigger className="h-12 rounded-xl border-border/60">
                             <SelectValue placeholder="Selecione" />
@@ -292,8 +243,8 @@ const AuthPage = () => {
                         </Select>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="idade" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-[11px]">Idade</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="idade" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Idade</Label>
                         <Input
                           id="idade"
                           type="number"
@@ -307,8 +258,8 @@ const AuthPage = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-[11px]">Telefone *</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone *</Label>
                       <PhoneInput
                         id="telefone"
                         value={telefone}
@@ -319,8 +270,8 @@ const AuthPage = () => {
                       />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-[11px]">Função *</Label>
+                    <div className="space-y-2">
+                      <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Função *</Label>
                       <Select value={funcao} onValueChange={setFuncao}>
                         <SelectTrigger className="h-12 rounded-xl border-border/60">
                           <SelectValue placeholder="Selecione a sua função" />
@@ -336,8 +287,8 @@ const AuthPage = () => {
                 )}
               </AnimatePresence>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-[11px]">Email *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -349,8 +300,8 @@ const AuthPage = () => {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-[11px]">Palavra-passe *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Palavra-passe *</Label>
                 <Input
                   id="password"
                   type="password"
@@ -371,24 +322,24 @@ const AuthPage = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-8 text-center">
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-[#3B82F6] transition-colors font-medium"
+                className="text-base text-muted-foreground hover:text-[#3B82F6] transition-colors font-medium"
               >
                 {isLogin ? (
-                  <>Não tem conta? <span className="text-[#3B82F6] font-bold">Registe-se</span></>
+                  <>Não tem conta? <span className="text-[#3B82F6] font-bold text-base">Registe-se</span></>
                 ) : (
-                  <>Já tem conta? <span className="text-[#3B82F6] font-bold">Entre aqui</span></>
+                  <>Já tem conta? <span className="text-[#3B82F6] font-bold text-base">Entre aqui</span></>
                 )}
               </button>
             </div>
           </motion.div>
         </div>
         
-        <div className="hidden md:block p-8 text-center">
-          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
+        <div className="p-8 text-center">
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest pb-0 pt-[80px]">
             © {new Date().getFullYear()} Delle. Todos os direitos reservados.
           </p>
         </div>
