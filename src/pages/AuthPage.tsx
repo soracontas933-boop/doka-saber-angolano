@@ -128,7 +128,7 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background font-apple">
-      {/* Lado Esquerdo: Imagem */}
+      {/* Lado Esquerdo: Imagem (Desktop) */}
       <div className="hidden md:flex md:w-1/2 lg:w-3/5 relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0B0B0B]">
         <AnimatePresence mode="wait">
           <motion.div
@@ -160,7 +160,6 @@ const AuthPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="mb-8 invert brightness-0"><DelleLogo size={40} /></div>
             <h2 className="text-4xl font-bold mb-6 tracking-tight leading-[1.1] md:text-lg">
               A sua jornada educacional inteligente começa aqui.
             </h2>
@@ -171,13 +170,43 @@ const AuthPage = () => {
         </div>
       </div>
 
-      {/* Lado Direito: Formulário */}
+      {/* Mobile: Imagem no topo com gradiente */}
+      <div className="md:hidden relative w-full h-64 overflow-hidden bg-[#F5F5F7] dark:bg-[#0B0B0B]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={loginImageUrl || 'default'}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0"
+          >
+            {loginImageUrl ? (
+              <img 
+                src={loginImageUrl} 
+                alt="Auth Background" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[#3B82F6]/10 to-transparent flex items-center justify-center">
+                <div className="opacity-5"><DelleLogo size={80} /></div>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+        
+        {/* Gradiente preto na parte inferior da imagem */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+      </div>
+
+      {/* Lado Direito: Formulário (Desktop) e Conteúdo Mobile */}
       <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col relative bg-white dark:bg-[#0B0B0B]">
-        <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20 bg-white">
+        {/* Botão voltar - Desktop */}
+        <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20 bg-white dark:bg-[#0B0B0B]">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="gap-2 rounded-full hover:bg-secondary px-0" 
+            className="gap-2 rounded-full hover:bg-secondary px-0 hidden md:flex" 
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -185,161 +214,174 @@ const AuthPage = () => {
           </Button>
         </div>
 
-        <div className="flex-1 flex items-center justify-center p-8 sm:p-16">
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-md"
-          >
-            <div className="md:hidden flex justify-center mb-10">
-              <DelleLogo size={48} />
-            </div>
+        <div className="flex-1 flex flex-col relative">
+          {/* Mobile: Botão voltar no topo da imagem */}
+          <div className="md:hidden absolute top-4 left-4 z-30">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2 rounded-full hover:bg-black/20 px-2 text-white" 
+              onClick={() => navigate("/")}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
 
-            <div className="space-y-3 mb-10 text-center md:text-left">
-              <h1 className="font-bold tracking-tight text-foreground text-2xl">
-                {isLogin ? "Bem-vindo de volta" : "Criar nova conta"}
-              </h1>
-              <p className="text-muted-foreground font-medium text-sm">
-                {isLogin ? 
-                  "Introduza as suas credenciais para aceder à sua conta" : 
-                  "Registe-se para começar a usar a plataforma"}
-              </p>
-            </div>
+          {/* Conteúdo do Formulário */}
+          <div className="flex items-center justify-center p-6 sm:p-8 md:p-16 flex-1">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-md"
+            >
+              {/* Seção de Boas-vindas */}
+              <div className="space-y-3 mb-8 text-center md:text-left">
+                <h1 className="font-bold tracking-tight text-foreground text-2xl md:text-3xl">
+                  {isLogin ? "Bem-vindo" : "Criar nova conta"}
+                </h1>
+                <p className="text-muted-foreground font-medium text-sm">
+                  {isLogin ? 
+                    "Introduza as suas credenciais para aceder à sua conta" : 
+                    "Registe-se para começar a usar a plataforma"}
+                </p>
+              </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <AnimatePresence mode="wait">
-                {!isLogin && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-5 overflow-hidden"
-                  >
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Nome completo *</Label>
-                      <Input
-                        id="name"
-                        placeholder="O seu nome"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required={!isLogin}
-                        className="h-12 rounded-xl border-border/60 focus:ring-[#3B82F6]"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
+                <AnimatePresence mode="wait">
+                  {!isLogin && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-4 md:space-y-5 overflow-hidden"
+                    >
                       <div className="space-y-2">
-                        <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Género *</Label>
-                        <Select value={genero} onValueChange={setGenero}>
-                          <SelectTrigger className="h-12 rounded-xl border-border/60">
-                            <SelectValue placeholder="Selecione" />
+                        <Label htmlFor="name" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Nome completo *</Label>
+                        <Input
+                          id="name"
+                          placeholder="O seu nome"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required={!isLogin}
+                          className="h-11 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-sm"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 md:gap-4">
+                        <div className="space-y-2">
+                          <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Género *</Label>
+                          <Select value={genero} onValueChange={setGenero}>
+                            <SelectTrigger className="h-11 md:h-12 rounded-xl border-border/60 text-sm">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="masculino">Masculino</SelectItem>
+                              <SelectItem value="feminino">Feminino</SelectItem>
+                              <SelectItem value="outro">Outro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="idade" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Idade</Label>
+                          <Input
+                            id="idade"
+                            type="number"
+                            placeholder="Ex: 18"
+                            min={10}
+                            max={99}
+                            value={idade}
+                            onChange={(e) => setIdade(e.target.value)}
+                            className="h-11 md:h-12 rounded-xl border-border/60 text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone *</Label>
+                        <PhoneInput
+                          id="telefone"
+                          value={telefone}
+                          onChange={(e164, valid) => {
+                            setTelefone(e164);
+                            setTelefoneValido(valid);
+                          }}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Função *</Label>
+                        <Select value={funcao} onValueChange={setFuncao}>
+                          <SelectTrigger className="h-11 md:h-12 rounded-xl border-border/60 text-sm">
+                            <SelectValue placeholder="Selecione a sua função" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="masculino">Masculino</SelectItem>
-                            <SelectItem value="feminino">Feminino</SelectItem>
+                            <SelectItem value="aluno">Aluno</SelectItem>
+                            <SelectItem value="professor">Professor</SelectItem>
                             <SelectItem value="outro">Outro</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="idade" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Idade</Label>
-                        <Input
-                          id="idade"
-                          type="number"
-                          placeholder="Ex: 18"
-                          min={10}
-                          max={99}
-                          value={idade}
-                          onChange={(e) => setIdade(e.target.value)}
-                          className="h-12 rounded-xl border-border/60"
-                        />
-                      </div>
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="h-11 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-sm"
+                  />
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="telefone" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Telefone *</Label>
-                      <PhoneInput
-                        id="telefone"
-                        value={telefone}
-                        onChange={(e164, valid) => {
-                          setTelefone(e164);
-                          setTelefoneValido(valid);
-                        }}
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Palavra-passe *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="h-11 md:h-12 rounded-xl border-border/60 focus:ring-[#3B82F6] text-sm"
+                  />
+                </div>
 
-                    <div className="space-y-2">
-                      <Label className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Função *</Label>
-                      <Select value={funcao} onValueChange={setFuncao}>
-                        <SelectTrigger className="h-12 rounded-xl border-border/60">
-                          <SelectValue placeholder="Selecione a sua função" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="aluno">Aluno</SelectItem>
-                          <SelectItem value="professor">Professor</SelectItem>
-                          <SelectItem value="outro">Outro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <Button type="submit" className="w-full h-12 md:h-14 rounded-full text-white text-base md:text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] bg-black mt-6 md:mt-8" disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  ) : null}
+                  {loading ? "A processar..." : isLogin ? "Entrar" : "Criar conta"}
+                </Button>
+              </form>
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="h-12 rounded-xl border-border/60 focus:ring-[#3B82F6]"
-                />
+              <div className="mt-6 md:mt-8 text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-sm md:text-base text-muted-foreground hover:text-[#3B82F6] transition-colors font-medium"
+                >
+                  {isLogin ? (
+                    <>Não tem conta? <span className="text-[#3B82F6] font-bold">Registe-se</span></>
+                  ) : (
+                    <>Já tem conta? <span className="text-[#3B82F6] font-bold">Entre aqui</span></>
+                  )}
+                </button>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="font-bold uppercase tracking-widest text-muted-foreground ml-1 text-xs">Palavra-passe *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="h-12 rounded-xl border-border/60 focus:ring-[#3B82F6]"
-                />
-              </div>
-
-              <Button type="submit" className="w-full h-14 rounded-full text-white text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] bg-black" disabled={loading}>
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                ) : null}
-                {loading ? "A processar..." : isLogin ? "Entrar" : "Criar conta"}
-              </Button>
-            </form>
-
-            <div className="mt-8 text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-base text-muted-foreground hover:text-[#3B82F6] transition-colors font-medium"
-              >
-                {isLogin ? (
-                  <>Não tem conta? <span className="text-[#3B82F6] font-bold text-base">Registe-se</span></>
-                ) : (
-                  <>Já tem conta? <span className="text-[#3B82F6] font-bold text-base">Entre aqui</span></>
-                )}
-              </button>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
         
-        <div className="p-8 text-center">
-          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest pb-0 pt-[80px]">
+        {/* Rodapé */}
+        <div className="p-6 md:p-8 text-center">
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest pb-0 pt-8 md:pt-[80px]">
             © {new Date().getFullYear()} Delle. Todos os direitos reservados.
           </p>
         </div>
