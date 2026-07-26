@@ -18,6 +18,8 @@ interface Popup {
   image_url: string | null;
   link_url: string | null;
   target_plan: string;
+  media_type: 'image' | 'video';
+  max_views_per_day: number;
 }
 
 const MarketingPopup = () => {
@@ -26,37 +28,64 @@ const MarketingPopup = () => {
   const { plan } = useUserPlan();
 
   useEffect(() => {
-    const fetchActivePopup = async () => {
-      // Check if user has already seen a popup in this session
-      const seenPopup = sessionStorage.getItem("doka_marketing_popup_seen");
-      if (seenPopup) return;
+    const checkAndFetchPopup = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      const { data, error } = await (supabase.from("popups") as any)
+      // Fetch active popup
+      const { data: popups, error: popupError } = await (supabase.from("popups") as any)
         .select("*")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(1);
 
-      if (!error && data && data.length > 0) {
-        const activePopup = data[0];
+      if (popupError || !popups || popups.length === 0) return;
+      const activePopup = popups[0];
+
+      // Check plan target
+      if (activePopup.target_plan !== "all" && activePopup.target_plan !== plan) return;
+
+      // Check frequency limit
+      const today = new Date().toISOString().split('T')[0];
+      const { data: viewData, error: viewError } = await (supabase.from("popup_views") as any)
+        .select("view_count")
+        .eq("user_id", user.id)
+        .eq("popup_id", activePopup.id)
+        .eq("viewed_at", today)
+        .maybeSingle();
+
+      const currentViews = viewData?.view_count || 0;
+      if (currentViews < (activePopup.max_views_per_day || 1)) {
+        setPopup(activePopup);
+        // Show popup after a short delay
+        setTimeout(() => setOpen(true), 2000);
         
-        // Check if popup targets this user's plan
-        if (activePopup.target_plan === "all" || activePopup.target_plan === plan) {
-          setPopup(activePopup);
-          // Show popup after a short delay
-          setTimeout(() => setOpen(true), 2000);
+        // Register the view
+        if (viewData) {
+          await (supabase.from("popup_views") as any)
+            .update({ view_count: currentViews + 1 })
+            .eq("user_id", user.id)
+            .eq("popup_id", activePopup.id)
+            .eq("viewed_at", today);
+        } else {
+          await (supabase.from("popup_views") as any)
+            .insert({
+              user_id: user.id,
+              popup_id: activePopup.id,
+              viewed_at: today,
+              view_count: 1
+            });
         }
       }
     };
 
     if (plan) {
-      fetchActivePopup();
+      checkAndFetchPopup();
     }
   }, [plan]);
 
   const handleClose = () => {
     setOpen(false);
-    sessionStorage.setItem("doka_marketing_popup_seen", "true");
   };
 
   const handleAction = () => {
@@ -70,7 +99,7 @@ const MarketingPopup = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none bg-transparent shadow-none">
+      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none bg-transparent shadow-none">
         <div className="relative bg-card rounded-xl overflow-hidden border shadow-2xl">
           <Button 
             variant="ghost" 
@@ -82,12 +111,23 @@ const MarketingPopup = () => {
           </Button>
 
           {popup.image_url && (
-            <div className="w-full h-48 overflow-hidden">
-              <img 
-                src={popup.image_url} 
-                alt={popup.title} 
-                className="w-full h-full object-cover"
-              />
+            <div className="w-full bg-black flex items-center justify-center overflow-hidden">
+              {popup.media_type === 'video' ? (
+                <video 
+                  src={popup.image_url} 
+                  className="w-full max-h-[300px]" 
+                  controls 
+                  autoPlay 
+                  muted 
+                  loop
+                />
+              ) : (
+                <img 
+                  src={popup.image_url} 
+                  alt={popup.title} 
+                  className="w-full h-full object-contain max-h-[300px]"
+                />
+              )}
             </div>
           )}
 
@@ -97,7 +137,7 @@ const MarketingPopup = () => {
             </DialogHeader>
             
             <div 
-              className="text-muted-foreground text-center prose prose-sm dark:prose-invert max-w-none"
+              className="text-muted-foreground text-center prose prose-sm dark:prose-invert max-w-none max-h-[200px] overflow-y-auto"
               dangerouslySetInnerHTML={{ __html: popup.content }}
             />
 

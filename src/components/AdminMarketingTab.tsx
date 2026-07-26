@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Megaphone, Plus, Trash2, Edit, Loader2, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { Megaphone, Plus, Trash2, Edit, Loader2, Image as ImageIcon, ExternalLink, Upload, Film, Eye } from "lucide-react";
 
 interface Popup {
   id: string;
@@ -38,6 +38,8 @@ interface Popup {
   link_url: string | null;
   is_active: boolean;
   target_plan: string;
+  media_type: 'image' | 'video';
+  max_views_per_day: number;
   created_at: string;
 }
 
@@ -47,14 +49,18 @@ const AdminMarketingTab = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPopup, setEditingPopup] = useState<Popup | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [isActive, setIsActive] = useState(false);
   const [targetPlan, setTargetPlan] = useState("all");
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
+  const [maxViews, setMaxViews] = useState(1);
 
   const fetchPopups = async () => {
     setLoading(true);
@@ -79,20 +85,53 @@ const AdminMarketingTab = () => {
       setEditingPopup(popup);
       setTitle(popup.title);
       setContent(popup.content);
-      setImageUrl(popup.image_url || "");
+      setMediaUrl(popup.image_url || "");
       setLinkUrl(popup.link_url || "");
       setIsActive(popup.is_active);
       setTargetPlan(popup.target_plan);
+      setMediaType(popup.media_type || 'image');
+      setMaxViews(popup.max_views_per_day || 1);
     } else {
       setEditingPopup(null);
       setTitle("");
       setContent("");
-      setImageUrl("");
+      setMediaUrl("");
       setLinkUrl("");
       setIsActive(false);
       setTargetPlan("all");
+      setMediaType('image');
+      setMaxViews(1);
     }
     setDialogOpen(true);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `popups/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('marketing')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('marketing')
+      .getPublicUrl(filePath);
+
+    setMediaUrl(publicUrl);
+    setMediaType(file.type.startsWith('video/') ? 'video' : 'image');
+    setUploading(false);
+    toast({ title: "Arquivo carregado com sucesso" });
   };
 
   const handleSave = async () => {
@@ -105,10 +144,12 @@ const AdminMarketingTab = () => {
     const popupData = {
       title,
       content,
-      image_url: imageUrl || null,
+      image_url: mediaUrl || null,
       link_url: linkUrl || null,
       is_active: isActive,
       target_plan: targetPlan,
+      media_type: mediaType,
+      max_views_per_day: maxViews,
       updated_at: new Date().toISOString(),
     };
 
@@ -184,16 +225,17 @@ const AdminMarketingTab = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Título</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Visualizações/Dia</TableHead>
                   <TableHead>Público-alvo</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Criado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {popups.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                       Nenhum pop-up configurado.
                     </TableCell>
                   </TableRow>
@@ -201,6 +243,18 @@ const AdminMarketingTab = () => {
                   popups.map((popup) => (
                     <TableRow key={popup.id}>
                       <TableCell className="font-medium">{popup.title}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {popup.media_type === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+                          <span className="text-xs capitalize">{popup.media_type}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          <span>{popup.max_views_per_day}x</span>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <span className="capitalize">{popup.target_plan === 'all' ? 'Todos' : popup.target_plan}</span>
                       </TableCell>
@@ -214,9 +268,6 @@ const AdminMarketingTab = () => {
                             {popup.is_active ? "Ativo" : "Inativo"}
                           </span>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {new Date(popup.created_at).toLocaleDateString("pt-AO")}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -238,7 +289,7 @@ const AdminMarketingTab = () => {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingPopup ? "Editar Pop-up" : "Criar Novo Pop-up"}</DialogTitle>
           </DialogHeader>
@@ -262,40 +313,99 @@ const AdminMarketingTab = () => {
                 className="min-h-[100px]"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <label htmlFor="imageUrl" className="text-sm font-medium">URL da Imagem (Opcional)</label>
+            
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Mídia (Imagem ou Vídeo)</label>
+              <div className="flex flex-col gap-3">
                 <div className="flex gap-2">
                   <Input 
-                    id="imageUrl" 
-                    value={imageUrl} 
-                    onChange={(e) => setImageUrl(e.target.value)} 
-                    placeholder="https://..."
+                    value={mediaUrl} 
+                    onChange={(e) => setMediaUrl(e.target.value)} 
+                    placeholder="URL da mídia ou faça upload..."
+                    className="flex-1"
                   />
-                  {imageUrl && (
-                    <Button variant="outline" size="icon" onClick={() => window.open(imageUrl, '_blank')}>
-                      <ImageIcon className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                    accept="image/*,video/*" 
+                    className="hidden" 
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="gap-2"
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    Upload
+                  </Button>
                 </div>
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="linkUrl" className="text-sm font-medium">URL de Destino (Opcional)</label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="linkUrl" 
-                    value={linkUrl} 
-                    onChange={(e) => setLinkUrl(e.target.value)} 
-                    placeholder="https://..."
-                  />
-                  {linkUrl && (
-                    <Button variant="outline" size="icon" onClick={() => window.open(linkUrl, '_blank')}>
-                      <ExternalLink className="h-4 w-4" />
+                
+                {mediaUrl && (
+                  <div className="mt-2 border rounded-lg p-2 bg-muted/30 relative group">
+                    {mediaType === 'image' ? (
+                      <img src={mediaUrl} alt="Preview" className="max-h-40 mx-auto rounded" />
+                    ) : (
+                      <video src={mediaUrl} className="max-h-40 mx-auto rounded" controls />
+                    )}
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setMediaUrl("")}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  )}
+                  </div>
+                )}
+                
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="radio" 
+                      id="type-image" 
+                      checked={mediaType === 'image'} 
+                      onChange={() => setMediaType('image')} 
+                    />
+                    <label htmlFor="type-image" className="text-xs">Imagem</label>
+                  </div>
+                  <div className="items-center gap-2 flex">
+                    <input 
+                      type="radio" 
+                      id="type-video" 
+                      checked={mediaType === 'video'} 
+                      onChange={() => setMediaType('video')} 
+                    />
+                    <label htmlFor="type-video" className="text-xs">Vídeo</label>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <label htmlFor="linkUrl" className="text-sm font-medium">URL de Destino (Opcional)</label>
+                <Input 
+                  id="linkUrl" 
+                  value={linkUrl} 
+                  onChange={(e) => setLinkUrl(e.target.value)} 
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="maxViews" className="text-sm font-medium">Visualizações por dia (por usuário)</label>
+                <Input 
+                  id="maxViews" 
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={maxViews} 
+                  onChange={(e) => setMaxViews(parseInt(e.target.value) || 1)} 
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <label htmlFor="targetPlan" className="text-sm font-medium">Público-alvo (Plano)</label>
