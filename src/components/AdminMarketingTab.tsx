@@ -28,7 +28,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Megaphone, Plus, Trash2, Edit, Loader2, Image as ImageIcon, ExternalLink, Upload, Film, Eye } from "lucide-react";
+import {
+  Megaphone, Plus, Trash2, Edit, Loader2, Image as ImageIcon,
+  ExternalLink, Upload, Film, Eye, ArrowRight,
+} from "lucide-react";
 
 interface Popup {
   id: string;
@@ -36,12 +39,39 @@ interface Popup {
   content: string;
   image_url: string | null;
   link_url: string | null;
+  internal_route: string | null;
   is_active: boolean;
   target_plan: string;
   media_type: 'image' | 'video';
   max_views_per_day: number;
   created_at: string;
 }
+
+// Internal site routes available for popup button navigation
+const INTERNAL_ROUTES: { value: string; label: string; group: string }[] = [
+  // Ferramentas de conteúdo
+  { value: "/trabalho", label: "Gerar Trabalho Escolar", group: "Ferramentas" },
+  { value: "/resumo", label: "Gerar Resumo", group: "Ferramentas" },
+  { value: "/questionario", label: "Gerar Questionário", group: "Ferramentas" },
+  { value: "/plano-aula", label: "Gerar Plano de Aula", group: "Ferramentas" },
+  { value: "/apresentacao", label: "Gerar Apresentação", group: "Ferramentas" },
+  { value: "/correcao", label: "Corrigir Trabalho", group: "Ferramentas" },
+  { value: "/curriculo", label: "Criar Currículo (CV)", group: "Ferramentas" },
+  // Navegação
+  { value: "/livraria", label: "Livraria", group: "Navegação" },
+  { value: "/minha-biblioteca", label: "Minha Biblioteca", group: "Navegação" },
+  { value: "/meus-projetos", label: "Meus Projetos", group: "Navegação" },
+  { value: "/home", label: "Início", group: "Navegação" },
+  { value: "/grupos", label: "Trabalho em Grupo", group: "Navegação" },
+  { value: "/suporte", label: "Suporte & Ajuda", group: "Navegação" },
+  { value: "/planos", label: "Planos & Assinaturas", group: "Navegação" },
+  { value: "/creditos", label: "Créditos Extras", group: "Navegação" },
+  // Admin (apenas para admins)
+  { value: "/admin", label: "Painel Admin", group: "Admin" },
+  { value: "/dashboard", label: "Dashboard", group: "Admin" },
+  { value: "/faturamento", label: "Faturamento", group: "Admin" },
+  { value: "/mensagens", label: "Mensagens", group: "Admin" },
+];
 
 const AdminMarketingTab = () => {
   const [popups, setPopups] = useState<Popup[]>([]);
@@ -57,6 +87,7 @@ const AdminMarketingTab = () => {
   const [content, setContent] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
+  const [internalRoute, setInternalRoute] = useState("");
   const [isActive, setIsActive] = useState(false);
   const [targetPlan, setTargetPlan] = useState("all");
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
@@ -87,6 +118,7 @@ const AdminMarketingTab = () => {
       setContent(popup.content);
       setMediaUrl(popup.image_url || "");
       setLinkUrl(popup.link_url || "");
+      setInternalRoute(popup.internal_route || "");
       setIsActive(popup.is_active);
       setTargetPlan(popup.target_plan);
       setMediaType(popup.media_type || 'image');
@@ -97,6 +129,7 @@ const AdminMarketingTab = () => {
       setContent("");
       setMediaUrl("");
       setLinkUrl("");
+      setInternalRoute("");
       setIsActive(false);
       setTargetPlan("all");
       setMediaType('image');
@@ -140,12 +173,16 @@ const AdminMarketingTab = () => {
       return;
     }
 
+    // If internal_route is selected, clear link_url to avoid ambiguity
+    const effectiveLinkUrl = internalRoute ? null : (linkUrl || null);
+
     setSaving(true);
     const popupData = {
       title,
       content,
       image_url: mediaUrl || null,
-      link_url: linkUrl || null,
+      link_url: effectiveLinkUrl,
+      internal_route: internalRoute || null,
       is_active: isActive,
       target_plan: targetPlan,
       media_type: mediaType,
@@ -202,6 +239,28 @@ const AdminMarketingTab = () => {
     }
   };
 
+  // When internal route is selected, clear link_url; when link_url is set, clear internal_route
+  const handleInternalRouteChange = (value: string) => {
+    setInternalRoute(value);
+    if (value) {
+      setLinkUrl("");
+    }
+  };
+
+  const handleLinkUrlChange = (value: string) => {
+    setLinkUrl(value);
+    if (value) {
+      setInternalRoute("");
+    }
+  };
+
+  // Group routes for the select
+  const groupedRoutes = INTERNAL_ROUTES.reduce((acc, route) => {
+    if (!acc[route.group]) acc[route.group] = [];
+    acc[route.group].push(route);
+    return acc;
+  }, {} as Record<string, typeof INTERNAL_ROUTES>);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -226,6 +285,7 @@ const AdminMarketingTab = () => {
                 <TableRow>
                   <TableHead>Título</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Destino</TableHead>
                   <TableHead>Visualizações/Dia</TableHead>
                   <TableHead>Público-alvo</TableHead>
                   <TableHead>Status</TableHead>
@@ -235,52 +295,64 @@ const AdminMarketingTab = () => {
               <TableBody>
                 {popups.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                       Nenhum pop-up configurado.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  popups.map((popup) => (
-                    <TableRow key={popup.id}>
-                      <TableCell className="font-medium">{popup.title}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          {popup.media_type === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-                          <span className="text-xs capitalize">{popup.media_type}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          <span>{popup.max_views_per_day}x</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="capitalize">{popup.target_plan === 'all' ? 'Todos' : popup.target_plan}</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch 
-                            checked={popup.is_active} 
-                            onCheckedChange={() => handleToggleActive(popup)}
-                          />
-                          <span className={popup.is_active ? "text-emerald-600" : "text-muted-foreground"}>
-                            {popup.is_active ? "Ativo" : "Inativo"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(popup)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(popup.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  popups.map((popup) => {
+                    const routeLabel = popup.internal_route
+                      ? INTERNAL_ROUTES.find(r => r.value === popup.internal_route)?.label || popup.internal_route
+                      : popup.link_url
+                        ? <span className="flex items-center gap-1 text-xs"><ExternalLink className="h-3 w-3" /> Externo</span>
+                        : "Nenhum";
+                    return (
+                      <TableRow key={popup.id}>
+                        <TableCell className="font-medium">{popup.title}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {popup.media_type === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+                            <span className="text-xs capitalize">{popup.media_type}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-xs">
+                            {routeLabel}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" />
+                            <span>{popup.max_views_per_day}x</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="capitalize">{popup.target_plan === 'all' ? 'Todos' : popup.target_plan}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch 
+                              checked={popup.is_active} 
+                              onCheckedChange={() => handleToggleActive(popup)}
+                            />
+                            <span className={popup.is_active ? "text-emerald-600" : "text-muted-foreground"}>
+                              {popup.is_active ? "Ativo" : "Inativo"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(popup)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(popup.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -383,18 +455,66 @@ const AdminMarketingTab = () => {
               </div>
             </div>
 
+            {/* Botão de destino — Mutually exclusive: internal route OR external URL */}
+            <div className="grid gap-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                Botão de Destino
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Escolha para onde o botão do pop-up vai levar o utilizador. Pode ser uma secção interna do site ou um link externo. Ambos são opcionais — sem destino, o botão apenas fecha o pop-up.
+              </p>
+              <div className="space-y-3">
+                {/* Internal route select */}
+                <div className="grid gap-2">
+                  <label className="text-xs font-medium text-muted-foreground">Secção interna do site (opcional)</label>
+                  <Select value={internalRoute} onValueChange={handleInternalRouteChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Nenhuma — botão só fecha o pop-up" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Nenhuma (botão fecha o pop-up)</SelectItem>
+                      {Object.entries(groupedRoutes).map(([group, routes]) => (
+                        <div key={group}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            {group}
+                          </div>
+                          {routes.map((route) => (
+                            <SelectItem key={route.value} value={route.value}>
+                              {route.label}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex-1 h-px bg-border" />
+                  <span>ou</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+
+                {/* External link */}
+                <div className="grid gap-2">
+                  <label htmlFor="linkUrl" className="text-xs font-medium text-muted-foreground">
+                    Link externo (opcional) — desactiva a rota interna se preenchido
+                  </label>
+                  <Input 
+                    id="linkUrl" 
+                    value={linkUrl} 
+                    onChange={(e) => handleLinkUrlChange(e.target.value)} 
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <label htmlFor="linkUrl" className="text-sm font-medium">URL de Destino (Opcional)</label>
-                <Input 
-                  id="linkUrl" 
-                  value={linkUrl} 
-                  onChange={(e) => setLinkUrl(e.target.value)} 
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="maxViews" className="text-sm font-medium">Visualizações por dia (por usuário)</label>
+                <label htmlFor="maxViews" className="text-sm font-medium">Visualizações por dia (por utilizador)</label>
                 <Input 
                   id="maxViews" 
                   type="number"
@@ -404,9 +524,6 @@ const AdminMarketingTab = () => {
                   onChange={(e) => setMaxViews(parseInt(e.target.value) || 1)} 
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <label htmlFor="targetPlan" className="text-sm font-medium">Público-alvo (Plano)</label>
                 <Select value={targetPlan} onValueChange={setTargetPlan}>
@@ -424,7 +541,7 @@ const AdminMarketingTab = () => {
               </div>
               <div className="flex items-center gap-2 pt-8">
                 <Switch id="isActive" checked={isActive} onCheckedChange={setIsActive} />
-                <label htmlFor="isActive" className="text-sm font-medium">Ativar imediatamente</label>
+                <label htmlFor="isActive" className="text-sm font-medium">Activar imediatamente</label>
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserPlan } from "@/hooks/use-user-plan";
 import {
@@ -9,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, ArrowRight } from "lucide-react";
 
 interface Popup {
   id: string;
@@ -17,16 +18,42 @@ interface Popup {
   content: string;
   image_url: string | null;
   link_url: string | null;
+  internal_route: string | null;
   target_plan: string;
   media_type: 'image' | 'video';
   max_views_per_day: number;
 }
+
+// Map of internal route labels for button text
+const ROUTE_LABELS: Record<string, string> = {
+  "/home": "Início",
+  "/dashboard": "Dashboard",
+  "/faturamento": "Faturamento",
+  "/admin": "Painel Admin",
+  "/meus-projetos": "Meus Projetos",
+  "/trabalho": "Gerar Trabalho",
+  "/curriculo": "Currículo (CV)",
+  "/resumo": "Resumo",
+  "/questionario": "Questionário",
+  "/plano-aula": "Plano de Aula",
+  "/apresentacao": "Apresentação",
+  "/correcao": "Corrigir Trabalho",
+  "/grupos": "Trabalho em Grupo",
+  "/livraria": "Livraria",
+  "/planos": "Planos & Assinaturas",
+  "/creditos": "Créditos Extras",
+  "/suporte": "Suporte & Ajuda",
+  "/mensagens": "Mensagens",
+  "/minha-biblioteca": "Minha Biblioteca",
+  "/configuracoes": "Configurações",
+};
 
 const MarketingPopup = () => {
   const [popup, setPopup] = useState<Popup | null>(null);
   const [open, setOpen] = useState(false);
   const { plan } = useUserPlan();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkAndFetchPopup = async () => {
@@ -90,10 +117,30 @@ const MarketingPopup = () => {
   };
 
   const handleAction = () => {
-    if (popup?.link_url) {
+    // Priority: internal_route > link_url > close only
+    if (popup?.internal_route) {
+      handleClose();
+      // Small delay to let dialog close animation finish
+      setTimeout(() => {
+        navigate(popup.internal_route!);
+      }, 200);
+    } else if (popup?.link_url) {
       window.open(popup.link_url, "_blank");
+      handleClose();
+    } else {
+      handleClose();
     }
-    handleClose();
+  };
+
+  // Determine button label
+  const getButtonLabel = () => {
+    if (popup?.internal_route) {
+      return ROUTE_LABELS[popup.internal_route] || "Ver Secção";
+    }
+    if (popup?.link_url) {
+      return "Ver Detalhes";
+    }
+    return "Entendido";
   };
 
   if (!popup) return null;
@@ -163,7 +210,10 @@ const MarketingPopup = () => {
                 onClick={handleAction} 
                 className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:scale-105 transition-transform"
               >
-                {popup.link_url ? "Ver Detalhes" : "Entendido"}
+                {getButtonLabel()}
+                {(popup.internal_route || popup.link_url) && (
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                )}
               </Button>
             </DialogFooter>
           </div>
