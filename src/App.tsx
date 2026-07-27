@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import HomePage from "@/pages/HomePage";
 import AuthPage from "@/pages/AuthPage";
 import Dashboard from "@/pages/Dashboard";
@@ -40,6 +41,14 @@ import SupportNotification from "@/components/SupportNotification";
 
 const queryClient = new QueryClient();
 
+// Wraps each route element with a page-level ErrorBoundary so that
+// a crash on one page never produces a white screen across the whole app.
+const withErrorBoundary = (element: React.ReactNode, label: string) => (
+  <ErrorBoundary>
+    <div className="min-h-screen">{element}</div>
+  </ErrorBoundary>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -50,40 +59,39 @@ const App = () => (
           <NoCreditsModal />
           <SupportNotification />
           <Routes>
-            <Route path="/livraria/:id" element={<LivroDetalhePage />} />
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="/landing" element={<HomePage />} />
-            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/livraria/:id" element={withErrorBoundary(<LivroDetalhePage />, "Livro Detalhe")} />
+            <Route path="/" element={withErrorBoundary(<RootRedirect />, "Redirecionamento")} />
+            <Route path="/landing" element={withErrorBoundary(<HomePage />, "Landing")} />
+            <Route path="/auth" element={withErrorBoundary(<AuthPage />, "Autenticação")} />
             <Route element={<ProtectedRoute />}>
-              <Route path="/setup-api-keys" element={<ApiKeysSetup />} />
+              <Route path="/setup-api-keys" element={withErrorBoundary(<ApiKeysSetup />, "Configurar API Keys")} />
               <Route element={<AppLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/home" element={<UserHomePage />} />
-                <Route path="/grupos" element={<GruposPage />} />
-                <Route path="/grupos/:id" element={<GrupoDetalhePage />} />
-                <Route path="/meus-projetos" element={<MeusProjetosPage />} />
-                <Route path="/trabalho" element={<TrabalhoPage />} />
-                <Route path="/resumo" element={<ResumoPage />} />
-                <Route path="/resumo/editar" element={<ResumoEditorPage />} />
-                <Route path="/resumo/mapa-mental" element={<MindMapEditorPage />} />
-                <Route path="/questionario" element={<QuestionarioPage />} />
-                <Route path="/plano-aula" element={<PlanoAulaPage />} />
-                <Route path="/correcao" element={<CorrecaoPage />} />
-                <Route path="/admin" element={<AdminPanelPage />} />
-                <Route path="/configuracoes" element={<SettingsPage />} />
-                <Route path="/planos" element={<PlanosPage />} />
-                <Route path="/creditos" element={<CreditosPage />} />
-                <Route path="/suporte" element={<SuportePage />} />
-                <Route path="/mensagens" element={<AdminMensagensPage />} />
-                <Route path="/curriculo" element={<CurriculoPage />} />
-                <Route path="/apresentacao" element={<ApresentacaoPage />} />
-                <Route path="/livraria" element={<LivrariaPage />} />
-
-                <Route path="/minha-biblioteca" element={<MinhaBibliotecaPage />} />
-                <Route path="/faturamento" element={<FaturamentoPage />} />
+                <Route path="/dashboard" element={withErrorBoundary(<Dashboard />, "Dashboard")} />
+                <Route path="/home" element={withErrorBoundary(<UserHomePage />, "Início")} />
+                <Route path="/grupos" element={withErrorBoundary(<GruposPage />, "Grupos")} />
+                <Route path="/grupos/:id" element={withErrorBoundary(<GrupoDetalhePage />, "Grupo Detalhe")} />
+                <Route path="/meus-projetos" element={withErrorBoundary(<MeusProjetosPage />, "Meus Projetos")} />
+                <Route path="/trabalho" element={withErrorBoundary(<TrabalhoPage />, "Trabalho")} />
+                <Route path="/resumo" element={withErrorBoundary(<ResumoPage />, "Resumo")} />
+                <Route path="/resumo/editar" element={withErrorBoundary(<ResumoEditorPage />, "Editar Resumo")} />
+                <Route path="/resumo/mapa-mental" element={withErrorBoundary(<MindMapEditorPage />, "Mapa Mental")} />
+                <Route path="/questionario" element={withErrorBoundary(<QuestionarioPage />, "Questionário")} />
+                <Route path="/plano-aula" element={withErrorBoundary(<PlanoAulaPage />, "Plano de Aula")} />
+                <Route path="/correcao" element={withErrorBoundary(<CorrecaoPage />, "Correção")} />
+                <Route path="/admin" element={withErrorBoundary(<AdminPanelPage />, "Admin")} />
+                <Route path="/configuracoes" element={withErrorBoundary(<SettingsPage />, "Configurações")} />
+                <Route path="/planos" element={withErrorBoundary(<PlanosPage />, "Planos")} />
+                <Route path="/creditos" element={withErrorBoundary(<CreditosPage />, "Créditos")} />
+                <Route path="/suporte" element={withErrorBoundary(<SuportePage />, "Suporte")} />
+                <Route path="/mensagens" element={withErrorBoundary(<AdminMensagensPage />, "Mensagens")} />
+                <Route path="/curriculo" element={withErrorBoundary(<CurriculoPage />, "Currículo")} />
+                <Route path="/apresentacao" element={withErrorBoundary(<ApresentacaoPage />, "Apresentação")} />
+                <Route path="/livraria" element={withErrorBoundary(<LivrariaPage />, "Livraria")} />
+                <Route path="/minha-biblioteca" element={withErrorBoundary(<MinhaBibliotecaPage />, "Minha Biblioteca")} />
+                <Route path="/faturamento" element={withErrorBoundary(<FaturamentoPage />, "Faturamento")} />
               </Route>
             </Route>
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={withErrorBoundary(<NotFound />, "404")} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

@@ -174,7 +174,8 @@ const AdminMarketingTab = () => {
     }
 
     // If internal_route is selected, clear link_url to avoid ambiguity
-    const effectiveLinkUrl = internalRoute ? null : (linkUrl || null);
+    const effectiveInternalRoute = internalRoute === "none" ? null : (internalRoute || null);
+    const effectiveLinkUrl = effectiveInternalRoute ? null : (linkUrl || null);
 
     setSaving(true);
     const popupData = {
@@ -182,7 +183,7 @@ const AdminMarketingTab = () => {
       content,
       image_url: mediaUrl || null,
       link_url: effectiveLinkUrl,
-      internal_route: internalRoute || null,
+      internal_route: effectiveInternalRoute,
       is_active: isActive,
       target_plan: targetPlan,
       media_type: mediaType,
@@ -241,10 +242,12 @@ const AdminMarketingTab = () => {
 
   // When internal route is selected, clear link_url; when link_url is set, clear internal_route
   const handleInternalRouteChange = (value: string) => {
-    setInternalRoute(value);
-    if (value) {
-      setLinkUrl("");
+    if (value === "none" || value === "") {
+      setInternalRoute("");
+      return;
     }
+    setInternalRoute(value);
+    setLinkUrl("");
   };
 
   const handleLinkUrlChange = (value: string) => {
@@ -468,12 +471,12 @@ const AdminMarketingTab = () => {
                 {/* Internal route select */}
                 <div className="grid gap-2">
                   <label className="text-xs font-medium text-muted-foreground">Secção interna do site (opcional)</label>
-                  <Select value={internalRoute} onValueChange={handleInternalRouteChange}>
+                  <Select value={internalRoute || "none"} onValueChange={handleInternalRouteChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Nenhuma — botão só fecha o pop-up" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhuma (botão fecha o pop-up)</SelectItem>
+                      <SelectItem value="none">Nenhuma (botão fecha o pop-up)</SelectItem>
                       {Object.entries(groupedRoutes).map(([group, routes]) => (
                         <div key={group}>
                           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
