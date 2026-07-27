@@ -84,24 +84,24 @@ export default function CommunityFeed({
   return (
     <div className="space-y-4">
       {/* Create Post Card */}
-      <Card className="border-border/40 shadow-sm hover:shadow-md transition-all duration-300 bg-background/50 backdrop-blur-sm">
+      <Card className="border-border/40 shadow-sm">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Avatar className="h-10 w-10 ring-2 ring-primary/10">
+            <Avatar className="h-10 w-10">
               <AvatarImage src={userAvatar} />
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+              <AvatarFallback>
                 {userEmail?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground font-medium mb-3">
+              <p className="text-sm text-muted-foreground mb-3">
                 O que está na tua mente?
               </p>
               <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 text-xs border-border/40 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                  className="gap-2"
                   onClick={onCreatePost}
                   disabled
                 >
@@ -111,7 +111,7 @@ export default function CommunityFeed({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 text-xs border-border/40 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                  className="gap-2"
                   onClick={onCreatePost}
                   disabled
                 >
@@ -126,14 +126,11 @@ export default function CommunityFeed({
 
       {/* Posts */}
       {posts.length === 0 ? (
-        <Card className="border-border/40 shadow-sm bg-background/50 backdrop-blur-sm">
+        <Card className="border-border/40 shadow-sm">
           <CardContent className="p-8 text-center">
-            <div className="space-y-2">
-              <Loader2 className="w-8 h-8 text-muted-foreground/50 mx-auto" />
-              <p className="text-muted-foreground">
-                Nenhuma postagem ainda. Começa a seguir utilizadores para ver as suas postagens!
-              </p>
-            </div>
+            <p className="text-muted-foreground">
+              Nenhuma postagem ainda. Começa a seguir utilizadores para ver as suas postagens!
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -144,12 +141,12 @@ export default function CommunityFeed({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
           >
-            <Card className="border-border/40 shadow-sm hover:shadow-md transition-all duration-300 bg-background/50 backdrop-blur-sm">
+            <Card className="border-border/40 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3 mb-3">
-                  <Avatar className="h-10 w-10 ring-1 ring-primary/10">
+                  <Avatar className="h-10 w-10">
                     <AvatarImage src={post.user_avatar} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                    <AvatarFallback>
                       {post.user_name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
