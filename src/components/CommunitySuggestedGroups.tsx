@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Users as UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -19,9 +20,12 @@ export default function CommunitySuggestedGroups({
   onJoin,
 }: CommunitySuggestedGroupsProps) {
   return (
-    <Card className="border-border/40 shadow-sm">
+    <Card className="border-border/40 shadow-sm hover:shadow-md transition-all duration-300 bg-background/50 backdrop-blur-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Grupos sugeridos</CardTitle>
+        <CardTitle className="text-base flex items-center gap-2">
+          <UsersIcon className="w-4 h-4 text-primary" />
+          Grupos
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {groups.length === 0 ? (
@@ -35,7 +39,7 @@ export default function CommunitySuggestedGroups({
               initial={{ opacity: 0, x: 8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="p-2 rounded-lg hover:bg-secondary transition-colors cursor-pointer"
+              className="p-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer group"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -43,7 +47,7 @@ export default function CommunitySuggestedGroups({
                     {group.name}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {group.members_count} membros
+                    {group.members_count} {group.members_count === 1 ? "membro" : "membros"}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                     {group.description}
@@ -51,9 +55,9 @@ export default function CommunitySuggestedGroups({
                 </div>
               </div>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="w-full text-xs mt-2"
+                className="w-full text-xs mt-2 h-7 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors opacity-0 group-hover:opacity-100"
                 onClick={() => onJoin?.(group.id)}
                 disabled
               >

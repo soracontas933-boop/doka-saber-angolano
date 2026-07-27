@@ -9,6 +9,7 @@ import {
   Share2,
   Image as ImageIcon,
   Video,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,6 +20,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import CommunityFeed from "@/components/CommunityFeed";
+import CommunityOnlineUsers from "@/components/CommunityOnlineUsers";
+import CommunitySuggestedUsers from "@/components/CommunitySuggestedUsers";
+import CommunitySuggestedGroups from "@/components/CommunitySuggestedGroups";
+import CommunityFutureIntegrations from "@/components/CommunityFutureIntegrations";
 
 interface CommunityPost {
   id: string;
@@ -164,350 +170,194 @@ export default function CommunityPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 max-w-7xl pb-20 md:pb-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2 mb-2">
-          <Users className="w-6 h-6 text-primary" />
-          Comunidade
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Conecta-te com outros utilizadores, partilha conhecimento e colabora em projetos
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95">
+      {/* Header com design minimalista */}
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl pt-4 md:pt-6 pb-4">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-2"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-primary/10 backdrop-blur-sm">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                Comunidade
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Conecta-te com outros utilizadores, partilha conhecimento e colabora
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Procura utilizadores, grupos ou tópicos..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-          />
-        </div>
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              placeholder="Procura utilizadores, grupos ou tópicos..."
+              className="pl-10 bg-background border-border/40 hover:border-border/60 focus-visible:border-primary/50 transition-colors shadow-sm"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </div>
+        </motion.div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Feed - Left Column */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Create Post Card */}
-            <Card className="border-border/40 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} />
-                    <AvatarFallback>
-                      {user?.email?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      O que está na tua mente?
-                    </p>
-                    <div className="flex gap-2 flex-wrap">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        disabled
-                      >
-                        <ImageIcon className="w-4 h-4" />
-                        Imagem
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        disabled
-                      >
-                        <Video className="w-4 h-4" />
-                        Vídeo (até 15s)
-                      </Button>
+      {/* Main Content */}
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-20 md:pb-6">
+        {loading ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center py-20"
+          >
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">
+                Carregando comunidade...
+              </p>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Feed - Left Column */}
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="lg:col-span-2 space-y-4"
+            >
+              {/* Create Post Card com design minimalista */}
+              <Card className="border-border/40 shadow-sm hover:shadow-md transition-all duration-300 bg-background/50 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-10 w-10 ring-2 ring-primary/10">
+                      <AvatarImage src={user?.user_metadata?.avatar_url} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {user?.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground font-medium mb-3">
+                        O que está na tua mente?
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 text-xs border-border/40 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                          disabled
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          Imagem
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 text-xs border-border/40 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                          disabled
+                        >
+                          <Video className="w-4 h-4" />
+                          Vídeo (até 15s)
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-background border border-border/40">
-                <TabsTrigger value="para-voce">Para ti</TabsTrigger>
-                <TabsTrigger value="seguindo">Seguindo</TabsTrigger>
-                <TabsTrigger value="tendencias">Tendências</TabsTrigger>
-              </TabsList>
+              {/* Tabs */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-3 bg-background border border-border/40 shadow-sm">
+                  <TabsTrigger value="para-voce" className="text-xs md:text-sm">
+                    Para ti
+                  </TabsTrigger>
+                  <TabsTrigger value="seguindo" className="text-xs md:text-sm">
+                    Seguindo
+                  </TabsTrigger>
+                  <TabsTrigger value="tendencias" className="text-xs md:text-sm">
+                    Tendências
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="para-voce" className="space-y-4 mt-4">
-                {posts.map((post, index) => (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className="border-border/40 shadow-sm hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3 mb-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback>
-                              {post.user_name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm">
-                              {post.user_name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(post.created_at).toLocaleDateString(
-                                "pt-PT"
-                              )}
-                            </p>
-                          </div>
-                        </div>
+                <TabsContent value="para-voce" className="space-y-4 mt-4">
+                  <CommunityFeed
+                    posts={posts}
+                    loading={false}
+                    onLike={handleLike}
+                    onComment={handleComment}
+                    onShare={handleShare}
+                    userAvatar={user?.user_metadata?.avatar_url}
+                    userEmail={user?.email}
+                  />
+                </TabsContent>
 
-                        <p className="text-sm mb-3 text-foreground/90">
-                          {post.content}
+                <TabsContent value="seguindo" className="space-y-4 mt-4">
+                  <Card className="border-border/40 shadow-sm bg-background/50 backdrop-blur-sm">
+                    <CardContent className="p-8 text-center">
+                      <div className="space-y-2">
+                        <Users className="w-8 h-8 text-muted-foreground/50 mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          Começa a seguir utilizadores para ver as suas postagens aqui
                         </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                        {post.media_url && (
-                          <div className="mb-3 rounded-lg overflow-hidden bg-secondary h-48">
-                            {post.media_type === "image" ? (
-                              <img
-                                src={post.media_url}
-                                alt="Post media"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <video
-                                src={post.media_url}
-                                className="w-full h-full object-cover"
-                              />
-                            )}
-                          </div>
-                        )}
+                <TabsContent value="tendencias" className="space-y-4 mt-4">
+                  <Card className="border-border/40 shadow-sm bg-background/50 backdrop-blur-sm">
+                    <CardContent className="p-8 text-center">
+                      <div className="space-y-2">
+                        <Zap className="w-8 h-8 text-muted-foreground/50 mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          As tendências aparecerão aqui em breve
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </motion.div>
 
-                        <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border/20">
-                          <span>{post.likes_count} gostos</span>
-                          <span>{post.comments_count} comentários</span>
-                        </div>
+            {/* Sidebar - Right Column */}
+            <motion.div
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+              className="space-y-4"
+            >
+              {/* Online Users */}
+              <CommunityOnlineUsers
+                users={onlineUsers}
+                onMessage={(userId) =>
+                  toast.info("Chat disponível em breve para " + userId)
+                }
+              />
 
-                        <div className="flex gap-2 mt-3 pt-3 border-t border-border/20">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex-1 gap-2 text-muted-foreground hover:text-primary"
-                            onClick={() => handleLike(post.id)}
-                          >
-                            <Heart className="w-4 h-4" />
-                            Gosto
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex-1 gap-2 text-muted-foreground hover:text-primary"
-                            onClick={() => handleComment(post.id)}
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            Comentar
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex-1 gap-2 text-muted-foreground hover:text-primary"
-                            onClick={() => handleShare(post.id)}
-                          >
-                            <Share2 className="w-4 h-4" />
-                            Partilhar
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </TabsContent>
+              {/* Suggested Users */}
+              <CommunitySuggestedUsers users={suggestedUsers} />
 
-              <TabsContent value="seguindo" className="space-y-4 mt-4">
-                <Card className="border-border/40 shadow-sm">
-                  <CardContent className="p-8 text-center">
-                    <p className="text-muted-foreground">
-                      Começa a seguir utilizadores para ver as suas postagens aqui
-                    </p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+              {/* Suggested Groups */}
+              <CommunitySuggestedGroups groups={suggestedGroups} />
 
-              <TabsContent value="tendencias" className="space-y-4 mt-4">
-                <Card className="border-border/40 shadow-sm">
-                  <CardContent className="p-8 text-center">
-                    <p className="text-muted-foreground">
-                      As tendências aparecerão aqui em breve
-                    </p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+              {/* Future Integrations */}
+              <CommunityFutureIntegrations />
+            </motion.div>
           </div>
-
-          {/* Sidebar - Right Column */}
-          <div className="space-y-4">
-            {/* Online Users */}
-            <Card className="border-border/40 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Online agora</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {onlineUsers.map((user) => (
-                  <motion.div
-                    key={user.id}
-                    initial={{ opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="relative">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>
-                            {user.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div
-                          className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-background ${
-                            user.status === "online"
-                              ? "bg-green-500"
-                              : "bg-yellow-500"
-                          }`}
-                        />
-                      </div>
-                      <span className="text-sm font-medium truncate">
-                        {user.name}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                    </Button>
-                  </motion.div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Suggested Users */}
-            <Card className="border-border/40 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Sugestões de utilizadores</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {suggestedUsers.map((suggestedUser) => (
-                  <motion.div
-                    key={suggestedUser.id}
-                    initial={{ opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>
-                          {suggestedUser.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {suggestedUser.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {suggestedUser.mutual_friends} amigos em comum
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      disabled
-                    >
-                      Seguir
-                    </Button>
-                  </motion.div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Suggested Groups */}
-            <Card className="border-border/40 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Grupos sugeridos</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {suggestedGroups.map((group) => (
-                  <motion.div
-                    key={group.id}
-                    initial={{ opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="p-2 rounded-lg hover:bg-secondary transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">
-                          {group.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {group.members_count} membros
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {group.description}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs mt-2"
-                      disabled
-                    >
-                      Juntar
-                    </Button>
-                  </motion.div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Future Integrations Placeholder */}
-            <Card className="border-dashed border-2 border-border/40 shadow-sm bg-background/50">
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
-                    Próximas funcionalidades
-                  </p>
-                  <div className="flex flex-wrap gap-1 justify-center">
-                    <Badge variant="outline" className="text-xs">
-                      Chat
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      Jogos
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      Eventos
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      IA
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
