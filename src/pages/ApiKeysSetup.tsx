@@ -20,7 +20,7 @@ import { Plus, Trash2, AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft, Chevro
 import { Badge } from "@/components/ui/badge";
 
 const TEXT_PROVIDERS = [
-  { key: "gemini", label: "Google AI Studio (Gemini)", placeholder: "AIzaSy...", description: "OCR + texto. Gratuito com limite diário." },
+  { key: "gemini", label: "Google AI Studio (Gemini)", placeholder: "AQ... ou AIza...", description: "OCR + texto. Aceita chaves novas (AQ) e antigas (AIza)." },
   { key: "groq", label: "Groq", placeholder: "gsk_...", description: "Llama 3.3 70B + Vision OCR. Muito rápido e gratuito." },
   { key: "cerebras", label: "Cerebras", placeholder: "csk-...", description: "Llama 3.3 70B. Extremamente rápido e gratuito." },
   { key: "together", label: "Together AI", placeholder: "tok_...", description: "Llama 3.3 70B free tier. Gratuito." },
@@ -533,7 +533,7 @@ export default function ApiKeysSetup() {
                                 type={isHidden ? "password" : "text"}
                                 value={keyRow.chave}
                                 onChange={(event) => updateKey(globalIndex, event.target.value)}
-                                placeholder={`Cole aqui a chave ${provider.placeholder}`}
+                                placeholder={provider.key === "gemini" ? "Cole a chave (AQ... ou AIza...)" : `Cole aqui a chave ${provider.placeholder}`}
                                 className={exhausted ? "border-destructive pr-16" : "pr-16"}
                               />
 
@@ -637,7 +637,7 @@ export default function ApiKeysSetup() {
                                 type={isHidden ? "password" : "text"}
                                 value={keyRow.chave}
                                 onChange={(event) => updateKey(globalIndex, event.target.value)}
-                                placeholder={`Cole aqui a chave ${provider.placeholder}`}
+                                placeholder={provider.key === "gemini" ? "Cole a chave (AQ... ou AIza...)" : `Cole aqui a chave ${provider.placeholder}`}
                                 className={exhausted ? "border-destructive pr-16" : "pr-16"}
                               />
 
