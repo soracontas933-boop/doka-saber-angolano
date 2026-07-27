@@ -1,4 +1,4 @@
-import { QueryClimport { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -35,7 +35,6 @@ import MinhaBibliotecaPage from "@/pages/MinhaBibliotecaPage";
 import NotFound from "@/pages/NotFound";
 import RootRedirect from "@/components/RootRedirect";
 import CreditosPage from "@/pages/CreditosPage";
-import CommunityPage from "@/pages/CommunityPage";
 import NoCreditsModal from "@/components/NoCreditsModal";
 import SupportNotification from "@/components/SupportNotification";
 
@@ -79,7 +78,7 @@ const App = () => (
                 <Route path="/curriculo" element={<CurriculoPage />} />
                 <Route path="/apresentacao" element={<ApresentacaoPage />} />
                 <Route path="/livraria" element={<LivrariaPage />} />
-                <Route path="/comunidade" element={<CommunityPage />} />
+
                 <Route path="/minha-biblioteca" element={<MinhaBibliotecaPage />} />
                 <Route path="/faturamento" element={<FaturamentoPage />} />
               </Route>

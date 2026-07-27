@@ -57,7 +57,7 @@ const navItems: NavItem[] = [
   { to: "/plano-aula", icon: ClipboardList, label: "Plano de Aula", featureKey: "plano-aula" },
   { to: "/apresentacao", icon: Presentation, label: "Apresentação", featureKey: "apresentacao" },
   { to: "/correcao", icon: Search, label: "Corrigir Trabalho", featureKey: "correcao" },
-  { to: "/comunidade", icon: Users, label: "Comunidade", userOnly: true, featureKey: "comunidade" },
+  { to: "/grupos", icon: Users, label: "Trabalho em Grupo", userOnly: true, featureKey: "grupos" },
   { to: "/livraria", icon: Library, label: "Livraria", masterLabel: "Livraria", featureKey: "livraria" },
   { to: "/planos", icon: CreditCard, label: "Planos", masterLabel: "Assinaturas", featureKey: "planos" },
   { to: "/creditos", icon: Zap, label: "Créditos Extras", userOnly: true, featureKey: "creditos" },
