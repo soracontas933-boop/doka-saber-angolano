@@ -105,7 +105,7 @@ const MarketingPopup = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="absolute right-2 top-2 z-10 rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80"
+            className="absolute right-1 sm:right-3 top-1 sm:top-3 z-10 rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80"
             onClick={handleClose}
           >
             <X className="h-4 w-4" />
