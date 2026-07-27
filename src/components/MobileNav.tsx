@@ -1,11 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, FolderOpen, Library, Presentation, Settings } from "lucide-react";
+import { Home, FolderOpen, Library, Presentation, Settings, Users } from "lucide-react";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useAdmin } from "@/hooks/use-admin";
 
 const navItems = [
   { to: "/home", icon: Home, label: "Início", featureKey: "home" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos", featureKey: "meus-projetos" },
+  { to: "/comunidade", icon: Users, label: "Comunidade", featureKey: "comunidade" },
   { to: "/livraria", icon: Library, label: "Livraria", featureKey: "livraria" },
   { to: "/apresentacao", icon: Presentation, label: "Slides", featureKey: "apresentacao" },
   { to: "/configuracoes", icon: Settings, label: "Ajustes" },
