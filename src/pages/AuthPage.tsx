@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, ArrowLeft } from "lucide-react";
 import PhoneInput from "@/components/PhoneInput";
+import { Particles } from "@/components/ui/particles";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -130,6 +131,15 @@ const AuthPage = () => {
     <div className="min-h-screen flex flex-col md:flex-row bg-background font-apple">
       {/* Lado Esquerdo: Imagem (Desktop) */}
       <div className="hidden md:flex md:w-1/2 lg:w-3/5 relative overflow-hidden bg-[#F5F5F7] dark:bg-[#0B0B0B]">
+        {/* Particles Background */}
+        <Particles
+          className="absolute inset-0"
+          quantity={80}
+          staticity={60}
+          ease={50}
+          size={1}
+          color="#3B82F6"
+        />
         <AnimatePresence mode="wait">
           <motion.div
             key={loginImageUrl || 'default'}
@@ -172,6 +182,15 @@ const AuthPage = () => {
 
       {/* Mobile: Imagem no topo com gradiente */}
       <div className="md:hidden relative w-full h-72 overflow-hidden bg-[#F5F5F7] dark:bg-[#0B0B0B]">
+        {/* Particles Background */}
+        <Particles
+          className="absolute inset-0"
+          quantity={40}
+          staticity={70}
+          ease={60}
+          size={0.8}
+          color="#3B82F6"
+        />
         {/* Botão Voltar no topo */}
         <div className="absolute top-4 left-4 z-30">
           <Button 
@@ -230,6 +249,15 @@ const AuthPage = () => {
 
       {/* Lado Direito: Formulário (Desktop) e Conteúdo Mobile */}
       <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col relative bg-white dark:bg-[#0B0B0B]">
+        {/* Particles Background - sutil no formulário */}
+        <Particles
+          className="absolute inset-0 opacity-30"
+          quantity={20}
+          staticity={80}
+          ease={80}
+          size={0.6}
+          color="#3B82F6"
+        />
         {/* Botão voltar - Desktop */}
         <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20 bg-white dark:bg-[#0B0B0B]">
           <Button 
