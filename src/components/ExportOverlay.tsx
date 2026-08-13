@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { Loader2, FileDown } from "lucide-react";
+import { FileDown } from "lucide-react";
+import { DelleLoader } from "./DelleLoader";
 
 let overlayContainer: HTMLDivElement | null = null;
 let overlayRoot: ReturnType<typeof createRoot> | null = null;
@@ -9,7 +10,7 @@ function ExportOverlay({ message }: { message: string }) {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-card border border-border rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4 max-w-xs w-full mx-4">
         <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-          <Loader2 className="h-7 w-7 text-primary animate-spin" />
+          <DelleLoader className="h-10 w-10" />
         </div>
         <div className="text-center">
           <p className="font-display font-semibold text-foreground text-base">A exportar...</p>

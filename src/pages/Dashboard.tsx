@@ -5,7 +5,6 @@ import {
   Users,
   FileText,
   Zap,
-  Loader2,
   LayoutDashboard,
   CreditCard,
   RefreshCw,
@@ -44,6 +43,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -486,7 +486,7 @@ const Dashboard = () => {
   if (isLoadingAdmin || !isAdmin || loading) {
     return (
       <div className="flex items-center justify-center h-full py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <DelleLoader className="h-10 w-10" />
       </div>
     );
   }
@@ -1022,7 +1022,7 @@ const Dashboard = () => {
               Reiniciar Créditos
             </Button>
             <Button onClick={handleUpdatePlan} disabled={saving} className="gap-1">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
+              {saving ? <DelleLoader className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
               Guardar Plano
             </Button>
           </DialogFooter>

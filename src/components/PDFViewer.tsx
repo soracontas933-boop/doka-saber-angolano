@@ -6,7 +6,6 @@ import {
   ChevronRight, 
   ZoomIn, 
   ZoomOut, 
-  Loader2, 
   X, 
   Sun, 
   Moon, 
@@ -15,6 +14,7 @@ import {
   Tag,
   BookOpen
 } from "lucide-react";
+import { DelleLoader } from "./DelleLoader";
 import { toast } from "@/hooks/use-toast";
 
 // @ts-ignore - importar worker como URL via Vite (evita falha de CDN)
@@ -249,10 +249,7 @@ const PDFViewer = ({ url, onClose, title }: PDFViewerProps) => {
         >
           {loading || !pdf ? (
             <div className="flex flex-col items-center justify-center h-full gap-4">
-              <div className="relative">
-                <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-              </div>
+              <DelleLoader className="h-16 w-16 sm:h-20 sm:w-20" />
               <p className="text-xs sm:text-sm font-bold text-slate-500 animate-pulse">Preparando sua leitura...</p>
             </div>
           ) : (

@@ -15,7 +15,8 @@ import DelleLogo from "@/components/DelleLogo";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import PhoneInput from "@/components/PhoneInput";
 import { Particles } from "@/components/ui/particles";
 
@@ -122,7 +123,7 @@ const AuthPage = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-[#3B82F6]" />
+        <DelleLoader className="h-10 w-10" />
       </div>
     );
   }
