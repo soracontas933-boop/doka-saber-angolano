@@ -40,7 +40,7 @@ const WelcomeGreeting = () => {
           </div>
           <div className="space-y-2 text-center">
             <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
-              Bem-vindo à Doka Saber Angolano! 🇦🇴
+              Bem-vindo à Delle! 🇦🇴
             </DialogTitle>
             <DialogDescription className="text-base text-muted-foreground leading-relaxed">
               Estamos felizes por ter você aqui. Prepare-se para uma nova experiência educativa potencializada pela tecnologia.
