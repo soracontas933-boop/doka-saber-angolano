@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { Search, Crown, Loader2, Trash2, UserPlus, ShieldCheck } from "lucide-react";
+import { Search, Crown, Trash2, UserPlus, ShieldCheck } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchAdminUsers } from "@/lib/admin-api";
 
@@ -172,7 +173,7 @@ const AdminMastersTab = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <DelleLoader className="h-6 w-6 text-primary" />
       </div>
     );
   }
@@ -195,7 +196,7 @@ const AdminMastersTab = () => {
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
             />
-            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+            {searching && <DelleLoader className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
 
           {filteredUsers.length > 0 && (
@@ -241,7 +242,7 @@ const AdminMastersTab = () => {
                 ))}
               </div>
               <Button onClick={handlePromote} disabled={saving} className="gap-2">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+                {saving ? <DelleLoader className="h-4 w-4 " /> : <Crown className="h-4 w-4" />}
                 Tornar Master
               </Button>
             </div>

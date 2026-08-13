@@ -12,18 +12,8 @@ import { useTheme } from "@/hooks/use-theme";
 
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
-import {
-  User,
-  Moon,
-  Sun,
-  Save,
-  Loader2,
-  Camera,
-  Upload,
-  Trash2,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { User, Moon, Sun, Save, Camera, Upload, Trash2, Settings, LogOut,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 
 
 const SettingsPage = () => {
@@ -187,7 +177,7 @@ const SettingsPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <DelleLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }
@@ -244,7 +234,7 @@ const SettingsPage = () => {
               </Avatar>
               {uploadingAvatar && (
                 <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  <DelleLoader className="h-6 w-6 text-white " />
                 </div>
               )}
             </div>
@@ -371,7 +361,7 @@ const SettingsPage = () => {
             disabled={saving} 
             className="w-full gap-2 h-9 md:h-10 text-xs md:text-sm bg-primary hover:bg-primary/90"
           >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {saving ? <DelleLoader className="h-3.5 w-3.5 " /> : <Save className="h-3.5 w-3.5" />}
             {saving ? "Guardando..." : "Guardar Perfil"}
           </Button>
         </div>

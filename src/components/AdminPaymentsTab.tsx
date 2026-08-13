@@ -23,7 +23,8 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Loader2, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield, ShoppingCart } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield, ShoppingCart } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { fetchAdminUsers } from "@/lib/admin-api";
 
 interface PaymentRequest {
@@ -357,7 +358,7 @@ const AdminPaymentsTab = () => {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <DelleLoader className="h-6 w-6 text-primary" />
       </div>
     );
   }
@@ -392,7 +393,7 @@ const AdminPaymentsTab = () => {
         </CardHeader>
         <CardContent>
           {settingsLoading ? (
-            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-4"><DelleLoader className="h-5 w-5 text-primary" /></div>
           ) : editingSettings ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -638,7 +639,7 @@ const AdminPaymentsTab = () => {
                                 onClick={() => setConfirmDialog({ open: true, action: "aprovar", payment: p })}
                                 disabled={processing === p.id}
                               >
-                                {processing === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                                {processing === p.id ? <DelleLoader className="h-4 w-4 " /> : <CheckCircle className="h-4 w-4" />}
                               </Button>
                               <Button
                                 variant="ghost"
@@ -689,7 +690,7 @@ const AdminPaymentsTab = () => {
               onClick={() => handleAction(confirmDialog.action)}
               disabled={!!processing}
             >
-              {processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {processing ? <DelleLoader className="h-4 w-4 mr-2" /> : null}
               Confirmar {confirmDialog.action === "aprovar" ? "Aprovação" : "Rejeição"}
             </Button>
           </DialogFooter>

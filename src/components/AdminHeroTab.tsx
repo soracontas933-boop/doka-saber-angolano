@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { ImagePlus, Trash2, Loader2, GripVertical, LogIn, Image as ImageIcon, Video, Save, AlignLeft, AlignCenter, AlignRight, Info } from "lucide-react";
+import { ImagePlus, Trash2, GripVertical, LogIn, Image as ImageIcon, Video, Save, AlignLeft, AlignCenter, AlignRight, Info } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { ImageCropper } from "./ImageCropper";
 
 interface HeroItem {
@@ -318,7 +319,7 @@ const AdminHeroTab = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <DelleLoader className="h-6 w-6 text-primary" />
       </div>
     );
   }
@@ -347,7 +348,7 @@ const AdminHeroTab = () => {
             </div>
           ) : (
             <Button variant="outline" className="w-full max-w-md h-32 border-dashed" onClick={() => document.getElementById("login-upload")?.click()} disabled={uploadingLogin}>
-              {uploadingLogin ? <Loader2 className="h-6 w-6 animate-spin" /> : <ImagePlus className="h-8 w-8 text-muted-foreground" />}
+              {uploadingLogin ? <DelleLoader className="h-6 w-6 " /> : <ImagePlus className="h-8 w-8 text-muted-foreground" />}
             </Button>
           )}
           <input id="login-upload" type="file" accept="image/*" className="hidden" onChange={handleLoginImageUpload} />
@@ -393,7 +394,7 @@ const AdminHeroTab = () => {
           {/* Add image */}
           <div className="flex items-center gap-4 flex-wrap">
             <Button onClick={() => document.getElementById("hero-upload")?.click()} disabled={uploading} className="gap-2">
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+              {uploading ? <DelleLoader className="h-4 w-4 " /> : <ImagePlus className="h-4 w-4" />}
               Adicionar Imagens
             </Button>
             <input id="hero-upload" type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} />
@@ -412,7 +413,7 @@ const AdminHeroTab = () => {
                 className="flex-1"
               />
               <Button onClick={handleAddHeroVideo} disabled={savingHeroVideo} className="gap-2">
-                {savingHeroVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {savingHeroVideo ? <DelleLoader className="h-4 w-4 " /> : <Save className="h-4 w-4" />}
                 Adicionar
               </Button>
             </div>
@@ -497,7 +498,7 @@ const AdminHeroTab = () => {
                     onClick={() => document.getElementById("about-upload")?.click()}
                     disabled={uploadingAbout}
                   >
-                    {uploadingAbout ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : (
+                    {uploadingAbout ? <DelleLoader className="h-6 w-6 text-primary" /> : (
                       <>
                         <ImagePlus className="h-6 w-6 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground">Carregar Imagem</span>
@@ -533,7 +534,7 @@ const AdminHeroTab = () => {
           </div>
 
           <Button onClick={handleSaveAbout} disabled={savingAbout} className="gap-2">
-            {savingAbout ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {savingAbout ? <DelleLoader className="h-4 w-4 " /> : <Save className="h-4 w-4" />}
             Guardar Secção Sobre Nós
           </Button>
         </CardContent>
@@ -559,7 +560,7 @@ const AdminHeroTab = () => {
               className="flex-1"
             />
             <Button onClick={handleSaveVideo} disabled={savingVideo} className="gap-2">
-              {savingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {savingVideo ? <DelleLoader className="h-4 w-4 " /> : <Save className="h-4 w-4" />}
               Guardar
             </Button>
           </div>
@@ -611,7 +612,7 @@ const AdminHeroTab = () => {
                       disabled={uploadingSection === section.key}
                     >
                       {uploadingSection === section.key ? (
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        <DelleLoader className="h-6 w-6 text-primary" />
                       ) : (
                         <>
                           <ImagePlus className="h-6 w-6 text-muted-foreground" />

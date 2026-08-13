@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Download, BookOpen, Eye } from "lucide-react";
+import { Download, BookOpen, Eye } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 import PDFViewer from "@/components/PDFViewer";
 import { getEbookDownloadUrl } from "@/lib/ebook-storage";
@@ -79,7 +80,7 @@ const MeusLivrosTab = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><DelleLoader className="h-6 w-6 text-primary" /></div>;
   
   if (items.length === 0) {
     return (
@@ -123,7 +124,7 @@ const MeusLivrosTab = () => {
                   <Eye className="h-3 w-3" /> Ler
                 </Button>
                 <Button onClick={() => download(b)} disabled={downloadingId === b.id} size="sm" className="rounded-xl gap-1 h-8 text-[10px] px-1">
-                  {downloadingId === b.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} Baixar
+                  {downloadingId === b.id ? <DelleLoader className="h-3 w-3 " /> : <Download className="h-3 w-3" />} Baixar
                 </Button>
               </div>
             </div>

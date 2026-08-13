@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Wallet, CreditCard } from "lucide-react";
+import { Plus, Trash2, Wallet, CreditCard } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -57,7 +58,7 @@ const FaturamentoAutorTab = () => {
     load();
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><DelleLoader className="h-6 w-6 text-primary" /></div>;
 
   const pendenteKz = payouts.filter((p) => p.estado === "pendente" && p.metodo === "kz").reduce((s, p) => s + Number(p.valor || 0), 0);
   const pagoKz = payouts.filter((p) => p.estado === "pago" && p.metodo === "kz").reduce((s, p) => s + Number(p.valor || 0), 0);
@@ -129,7 +130,7 @@ const FaturamentoAutorTab = () => {
               </div>
             </div>
             <Button onClick={addMethod} disabled={saving} className="w-full rounded-xl">
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Adicionar método
+              {saving && <DelleLoader className="h-4 w-4 mr-2" />} Adicionar método
             </Button>
           </div>
         </CardContent>

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload, Trash2, Plus } from "lucide-react";
+import { Upload, Trash2, Plus } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 
 interface HeroBackgroundMedia {
@@ -163,7 +164,7 @@ const AdminHeroBackgroundTab = () => {
     });
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><DelleLoader className="h-6 w-6 " /></div>;
 
   return (
     <Card>
@@ -286,7 +287,7 @@ const AdminHeroBackgroundTab = () => {
 
         <div className="flex gap-2 pt-4">
           <Button onClick={saveMedia} disabled={saving} className="flex-1 gap-2">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            {saving ? <DelleLoader className="h-4 w-4 " /> : "Salvar"}
           </Button>
           {media.id && (
             <Button onClick={deleteMedia} variant="destructive" className="gap-2">

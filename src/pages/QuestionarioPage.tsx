@@ -3,7 +3,8 @@ import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { HelpCircle, Upload, Camera, X, Image, Loader2 } from "lucide-react";
+import { HelpCircle, Upload, Camera, X, Image } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -311,7 +312,7 @@ const QuestionarioPage = () => {
         <Button type="submit" className="w-full h-12 text-base" disabled={loading || files.length === 0}>
           {loading ? (
             <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <DelleLoader className="h-4 w-4 " />
               {etapa || "A processar..."}
             </span>
           ) : (

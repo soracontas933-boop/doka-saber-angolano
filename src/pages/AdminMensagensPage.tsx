@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { MessageSquare, Send, Loader2, Search, User, ArrowLeft, Plus, Headphones, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageSquare, Send, Search, User, ArrowLeft, Plus, Headphones, ChevronLeft, ChevronRight } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 import { Button } from "@/components/ui/button";
@@ -378,7 +379,7 @@ const AdminMensagensPage = () => {
   if (isLoadingAdmin || !isAdmin) {
     return (
       <div className="flex items-center justify-center h-full py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <DelleLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }
@@ -412,7 +413,7 @@ const AdminMensagensPage = () => {
                       onChange={(e) => handleUserSearch(e.target.value)}
                       className="pl-9"
                     />
-                    {userSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                    {userSearching && <DelleLoader className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
                   </div>
 
                   {users.length > 0 && (
@@ -457,7 +458,7 @@ const AdminMensagensPage = () => {
                     onClick={() => selectedUserId && handleStartConversation(selectedUserId)}
                   >
                     {creatingSending ? (
-                      <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</>
+                      <><DelleLoader className="h-4 w-4 mr-2" /> Enviando...</>
                     ) : (
                       <><Send className="h-4 w-4 mr-2" /> Enviar Mensagem</>
                     )}
@@ -479,7 +480,7 @@ const AdminMensagensPage = () => {
 
         <ScrollArea className="flex-1">
           {loading ? (
-            <div className="p-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            <div className="p-8 flex justify-center"><DelleLoader className="h-6 w-6 text-primary" /></div>
           ) : userGroups.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">Nenhuma conversa encontrada.</div>
           ) : (
@@ -575,7 +576,7 @@ const AdminMensagensPage = () => {
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-6 max-w-4xl mx-auto">
                 {chatLoading ? (
-                  <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  <div className="flex justify-center py-10"><DelleLoader className="h-6 w-6 text-primary" /></div>
                 ) : chatMessages.length === 0 ? (
                   <div className="text-center py-10 text-muted-foreground text-sm">Nenhuma mensagem nesta conversa.</div>
                 ) : (
@@ -642,7 +643,7 @@ const AdminMensagensPage = () => {
                   className="rounded-full h-11 w-11 shrink-0 shadow-md"
                   disabled={!newMessage.trim() || sending}
                 >
-                  {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                  {sending ? <DelleLoader className="h-5 w-5 " /> : <Send className="h-5 w-5" />}
                 </Button>
               </form>
             </div>

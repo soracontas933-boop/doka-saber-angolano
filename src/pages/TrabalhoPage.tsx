@@ -4,7 +4,8 @@ import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTrabalhoSettings, FONT_OPTIONS, TRABALHO_DEFAULTS } from "@/hooks/use-trabalho-settings";
 import { motion } from "framer-motion";
-import { FileText, Download, Copy, Upload, Plus, Minus, Image, Loader2, FileDown, ArrowLeft, Pencil, Eye, Save, Type, Ruler, RotateCcw, Quote } from "lucide-react";
+import { FileText, Download, Copy, Upload, Plus, Minus, Image, FileDown, ArrowLeft, Pencil, Eye, Save, Type, Ruler, RotateCcw, Quote } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -734,7 +735,7 @@ const TrabalhoPage = () => {
           <Button type="submit" className="w-full h-11 text-sm font-semibold shadow-[0_4px_16px_hsl(var(--primary)/0.3)]" disabled={loading}>
             {loading ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <DelleLoader className="h-4 w-4 " />
                 <span className="text-xs">{etapa || "A gerar..."}</span>
               </span>
             ) : (

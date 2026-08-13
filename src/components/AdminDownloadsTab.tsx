@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Smartphone, Tablet, Monitor, MapPin, Globe, Eye, Loader2, RefreshCw, TrendingUp, CheckCircle2, Activity } from "lucide-react";
+import { Download, Smartphone, Tablet, Monitor, MapPin, Globe, Eye, RefreshCw, TrendingUp, CheckCircle2, Activity } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import {
@@ -371,7 +372,7 @@ export const AdminDownloadsTab = () => {
         <CardHeader className="pb-2"><CardTitle className="text-sm">Eventos recentes</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-8"><DelleLoader className="h-5 w-5 text-primary" /></div>
           ) : downloads.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">Sem downloads no período seleccionado.</p>
           ) : (

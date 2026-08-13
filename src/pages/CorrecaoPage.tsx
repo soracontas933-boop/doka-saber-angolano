@@ -3,7 +3,8 @@ import DOMPurify from "dompurify";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileText, AlertTriangle, CheckCircle2, Download, Eye, Loader2, ArrowLeft, ChevronRight } from "lucide-react";
+import { Upload, FileText, AlertTriangle, CheckCircle2, Download, Eye, ArrowLeft, ChevronRight } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -435,7 +436,7 @@ const CorrecaoPage = () => {
         {step === "correcting" && (
           <motion.div key="correcting" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
             <Card className="p-8 flex flex-col items-center gap-4">
-              <Loader2 className="h-10 w-10 text-primary animate-spin" />
+              <DelleLoader className="h-10 w-10 text-primary " />
               <p className="font-display font-semibold">A corrigir o trabalho...</p>
               <p className="text-sm text-muted-foreground text-center">Estamos a gerar uma versão melhorada com todas as correcções aplicadas</p>
             </Card>

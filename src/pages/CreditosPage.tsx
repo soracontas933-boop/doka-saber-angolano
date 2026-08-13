@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Zap, Loader2, Check } from "lucide-react";
+import { Zap, Check } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +35,7 @@ const CreditosPage = () => {
   }, []);
 
   if (loading || loadingPacks) {
-    return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <div className="flex justify-center py-20"><DelleLoader className="h-8 w-8 text-primary" /></div>;
   }
 
   const totalCredits = plan?.creditos_totais === -1 ? Infinity : (plan?.creditos_totais ?? 0);

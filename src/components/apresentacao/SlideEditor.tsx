@@ -1,8 +1,6 @@
 import { useState, useRef } from "react";
-import {
-  ChevronUp, ChevronDown, Copy, Trash2, Plus, Sparkles, Loader2,
-  X, GripVertical, Wand2, Image as ImageIcon, Upload, EyeOff, Eye,
-} from "lucide-react";
+import { ChevronUp, ChevronDown, Copy, Trash2, Plus, Sparkles, X, GripVertical, Wand2, Image as ImageIcon, Upload, EyeOff, Eye,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -458,7 +456,7 @@ export function SlideEditor({
                   className="flex-1"
                 >
                   {regeneratingImage ? (
-                    <><Loader2 className="h-3 w-3 mr-1 animate-spin" />A gerar…</>
+                    <><DelleLoader className="h-3 w-3 mr-1 " />A gerar…</>
                   ) : (
                     <><Sparkles className="h-3 w-3 mr-1" />Regenerar IA</>
                   )}
@@ -537,7 +535,7 @@ export function SlideEditor({
         />
         <Button onClick={regen} disabled={regenerating} className="w-full" size="sm">
           {regenerating
-            ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />A regenerar…</>
+            ? <><DelleLoader className="h-4 w-4 mr-2 " />A regenerar…</>
             : <><Sparkles className="h-4 w-4 mr-2" />Regenerar slide</>}
         </Button>
       </div>

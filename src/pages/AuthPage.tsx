@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ArrowLeft } from "lucide-react";
 import { DelleLoader } from "@/components/DelleLoader";
+import { DelleLoader } from "@/components/DelleLoader";
 import PhoneInput from "@/components/PhoneInput";
 import { Particles } from "@/components/ui/particles";
 
@@ -402,7 +403,7 @@ const AuthPage = () => {
 
                 <Button type="submit" className="w-full h-12 md:h-14 rounded-full text-white text-base md:text-lg font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] bg-black mt-6 md:mt-8" disabled={loading}>
                   {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <DelleLoader className="h-5 w-5 mr-2" />
                   ) : null}
                   {loading ? "A processar..." : isLogin ? "Entrar" : "Criar conta"}
                 </Button>

@@ -1,36 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  Users,
-  FileText,
-  Zap,
-  Loader2,
-  ShieldCheck,
-  BarChart3,
-  Activity,
-  CreditCard,
-  UserCheck,
-  RefreshCw,
-  Search,
-  TrendingUp,
-  Eye,
-  Phone,
-  Mail,
-  User,
-  Globe,
-  Receipt,
-  ImageIcon,
-  Crown,
-  Smartphone,
-  Library,
-  SlidersHorizontal,
-  Download,
-  Megaphone,
-  ChevronLeft,
-  ChevronRight,
-  History,
-  Cpu,
-} from "lucide-react";
+import { Users, FileText, Zap, ShieldCheck, BarChart3, Activity, CreditCard, UserCheck, RefreshCw, Search, TrendingUp, Eye, Phone, Mail, User, Globe, Receipt, ImageIcon, Crown, Smartphone, Library, SlidersHorizontal, Download, Megaphone, ChevronLeft, ChevronRight, History, Cpu,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { supabase } from "@/integrations/supabase/client";
 import AdminPaymentsTab from "@/components/AdminPaymentsTab";
 import AdminMastersTab from "@/components/AdminMastersTab";
@@ -568,7 +539,7 @@ const AdminPanelPage = () => {
   if (isLoadingAdmin || !isAdmin) {
     return (
       <div className="flex items-center justify-center h-full py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <DelleLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }
@@ -715,7 +686,7 @@ const AdminPanelPage = () => {
             <CardContent className="p-0">
               {loading ? (
                 <div className="flex items-center justify-center py-20">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <DelleLoader className="h-8 w-8 text-primary" />
                 </div>
               ) : (
                 <>
@@ -1029,7 +1000,7 @@ const AdminPanelPage = () => {
                     </SelectContent>
                   </Select>
                   <Button onClick={handleUpdatePlan} disabled={saving || newPlan === selectedUser.plano}>
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Actualizar"}
+                    {saving ? <DelleLoader className="h-4 w-4 " /> : "Actualizar"}
                   </Button>
                 </div>
               </div>

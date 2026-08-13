@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { ClipboardList, Upload, Camera, X, Image, Loader2 } from "lucide-react";
+import { ClipboardList, Upload, Camera, X, Image } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -344,7 +345,7 @@ const PlanoAulaPage = () => {
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <DelleLoader className="h-4 w-4 " />
               {etapa || "A processar..."}
             </span>
           ) : "Gerar Plano de Aula"}

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Copy, FileText, Loader2 } from "lucide-react";
+import { Download, Copy, FileText } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "sonner";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { PlanoHorizontalData } from "./PlanoHorizontalForm";
@@ -60,7 +61,7 @@ const PlanoHorizontalResult: React.FC<Props> = ({ dados, fases }) => {
         </Button>
 
         <Button size="sm" variant="outline" onClick={handleExportWord} disabled={!!exporting}>
-          {exporting === "word" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
+          {exporting === "word" ? <DelleLoader className="h-4 w-4 mr-1 " /> : <FileText className="h-4 w-4 mr-1" />}
           Word
         </Button>
       </div>

@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, BookOpen, Eye, Download, TrendingUp, ExternalLink, Copy, Share2 } from "lucide-react";
+import { Plus, BookOpen, Eye, Download, TrendingUp, ExternalLink, Copy, Share2 } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 import * as pdfjsLib from "pdfjs-dist";
 // @ts-ignore
@@ -157,7 +158,7 @@ const PublicarLivroTab = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        <div className="flex justify-center py-12"><DelleLoader className="h-6 w-6 text-primary" /></div>
       ) : myBooks.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
           <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-40" />
@@ -270,7 +271,7 @@ const PublicarLivroTab = () => {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={submit} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Submeter para aprovação
+              {saving && <DelleLoader className="h-4 w-4 mr-2" />} Submeter para aprovação
             </Button>
           </DialogFooter>
         </DialogContent>

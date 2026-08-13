@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
+import { ImageIcon, Trash2, Upload } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import AdminHeroBackgroundTab from "./AdminHeroBackgroundTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -103,7 +104,7 @@ const AdminButtonCoversTab = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <DelleLoader className="h-6 w-6 text-primary" />
       </div>
     );
   }
@@ -192,7 +193,7 @@ const AdminButtonCoversTab = () => {
                     />
                     <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors text-primary text-sm font-medium">
                       {isUploading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <DelleLoader className="h-4 w-4 " />
                       ) : (
                         <Upload className="h-4 w-4" />
                       )}

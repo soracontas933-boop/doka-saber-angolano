@@ -28,10 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import {
-  Megaphone, Plus, Trash2, Edit, Loader2, Image as ImageIcon,
-  ExternalLink, Upload, Film, Eye, ArrowRight,
-} from "lucide-react";
+import { Megaphone, Plus, Trash2, Edit, Image as ImageIcon, ExternalLink, Upload, Film, Eye, ArrowRight,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 
 interface Popup {
   id: string;
@@ -280,7 +278,7 @@ const AdminMarketingTab = () => {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <DelleLoader className="h-8 w-8 text-primary" />
             </div>
           ) : (
             <Table>
@@ -412,7 +410,7 @@ const AdminMarketingTab = () => {
                     disabled={uploading}
                     className="gap-2"
                   >
-                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {uploading ? <DelleLoader className="h-4 w-4 " /> : <Upload className="h-4 w-4" />}
                     Upload
                   </Button>
                 </div>
@@ -551,7 +549,7 @@ const AdminMarketingTab = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {saving ? <DelleLoader className="h-4 w-4 mr-2" /> : null}
               {editingPopup ? "Salvar Alterações" : "Criar Pop-up"}
             </Button>
           </DialogFooter>

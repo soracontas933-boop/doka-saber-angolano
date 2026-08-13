@@ -1,20 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  Send,
-  UserPlus,
-  Sparkles,
-  Loader2,
-  FileText,
-  Download,
-  RefreshCcw,
-  Mic,
-  Users,
-  Layers,
-  CheckCircle2,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Send, UserPlus, Sparkles, FileText, Download, RefreshCcw, Mic, Users, Layers, CheckCircle2, X,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -339,7 +326,7 @@ export default function GrupoDetalhePage() {
   if (loading || !group) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <DelleLoader className="w-8 h-8 text-primary" />
       </div>
     );
   }
@@ -444,7 +431,7 @@ export default function GrupoDetalhePage() {
                 disabled={sending}
               />
               <Button onClick={sendMessage} disabled={sending || !newMsg.trim()}>
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {sending ? <DelleLoader className="w-4 h-4 " /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
           </Card>
@@ -486,7 +473,7 @@ export default function GrupoDetalhePage() {
           <div className="space-y-3">
             {isOwner && (
               <Button onClick={handleDividir} disabled={aiBusy} className="w-full gap-2" size="lg">
-                {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {aiBusy ? <DelleLoader className="w-4 h-4 " /> : <Sparkles className="w-4 h-4" />}
                 {parts.length > 0 ? "Re-dividir trabalho com IA" : "Dividir trabalho com IA"}
               </Button>
             )}
@@ -613,7 +600,7 @@ export default function GrupoDetalhePage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
             <Button onClick={handleInvite} disabled={inviting || !inviteEmail.trim()}>
-              {inviting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {inviting && <DelleLoader className="w-4 h-4 mr-2" />}
               Enviar convite
             </Button>
           </DialogFooter>
@@ -635,7 +622,7 @@ export default function GrupoDetalhePage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingPart(null)}>Cancelar</Button>
             <Button onClick={saveEdit} disabled={savingPart}>
-              {savingPart && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {savingPart && <DelleLoader className="w-4 h-4 mr-2" />}
               Guardar
             </Button>
           </DialogFooter>

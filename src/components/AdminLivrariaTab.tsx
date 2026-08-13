@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, Trash2, Edit, Check, X, BookOpen, ExternalLink, Copy } from "lucide-react";
+import { Plus, Trash2, Edit, Check, X, BookOpen, ExternalLink, Copy } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 import { uploadEbookPDF, uploadEbookCover, sanitizeFilename } from "@/lib/ebook-storage";
 import * as pdfjsLib from "pdfjs-dist";
@@ -204,7 +205,7 @@ const AdminLivrariaTab = () => {
     load();
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><DelleLoader className="h-6 w-6 " /></div>;
 
   return (
     <Tabs defaultValue="books">
@@ -441,7 +442,7 @@ const AdminLivrariaTab = () => {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpenBook(false)}>Cancelar</Button>
-            <Button onClick={saveBook} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Guardar</Button>
+            <Button onClick={saveBook} disabled={saving}>{saving && <DelleLoader className="h-4 w-4 mr-2" />} Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download, Loader2, Link as LinkIcon, FileText, Eye, Share2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Link as LinkIcon, FileText, Eye, Share2, ChevronDown, ChevronUp } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 
 import PDFViewer from "@/components/PDFViewer";
@@ -163,7 +164,7 @@ const LivroDetalhePage = () => {
     toast({ title: "Link copiado!", description: "Agora pode partilhar este livro." });
   };
 
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><DelleLoader className="h-6 w-6 text-primary" /></div>;
   if (!book) return <div className="text-center py-20">Livro não encontrado.</div>;
 
   return (
@@ -256,24 +257,24 @@ const LivroDetalhePage = () => {
           {owned ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button onClick={handleRead} disabled={processing} className="h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white font-semibold text-base gap-2 shadow-lg button-3d">
-                {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Eye className="h-5 w-5" />}
+                {processing ? <DelleLoader className="h-5 w-5 " /> : <Eye className="h-5 w-5" />}
                 Ler agora
               </Button>
               <Button onClick={handleDownload} variant="outline" disabled={processing} className="h-14 rounded-2xl border-border text-foreground font-semibold text-base gap-2 hover:bg-secondary button-3d shadow-md">
-                {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+                {processing ? <DelleLoader className="h-5 w-5 " /> : <Download className="h-5 w-5" />}
                 Baixar PDF
               </Button>
             </div>
           ) : book.gratuito ? (
             <Button onClick={handleObterGratis} disabled={processing} className="w-full h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white font-semibold text-base gap-2 shadow-lg button-3d">
-              {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+              {processing ? <DelleLoader className="h-5 w-5 " /> : <Download className="h-5 w-5" />}
               Obter Grátis
             </Button>
           ) : (
             <div className="flex flex-col gap-3">
               {book.preco_creditos > 0 && (
                 <Button onClick={handleComprarCreditos} disabled={processing} className="w-full h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white font-semibold text-base gap-2 shadow-lg button-3d">
-                  {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <LinkIcon className="h-5 w-5" />}
+                  {processing ? <DelleLoader className="h-5 w-5 " /> : <LinkIcon className="h-5 w-5" />}
                   Pagar com {book.preco_creditos} créditos
                 </Button>
               )}

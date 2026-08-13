@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft, FileText, Loader2, Presentation, Sparkles, WandSparkles } from "lucide-react";
+import { ArrowLeft, FileText, Presentation, Sparkles, WandSparkles } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -91,7 +92,7 @@ export default function ApresentacaoDellePage() {
             <label className="mb-2 block text-sm font-semibold text-[#404158]">Tema ou conteúdo-base</label>
             <Textarea value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="Escreve um tema, cola o teu outline ou insere o texto de um documento..." className="min-h-44 resize-y rounded-2xl border-[#e2e0ee] bg-[#fcfcfe] p-4 leading-relaxed focus-visible:ring-[#6d5ef7]" />
             <div className="mt-5 grid gap-4 sm:grid-cols-2"><div><label className="mb-2 block text-sm font-semibold text-[#404158]">Público-alvo <span className="font-normal text-[#9a9aac]">(opcional)</span></label><Input value={audience} onChange={(event) => setAudience(event.target.value)} placeholder="Ex.: estudantes universitários" className="rounded-xl border-[#e2e0ee]" /></div><div><label className="mb-2 block text-sm font-semibold text-[#404158]">Tom</label><Input value={tone} onChange={(event) => setTone(event.target.value)} placeholder="Ex.: formal e académico" className="rounded-xl border-[#e2e0ee]" /></div></div>
-            <Button onClick={generate} disabled={loading} className="mt-6 h-12 w-full rounded-xl bg-[#6d5ef7] text-base font-bold shadow-lg shadow-[#6d5ef7]/20 hover:bg-[#5c4de4]">{loading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />A construir narrativa...</> : <><FileText className="mr-2 h-5 w-5" />Gerar apresentação Delle</>}</Button>
+            <Button onClick={generate} disabled={loading} className="mt-6 h-12 w-full rounded-xl bg-[#6d5ef7] text-base font-bold shadow-lg shadow-[#6d5ef7]/20 hover:bg-[#5c4de4]">{loading ? <><DelleLoader className="mr-2 h-5 w-5 " />A construir narrativa...</> : <><FileText className="mr-2 h-5 w-5" />Gerar apresentação Delle</>}</Button>
             {loadingImages && !loading && <p className="mt-4 text-center text-xs text-[#85869a]">A criar os visuais de apoio...</p>}
           </section>
         </div>

@@ -5,20 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { 
-  Loader2, 
-  Plus, 
-  Trash2, 
-  ArrowUp, 
-  ArrowDown, 
-  Eye,
-  RefreshCw,
-  Settings2,
-  Layers,
-  Save,
-  Copy,
-  Trash
-} from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Eye, RefreshCw, Settings2, Layers, Save, Copy, Trash } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -237,7 +225,7 @@ const AdminLandingTabNew = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <DelleLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }

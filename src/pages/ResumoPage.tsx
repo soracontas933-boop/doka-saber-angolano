@@ -4,7 +4,8 @@ import { useUsageTracker } from "@/hooks/use-usage-tracker";
 import CreditCostBadge from "@/components/CreditCostBadge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { motion } from "framer-motion";
-import { BookOpen, Upload, Camera, X, Image, Loader2, FileText, File, Globe, Layers } from "lucide-react";
+import { BookOpen, Upload, Camera, X, Image, FileText, File, Globe, Layers } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -345,7 +346,7 @@ const ResumoPage = () => {
         <Button className="w-full h-12 text-base" onClick={handleGenerate} disabled={loading || (files.length === 0 && docFiles.length === 0)}>
           {loading ? (
             <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <DelleLoader className="h-4 w-4 " />
               {etapa || "A processar..."}
             </span>
           ) : (

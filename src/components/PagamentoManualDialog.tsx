@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Upload, CreditCard, Building2, Smartphone, Loader2, FileText, X } from "lucide-react";
+import { Upload, CreditCard, Building2, Smartphone, FileText, X } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
@@ -278,7 +279,7 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey, packInfo }: Pagame
           <Button onClick={handleSubmit} disabled={submitting} className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base shadow-xl shadow-primary/20 transition-all active:scale-[0.98] hover:shadow-primary/30">
             {submitting ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                <DelleLoader className="h-5 w-5 mr-2" />
                 A submeter...
               </>
             ) : (

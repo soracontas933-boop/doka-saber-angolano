@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2, Search, RotateCcw, ToggleLeft, ToggleRight, AlertTriangle, User as UserIcon } from "lucide-react";
+import { Search, RotateCcw, ToggleLeft, ToggleRight, AlertTriangle, User as UserIcon } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -182,7 +183,7 @@ const AdminFeaturesTab = () => {
           <TabsContent value="global">
             {loading ? (
               <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <DelleLoader className="h-5 w-5 text-muted-foreground" />
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-2">
@@ -219,7 +220,7 @@ const AdminFeaturesTab = () => {
                 />
               </div>
               <Button onClick={searchUsers} disabled={searching}>
-                {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Procurar"}
+                {searching ? <DelleLoader className="h-4 w-4 " /> : "Procurar"}
               </Button>
             </div>
 
@@ -268,7 +269,7 @@ const AdminFeaturesTab = () => {
 
                 {loadingUser ? (
                   <div className="flex items-center justify-center py-10">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <DelleLoader className="h-5 w-5 text-muted-foreground" />
                   </div>
                 ) : (
                   <div className="space-y-2">

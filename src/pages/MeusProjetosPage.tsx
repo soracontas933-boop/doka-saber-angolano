@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FolderOpen, FileText, BookOpen, HelpCircle, ClipboardList, Trash2, Eye, Loader2, Download, X } from "lucide-react";
+import { FolderOpen, FileText, BookOpen, HelpCircle, ClipboardList, Trash2, Eye, Download, X } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -272,7 +273,7 @@ const MeusProjetosPage = () => {
         <TabsContent value={tab}>
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <DelleLoader className="h-8 w-8 text-primary" />
             </div>
           ) : filtered.length === 0 ? (
             <motion.div

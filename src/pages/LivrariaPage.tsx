@@ -6,20 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Search,
-  BookOpen,
-  Download,
-  Sparkles,
-  Library as LibraryIcon,
-  Loader2,
-  Flame,
-  Star,
-  TrendingUp,
-  ShoppingBag,
-  Zap,
-  ArrowRight,
-} from "lucide-react";
+import { Search, BookOpen, Download, Sparkles, Library as LibraryIcon, Flame, Star, TrendingUp, ShoppingBag, Zap, ArrowRight,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 
 interface Category {
   id: string;
@@ -253,7 +241,7 @@ const LivrariaPage = () => {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <DelleLoader className="h-8 w-8 text-primary" />
           </div>
         ) : (
           <>

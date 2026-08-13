@@ -13,17 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Upload,
-  CreditCard,
-  Building2,
-  Smartphone,
-  Loader2,
-  FileText,
-  X,
-  CheckCircle,
-  AlertCircle,
-} from "lucide-react";
+import { Upload, CreditCard, Building2, Smartphone, FileText, X, CheckCircle, AlertCircle,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -193,7 +184,7 @@ const BookPaymentDialog = ({
 
           {/* Payment Methods */}
           {loadingPaymentMethods ? (
-            <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-6"><DelleLoader className="h-5 w-5 text-primary" /></div>
           ) : authorPaymentMethods.length === 0 ? (
             <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 p-3 border border-amber-100 dark:border-amber-900/30 flex gap-2">
               <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -280,7 +271,7 @@ const BookPaymentDialog = ({
           </div>
 
           <Button onClick={handleSubmit} disabled={submitting} className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[1.5rem] font-bold text-sm sm:text-base shadow-xl shadow-primary/20 transition-all active:scale-[0.98] hover:shadow-primary/30 bg-gradient-to-br from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-white button-3d">
-            {submitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <CheckCircle className="h-5 w-5 mr-2" />}
+            {submitting ? <DelleLoader className="h-5 w-5 mr-2" /> : <CheckCircle className="h-5 w-5 mr-2" />}
             Confirmar Pagamento
           </Button>
         </div>

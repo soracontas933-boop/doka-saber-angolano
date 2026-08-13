@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, Trash2, Type, Palette, Layout, Sparkles, Settings2 } from 'lucide-react';
+import {   Plus, Trash2, Type, Palette, Layout, Sparkles, Settings2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface BlockPropertiesPanelProps {
@@ -99,7 +99,7 @@ const BlockPropertiesPanel: React.FC<BlockPropertiesPanelProps> = ({
                 onClick={() => document.getElementById(`image-upload-${block.id}`)?.click()}
                 disabled={uploading}
               >
-                {uploading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Plus className="h-3 w-3 mr-1" />}
+                {uploading ? <DelleLoader className="h-3 w-3 mr-1 " /> : <Plus className="h-3 w-3 mr-1" />}
                 Carregar Imagem
               </Button>
               <input

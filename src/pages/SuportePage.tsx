@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Send, Loader2, Headphones, Plus } from "lucide-react";
+import { Send, Headphones, Plus } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -319,7 +320,7 @@ const SuportePage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <DelleLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }
@@ -432,7 +433,7 @@ const SuportePage = () => {
             >
               {chatLoading ? (
                 <div className="flex items-center justify-center py-20">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <DelleLoader className="h-6 w-6 text-primary" />
                 </div>
               ) : chatMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
@@ -491,7 +492,7 @@ const SuportePage = () => {
                 disabled={sending}
               />
               <Button type="submit" size="icon" disabled={sending || !newMessage.trim()} className="rounded-full h-10 w-10 shrink-0">
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {sending ? <DelleLoader className="h-4 w-4 " /> : <Send className="h-4 w-4" />}
               </Button>
             </form>
           </>

@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowLeft, Presentation, Download, Loader2, Sparkles, Send,
-  Edit2, Trash2, Plus, Save, Shuffle, PanelRightOpen, PanelRightClose,
-  Tag,
-} from "lucide-react";
+import { ArrowLeft, Presentation, Download, Sparkles, Send, Edit2, Trash2, Plus, Save, Shuffle, PanelRightOpen, PanelRightClose, Tag,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -270,7 +267,7 @@ export default function ApresentacaoPage() {
                     {[6, 8, 10, 12, 14].map(n => <option key={n} value={n}>{n} blocos</option>)}
                   </select>
                   <Button onClick={handleChatSubmit} disabled={loading || !chatMessage.trim()} className="rounded-xl">
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                    {loading ? <DelleLoader className="h-5 w-5 " /> : <Send className="h-5 w-5" />}
                   </Button>
                 </div>
               </div>
@@ -461,7 +458,7 @@ export default function ApresentacaoPage() {
             <motion.div key="gen" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-[70vh] flex items-center justify-center p-6">
               <div className="text-center space-y-6">
                 <div className="relative h-32 w-32 mx-auto">
-                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                  <DelleLoader className="absolute inset-0 h-full w-full" />
                   <Sparkles className="absolute inset-0 m-auto h-10 w-10 text-primary animate-pulse" />
                 </div>
                 <div>
@@ -481,7 +478,7 @@ export default function ApresentacaoPage() {
                 </div>
                 {generatingImages && (
                   <div className="shrink-0 flex items-center justify-center gap-2 p-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
-                    <Loader2 className="h-3 w-3 animate-spin" />A gerar visuais HD…
+                    <DelleLoader className="h-3 w-3 " />A gerar visuais HD…
                   </div>
                 )}
               </div>

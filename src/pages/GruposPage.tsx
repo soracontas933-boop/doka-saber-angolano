@@ -1,17 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Users,
-  Plus,
-  Loader2,
-  Mail,
-  Check,
-  X,
-  Sparkles,
-  Trash2,
-  ArrowRight,
-} from "lucide-react";
+import { Users, Plus, Mail, Check, X, Sparkles, Trash2, ArrowRight,  } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -285,7 +276,7 @@ export default function GruposPage() {
       {/* Lista de grupos */}
       {loading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <DelleLoader className="w-8 h-8 text-primary" />
         </div>
       ) : groups.length === 0 ? (
         <Card className="text-center py-16">
@@ -368,7 +359,7 @@ export default function GruposPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={creating}>
-              {creating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {creating && <DelleLoader className="w-4 h-4 mr-2" />}
               Criar
             </Button>
           </DialogFooter>
@@ -408,7 +399,7 @@ export default function GruposPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setAcceptOpen(null)}>Cancelar</Button>
             <Button onClick={handleAccept} disabled={accepting}>
-              {accepting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {accepting && <DelleLoader className="w-4 h-4 mr-2" />}
               Confirmar entrada
             </Button>
           </DialogFooter>

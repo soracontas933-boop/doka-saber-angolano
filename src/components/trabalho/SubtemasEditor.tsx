@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ChevronUp, ChevronDown, Trash2, Plus, Loader2, RefreshCw,
-  Check, GripVertical, Play, ChevronRight, FileText
-} from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, Plus, RefreshCw, Check, GripVertical, Play, ChevronRight, FileText } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -169,7 +167,7 @@ const SubtemasEditor: React.FC<SubtemasEditorProps> = ({
                           <Check className="h-4 w-4 text-primary" />
                         )}
                         {subtema.status === "gerando" && (
-                          <Loader2 className="h-4 w-4 animate-spin text-secondary" />
+                          <DelleLoader className="h-4 w-4 text-secondary" />
                         )}
 
                         <Button
@@ -249,7 +247,7 @@ const SubtemasEditor: React.FC<SubtemasEditorProps> = ({
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <DelleLoader className="h-4 w-4 " />
               {etapa || "A gerar..."}
             </span>
           ) : (

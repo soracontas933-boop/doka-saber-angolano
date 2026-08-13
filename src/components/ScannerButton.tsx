@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { ScanFace, Loader2, BookOpen, HelpCircle, ClipboardList, X } from "lucide-react";
+import { ScanFace, BookOpen, HelpCircle, ClipboardList, X } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {

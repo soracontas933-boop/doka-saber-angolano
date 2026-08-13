@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Crown, Check, Star, Loader2, Zap, ShoppingCart } from "lucide-react";
+import { Crown, Check, Star, Zap, ShoppingCart } from "lucide-react";
+import { DelleLoader } from "@/components/DelleLoader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUserPlan, PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
@@ -45,7 +46,7 @@ const PlanosPage = () => {
   }, []);
 
   if (loading) {
-    return <div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <div className="flex items-center justify-center py-32"><DelleLoader className="h-8 w-8 text-primary" /></div>;
   }
 
   return (
