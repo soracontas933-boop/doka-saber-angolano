@@ -38,6 +38,7 @@ import RootRedirect from "@/components/RootRedirect";
 import CreditosPage from "@/pages/CreditosPage";
 import NoCreditsModal from "@/components/NoCreditsModal";
 import SupportNotification from "@/components/SupportNotification";
+import WelcomeGreeting from "@/components/WelcomeGreeting";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
         <AuthProvider>
           <NoCreditsModal />
           <SupportNotification />
+          <WelcomeGreeting />
           <Routes>
             <Route path="/livraria/:id" element={withErrorBoundary(<LivroDetalhePage />, "Livro Detalhe")} />
             <Route path="/" element={withErrorBoundary(<RootRedirect />, "Redirecionamento")} />
