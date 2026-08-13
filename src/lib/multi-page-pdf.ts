@@ -81,8 +81,20 @@ export async function exportMultiPagePdf({
 
       try {
         await waitForImages(page);
+        
+        // Salva estados originais para restauração
+        const originalStyle = page.getAttribute("style") || "";
+        const originalWidth = page.style.width;
+        const originalHeight = page.style.height;
+        
+        // Força escala 1 e overflow visível para captura perfeita
         page.style.transform = "none";
         page.style.transformOrigin = "top left";
+        page.style.overflow = "visible";
+        
+        // Garante que o container interno não corte texto
+        const innerContainer = page.querySelector('div[style*="overflow: hidden"]') as HTMLElement;
+        if (innerContainer) innerContainer.style.overflow = "visible";
 
         const canvas = await captureToCanvas(page, scale);
         const imgData = canvas.toDataURL("image/jpeg", 0.95);

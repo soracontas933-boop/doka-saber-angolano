@@ -93,7 +93,9 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     };
   }, []);
 
-  const totalScale = responsiveScale * zoomScale;
+  // Durante a exportação (readOnly=true), usamos escala 1 para garantir captura em alta resolução
+  // sem cortes causados pelo redimensionamento responsivo do browser.
+  const totalScale = readOnly ? zoomScale : (responsiveScale * zoomScale);
 
   const updateNode = (id: string, patch: Partial<MindNode>) => {
     onChange({
@@ -420,9 +422,12 @@ export const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
                       textAlign: "center",
                       width: "100%",
                       display: "-webkit-box",
-                      WebkitLineClamp: isExpanded ? 20 : (node.size === "large" ? 4 : 3),
+                      WebkitLineClamp: isExpanded ? 20 : (node.size === "large" ? 6 : 5),
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
+                      wordBreak: "break-word",
+                      overflowWrap: "anywhere",
+                      whiteSpace: "pre-wrap",
                     }}>
                       {node.label}
                     </span>

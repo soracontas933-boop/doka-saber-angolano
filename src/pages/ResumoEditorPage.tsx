@@ -143,12 +143,14 @@ const ResumoEditorPage: React.FC = () => {
         const data = parseMapaMental(cleaned);
         if (!data.branches.length) return null;
         return (
-          <MapaMentalVisual
-            central={data.central}
-            branches={data.branches}
-            fillA4
-            fontScale={fontScale}
-          />
+          <div style={{ width: "100%", height: "100%", overflow: "visible" }}>
+            <MapaMentalVisual
+              central={data.central}
+              branches={data.branches}
+              fillA4
+              fontScale={fontScale}
+            />
+          </div>
         );
       }
       case "Flashcards": {

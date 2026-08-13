@@ -60,12 +60,9 @@ export const MapaMentalVisual: React.FC<Props> = ({
     return { x, y, angle };
   });
 
-  // Garante que o conteúdo de cada item NUNCA estoura o card.
-  // Trunca itens com mais de 12 palavras para 10 palavras + "…"
+  // Garante que o conteúdo de cada item seja exibido completamente com quebra de linha
   const trimItem = (s: string) => {
-    const clean = s.replace(/^\d+(\.\d+)*\s*[-.:]?\s*/, "").trim();
-    const words = clean.split(/\s+/);
-    return words.length > 12 ? words.slice(0, 10).join(" ") + "…" : clean;
+    return s.replace(/^\d+(\.\d+)*\s*[-.:]?\s*/, "").trim();
   };
 
   // Ajusta tamanho dos sub-itens para caberem no card, conforme densidade
@@ -348,6 +345,8 @@ export const MapaMentalVisual: React.FC<Props> = ({
                         lineHeight: 1.25,
                         fontFamily: "'SF Pro Display', system-ui, sans-serif",
                         wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        whiteSpace: "pre-wrap",
                         marginTop: "2px",
                       }}
                     >
@@ -375,6 +374,8 @@ export const MapaMentalVisual: React.FC<Props> = ({
                         fontWeight: 500,
                         fontFamily: "'SF Pro Display', system-ui, sans-serif",
                         wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        whiteSpace: "pre-wrap",
                         transition: "all 0.2s ease",
                       }}
                     >
@@ -391,7 +392,7 @@ export const MapaMentalVisual: React.FC<Props> = ({
                       >
                         {branchNumber}.{j + 1}
                       </span>
-                      <span style={{ flex: 1 }}>{trimItem(it)}</span>
+                      <div style={{ flex: 1 }}>{trimItem(it)}</div>
                     </li>
                   ))}
                 </ol>

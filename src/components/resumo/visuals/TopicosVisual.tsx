@@ -269,6 +269,9 @@ const TopicosVisual: React.FC<Props> = ({
             textAlign: "justify",
             flex: 1,
             display: "block",
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+            whiteSpace: "pre-wrap",
           }}
         />
       </div>
