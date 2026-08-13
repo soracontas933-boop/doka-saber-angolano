@@ -30,6 +30,7 @@ import AdminMensagensPage from "@/pages/AdminMensagensPage";
 import CurriculoPage from "@/pages/CurriculoPage";
 import FaturamentoPage from "@/pages/FaturamentoPage";
 import ApresentacaoPage from "@/pages/ApresentacaoPage";
+import ApresentacaoDellePage from "@/pages/ApresentacaoDellePage";
 import LivrariaPage from "@/pages/LivrariaPage";
 import LivroDetalhePage from "@/pages/LivroDetalhePage";
 import MinhaBibliotecaPage from "@/pages/MinhaBibliotecaPage";
@@ -88,6 +89,7 @@ const App = () => (
                 <Route path="/mensagens" element={withErrorBoundary(<AdminMensagensPage />, "Mensagens")} />
                 <Route path="/curriculo" element={withErrorBoundary(<CurriculoPage />, "Currículo")} />
                 <Route path="/apresentacao" element={withErrorBoundary(<ApresentacaoPage />, "Apresentação")} />
+                <Route path="/apresentacao-delle" element={withErrorBoundary(<ApresentacaoDellePage />, "Apresentações Delle")} />
                 <Route path="/livraria" element={withErrorBoundary(<LivrariaPage />, "Livraria")} />
                 <Route path="/minha-biblioteca" element={withErrorBoundary(<MinhaBibliotecaPage />, "Minha Biblioteca")} />
                 <Route path="/faturamento" element={withErrorBoundary(<FaturamentoPage />, "Faturamento")} />
