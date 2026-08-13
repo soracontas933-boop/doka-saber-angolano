@@ -16,6 +16,7 @@ import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PLAN_CONFIGS, type PlanKey } from "@/hooks/use-user-plan";
+import { analyzeReceiptFraud, saveFraudAnalysis } from "@/lib/receipt-fraud-service";
 
 interface PagamentoManualDialogProps {
   open: boolean;
@@ -120,20 +121,38 @@ const PagamentoManualDialog = ({ open, onOpenChange, planKey, packInfo }: Pagame
       }
 
       // Insert payment request
-      const { error: insertError } = await (supabase.from("payment_requests") as any)
+      const { data: insertData, error: insertError } = await (supabase.from("payment_requests") as any)
         .insert({
           user_id: user.id,
           plano: packInfo ? `pacote_${packInfo.creditos}` : planKey,
           valor: cfg.preco,
           email_confirmacao: email,
           ficheiro_url: filePath,
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) {
         console.error("Insert error:", insertError);
         toast.error("Erro ao submeter pedido. Tente novamente.");
         return;
       }
+
+      // Background fraud analysis - non-blocking for user
+      (async () => {
+        try {
+          const { data: urlData } = await supabase.storage
+            .from("comprovativos")
+            .createSignedUrl(filePath, 300);
+          
+          if (urlData?.signedUrl) {
+            const analysis = await analyzeReceiptFraud(urlData.signedUrl, cfg.preco);
+            await saveFraudAnalysis(insertData.id, analysis);
+          }
+        } catch (e) {
+          console.error("Silent fraud analysis error:", e);
+        }
+      })();
 
       toast.success("Pedido de pagamento submetido com sucesso! Será notificado por email após verificação.");
       onOpenChange(false);

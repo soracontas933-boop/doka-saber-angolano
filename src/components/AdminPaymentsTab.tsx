@@ -23,7 +23,8 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield, ShoppingCart } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Download, ExternalLink, Save, Building2, Smartphone, Pencil, Link2, Webhook, Copy, Shield, ShoppingCart, AlertTriangle, ShieldAlert, ShieldCheck } from "lucide-react";
+import { analyzeReceiptFraud, saveFraudAnalysis, type FraudAnalysisResult } from "@/lib/receipt-fraud-service";
 import { DelleLoader } from "@/components/DelleLoader";
 import { fetchAdminUsers } from "@/lib/admin-api";
 
@@ -36,6 +37,7 @@ interface PaymentRequest {
   ficheiro_url: string | null;
   estado: string;
   criado_em: string;
+  fraud_analysis?: FraudAnalysisResult;
   // joined
   user_nome?: string;
   user_email?: string;
@@ -59,6 +61,7 @@ const AdminPaymentsTab = () => {
   const [payments, setPayments] = useState<PaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [analyzingFraud, setAnalyzingFraud] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -170,6 +173,34 @@ const AdminPaymentsTab = () => {
       supabase.removeChannel(channel);
     };
   }, [fetchPayments, fetchActiveCheckouts]);
+
+  const runFraudAnalysis = async (payment: PaymentRequest) => {
+    if (!payment.ficheiro_url || analyzingFraud) return;
+    setAnalyzingFraud(payment.id);
+    try {
+      // Get a signed URL first
+      const { createHostingerStorageClient } = await import("@/lib/hostinger-storage");
+      const client = createHostingerStorageClient("comprovativos");
+      const { data } = await client.createSignedUrl(payment.ficheiro_url, 300);
+      const url = data?.signedUrl;
+      
+      if (!url) throw new Error("URL não disponível");
+      
+      const result = await analyzeReceiptFraud(url, payment.valor);
+      await saveFraudAnalysis(payment.id, result);
+      toast({ 
+        title: result.isSuspicious ? "Alerta de Fraude!" : "Análise concluída", 
+        description: result.reason,
+        variant: result.isSuspicious ? "destructive" : "default"
+      });
+      fetchPayments();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erro na análise", variant: "destructive" });
+    } finally {
+      setAnalyzingFraud(null);
+    }
+  };
 
   const viewReceipt = async (filePath: string) => {
     try {
@@ -621,14 +652,42 @@ const AdminPaymentsTab = () => {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           {p.ficheiro_url && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => viewReceipt(p.ficheiro_url!)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center">
+                              {p.fraud_analysis ? (
+                                <div 
+                                  className={`mr-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    p.fraud_analysis.isSuspicious 
+                                      ? "bg-destructive/10 text-destructive animate-pulse" 
+                                      : "bg-emerald-500/10 text-emerald-600"
+                                  }`}
+                                  title={p.fraud_analysis.reason}
+                                >
+                                  {p.fraud_analysis.isSuspicious ? <ShieldAlert className="h-3 w-3" /> : <ShieldCheck className="h-3 w-3" />}
+                                  {p.fraud_analysis.isSuspicious ? "Suspeito" : "Seguro"}
+                                </div>
+                              ) : (
+                                p.estado === "pendente" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-[10px] mr-2 gap-1 text-muted-foreground hover:text-primary"
+                                    onClick={() => runFraudAnalysis(p)}
+                                    disabled={analyzingFraud === p.id}
+                                  >
+                                    {analyzingFraud === p.id ? <DelleLoader className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                                    Analisar
+                                  </Button>
+                                )
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => viewReceipt(p.ficheiro_url!)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
                           )}
                           {p.estado === "pendente" && (
                             <>
