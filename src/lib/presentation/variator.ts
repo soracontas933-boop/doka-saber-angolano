@@ -56,9 +56,18 @@ export function composeSlots(targetSlideCount: number, seed: number): ComposedSl
       }
       kindCounts[kind] = (kindCounts[kind] || 0) + 1;
 
-      // ─── Escolher variant evitando repetir o anterior ──
+      // ─── Escolher variant com consciência estética (Motif) ──
       const variants = LAYOUT_VARIANTS[kind];
       let variant = pickAvoiding(rng, variants, lastVariant);
+      
+      // Preferir variantes que combinem com o motif se existirem
+      // Ex: bento -> bento-mosaic, editorial -> hero-magazine, glass -> glass-arctic
+      const theme = pickTheme(seed); // Apenas para ver o motif provável
+      const motifVariants = variants.filter(v => v.includes(theme.motif));
+      if (motifVariants.length > 0 && rng() > 0.4) {
+        variant = pickAvoiding(rng, motifVariants, lastVariant);
+      }
+
       if ((variantCounts[variant] || 0) >= 2 && variants.length > 1) {
         variant = pickAvoiding(rng, variants, variant);
       }

@@ -58,11 +58,37 @@ export default function ApresentacaoPage() {
     try {
       const r = await generateWithAI(
         DELLE_SYSTEM_PROMPT,
-        `Tema: "${chatMessage}". Cria um título principal premium e ${numCards} cartões de subtemas (cada um com 2-4 bullets curtos). JSON: {"mainTopic":"...","cards":[{"title":"...","subtopics":["..."]}]}.`,
+        `Age como um Estrategista de Conteúdo Cinematográfico. Para o tema "${chatMessage}", cria uma estrutura narrativa premium e impactante.
+        
+        REQUISITOS:
+        1. Título Principal: Deve ser provocativo, elegante e de alto impacto (ex: em vez de "História de Angola", usa "Angola: A Epopeia da Resistência e do Progresso").
+        2. Subtemas (${numCards}): Cria tópicos que contem uma história, do problema à solução, do passado ao futuro. Cada subtema deve ter 2-4 bullets densos e informativos.
+        3. Foco: Qualidade editorial, tom executivo e visão inovadora.
+
+        Responde APENAS com um JSON válido no formato:
+        {
+          "mainTopic": "Título Premium",
+          "cards": [
+            { "title": "Título do Subtema", "subtopics": ["Bullet 1", "Bullet 2"] }
+          ]
+        }`,
         2500, 0.75,
       );
-      const m = r.content.match(/\{[\s\S]*\}/);
-      const parsed = JSON.parse(m![0]);
+      
+      // Limpeza robusta de JSON
+      let content = r.content.trim();
+      if (content.includes("```json")) {
+        content = content.split("```json")[1].split("```")[0];
+      } else if (content.includes("```")) {
+        content = content.split("```")[1].split("```")[0];
+      }
+      
+      const m = content.match(/\{[\s\S]*\}/);
+      if (!m) throw new Error("JSON não encontrado");
+      
+      // Remove possíveis comentários ou vírgulas extras antes do parse
+      const jsonStr = m[0].replace(/\/\/.*$/gm, "").replace(/,(\s*[}\]])/g, "$1");
+      const parsed = JSON.parse(jsonStr);
       setMainTopic(parsed.mainTopic);
       setCards((parsed.cards || []).map((c: any, i: number) => ({
         id: `c-${i}`, title: c.title, subtopics: c.subtopics || [],

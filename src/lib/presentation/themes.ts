@@ -229,6 +229,33 @@ export const DECK_THEMES: DeckTheme[] = [
     category: "dark-premium",
     showBadge: false,
   },
+  {
+    id: "cyber-punk",
+    name: "Cyber Vision",
+    palette: { bg: "#050505", surface: "#121212", text: "#00FF41", muted: "#008F11", primary: "#00FF41", accent: "#FF00FF", isDark: true },
+    fonts: { heading: "'Space Mono', monospace", body: "'Inter', sans-serif" },
+    motif: "brutalist",
+    radius: 0,
+    category: "startup",
+  },
+  {
+    id: "minimal-vogue",
+    name: "Vogue Minimal",
+    palette: { bg: "#FFFFFF", surface: "#F8F8F8", text: "#000000", muted: "#888888", primary: "#000000", accent: "#E5E5E5", isDark: false },
+    fonts: { heading: "'Bodoni Moda', serif", body: "'Montserrat', sans-serif" },
+    motif: "editorial",
+    radius: 0,
+    category: "luxo",
+  },
+  {
+    id: "clay-morphism",
+    name: "Soft Clay",
+    palette: { bg: "#F0F2F5", surface: "#FFFFFF", text: "#333333", muted: "#999999", primary: "#6C63FF", accent: "#FF6584", isDark: false },
+    fonts: { heading: "'Quicksand', sans-serif", body: "'Inter', sans-serif" },
+    motif: "bento",
+    radius: 32,
+    category: "startup",
+  },
 ];
 
 export function getThemeById(id: string): DeckTheme {

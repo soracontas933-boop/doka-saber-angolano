@@ -199,52 +199,35 @@ export async function generateDeckContent(args: GenDeckContentArgs): Promise<Raw
     })
     .join("\n");
 
-  const userPrompt = `
-Cria o conteúdo de uma apresentação executiva premium estilo Gamma sobre: "${args.topic}".
-
-Tópicos do utilizador (matéria-prima — distribui pelos slides certos, NUNCA inventes do zero ignorando isto):
-${args.cardsOutline}
-
-ESTRUTURA OBRIGATÓRIA (respeita a ordem e o tipo de cada slot, e PREENCHE OS CAMPOS PEDIDOS):
-${slotsList}
-
-REGRA #1 — NENHUM SLIDE PODE TER CARDS/BULLETS VAZIOS.
-Se um slot pede "blocks: 3-4 stats", devolves 3-4 blocks completos com value, label E description.
-Se pede "body: 4-6 takeaways", devolves 4-6 strings reais (não placeholders).
-Slides vazios serão rejeitados e regenerados — não desperdices tokens.
-
-REGRA #2 — IDIOMA: ${args.language === "pt-AO" ? "Português de Angola ('utilizador', 'parceria', 'ficheiro', 'óptimo')" : "Português do Brasil"}.
-
-REGRA #3 — Tom executivo, cinematográfico, premium. ZERO meta-comentário ("neste slide", "vamos ver"). Frases directas e densas.
-
-REGRA #4 — DENSIDADE OBRIGATÓRIA: ${DENSITY_HINT[args.density]}
-   ⚠ Esta regra é IMPERATIVA. Slides com texto abaixo do limiar serão rejeitados. Cada subtema do utilizador DEVE ser desenvolvido com profundidade proporcional à densidade pedida — não te limites a repetir o título do subtema, EXPLICA, contextualiza e dá exemplos concretos angolanos.
-
-CAMPOS DISPONÍVEIS POR SLIDE:
-- title (obrigatório, 3-7 palavras de impacto, vai aparecer GIGANTE)
-- subtitle (opcional, ≤20 palavras de contexto)
-- pill (opcional, MAIÚSCULAS curtas tipo "OPORTUNIDADE · 2025") — usar sobretudo no hero
-- richBody (parágrafo único 40-90 palavras com 2-3 expressões em **negrito**)
-- body (array de strings curtas, sem markdown)
-- footnote (frase ≤15 palavras de impacto, opcional)
-- blocks (array de objectos {type, label, value, description, icon})
-  • stats → {value:"85%", label:"Curto", description:"frase explicativa"}
-  • bento → {label:"Título", description:"2 frases", icon:"📚"}
-  • timeline/process → {label:"Etapa", description:"1 frase"}
-  • comparison → {label:"critério", value:"opção A", description:"opção B"}
-- imagePrompt (EM INGLÊS, ≤30 palavras, sem texto na imagem)
-
-REGRAS ESPECIAIS:
-- HERO: pill + title curto + subtitle tagline. Sem body/blocks.
-- QUOTE: title = citação completa entre aspas; subtitle = "Autor — Fonte".
-- REFERENCES: body = 4-8 referências APA reais (autor, ano, título, fonte).
-- CLOSING/CTA: title curto + subtitle + body[0] = texto do botão.
-
-${args.extraKeywords?.length ? `Vibe visual: ${args.extraKeywords.join(", ")}.` : ""}
-
-Devolve APENAS JSON válido (sem comentários, sem markdown):
-{ "slides": [ {...}, {...} ] }
-`.trim();
+	  const userPrompt = `
+	Age como um Creative Director e Content Strategist. Cria o conteúdo de uma apresentação cinematográfica, premium e ultra-estética sobre: "${args.topic}".
+	
+	MATÉRIA-PRIMA (Tópicos do Utilizador):
+	${args.cardsOutline}
+	
+	ESTRUTURA NARRATIVA (Segue esta sequência exacta de slots):
+	${slotsList}
+	
+	DIRETRISES DE DESIGN DE CONTEÚDO:
+	1. LINGUAGEM: Executiva, inspiradora e densa. Usa o dialeto ${args.language === "pt-AO" ? "Português de Angola" : "Português do Brasil"}.
+	2. DENSIDADE: ${DENSITY_HINT[args.density]}. É OBRIGATÓRIO expandir cada tópico com análises, exemplos e dados.
+	3. TÍTULOS: Devem ser magnéticos e cinematográficos (ex: em vez de "Resultados", usa "O Horizonte do Sucesso: Métricas que Falam").
+	4. NENHUM CAMPO VAZIO: Preenche todos os campos solicitados para cada tipo de slide com conteúdo real e valioso.
+	
+	ESPECIFICAÇÕES DOS CAMPOS:
+	- title: 3-8 palavras de alto impacto.
+	- subtitle: Contextualização elegante (máx 20 palavras).
+	- pill: Tag em maiúsculas (ex: "VISÃO 2030", "INSIGHT ESTRATÉGICO").
+	- richBody: Parágrafo narrativo fluido com **negritos estratégicos**.
+	- body: Lista de pontos-chave (se o slide pedir).
+	- blocks: Dados estruturados (stats, bento, timeline, comparison).
+	- imagePrompt: Descrição visual artística EM INGLÊS (ex: "Cinematic shot of Luanda skyline at sunset, golden hour, architectural photography, 8k, highly detailed, professional lighting"). NÃO INCLUAS TEXTO NA IMAGEM.
+	
+	${args.extraKeywords?.length ? `VIBE VISUAL E ESTÉTICA: ${args.extraKeywords.join(", ")}.` : ""}
+	
+	Responde APENAS com JSON válido, sem markdown ou comentários:
+	{ "slides": [ {...}, {...} ] }
+	`.trim();
 
   const result = await generateWithAI(DELLE_SYSTEM_PROMPT, userPrompt, DENSITY_TOKEN_BUDGET[args.density], 0.8);
   const match = result.content.match(/\{[\s\S]*\}/);
@@ -394,7 +377,7 @@ export async function generateSingleSlideImage(
   else if (slide.kind === "gallery") kindHint = ", curated photo collection, editorial";
 
   const styleExtra = styleHint ? `, ${styleHint}` : "";
-  const prompt = `${baseHint}, ${motifHint}, ${paletteHint}${kindHint}${styleExtra}, professional, premium, no watermark`;
+	  const prompt = `High-end commercial photography, ${baseHint}, ${motifHint}, ${paletteHint}${kindHint}${styleExtra}, ultra-detailed, 8k resolution, cinematic lighting, sharp focus, professional color grading, masterpiece, no text, no watermark`;
 
   try {
     const r = await generateImageAI(prompt, 1024, 768);
@@ -424,7 +407,7 @@ export async function generateDeckImages(
     else if (task.slide.kind === "dashboard") kindHint = ", modern UI dashboard mockup, no text";
     else if (task.slide.kind === "stats") kindHint = ", abstract data visualization, no text";
 
-    const prompt = `${baseHint}, ${motifHint}, ${paletteHint}${kindHint}, professional, premium, no watermark`;
+	    const prompt = `High-end commercial photography, ${baseHint}, ${motifHint}, ${paletteHint}${kindHint}, ultra-detailed, 8k resolution, cinematic lighting, sharp focus, professional color grading, masterpiece, no text, no watermark`;
     try {
       const r = await generateImageAI(prompt, 1024, 768);
       task.slide.imageUrl = r.image_url;
