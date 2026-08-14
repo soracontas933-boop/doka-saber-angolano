@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, BookOpen, Download, Sparkles, Library as LibraryIcon, Flame, Star, TrendingUp, ShoppingBag, Zap, ArrowRight,  } from "lucide-react";
 import { DelleLoader } from "@/components/DelleLoader";
+import { OptimizedImage } from "@/components/OptimizedImage";
 
 interface Category {
   id: string;
@@ -358,11 +359,12 @@ const BookCardLarge = ({ book, owned }: { book: Book; owned: boolean }) => (
     <Card className="overflow-hidden border-0 shadow-apple-card hover:shadow-apple-card-hover transition-all hover:-translate-y-1 rounded-2xl">
       <div className="relative aspect-[16/10] bg-gradient-to-br from-primary/20 to-blue-400/20 overflow-hidden">
         {book.capa_url ? (
-          <img
+          <OptimizedImage
             src={book.capa_url}
             alt={book.titulo}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            aspectRatio="aspect-[16/10]"
+            width={600}
+            className="group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -420,11 +422,12 @@ const BookCard = ({
     <Link to={`/livraria/${book.id}`} className="group block">
       <div className="relative bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-apple-card group-hover:shadow-apple-card-hover transition-all group-hover:-translate-y-1">
         {book.capa_url ? (
-          <img
+          <OptimizedImage
             src={book.capa_url}
             alt={book.titulo}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            aspectRatio="aspect-[2/3]"
+            width={300}
+            className="group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-blue-400/20">

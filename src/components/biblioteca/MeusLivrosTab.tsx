@@ -8,6 +8,7 @@ import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 import PDFViewer from "@/components/PDFViewer";
 import { getEbookDownloadUrl } from "@/lib/ebook-storage";
+import { OptimizedImage } from "@/components/OptimizedImage";
 
 const MeusLivrosTab = () => {
   const [items, setItems] = useState<any[]>([]);
@@ -100,9 +101,9 @@ const MeusLivrosTab = () => {
           if (!b) return null;
           return (
             <div key={item.id} className="group">
-              <div className="relative bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-apple-card group-hover:shadow-apple-card-hover transition-all">
+                <div className="relative bg-secondary rounded-2xl overflow-hidden aspect-[2/3] shadow-apple-card group-hover:shadow-apple-card-hover transition-all">
                 {b.capa_url ? (
-                  <img src={b.capa_url} alt={b.titulo} loading="lazy" className="w-full h-full object-cover" />
+                  <OptimizedImage src={b.capa_url} alt={b.titulo} width={300} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-blue-400/20">
                     <BookOpen className="h-10 w-10 text-primary/60" />

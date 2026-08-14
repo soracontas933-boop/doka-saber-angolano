@@ -17,6 +17,7 @@ import { Upload, CreditCard, Building2, Smartphone, FileText, X, CheckCircle, Al
 import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { OptimizedImage } from "@/components/OptimizedImage";
 
 interface BookPaymentDialogProps {
   open: boolean;
@@ -173,7 +174,14 @@ const BookPaymentDialog = ({
           {/* Livro Info - Sólido */}
           <div className="bg-secondary p-2.5 sm:p-4 rounded-2xl border border-border flex items-center gap-3 card-3d">
             {book.capa_url && (
-              <img src={book.capa_url} alt={book.titulo} className="h-12 w-9 sm:h-16 sm:w-12 rounded-lg shadow-sm object-cover flex-shrink-0" />
+              <OptimizedImage
+                src={book.capa_url}
+                alt={book.titulo}
+                width={80}
+                aspectRatio="aspect-[3/4]"
+                className="h-12 w-9 sm:h-16 sm:w-12 rounded-lg shadow-sm object-cover flex-shrink-0"
+                containerClassName="h-12 w-9 sm:h-16 sm:w-12 rounded-lg flex-shrink-0"
+              />
             )}
             <div className="flex-1 min-w-0">
               <p className="font-bold text-xs sm:text-base text-foreground truncate leading-tight">{book.titulo}</p>

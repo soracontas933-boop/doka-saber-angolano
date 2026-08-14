@@ -13,6 +13,7 @@ import { Plus, Trash2, Edit, Check, X, BookOpen, ExternalLink, Copy } from "luci
 import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
 import { uploadEbookPDF, uploadEbookCover, sanitizeFilename } from "@/lib/ebook-storage";
+import { OptimizedImage } from "@/components/OptimizedImage";
 import * as pdfjsLib from "pdfjs-dist";
 // @ts-ignore - importar worker como URL via Vite (evita falha de CDN)
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -229,7 +230,7 @@ const AdminLivrariaTab = () => {
                 <div key={b.id} className="group">
                   <div className="relative bg-secondary rounded-xl overflow-hidden aspect-[2/3]">
                     {b.capa_url ? (
-                      <img src={b.capa_url} alt={b.titulo} className="w-full h-full object-cover" />
+                      <OptimizedImage src={b.capa_url} alt={b.titulo} width={150} />
                     ) : (
                       <div className="flex items-center justify-center h-full"><BookOpen className="h-8 w-8 text-muted-foreground/40" /></div>
                     )}

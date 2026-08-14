@@ -190,7 +190,13 @@ const LivroDetalhePage = () => {
           <div className="w-1/3 min-w-[120px] max-w-[180px]">
             <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-lg bg-secondary border border-border card-3d">
               {book.capa_url ? (
-                <img src={book.capa_url} alt={book.titulo} className="w-full h-full object-cover" />
+                <OptimizedImage
+                  src={book.capa_url}
+                  alt={book.titulo}
+                  loading="eager"
+                  fetchPriority="high"
+                  width={400}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <BookOpen className="h-12 w-12 text-muted-foreground" />

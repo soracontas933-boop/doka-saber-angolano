@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Plus, BookOpen, Eye, Download, TrendingUp, ExternalLink, Copy, Share2 } from "lucide-react";
 import { DelleLoader } from "@/components/DelleLoader";
 import { toast } from "@/hooks/use-toast";
+import { OptimizedImage } from "@/components/OptimizedImage";
 import * as pdfjsLib from "pdfjs-dist";
 // @ts-ignore
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -171,7 +172,7 @@ const PublicarLivroTab = () => {
             <Card key={b.id} className="overflow-hidden">
               <div className="flex gap-3 p-3">
                 <div className="w-20 h-28 bg-secondary rounded-xl overflow-hidden flex-shrink-0">
-                  {b.capa_url ? <img src={b.capa_url} alt={b.titulo} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><BookOpen className="h-6 w-6 text-muted-foreground" /></div>}
+                  {b.capa_url ? <OptimizedImage src={b.capa_url} alt={b.titulo} width={100} aspectRatio="aspect-[20/28]" /> : <div className="w-full h-full flex items-center justify-center"><BookOpen className="h-6 w-6 text-muted-foreground" /></div>}
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
                   <h3 className="font-semibold text-sm line-clamp-2">{b.titulo}</h3>

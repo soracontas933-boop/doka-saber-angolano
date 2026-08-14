@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { GraduationCap } from "lucide-react";
 import { BackgroundMediaCarousel } from "@/components/BackgroundMediaCarousel";
-import { useState, useEffect } from "react";
+import { OptimizedImage } from "@/components/OptimizedImage";
 import PixelTetris from "@/components/PixelTetris";
 
 
@@ -232,10 +232,13 @@ const UserHomePage = () => {
                         playsInline
                       />
                     ) : (
-                      <img
+                      <OptimizedImage
                         src={coverUrl}
                         alt={action.label}
+                        width={200}
+                        aspectRatio="aspect-square"
                         className="absolute inset-0 w-full h-full object-cover rounded-lg z-0"
+                        containerClassName="absolute inset-0 w-full h-full rounded-lg"
                       />
                     )
                   )}
@@ -291,13 +294,16 @@ const UserHomePage = () => {
                   loop
                   playsInline
                 />
-              ) : (
-                <img
-                  src={buttonCovers["comunidade"]}
-                  alt="Comunidade"
-                  className="absolute inset-0 w-full h-full object-cover z-0 hidden md:block"
-                />
-              )
+                ) : (
+                  <OptimizedImage
+                    src={buttonCovers["comunidade"]}
+                    alt="Comunidade"
+                    width={800}
+                    aspectRatio="aspect-video"
+                    className="absolute inset-0 w-full h-full object-cover z-0 hidden md:block"
+                    containerClassName="absolute inset-0 w-full h-full hidden md:block"
+                  />
+                )
             )}
             <div className="relative z-10 flex items-center gap-3">
               <div className={`p-2.5 rounded-md ${buttonCovers["comunidade"] ? "bg-background/20" : "bg-muted"}`}>
