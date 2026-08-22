@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BookOpen, Download, Link as LinkIcon, FileText, Eye, Share2, ChevronDown, ChevronUp } from "lucide-react";
 import { DelleLoader } from "@/components/DelleLoader";
+import { OptimizedImage } from "@/components/OptimizedImage";
 import { toast } from "@/hooks/use-toast";
 
 import PDFViewer from "@/components/PDFViewer";
