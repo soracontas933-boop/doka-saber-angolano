@@ -595,3 +595,52 @@
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   CAPA DOS PROJETOS — miniatura mobile
+   ═══════════════════════════════════════════════════════════ */
+
+.project-cover-thumbnail {
+  width: 100%;
+  aspect-ratio: 210 / 297;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+  pointer-events: none;
+}
+
+.project-cover-thumbnail__page {
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  transform-origin: top left;
+  transform: scale(var(--project-cover-scale, 0.25));
+  background: #fff;
+  color: #000;
+}
+
+.project-cover-thumbnail__page .capa-page {
+  width: 210mm;
+  height: 297mm;
+}
+
+.project-cover-thumbnail__page .capa-border {
+  min-height: 240mm;
+}
+
+@media (min-width: 640px) {
+  .project-cover-thumbnail {
+    border-radius: 1rem;
+  }
+
+  .project-cover-thumbnail__page {
+    --project-cover-scale: 0.34;
+  }
+}
+
+@media (min-width: 1024px) {
+  .project-cover-thumbnail__page {
+    --project-cover-scale: 0.42;
+  }
+}

@@ -310,6 +310,10 @@ const TrabalhoPage = () => {
       nomeEscola,
       nomeDocente,
       tipoTrabalho,
+      coverData: getCoverData(),
+      // URLs de objecto de uploads locais expiram ao recarregar a página;
+      // apenas a capa gerada remotamente é persistida.
+      capaImageUrl: tipoCapa === "personalizada" ? capaUrl : undefined,
     });
   };;
 

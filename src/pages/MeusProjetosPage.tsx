@@ -31,6 +31,7 @@ import ResumoPreview from "@/components/resumo/ResumoPreview";
 import QuestionarioPreview from "@/components/questionario/QuestionarioPreview";
 import PlanoHorizontalResult from "@/components/plano-aula/PlanoHorizontalResult";
 import TrabalhoCompleto from "@/components/trabalho/TrabalhoCompleto";
+import ProjectCoverThumbnail from "@/components/projetos/ProjectCoverThumbnail";
 
 // Utilitários de Exportação
 import { exportToPDF, exportToWord } from "@/lib/export-utils";
@@ -294,7 +295,7 @@ const MeusProjetosPage = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+              className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-6"
             >
               {filtered.map((project) => {
                 const cfg = tipoConfig[project.tipo] || tipoConfig.trabalho;
@@ -303,41 +304,45 @@ const MeusProjetosPage = () => {
                   <motion.div
                     key={project.id}
                     layoutId={project.id}
-                    className="group bg-card border border-border/50 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
+                    className="group min-w-0 bg-card border border-border/50 rounded-2xl sm:rounded-3xl p-2 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
                   >
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br ${cfg.gradient} shadow-lg shadow-primary/10 flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                        <Icon className="h-6 w-6 text-white" />
+                    <div className="mb-2 sm:mb-4">
+                      <ProjectCoverThumbnail project={project} />
+                    </div>
+
+                    <div className="flex items-start gap-1.5 sm:gap-4 mb-2 sm:mb-4">
+                      <div className={`inline-flex items-center justify-center w-7 h-7 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-gradient-to-br ${cfg.gradient} shadow-lg shadow-primary/10 flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                        <Icon className="h-3.5 w-3.5 sm:h-6 sm:w-6 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                        <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-muted-foreground font-bold truncate block">
                           {cfg.label}
                         </span>
-                        <h3 className="text-sm md:text-base font-display font-bold text-foreground line-clamp-2 mt-0.5 leading-tight">
+                        <h3 className="text-[10px] sm:text-sm md:text-base font-display font-bold text-foreground line-clamp-2 mt-0.5 leading-tight break-words">
                           {project.titulo}
                         </h3>
-                        <p className="text-[10px] md:text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <p className="hidden sm:flex text-[10px] md:text-xs text-muted-foreground mt-1 items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
                           {formatDate(project.criado_em)}
                         </p>
                       </div>
                     </div>
                     
-                    <div className="mt-auto flex items-center gap-2 pt-4 border-t border-border/40">
+                    <div className="mt-auto flex items-center gap-1 sm:gap-2 pt-2 sm:pt-4 border-t border-border/40">
                       <Button
                         variant="default"
                         size="sm"
-                        className="flex-1 text-xs font-semibold h-9 rounded-xl"
+                        className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold h-8 sm:h-9 rounded-lg sm:rounded-xl px-1 sm:px-3"
                         onClick={() => openPreview(project)}
                       >
-                        <Eye className="h-3.5 w-3.5 mr-1.5" />
-                        Modo Leitura
+                        <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5 sm:mr-1.5" />
+                        <span className="hidden sm:inline">Modo Leitura</span>
                       </Button>
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-xl">
-                            <Download className="h-3.5 w-3.5" />
+                          <Button variant="outline" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-lg sm:rounded-xl">
+                            <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-xl">
@@ -354,8 +359,8 @@ const MeusProjetosPage = () => {
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/5">
-                            <Trash2 className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-lg sm:rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/5">
+                            <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent className="rounded-3xl">
