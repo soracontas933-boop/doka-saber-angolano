@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const HIGGSFIELD_BASE_URL = "https://api.higgsfield.ai";
+const HIGGSFIELD_BASE_URL = "https://platform.higgsfield.ai";
 const MODELS: Record<string, { type: "image" | "video"; endpoint: string }> = {
   "qwen-image-3": { type: "image", endpoint: "/alibaba/qwen-image-3/text-to-image" },
   "nano-banana-2-lite": { type: "image", endpoint: "/nano-banana-2/lite/text-to-image" },
