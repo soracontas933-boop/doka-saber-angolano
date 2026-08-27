@@ -37,6 +37,7 @@ import MinhaBibliotecaPage from "@/pages/MinhaBibliotecaPage";
 import NotFound from "@/pages/NotFound";
 import RootRedirect from "@/components/RootRedirect";
 import CreditosPage from "@/pages/CreditosPage";
+import GeradorMediaPage from "@/pages/GeradorMediaPage";
 import NoCreditsModal from "@/components/NoCreditsModal";
 import SupportNotification from "@/components/SupportNotification";
 import WelcomeGreeting from "@/components/WelcomeGreeting";
@@ -85,6 +86,7 @@ const App = () => (
                 <Route path="/configuracoes" element={withErrorBoundary(<SettingsPage />, "Configurações")} />
                 <Route path="/planos" element={withErrorBoundary(<PlanosPage />, "Planos")} />
                 <Route path="/creditos" element={withErrorBoundary(<CreditosPage />, "Créditos")} />
+                <Route path="/gerador-media" element={withErrorBoundary(<GeradorMediaPage />, "Gerador de Imagens e Vídeos")} />
                 <Route path="/suporte" element={withErrorBoundary(<SuportePage />, "Suporte")} />
                 <Route path="/mensagens" element={withErrorBoundary(<AdminMensagensPage />, "Mensagens")} />
                 <Route path="/curriculo" element={withErrorBoundary(<CurriculoPage />, "Currículo")} />

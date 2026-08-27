@@ -25,6 +25,7 @@ import {
   type LucideIcon,
   ChevronLeft,
   ChevronRight,
+  WandSparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
@@ -50,6 +51,7 @@ const navItems: NavItem[] = [
   { to: "/faturamento", icon: Receipt, label: "Faturamento", adminOnly: true, permission: "faturamento" },
   { to: "/admin", icon: ShieldCheck, label: "Painel Admin", adminOnly: true, permission: "admin_panel" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos", featureKey: "meus-projetos" },
+  { to: "/gerador-media", icon: WandSparkles, label: "Imagens e Vídeos" },
   { to: "/trabalho", icon: FileText, label: "Trabalho Escolar", featureKey: "trabalho" },
   { to: "/curriculo", icon: FileText, label: "Currículo (CV)", featureKey: "curriculo" },
   { to: "/resumo", icon: BookOpen, label: "Resumo", featureKey: "resumo" },
@@ -119,7 +121,7 @@ const AppSidebar = () => {
           <div className="flex items-center gap-2.5 animate-in fade-in duration-300">
             <DelleLogo size={32} />
             <div className="flex flex-col">
-              <span className="text-sm font-bold tracking-tight">​</span>
+              <span className="text-sm font-bold tracking-tight">{" "}</span>
               {isAdmin && (
                 <Badge variant="secondary" className="h-4 text-[9px] px-1 font-bold bg-primary/10 text-primary border-none">
                   MASTER
