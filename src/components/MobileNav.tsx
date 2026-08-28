@@ -1,12 +1,22 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, FolderOpen, Library, Presentation, Settings, WandSparkles } from "lucide-react";
+import { Home, FolderOpen, Library, Presentation, Settings, WandSparkles, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useAdmin } from "@/hooks/use-admin";
 
-const navItems = [
+interface MobileNavItem {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  featureKey?: string;
+  adminOnly?: boolean;
+  permission?: string;
+}
+
+const navItems: MobileNavItem[] = [
   { to: "/home", icon: Home, label: "Início", featureKey: "home" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos", featureKey: "meus-projetos" },
   { to: "/gerador-media", icon: WandSparkles, label: "Criar" },
+  { to: "/admin", icon: ShieldCheck, label: "Master", adminOnly: true, permission: "admin_panel" },
   { to: "/livraria", icon: Library, label: "Livraria", featureKey: "livraria" },
   { to: "/apresentacao", icon: Presentation, label: "Slides", featureKey: "apresentacao" },
   { to: "/configuracoes", icon: Settings, label: "Ajustes" },
@@ -15,9 +25,10 @@ const navItems = [
 const MobileNav = () => {
   const location = useLocation();
   const { isFeatureEnabled } = useFeatureFlags();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, hasPermission } = useAdmin();
 
   const visibleItems = navItems.filter((item) => {
+    if (item.adminOnly && (!isAdmin || (item.permission && !hasPermission(item.permission)))) return false;
     if (!item.featureKey) return true;
     if (isAdmin) return true;
     return isFeatureEnabled(item.featureKey);
@@ -25,7 +36,7 @@ const MobileNav = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-gradient-to-t from-background to-background/95 backdrop-blur-xl border-t border-border/40 shadow-2xl shadow-black/20 dark:shadow-black/50">
-      <div className="px-4 py-3 flex-row pt-px pb-[4px] flex items-start justify-center text-justify font-mono">
+      <div className={`w-full px-2 py-3 pt-px pb-[4px] grid items-start text-center font-mono ${visibleItems.length > 5 ? "grid-cols-6" : "grid-cols-5"}`}>
         {visibleItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           
@@ -33,7 +44,7 @@ const MobileNav = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex flex-col items-center gap-1.5 px-2 py-1 transition-all duration-200 active:scale-90 mr-[6px]"
+              className="relative flex min-w-0 flex-col items-center gap-1.5 px-1 py-1 transition-all duration-200 active:scale-90"
             >
               <div className={`p-1 rounded-full transition-all duration-300 button-3d ${
                 isActive 
