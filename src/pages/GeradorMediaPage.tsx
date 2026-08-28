@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Image as ImageIcon, Loader2, Trash2, Video, WandSparkles, X } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, LockKeyhole, Trash2, Video, WandSparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAdmin } from "@/hooks/use-admin";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 const MODELS = {
   image: [
@@ -72,6 +74,8 @@ function sleep(ms: number) {
 }
 
 const GeradorMediaPage = () => {
+  const { isAdmin } = useAdmin();
+  const { isFeatureEnabled } = useFeatureFlags();
   const [mediaType, setMediaType] = useState<MediaType>("image");
   const [model, setModel] = useState<string>(MODELS.image[0].id);
   const [prompt, setPrompt] = useState("");
@@ -189,6 +193,26 @@ const GeradorMediaPage = () => {
     setCurrentUrl(null);
     setCurrentResult(null);
   };
+
+  if (!isAdmin && !isFeatureEnabled("gerador-media")) {
+    return (
+      <div className="min-h-screen bg-background px-4 py-10 sm:px-6">
+        <div className="mx-auto flex min-h-[55vh] max-w-lg items-center justify-center">
+          <Card className="w-full rounded-3xl border-border/60 text-center shadow-sm">
+            <CardContent className="space-y-4 p-8">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <LockKeyhole className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-xl font-display font-bold">Funcionalidade indisponível</h1>
+                <p className="text-sm text-muted-foreground">O acesso à geração de imagens e vídeos está desactivado para a tua conta.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-3 py-5 sm:px-6 sm:py-8 lg:px-10">

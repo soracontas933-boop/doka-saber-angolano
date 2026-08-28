@@ -15,7 +15,7 @@ interface MobileNavItem {
 const navItems: MobileNavItem[] = [
   { to: "/home", icon: Home, label: "Início", featureKey: "home" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos", featureKey: "meus-projetos" },
-  { to: "/gerador-media", icon: WandSparkles, label: "Criar" },
+  { to: "/gerador-media", icon: WandSparkles, label: "Criar", featureKey: "gerador-media" },
   { to: "/admin", icon: ShieldCheck, label: "Master", adminOnly: true, permission: "admin_panel" },
   { to: "/livraria", icon: Library, label: "Livraria", featureKey: "livraria" },
   { to: "/apresentacao", icon: Presentation, label: "Slides", featureKey: "apresentacao" },

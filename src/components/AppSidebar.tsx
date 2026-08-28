@@ -51,7 +51,7 @@ const navItems: NavItem[] = [
   { to: "/faturamento", icon: Receipt, label: "Faturamento", adminOnly: true, permission: "faturamento" },
   { to: "/admin", icon: ShieldCheck, label: "Painel Admin", adminOnly: true, permission: "admin_panel" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Meus Projetos", featureKey: "meus-projetos" },
-  { to: "/gerador-media", icon: WandSparkles, label: "Imagens e Vídeos" },
+  { to: "/gerador-media", icon: WandSparkles, label: "Imagens e Vídeos", featureKey: "gerador-media" },
   { to: "/trabalho", icon: FileText, label: "Trabalho Escolar", featureKey: "trabalho" },
   { to: "/curriculo", icon: FileText, label: "Currículo (CV)", featureKey: "curriculo" },
   { to: "/resumo", icon: BookOpen, label: "Resumo", featureKey: "resumo" },
