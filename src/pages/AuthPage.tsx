@@ -16,8 +16,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ArrowLeft } from "lucide-react";
-import { DelleLoader } from "@/components/DelleLoader";
-import { DelleLoader } from "@/components/DelleLoader";
+import PuzzleLoadingScreen from "@/components/PuzzleLoadingScreen";
 import PhoneInput from "@/components/PhoneInput";
 import { Particles } from "@/components/ui/particles";
 
@@ -122,11 +121,7 @@ const AuthPage = () => {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <DelleLoader className="h-10 w-10" />
-      </div>
-    );
+    return <PuzzleLoadingScreen label="A preparar o início de sessão…" />;
   }
 
   return (

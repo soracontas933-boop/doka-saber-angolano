@@ -271,7 +271,7 @@ const UserHomePage = () => {
             {/* Pixel Tetris animation background on mobile */}
             <PixelTetris
               boardColor="rgba(249, 115, 26, 0.08)"
-              colors={["#F9731A", "#FFFFFF"]}
+              colors={["#0B0B0B", "#F97316"]}
               movement={2}
               cellSize={8}
               gap={2}

@@ -1,16 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { DelleLoader } from "./DelleLoader";
+import PuzzleLoadingScreen from "./PuzzleLoadingScreen";
 
 const ProtectedRoute = () => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <DelleLoader className="h-10 w-10" />
-      </div>
-    );
+    return <PuzzleLoadingScreen label="A validar a tua sessão…" />;
   }
 
   if (!user) {
