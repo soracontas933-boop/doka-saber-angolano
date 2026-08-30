@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, FolderOpen, Library, Presentation, Settings, WandSparkles, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Home, FolderOpen, Library, Presentation, Settings, WandSparkles, ShieldCheck, LayoutDashboard, type LucideIcon } from "lucide-react";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useAdmin } from "@/hooks/use-admin";
 
@@ -14,6 +14,7 @@ interface MobileNavItem {
 
 const navItems: MobileNavItem[] = [
   { to: "/home", icon: Home, label: "Início", featureKey: "home" },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: true, permission: "admin_panel" },
   { to: "/meus-projetos", icon: FolderOpen, label: "Projetos", featureKey: "meus-projetos" },
   { to: "/gerador-media", icon: WandSparkles, label: "Criar", featureKey: "gerador-media" },
   { to: "/admin", icon: ShieldCheck, label: "Master", adminOnly: true, permission: "admin_panel" },
@@ -36,7 +37,7 @@ const MobileNav = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom bg-gradient-to-t from-background to-background/95 backdrop-blur-xl border-t border-border/40 shadow-2xl shadow-black/20 dark:shadow-black/50">
-      <div className={`w-full px-2 py-3 pt-px pb-[4px] grid items-start text-center font-mono ${visibleItems.length > 5 ? "grid-cols-6" : "grid-cols-5"}`}>
+      <div className="flex w-full items-start gap-1 overflow-x-auto px-2 py-2 pb-[4px] text-center font-mono [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {visibleItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           
@@ -44,7 +45,7 @@ const MobileNav = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex min-w-0 flex-col items-center gap-1.5 px-1 py-1 transition-all duration-200 active:scale-90"
+              className="relative flex w-[68px] shrink-0 flex-col items-center gap-1.5 px-1 py-1 transition-all duration-200 active:scale-90"
             >
               <div className={`p-1 rounded-full transition-all duration-300 button-3d ${
                 isActive 

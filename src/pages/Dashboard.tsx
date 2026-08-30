@@ -492,12 +492,12 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 bg-[#dde1e9]">
+    <div className="w-full min-w-0 max-w-7xl mx-auto space-y-6 bg-[#dde1e9] p-3 sm:p-4 md:p-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex items-center gap-3">
           <LayoutDashboard className="h-7 w-7 text-primary" />
@@ -506,7 +506,7 @@ const Dashboard = () => {
             <p className="text-sm text-muted-foreground">Visão geral do sistema</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="gap-2">
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="w-full gap-2 sm:w-auto">
           <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
           Atualizar
         </Button>
@@ -517,7 +517,7 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="grid grid-cols-2 lg:grid-cols-5 gap-4"
+        className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5"
       >
         {[
           { label: "Utilizadores", value: totals.totalUsers, sub: "registados", icon: Users },
@@ -531,13 +531,13 @@ const Dashboard = () => {
             icon: TrendingUp,
           },
         ].map((kpi) => (
-          <Card key={kpi.label} className="border-primary/20">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.label}</CardTitle>
+          <Card key={kpi.label} className="min-w-0 overflow-hidden border-primary/20">
+            <CardHeader className="flex flex-row items-start justify-between gap-2 px-3 pb-2 sm:px-6">
+              <CardTitle className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">{kpi.label}</CardTitle>
               <kpi.icon className="h-5 w-5 text-primary" />
             </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
+            <CardContent className="px-3 sm:px-6">
+              <p className="break-words text-2xl font-bold text-foreground sm:text-3xl">{kpi.value}</p>
               <p className="text-xs text-muted-foreground mt-1">{kpi.sub}</p>
             </CardContent>
           </Card>
@@ -551,7 +551,7 @@ const Dashboard = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-4"
         >
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20">
                 <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400 animate-bounce" />
@@ -567,7 +567,7 @@ const Dashboard = () => {
             </div>
             <Button
               onClick={() => navigate("/admin?tab=payments")}
-              className="gap-2 bg-amber-600 hover:bg-amber-700 text-white"
+              className="w-full gap-2 bg-amber-600 text-white hover:bg-amber-700 sm:w-auto"
             >
               <CreditCard className="h-4 w-4" />
               Ver Pagamentos
@@ -581,10 +581,10 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+        className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3"
       >
         {/* Activity Area Chart */}
-        <Card className="lg:col-span-2">
+        <Card className="min-w-0 overflow-hidden lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" />
@@ -630,7 +630,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Plan Distribution Pie */}
-        <Card>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-primary" />
@@ -677,10 +677,10 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2"
       >
         {/* Projects by Type */}
-        <Card>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
@@ -719,7 +719,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Tokens by Service */}
-        <Card>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" />
@@ -761,9 +761,9 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.17 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+        className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3"
       >
-        <Card className="lg:col-span-2">
+        <Card className="min-w-0 overflow-hidden lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" />
@@ -805,7 +805,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Today's Summary Table with Daily Limits */}
-        <Card>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" />
@@ -813,8 +813,9 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Serviço IA</TableHead>
                   <TableHead className="text-xs text-right">Usados Hoje</TableHead>
@@ -878,7 +879,8 @@ const Dashboard = () => {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
@@ -890,13 +892,13 @@ const Dashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
               Utilizadores
             </CardTitle>
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Pesquisar..."
